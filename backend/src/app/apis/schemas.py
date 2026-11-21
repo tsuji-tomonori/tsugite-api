@@ -29,6 +29,13 @@ class Listing(BaseModel):
     revision: int
 
 
+class CatalogPage(BaseModel):
+    items: list[Listing]
+    page: int
+    page_size: int
+    total: int
+
+
 class Detail(Listing):
     spec: dict[str, Any]
 
@@ -53,6 +60,7 @@ class Right(BaseModel):
     environment: Env
     reason: str
     asset_name: str = ""
+    decision_reason: str | None = None
     status: Literal["pending", "approved", "rejected", "revoked", "withdrawn"]
     revision: int
 

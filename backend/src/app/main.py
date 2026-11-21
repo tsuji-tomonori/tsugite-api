@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import secrets
@@ -16,6 +17,10 @@ from app.core.auth import demo_token
 from app.core.config import local_demo, settings
 
 log = logging.getLogger("tsugite.access")
+log.setLevel(logging.INFO)
+if not log.handlers:
+    log.addHandler(logging.StreamHandler())
+log.propagate = False
 
 
 def create_app() -> FastAPI:
@@ -40,12 +45,18 @@ def create_app() -> FastAPI:
         result.headers["X-Request-ID"] = request.state.request_id
         if request.url.path.startswith("/api/"):
             result.headers["Cache-Control"] = "no-store"
-        log.info(
-            "request_id=%s method=%s status=%s",
-            request.state.request_id,
-            request.method,
-            result.status_code,
-        )
+        if request.url.path.startswith("/api/"):
+            log.info(
+                json.dumps(
+                    {
+                        "event": "http.access",
+                        "request_id": request.state.request_id,
+                        "method": request.method,
+                        "route": getattr(request.scope.get("route"), "path", ""),
+                        "status": result.status_code,
+                    }
+                )
+            )
         return result
 
     @app.exception_handler(StaleDataError)
