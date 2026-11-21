@@ -80,7 +80,7 @@ def register(data: Register, request: Request, actor: User, db: DB):
     except Exception as exc:
         raise HTTPException(422,"OpenAPIの形式または内部参照を確認してください") from exc
     row = Asset(id=new_id(),name=data.name,summary=data.summary,owner=data.owner,
-                targets=json.dumps(data.targets),spec=spec,published=False)
+                base_path=data.base_path,targets=json.dumps(data.targets),spec=spec,published=False)
     db.add(row)
     event(db,request,actor,row,"register",row.owner)
     db.commit()
@@ -136,9 +136,9 @@ def apply(key: str, data: Apply, request: Request, actor: User, db: DB):
 
 @router.get("/requests",response_model=list[Right])
 def requests(actor: User, db: DB, incoming: bool=False):
-    stmt=select(Access).join(Asset,Asset.id==Access.asset_id)
+    stmt=select(Access,Asset.name).join(Asset,Asset.id==Access.asset_id)
     stmt=stmt.where(Asset.owner.in_(actor.owners) if incoming else Access.project.in_(actor.projects))
-    return list(db.scalars(stmt.order_by(Access.asset_id,Access.project,Access.environment)))
+    return [Right.model_validate(row).model_copy(update={"asset_name":name}) for row,name in db.execute(stmt.order_by(Asset.name,Access.project,Access.environment))]
 
 
 NEXT={"approve":("pending","approved"),"reject":("pending","rejected"),"withdraw":("pending","withdrawn"),

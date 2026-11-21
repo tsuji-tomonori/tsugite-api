@@ -123,8 +123,15 @@ async def register():
     if not chosen:
         raise ValueError("接続先を一つ以上選んでください")
     bindings=ctx["me"]["targets"]
-    data={"name":value("name"),"summary":value("summary"),"owner":bindings[chosen[0]]["owner"],
-          "targets":{bindings[k]["environment"]:k for k in chosen},"spec":json.loads(value("spec"))}
+    spec_text=value("spec")
+    files=document.getElementById("spec-file").files
+    if files.length:
+        file=files.item(0)
+        if file.size>500000:
+            raise ValueError("500KB以内のファイルを選んでください")
+        spec_text=str(await file.text())
+    data={"base_path":value("base-path"),"name":value("name"),"summary":value("summary"),"owner":bindings[chosen[0]]["owner"],
+          "targets":{bindings[k]["environment"]:k for k in chosen},"spec":json.loads(spec_text)}
     asset=await client.api("/apis","POST",data)
     await go("api/"+asset["id"])
     ctx["message"]="下書きを保存しました。仕様を確認して公開してください。"
@@ -183,7 +190,11 @@ def inventory_form():
         for env in ("sandbox","production"):
             opts=[("","指定しない")]+[(k,k+" · "+v["owner"]) for k,v in ctx["me"]["targets"].items() if v["environment"]==env]
             field(LABEL[env]+"の接続先",env,options=opts)
-        field("OpenAPI定義（JSON）","spec",textarea=True,text=json.dumps(SAMPLE,ensure_ascii=False,indent=2) if ctx["config"]["demo"] else "")
+        field("接続先のベースパス（任意）","base-path",placeholder="/inventory/v1")
+        with t.label(classes="field"):
+            t.span("OpenAPIファイル（JSON）")
+            t.input(id="spec-file",type="file",accept=".json,application/json",classes="form-control")
+        field("またはOpenAPI定義を貼り付け（JSON）","spec",textarea=True,text=json.dumps(SAMPLE,ensure_ascii=False,indent=2) if ctx["config"]["demo"] else "")
         btn("下書きを保存",register,primary=True)
 
 

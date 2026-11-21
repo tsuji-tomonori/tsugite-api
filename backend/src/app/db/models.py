@@ -24,6 +24,7 @@ class Asset(Base):
     owner: Mapped[str] = mapped_column(String(64))
     name: Mapped[str] = mapped_column(String(120))
     summary: Mapped[str] = mapped_column(Text)
+    base_path: Mapped[str | None] = mapped_column(String(300))
     spec: Mapped[str] = mapped_column(Text)
     targets: Mapped[str] = mapped_column(Text)
     published: Mapped[bool] = mapped_column(default=False)

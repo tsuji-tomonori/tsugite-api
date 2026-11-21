@@ -15,6 +15,7 @@ class Register(Input):
     name: str = Field(min_length=1,max_length=120)
     summary: str = Field(min_length=1,max_length=1000)
     targets: dict[Env,str] = Field(min_length=1,max_length=2)
+    base_path: str = Field("",pattern=r"^(?:/[A-Za-z0-9_-]+)*$",max_length=300)
     spec: dict[str,Any]
 
 
@@ -51,6 +52,7 @@ class Right(BaseModel):
     project: str
     environment: Env
     reason: str
+    asset_name: str = ""
     status: Literal["pending","approved","rejected","revoked","withdrawn"]
     revision: int
 

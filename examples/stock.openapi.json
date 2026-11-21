@@ -1,0 +1,19 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "在庫照会",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/items": {
+      "get": {
+        "summary": "在庫一覧を取得",
+        "responses": {
+          "200": {
+            "description": "在庫一覧"
+          }
+        }
+      }
+    }
+  }
+}

@@ -61,7 +61,7 @@ async def invoke(key: str,environment: Env,project: str,tail: str,request: Reque
                  "x-request-id":request.state.request_id}
         event(db,request,actor,asset,"invoke.start",project,environment,request.method)
         db.commit()
-        result=await run_in_threadpool(dispatch,binding,request.method,path,request.url.query,bytes(body),headers)
+        result=await run_in_threadpool(dispatch,binding,request.method,(asset.base_path or "")+path,request.url.query,bytes(body),headers)
     except HTTPException as exc:
         event(db,request,actor,asset,"invoke.denied" if exc.status_code==403 else "invoke.error",
               member_project,environment,str(exc.status_code))
