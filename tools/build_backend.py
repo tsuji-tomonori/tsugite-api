@@ -34,6 +34,7 @@ def build():
         [
             "uv",
             "pip",
+            "--no-config",
             "install",
             "--target",
             str(dest),
@@ -49,11 +50,20 @@ def build():
         ],
         check=True,
     )
-    shutil.copytree(ROOT / "backend/src/app", dest / "app", ignore=shutil.ignore_patterns("__pycache__"))
     shutil.copytree(
-        ROOT / "backend/migrations", dest / "migrations", ignore=shutil.ignore_patterns("__pycache__")
+        ROOT / "packages/backend/src/app", dest / "app", ignore=shutil.ignore_patterns("__pycache__")
     )
-    shutil.copy(ROOT / "backend/alembic.ini", dest)
+    shutil.copytree(
+        ROOT / "packages/database/migrations",
+        dest / "migrations",
+        ignore=shutil.ignore_patterns("__pycache__"),
+    )
+    shutil.copytree(
+        ROOT / "packages/database/src/tsugite_db",
+        dest / "tsugite_db",
+        ignore=shutil.ignore_patterns("__pycache__"),
+    )
+    shutil.copy(ROOT / "packages/database/alembic.ini", dest)
     for path in dest.rglob("__pycache__"):
         shutil.rmtree(path)
 

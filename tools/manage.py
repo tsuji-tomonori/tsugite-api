@@ -1,4 +1,4 @@
-"""継手APIの起動・検証・AWS配備。リポジトリ直下で uv run python tools/manage.py を実行する。"""
+"""継手APIの起動・検証・AWS配備。リポジトリ直下のTaskfileから実行する。"""
 
 import argparse
 import json
@@ -31,7 +31,8 @@ def main():
         os.environ["TSUGITE_DEMO"] = "1"
         frontend()
         subprocess.run(
-            [sys.executable, "-m", "alembic", "-c", "backend/alembic.ini", "upgrade", "head"], check=True
+            [sys.executable, "-m", "alembic", "-c", "packages/database/alembic.ini", "upgrade", "head"],
+            check=True,
         )
         subprocess.run(
             [
@@ -47,8 +48,8 @@ def main():
             check=True,
         )
     elif args.command == "contracts":
-        from app.db.models import Base
         from app.main import create_app
+        from tsugite_db.models import Base
 
         out = Path("artifacts")
         out.mkdir(exist_ok=True)
@@ -73,7 +74,7 @@ def main():
             context = ["-c", "bindings=" + str(args.bindings.resolve())] if args.bindings else []
             subprocess.run(
                 ["npx", "--yes", "--package", "aws-cdk@2.1149.0", "cdk", args.command, *context],
-                cwd=ROOT / "infra",
+                cwd=ROOT / "packages/infra",
                 check=True,
             )
 
