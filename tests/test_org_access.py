@@ -145,3 +145,30 @@ def test_delegation_search_and_personal_isolation(portal, monkeypatch):
         "/api/workspace/memberships", params={"subject": "approver", "unit_id": "east"}, headers=admin
     ).raise_for_status()
     assert api.get("/api/workspace/units/east/usage", headers=lead).status_code == 403
+
+
+def test_invitation_respects_identity_source(portal):
+    from app.core.auth import Actor
+    from app.core.workspace import populate
+    from app.db.session import engine
+    from sqlalchemy.orm import Session
+
+    admin = headers(portal, "admin")
+    portal.put(
+        "/api/workspace/units/new-project", json={"kind": "project", "name": "企画案件"}, headers=admin
+    ).raise_for_status()
+    for project in ("finance", "new-project"):
+        identity = (
+            portal.post(
+                "/api/members",
+                headers=admin,
+                json={"email": project + "@example.org", "role": "provider", "project": project},
+            )
+            .raise_for_status()
+            .json()["subject"]
+        )
+        with Session(engine()) as db:
+            # A fresh JWT with no groups cannot recover a revoked Cognito-backed role.
+            actor = populate(db, Actor(identity, frozenset(), frozenset(), False, False))
+            assert (project in actor.owners) == (project == "new-project")
+            assert (project in actor.projects) == (project == "new-project")

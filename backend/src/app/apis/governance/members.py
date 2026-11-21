@@ -5,6 +5,7 @@ from app.apis.catalog.common import DB, User
 from app.apis.schemas import Input
 from app.core.auth import DEMO_GROUPS
 from app.core.config import local_demo, settings
+from app.core.workspace import configured_projects, units
 from app.db.models import Event, Member, new_id
 from botocore.exceptions import ClientError
 from fastapi import APIRouter, HTTPException, Query, Request
@@ -17,16 +18,8 @@ router = APIRouter()
 
 def projects(db=None):
     if db is not None:
-        from app.core.workspace import units
-
         return sorted(k for k, u in units(db).items() if u["kind"] == "project")
-    cfg = settings()
-    return sorted(
-        set(cfg.get("projects", []))
-        | {r["project"] for r in cfg.get("machine_projects", [])}
-        | {t["owner"] for t in cfg.get("targets", {}).values()}
-        | ({"finance", "supply"} if local_demo() else set())
-    )
+    return sorted(configured_projects())
 
 
 class Invitation(Input):

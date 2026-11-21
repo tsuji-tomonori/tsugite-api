@@ -17,6 +17,7 @@ from playwright.sync_api import sync_playwright
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "artifacts"
 CASE = {
+    "test_invitation_respects_identity_source": "Cognitoグループの除外が有効で、ポータルで新設したプロジェクトへの招待も反映される",
     "test_gateway_scoped_key_authorizer": "API Gateway用の認可関数で、本人キー・別ユーザー・失効の判定を確認する",
     "test_provider_policy_console": "提供者が公開・自動承認・委任の条件を保存し、部署リーダーが個人申請を画面から却下する",
     "test_hybrid_retrieval": "語句・意味の両方で業務APIを検索し、同義語を含めて順位付けする",

@@ -13,7 +13,7 @@ def private_project(subject):
     return "person-" + hashlib.sha256(subject.encode()).hexdigest()[:32]
 
 
-def units(db):
+def configured_projects():
     cfg = settings()
     ids = (
         set(cfg.get("projects", []))
@@ -22,7 +22,13 @@ def units(db):
     )
     if local_demo():
         ids.update(["finance", "supply"])
-    base = {k: dict(id=k, name=k, kind="project", parent="", stopped=False) for k in ids}
+    return ids
+
+
+def units(db):
+    base = {
+        k: dict(id=k, name=k, kind="project", parent="", stopped=False) for k in configured_projects()
+    }
     if "workspace_tree" not in db.info:
         db.info["workspace_tree"] = db.get(DirectoryTree, "tree")
     saved = db.info["workspace_tree"]
@@ -48,7 +54,12 @@ def populate(db, actor):
     projects = set(actor.projects)
     owners = set(actor.owners)
     account = db.get(Member, actor.subject)
-    if account and account.project and not account.deleted:
+    if (
+        account
+        and account.project
+        and not account.deleted
+        and account.project not in configured_projects()
+    ):
         projects.add(account.project)
         if account.role == "provider":
             owners.add(account.project)
