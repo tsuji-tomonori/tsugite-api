@@ -23,7 +23,7 @@ def create_app() -> FastAPI:
 
     @app.middleware("http")
     async def request_context(request: Request,call_next):
-        request.state.request_id=uuid4().hex
+        request.state.request_id=request.scope.get("aws.event",{}).get("requestContext",{}).get("requestId") or uuid4().hex
         if os.getenv("AWS_LAMBDA_FUNCTION_NAME"):
             secret=os.environ["ORIGIN_SECRET"]
             if not secrets.compare_digest(request.headers.get("x-tsugite-origin",""),secret):

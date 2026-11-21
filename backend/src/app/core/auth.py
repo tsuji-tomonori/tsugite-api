@@ -48,7 +48,7 @@ def identify(token: str) -> Actor:
             if claims.get("token_use") != "access":
                 raise ValueError("token_use")
             client = claims["client_id"]
-            project = cfg.get("machines",{}).get(client)
+            project = {m["client"]:m["project"] for m in cfg.get("machine_projects",[])}.get(client)
             if project and "hub/invoke" in claims.get("scope","").split():
                 return Actor(client,frozenset([project]),frozenset(),False,True)
             if client != cfg["portal_client"]:

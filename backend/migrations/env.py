@@ -2,6 +2,14 @@ from alembic import context
 from app.db.models import Base
 from app.db.session import engine
 
+from alembic.ddl.postgresql import PostgresqlImpl
+
+
+class DsqlImpl(PostgresqlImpl):
+    __dialect__ = "auroradsql"
+    transactional_ddl = False
+
+
 with engine().connect() as connection:
     # DSQL permits one DDL statement per transaction. The frozen revisions
     # below use idempotent DDL, so an interrupted upgrade can be resumed.
