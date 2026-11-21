@@ -34,7 +34,12 @@ def test_gateway_authorizer_rechecks_each_invocation(portal, monkeypatch):
         "context": {"subject": "consumer", "project": "finance"},
     }
     assert handler(
-        {**incoming, "rawPath": incoming["rawPath"].replace("sandbox", "production")}, None
+        {
+            **incoming,
+            "requestContext": {"requestId": "wrong-env"},
+            "rawPath": incoming["rawPath"].replace("sandbox", "production"),
+        },
+        None,
     ) == {"isAuthorized": False}
     assert (
         portal.post(
@@ -44,8 +49,10 @@ def test_gateway_authorizer_rechecks_each_invocation(portal, monkeypatch):
         ).status_code
         == 200
     )
-    assert handler(incoming, None) == {"isAuthorized": False}
-    logs = portal.get("/api/audit?request_id=gateway-test", headers=owner).json()
+    assert handler({**incoming, "requestContext": {"requestId": "after-revoke"}}, None) == {
+        "isAuthorized": False
+    }
+    logs = portal.get("/api/audit?action=invoke.denied", headers=owner).json()
     assert len(logs) == 3 and all(e["action"] == "invoke.denied" for e in logs)
 
 

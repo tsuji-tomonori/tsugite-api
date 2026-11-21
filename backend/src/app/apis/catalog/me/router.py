@@ -1,4 +1,5 @@
 from app.apis.catalog.common import User
+from app.apis.governance.members import projects
 from app.core.config import targets
 from fastapi import APIRouter
 
@@ -8,6 +9,8 @@ router = APIRouter()
 @router.get("/me", operation_id="me")
 def me(actor: User):
     return {
+        "known_projects": projects() if actor.admin else [],
+        "admin": actor.admin,
         "subject": actor.subject,
         "projects": sorted(actor.projects),
         "owners": sorted(actor.owners),

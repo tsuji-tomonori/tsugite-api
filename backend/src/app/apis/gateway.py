@@ -1,12 +1,14 @@
 import json
 import re
+from time import monotonic
 from typing import Annotated
 
 from app.apis.catalog.common import DB, event, record, right_id
+from app.apis.governance.alerts import admit
 from app.apis.schemas import Env
-from app.core.auth import Actor, current
+from app.core.auth import Actor, check_member, current
 from app.core.config import targets
-from app.db.models import Access
+from app.db.models import Access, AccessLog
 from app.integrations.upstream import MAX_BODY, dispatch
 from fastapi import APIRouter, Depends, HTTPException, Request
 from starlette.concurrency import run_in_threadpool
@@ -36,6 +38,7 @@ def allowed_path(spec: dict, method: str, path: str) -> bool:
 
 
 def authorize(db, key, project, environment, actor):
+    check_member(db, actor)
     asset = record(db, key)
     grant = db.get(Access, right_id(key, project, environment))
     if project not in actor.projects or grant is None or grant.status != "approved":
@@ -57,8 +60,26 @@ async def invoke(
     actor: Annotated[Actor, Depends(current)],
     db: DB,
 ):
+    started = monotonic()
     asset = record(db, key)
     member_project = project if project in actor.projects else ""
+
+    def log_result(status):
+        db.add(
+            AccessLog(
+                request_id=request.state.request_id,
+                actor=actor.subject,
+                owner=asset.owner,
+                asset_id=key,
+                project=member_project,
+                environment=environment,
+                method=request.method,
+                operation=getattr(request.state, "operation", "") or "",
+                status=status,
+                duration_ms=round((monotonic() - started) * 1000),
+            )
+        )
+
     try:
         authorize(db, key, project, environment, actor)
         path = "/" + tail
@@ -79,6 +100,7 @@ async def invoke(
             "x-tsugite-subject": actor.subject,
             "x-request-id": request.state.request_id,
         }
+        admit(db, request, actor, asset, project, environment)
         event(db, request, actor, asset, "invoke.start", project, environment, request.method)
         db.commit()
         result = await run_in_threadpool(
@@ -96,18 +118,21 @@ async def invoke(
             request,
             actor,
             asset,
-            "invoke.denied" if exc.status_code == 403 else "invoke.error",
+            "invoke.denied" if exc.status_code in (403, 429) else "invoke.error",
             member_project,
             environment,
             str(exc.status_code),
         )
+        log_result(exc.status_code)
         db.commit()
         raise
     except Exception as exc:
         db.rollback()
         event(db, request, actor, asset, "invoke.error", member_project, environment, "502")
+        log_result(502)
         db.commit()
         raise HTTPException(502, "接続先と通信できませんでした") from exc
+    log_result(result.status_code)
     event(db, request, actor, asset, "invoke.end", project, environment, str(result.status_code))
     db.commit()
     return result

@@ -45,7 +45,21 @@ class UpstreamBindings(Construct):
                     )
                 )
         # CloudFormation dynamic values can be used in values, never as JSON keys.
+        role.add_to_policy(
+            iam.PolicyStatement(
+                actions=[
+                    "cognito-idp:AdminCreateUser",
+                    "cognito-idp:AdminDeleteUser",
+                    "cognito-idp:AdminGetUser",
+                    "cognito-idp:AdminAddUserToGroup",
+                    "cognito-idp:ListUsers",
+                ],
+                resources=[identity.pool.user_pool_arn],
+            )
+        )
         config = {
+            "pool_id": identity.pool.user_pool_id,
+            "projects": projects,
             "issuer": identity.pool.user_pool_provider_url,
             "domain": identity.domain.base_url(),
             "portal_client": identity.client.user_pool_client_id,

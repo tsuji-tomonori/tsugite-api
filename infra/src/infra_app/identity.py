@@ -58,6 +58,7 @@ class PortalIdentity(Construct):
             )
             resource.override_logical_id(re.sub("[^A-Za-z0-9]", "", logical_id))
 
+        group("admin", "PortalAdmins")
         group("audit", "Auditors")
         for project in projects:
             for prefix in ("use-", "own-"):

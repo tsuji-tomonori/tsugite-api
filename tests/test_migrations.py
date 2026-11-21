@@ -31,7 +31,7 @@ def test_schema_matches_models_and_replays(portal):
         )
     command.upgrade(cfg, "head")
     with db.connect() as conn:
-        assert conn.scalar(text("select version_num from alembic_version")) == "002"
+        assert conn.scalar(text("select version_num from alembic_version")) == "003"
         assert conn.execute(text("select name,base_path from assets where id='before'")).one() == (
             "旧版",
             None,

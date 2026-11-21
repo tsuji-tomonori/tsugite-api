@@ -14,6 +14,8 @@ from sqlalchemy.exc import IntegrityError, OperationalError
 from sqlalchemy.orm.exc import StaleDataError
 
 from app.apis import catalog, gateway
+from app.apis.catalog.common import DB
+from app.apis.governance import router as governance
 from app.core.auth import demo_token
 from app.core.config import local_demo, settings
 
@@ -89,13 +91,14 @@ def create_app() -> FastAPI:
     if local_demo():
 
         @app.post("/api/demo/{persona}")
-        def local_login(persona: str, request: Request):
+        def local_login(persona: str, request: Request, db: DB):
             if request.headers.get("origin") and request.headers["origin"] != str(
                 request.base_url
             ).rstrip("/"):
                 raise HTTPException(403)
-            return {"access_token": demo_token(persona)}
+            return {"access_token": demo_token(persona, db)}
 
+    app.include_router(governance.router, prefix="/api")
     app.include_router(catalog.router, prefix="/api")
     app.include_router(gateway.router, prefix="/api")
     static = Path(os.getenv("FRONTEND_DIST", "frontend/dist"))

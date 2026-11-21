@@ -29,7 +29,7 @@ def event(db, request, actor, asset, action, project="", environment="", detail=
 
 def record(db: Session, key: str) -> Asset:
     row = db.get(Asset, key)
-    if row is None:
+    if row is None or row.removed_at is not None:
         raise HTTPException(404, "APIが見つかりません")
     return row
 

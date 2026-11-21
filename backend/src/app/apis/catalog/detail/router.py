@@ -19,4 +19,9 @@ def detail(key: str, actor: User, db: DB):
     )
     if not a.published and a.owner not in actor.owners and not grant:
         raise HTTPException(404)
-    return Detail(**listing(a).model_dump(), spec=json.loads(a.spec))
+    return Detail(
+        **listing(a).model_dump(),
+        spec=json.loads(a.spec),
+        base_path=a.base_path or "",
+        bindings=json.loads(a.targets) if a.owner in actor.owners else {},
+    )

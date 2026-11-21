@@ -9,7 +9,11 @@ router = APIRouter()
 
 
 def visible_assets(actor, inventory, q):
-    stmt = select(Asset).where(Asset.owner.in_(actor.owners) if inventory else Asset.published.is_(True))
+    stmt = (
+        select(Asset)
+        .where(Asset.removed_at.is_(None))
+        .where(Asset.owner.in_(actor.owners) if inventory else Asset.published.is_(True))
+    )
     if term := q.strip():
         stmt = stmt.where(
             or_(

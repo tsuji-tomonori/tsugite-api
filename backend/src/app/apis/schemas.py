@@ -37,6 +37,8 @@ class CatalogPage(BaseModel):
 
 
 class Detail(Listing):
+    base_path: str = ""
+    bindings: dict[str, str] = Field(default_factory=dict)
     spec: dict[str, Any]
 
 

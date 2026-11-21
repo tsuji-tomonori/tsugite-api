@@ -22,6 +22,7 @@ def requests(actor: User, db: DB, incoming: bool = False, asset_id: str = ""):
         .scalar_subquery()
     )
     stmt = select(Access, Asset.name, last_decision).join(Asset, Asset.id == Access.asset_id)
+    stmt = stmt.where(Asset.removed_at.is_(None))
     stmt = stmt.where(Asset.owner.in_(actor.owners) if incoming else Access.project.in_(actor.projects))
     if asset_id:
         stmt = stmt.where(Access.asset_id == asset_id)

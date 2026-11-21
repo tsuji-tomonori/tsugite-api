@@ -29,7 +29,7 @@ def cognito_users(aws):
         ExplicitAuthFlows=["ALLOW_USER_PASSWORD_AUTH", "ALLOW_REFRESH_TOKEN_AUTH"],
     )["UserPoolClient"]["ClientId"]
     tokens = {}
-    for name, group in [("owner", "own-supply"), ("user", "use-finance")]:
+    for name, group in [("owner", "own-supply"), ("user", "use-finance"), ("administrator", "admin")]:
         password = secrets.token_urlsafe(24) + "9aA!"
         cognito.create_group(UserPoolId=pool, GroupName=group)
         cognito.admin_create_user(UserPoolId=pool, Username=name, MessageAction="SUPPRESS")
@@ -43,7 +43,15 @@ def cognito_users(aws):
             AuthParameters={"USERNAME": name, "PASSWORD": password},
         )
         tokens[name] = result["AuthenticationResult"]["AccessToken"]
-    yield {"issuer": os.environ["AWS_ENDPOINT_URL"] + "/" + pool, "portal_client": client}, tokens
+    yield (
+        {
+            "issuer": os.environ["AWS_ENDPOINT_URL"] + "/" + pool,
+            "portal_client": client,
+            "pool_id": pool,
+            "projects": ["finance", "supply"],
+        },
+        tokens,
+    )
 
 
 @contextmanager
@@ -381,3 +389,41 @@ def test_upstream_unavailable(aws, resources, tmp_path, request):
                 f"接続先停止後 GET /items → 502。開始・通信失敗・HTTPアクセスログをID {trace} で照合。",
             )
         )
+
+
+def test_cognito_member_lifecycle(aws, resources, tmp_path):
+    with live_portal(aws, resources, tmp_path, "directory") as (url, tokens):
+        admin = {"Authorization": "Bearer " + tokens["administrator"]}
+        claims = jwt.decode(tokens["user"], options={"verify_signature": False})
+        pool = claims["iss"].split("/")[-1]
+        idp = aws.client("cognito-idp")
+        with httpx.Client(base_url=url + "/api/", trust_env=False) as api:
+            username = "account@example.org"
+            created = api.post(
+                "members",
+                json={"email": username, "role": "consumer", "project": "finance"},
+                headers=admin,
+            )
+            assert created.status_code == 201, created.text
+            member = created.json()
+            assert any(
+                row["subject"] == member["subject"]
+                for row in api.get("members", headers=admin).json()["items"]
+            )
+            password = secrets.token_urlsafe(24) + "9aA!"
+            idp.admin_set_user_password(
+                UserPoolId=pool, Username=username, Password=password, Permanent=True
+            )
+            token = idp.initiate_auth(
+                AuthFlow="USER_PASSWORD_AUTH",
+                ClientId=claims["client_id"],
+                AuthParameters={"USERNAME": username, "PASSWORD": password},
+            )["AuthenticationResult"]["AccessToken"]
+            user = {"Authorization": "Bearer " + token}
+            assert api.get("me", headers=user).json()["projects"] == ["finance"]
+            assert api.delete(
+                "members/" + member["subject"], params={"username": username}, headers=admin
+            ).is_success
+            assert api.get("me", headers=user).status_code == 403
+            with pytest.raises(idp.exceptions.UserNotFoundException):
+                idp.admin_get_user(UserPoolId=pool, Username=username)

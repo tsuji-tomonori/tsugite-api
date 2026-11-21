@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.apis.gateway import authorize
 from app.core.auth import identify
-from app.db.models import Asset, Event
+from app.db.models import AccessLog, Asset, Event
 from app.db.session import engine
 
 
@@ -43,6 +43,20 @@ def handler(event, context):
                         action="invoke.denied",
                         detail=str(exc.status_code),
                         request_id=event["requestContext"]["requestId"],
+                    )
+                )
+                db.add(
+                    AccessLog(
+                        request_id=event["requestContext"]["requestId"],
+                        actor=actor.subject,
+                        owner=asset.owner,
+                        asset_id=key,
+                        project=project if project in actor.projects else "",
+                        environment=environment[:16],
+                        method=event["requestContext"].get("http", {}).get("method", ""),
+                        operation="",
+                        status=403,
+                        duration_ms=0,
                     )
                 )
                 db.commit()

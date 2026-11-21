@@ -25,6 +25,10 @@ def handler(event, context):
             conn.exec_driver_sql("CREATE ROLE tsugite_app WITH LOGIN")
         conn.exec_driver_sql(f"AWS IAM GRANT tsugite_app TO '{arn}'")
         conn.exec_driver_sql("GRANT USAGE ON SCHEMA public TO tsugite_app")
-        conn.exec_driver_sql("GRANT SELECT, INSERT, UPDATE ON assets, access_rights TO tsugite_app")
-        conn.exec_driver_sql("GRANT SELECT, INSERT ON audit_events TO tsugite_app")
+        conn.exec_driver_sql(
+            "GRANT SELECT, INSERT, UPDATE ON assets, access_rights, portal_members, alert_rules TO tsugite_app"
+        )
+        conn.exec_driver_sql(
+            "GRANT SELECT, INSERT ON audit_events, invocation_logs, notices, notice_reads TO tsugite_app"
+        )
     return result

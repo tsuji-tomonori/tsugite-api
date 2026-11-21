@@ -18,7 +18,7 @@ def audit(
     limit: int = Query(100, ge=1, le=500),
 ):
     stmt = select(Event)
-    if not actor.auditor:
+    if not (actor.auditor or actor.admin):
         stmt = stmt.where(or_(Event.owner.in_(actor.owners), Event.project.in_(actor.projects)))
     if asset_id:
         stmt = stmt.where(Event.asset_id == asset_id)
