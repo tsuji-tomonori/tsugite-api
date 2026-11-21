@@ -27,7 +27,15 @@ def save_rule(data: Rule, request: Request, actor: User, db: DB):
     if not actor.admin and asset.owner not in actor.owners:
         raise HTTPException(403)
     key = right_id(asset.id, data.project, data.environment)
-    if not db.get(Access, key):
+    if not db.scalar(
+        select(Access.id)
+        .where(
+            Access.asset_id == asset.id,
+            Access.project == data.project,
+            Access.environment == data.environment,
+        )
+        .limit(1)
+    ):
         raise HTTPException(422, "対象の利用申請がありません")
     row = db.get(AlertRule, key)
     if not row:

@@ -1,37 +1,35 @@
+import json
+
 from app.apis.catalog.common import DB, User, listing
+from app.apis.catalog.search_rank import rank_assets
 from app.apis.schemas import CatalogPage, Env, Listing
+from app.core.workspace import allowed_audience
 from app.db.models import Asset
 from fastapi import APIRouter, Query
-from sqlalchemy import func, or_, select
+from sqlalchemy import select
 from sqlalchemy.orm import defer
 
 router = APIRouter()
 
 
-def visible_assets(actor, inventory, q):
-    stmt = (
-        select(Asset)
-        .where(Asset.removed_at.is_(None))
-        .where(Asset.owner.in_(actor.owners) if inventory else Asset.published.is_(True))
+def collection(db, actor, inventory, q, environment=None):
+    stmt = select(Asset).where(
+        Asset.removed_at.is_(None),
+        Asset.owner.in_(actor.owners) if inventory else Asset.published.is_(True),
     )
-    if term := q.strip():
-        stmt = stmt.where(
-            or_(
-                *(
-                    column.icontains(term, autoescape=True)
-                    for column in (Asset.name, Asset.summary, Asset.owner, Asset.spec)
-                )
-            )
-        )
-    return stmt
+    if not q.strip():
+        stmt = stmt.options(defer(Asset.spec))
+    eligible = [
+        a
+        for a in db.scalars(stmt)
+        if allowed_audience(a, actor) and (not environment or environment in json.loads(a.targets))
+    ]
+    return rank_assets(eligible, q)
 
 
 @router.get("/apis", response_model=list[Listing], operation_id="catalog")
 def catalog(actor: User, db: DB, q: str = Query("", max_length=120), inventory: bool = False):
-    stmt = visible_assets(actor, inventory, q)
-    return [
-        listing(a) for a in db.scalars(stmt.options(defer(Asset.spec)).order_by(Asset.name, Asset.id))
-    ]
+    return [listing(a) for a in collection(db, actor, inventory, q)]
 
 
 @router.get("/catalog-page", response_model=CatalogPage, operation_id="catalogPage")
@@ -43,16 +41,12 @@ def catalog_page(
     environment: Env | None = None,
     page: int = Query(1, ge=1, le=1000000),
 ):
-    stmt = visible_assets(actor, inventory, q)
-    if environment:
-        stmt = stmt.where(Asset.targets.contains(f'"{environment}":'))
+    rows = collection(db, actor, inventory, q, environment)
     size = 12
-    total = db.scalar(select(func.count()).select_from(stmt.with_only_columns(Asset.id).subquery())) or 0
-    current = min(page, max(1, (total + size - 1) // size))
-    rows = db.scalars(
-        stmt.options(defer(Asset.spec))
-        .order_by(Asset.name, Asset.id)
-        .offset((current - 1) * size)
-        .limit(size)
+    page = min(page, max(1, (len(rows) + size - 1) // size))
+    return CatalogPage(
+        items=[listing(a) for a in rows[(page - 1) * size : page * size]],
+        page=page,
+        page_size=size,
+        total=len(rows),
     )
-    return CatalogPage(items=[listing(a) for a in rows], page=current, page_size=size, total=total)

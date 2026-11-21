@@ -398,6 +398,12 @@ def test_cognito_member_lifecycle(aws, resources, tmp_path):
         pool = claims["iss"].split("/")[-1]
         idp = aws.client("cognito-idp")
         with httpx.Client(base_url=url + "/api/", trust_env=False) as api:
+            current_members = (
+                api.get("workspace/units/finance/usage", headers=admin)
+                .raise_for_status()
+                .json()["members"]
+            )
+            assert any(r["username"] == "user" for r in current_members)
             username = "account@example.org"
             created = api.post(
                 "members",

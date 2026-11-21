@@ -91,6 +91,7 @@ def close_rights(db, request, actor, row, reason):
         select(Access).where(Access.asset_id == row.id, Access.status.in_(("approved", "pending")))
     ):
         action = "revoke" if right.status == "approved" else "reject"
+        right.decision_note = reason
         right.status = "revoked" if action == "revoke" else "rejected"
         event(db, request, actor, row, action, right.project, right.environment, reason)
 

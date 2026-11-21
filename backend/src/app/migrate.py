@@ -26,9 +26,9 @@ def handler(event, context):
         conn.exec_driver_sql(f"AWS IAM GRANT tsugite_app TO '{arn}'")
         conn.exec_driver_sql("GRANT USAGE ON SCHEMA public TO tsugite_app")
         conn.exec_driver_sql(
-            "GRANT SELECT, INSERT, UPDATE ON assets, access_rights, portal_members, alert_rules TO tsugite_app"
+            "GRANT SELECT, INSERT, UPDATE ON assets, access_rights, portal_members, alert_rules, directory_tree, affiliations, api_keys TO tsugite_app"
         )
         conn.exec_driver_sql(
-            "GRANT SELECT, INSERT ON audit_events, invocation_logs, notices, notice_reads TO tsugite_app"
+            "GRANT SELECT, INSERT ON audit_events, invocation_logs, notices, notice_reads, invocation_units TO tsugite_app"
         )
     return result

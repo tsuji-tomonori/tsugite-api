@@ -43,6 +43,7 @@ class Detail(Listing):
 
 
 class Apply(Input):
+    personal: bool = False
     project: str = Field(pattern=r"^[a-z][a-z0-9-]{0,62}$")
     environment: Env
     reason: str = Field(min_length=1, max_length=1000)
@@ -61,6 +62,8 @@ class Right(BaseModel):
     project: str
     environment: Env
     reason: str
+    subject: str | None = None
+    applicant: str | None = None
     asset_name: str = ""
     decision_reason: str | None = None
     status: Literal["pending", "approved", "rejected", "revoked", "withdrawn"]

@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
-from . import alerts, members, notifications, observability
+from . import alerts, directory, keys, members, notifications, observability, policies
 
 router = APIRouter()
-for feature in (alerts, members, notifications, observability):
+for feature in (alerts, directory, keys, members, notifications, observability, policies):
     router.include_router(feature.router)

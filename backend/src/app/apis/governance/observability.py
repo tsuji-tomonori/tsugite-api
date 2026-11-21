@@ -3,17 +3,21 @@ from datetime import UTC, datetime, timedelta
 from typing import Annotated, Literal
 
 from app.apis.catalog.common import DB, User
+from app.apis.governance.directory import manages, unit_condition
 from app.apis.governance.notifications import unread
+from app.core.workspace import allowed_audience, private_project, units
 from app.db.models import Access, AccessLog, Asset
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import Response
 from sqlalchemy import func, or_, select
+from sqlalchemy.orm import load_only
 
 router = APIRouter()
 LOG_FIELDS = (
     "at",
     "request_id",
     "actor",
+    "key_id",
     "owner",
     "project",
     "asset_id",
@@ -25,10 +29,20 @@ LOG_FIELDS = (
 )
 
 
-def visible(stmt, actor):
+def visible(stmt, actor, db=None, unit=""):
+    if unit:
+        tree = units(db)
+        if not manages(actor, tree, unit):
+            raise HTTPException(403, "担当範囲のリーダー権限が必要です")
+        return stmt.where(unit_condition(tree, unit))
     if actor.admin or actor.auditor:
         return stmt
-    return stmt.where(or_(AccessLog.owner.in_(actor.owners), AccessLog.project.in_(actor.projects)))
+    return stmt.where(
+        or_(
+            AccessLog.owner.in_(actor.owners),
+            AccessLog.project.in_(actor.projects | {private_project(actor.subject)}),
+        )
+    )
 
 
 def interval(
@@ -68,8 +82,15 @@ def log_data(row):
 
 
 @router.get("/access-logs")
-def access_logs(actor: User, db: DB, period: Range, offset: int = Query(0, ge=0), request_id: str = ""):
-    stmt = visible(period[2], actor)
+def access_logs(
+    actor: User,
+    db: DB,
+    period: Range,
+    offset: int = Query(0, ge=0),
+    request_id: str = "",
+    unit: str = "",
+):
+    stmt = visible(period[2], actor, db, unit)
     if request_id:
         stmt = stmt.where(AccessLog.request_id == request_id)
     return [
@@ -81,8 +102,8 @@ def access_logs(actor: User, db: DB, period: Range, offset: int = Query(0, ge=0)
 
 
 @router.get("/access-logs/download")
-def download(actor: User, db: DB, period: Range, request_id: str = "", cursor: str = ""):
-    stmt = visible(period[2], actor)
+def download(actor: User, db: DB, period: Range, request_id: str = "", cursor: str = "", unit: str = ""):
+    stmt = visible(period[2], actor, db, unit)
     if request_id:
         stmt = stmt.where(AccessLog.request_id == request_id)
     if cursor:
@@ -105,7 +126,13 @@ def download(actor: User, db: DB, period: Range, request_id: str = "", cursor: s
 
 
 @router.get("/metrics")
-def metrics(actor: User, db: DB, period: Range, minutes: Literal["1", "5", "15", "60", "1440"] = "60"):
+def metrics(
+    actor: User,
+    db: DB,
+    period: Range,
+    minutes: Literal["1", "5", "15", "60", "1440"] = "60",
+    unit: str = "",
+):
     start, end, stmt = period
     seconds = int(minutes) * 60
     first = int(start.timestamp()) // seconds
@@ -124,7 +151,7 @@ def metrics(actor: User, db: DB, period: Range, minutes: Literal["1", "5", "15",
         )
         for n in range(first, last + 1)
     ]
-    selected = visible(stmt, actor).with_only_columns(
+    selected = visible(stmt, actor, db, unit).with_only_columns(
         AccessLog.at, AccessLog.status, AccessLog.duration_ms
     )
     for item in db.execute(selected.execution_options(yield_per=500)).mappings():
@@ -151,7 +178,13 @@ def dashboard(actor: User, db: DB):
         .where(Asset.removed_at.is_(None))
     )
     if not actor.admin and not actor.auditor:
-        rights = rights.where(or_(Asset.owner.in_(actor.owners), Access.project.in_(actor.projects)))
+        rights = rights.where(
+            or_(
+                Asset.owner.in_(actor.owners),
+                Access.subject == actor.subject,
+                Access.subject.is_(None) & Access.project.in_(actor.projects),
+            )
+        )
     calls = visible(
         select(func.count(AccessLog.request_id)).where(
             AccessLog.at >= datetime.now(UTC) - timedelta(days=1)
@@ -159,7 +192,15 @@ def dashboard(actor: User, db: DB):
         actor,
     )
     return {
-        "published": db.scalar(assets.where(Asset.published.is_(True))),
+        "published": sum(
+            1
+            for a in db.scalars(
+                select(Asset)
+                .options(load_only(Asset.owner, Asset.policy))
+                .where(Asset.removed_at.is_(None), Asset.published.is_(True))
+            )
+            if allowed_audience(a, actor)
+        ),
         "inventory": db.scalar(assets if actor.admin else assets.where(Asset.owner.in_(actor.owners))),
         "pending": db.scalar(rights.where(Access.status == "pending")),
         "approved": db.scalar(rights.where(Access.status == "approved")),
@@ -180,7 +221,7 @@ def management_targets(actor: User, db: DB):
         stmt = stmt.where(Asset.owner.in_(actor.owners))
     return [
         {
-            "id": r.id,
+            "id": "/".join((r.asset_id, r.project, r.environment)),
             "asset_id": r.asset_id,
             "name": name,
             "project": r.project,
@@ -191,11 +232,13 @@ def management_targets(actor: User, db: DB):
 
 
 @router.get("/metric-dimensions")
-def dimensions(actor: User, db: DB):
+def dimensions(actor: User, db: DB, unit: str = ""):
     stmt = visible(
         select(AccessLog.asset_id, Asset.name, AccessLog.project).join(
             Asset, Asset.id == AccessLog.asset_id
         ),
         actor,
+        db,
+        unit,
     ).distinct()
     return [{"asset_id": r.asset_id, "name": r.name, "project": r.project} for r in db.execute(stmt)]

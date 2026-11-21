@@ -15,7 +15,11 @@ from sqlalchemy.exc import SQLAlchemyError
 router = APIRouter()
 
 
-def projects():
+def projects(db=None):
+    if db is not None:
+        from app.core.workspace import units
+
+        return sorted(k for k, u in units(db).items() if u["kind"] == "project")
     cfg = settings()
     return sorted(
         set(cfg.get("projects", []))
@@ -68,7 +72,7 @@ def list_members(actor: User, db: DB, cursor: str = "", limit: int = Query(40, g
             {"subject": m.subject, "username": m.username, "role": m.role, "project": m.project}
             for m in db.scalars(select(Member).where(Member.deleted.is_(False)))
         )
-        return {"items": rows, "next": "", "projects": projects()}
+        return {"items": rows, "next": "", "projects": projects(db)}
     idp = boto3.client("cognito-idp")
     page = idp.list_users(
         UserPoolId=pool(), Limit=limit, **({"PaginationToken": cursor} if cursor else {})
@@ -87,13 +91,13 @@ def list_members(actor: User, db: DB, cursor: str = "", limit: int = Query(40, g
                 "deleted": bool(entry and entry.deleted),
             }
         )
-    return {"items": rows, "next": page.get("PaginationToken", ""), "projects": projects()}
+    return {"items": rows, "next": page.get("PaginationToken", ""), "projects": projects(db)}
 
 
 @router.post("/members", status_code=201)
 def invite(data: Invitation, request: Request, actor: User, db: DB):
     administrator(actor)
-    if data.project not in projects():
+    if data.project not in projects(db):
         raise HTTPException(422, "有効なプロジェクトを選んでください")
     username = data.email.lower()
     if db.scalar(select(Member.subject).where(Member.username == username, Member.deleted.is_(False))):
@@ -112,11 +116,12 @@ def invite(data: Invitation, request: Request, actor: User, db: DB):
             raise HTTPException(409, "登録済みです") from exc
         try:
             subject = next(a["Value"] for a in user["Attributes"] if a["Name"] == "sub")
-            idp.admin_add_user_to_group(
-                UserPoolId=pool(),
-                Username=username,
-                GroupName=("own-" if data.role == "provider" else "use-") + data.project,
-            )
+            if data.project in projects():
+                idp.admin_add_user_to_group(
+                    UserPoolId=pool(),
+                    Username=username,
+                    GroupName=("own-" if data.role == "provider" else "use-") + data.project,
+                )
         except Exception:
             idp.admin_delete_user(UserPoolId=pool(), Username=username)
             raise

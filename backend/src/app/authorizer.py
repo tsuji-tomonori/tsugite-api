@@ -7,7 +7,8 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from app.apis.gateway import authorize
-from app.core.auth import identify
+from app.apis.governance.keys import invocation_actor
+from app.core.workspace import attribute, private_project
 from app.db.models import AccessLog, Asset, Event
 from app.db.session import engine
 
@@ -23,11 +24,11 @@ def handler(event, context):
     if len(parts) < 6 or parts[1:3] != ["api", "invoke"]:
         return {"isAuthorized": False}
     key, environment, project = parts[3:6]
-    try:
-        actor = identify(token)
-    except HTTPException:
-        return {"isAuthorized": False}
     with Session(engine()) as db:
+        try:
+            actor = invocation_actor(db, token, headers)
+        except HTTPException:
+            return {"isAuthorized": False}
         try:
             authorize(db, key, project, environment, actor)
         except HTTPException as exc:
@@ -45,8 +46,15 @@ def handler(event, context):
                         request_id=event["requestContext"]["requestId"],
                     )
                 )
+                attributed = (
+                    project
+                    if project in actor.projects or project == private_project(actor.subject)
+                    else ""
+                )
+                attribute(db, event["requestContext"]["requestId"], actor, attributed)
                 db.add(
                     AccessLog(
+                        key_id=actor.key_id or None,
                         request_id=event["requestContext"]["requestId"],
                         actor=actor.subject,
                         owner=asset.owner,

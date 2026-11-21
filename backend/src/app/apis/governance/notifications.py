@@ -1,6 +1,7 @@
 from app.apis.catalog.common import DB, User, event, record
 from app.apis.governance.members import projects
 from app.apis.schemas import Input
+from app.core.workspace import private_project
 from app.db.models import Access, Event, Notice, NoticeRead
 from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import Field
@@ -18,7 +19,11 @@ class Message(Input):
 
 
 def mailbox(actor):
-    return or_(Notice.project == "*", Notice.project.in_(actor.projects), Notice.sender == actor.subject)
+    return or_(
+        Notice.project == "*",
+        Notice.project.in_(actor.projects | {private_project(actor.subject)}),
+        Notice.sender == actor.subject,
+    )
 
 
 def unread_query(actor):
@@ -65,7 +70,7 @@ def send(data: Message, request: Request, actor: User, db: DB):
     if not actor.admin and not actor.owners:
         raise HTTPException(403)
     if actor.admin:
-        if data.project != "*" and data.project not in projects():
+        if data.project != "*" and data.project not in projects(db):
             raise HTTPException(422, "送信先プロジェクトを確認してください")
         db.add(
             Event(

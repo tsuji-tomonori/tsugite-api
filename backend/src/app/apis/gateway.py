@@ -5,10 +5,12 @@ from typing import Annotated
 
 from app.apis.catalog.common import DB, event, record, right_id
 from app.apis.governance.alerts import admit
+from app.apis.governance.keys import invoker
 from app.apis.schemas import Env
-from app.core.auth import Actor, check_member, current
+from app.core.auth import Actor, check_member
 from app.core.config import targets
-from app.db.models import Access, AccessLog
+from app.core.workspace import allowed_audience, attribute, private_project, stopped
+from app.db.models import Access, AccessLog, PortalKey
 from app.integrations.upstream import MAX_BODY, dispatch
 from fastapi import APIRouter, Depends, HTTPException, Request
 from starlette.concurrency import run_in_threadpool
@@ -41,8 +43,25 @@ def authorize(db, key, project, environment, actor):
     check_member(db, actor)
     asset = record(db, key)
     grant = db.get(Access, right_id(key, project, environment))
-    if project not in actor.projects or grant is None or grant.status != "approved":
-        raise HTTPException(403, "この環境での利用が承認されていません")
+    if actor.key_id:
+        k = db.get(PortalKey, actor.key_id)
+        scopes = json.loads(k.scopes) if k else []
+        if not k or k.revoked or k.project != project or (scopes and key not in scopes):
+            raise HTTPException(403, "このAPIはキーの対象外です")
+    permitted = grant is not None and grant.status == "approved"
+    if not permitted and not actor.machine and not actor.key_shared:
+        own = db.get(Access, right_id(key, project, environment, actor.subject))
+        permitted = own is not None and own.status == "approved"
+    if (
+        not permitted
+        or (
+            project not in actor.projects
+            and (actor.machine or project != private_project(actor.subject))
+        )
+        or not allowed_audience(asset, actor)
+        or stopped(db, actor, project)
+    ):
+        raise HTTPException(403, "この環境での利用が許可されていません")
     return asset
 
 
@@ -57,14 +76,17 @@ async def invoke(
     project: str,
     tail: str,
     request: Request,
-    actor: Annotated[Actor, Depends(current)],
+    actor: Annotated[Actor, Depends(invoker)],
     db: DB,
 ):
     started = monotonic()
     asset = record(db, key)
-    member_project = project if project in actor.projects else ""
+    member_project = (
+        project if project in actor.projects or project == private_project(actor.subject) else ""
+    )
 
     def log_result(status):
+        attribute(db, request.state.request_id, actor, member_project)
         db.add(
             AccessLog(
                 request_id=request.state.request_id,
@@ -73,6 +95,7 @@ async def invoke(
                 asset_id=key,
                 project=member_project,
                 environment=environment,
+                key_id=actor.key_id or None,
                 method=request.method,
                 operation=getattr(request.state, "operation", "") or "",
                 status=status,

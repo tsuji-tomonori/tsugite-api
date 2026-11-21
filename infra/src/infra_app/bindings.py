@@ -53,6 +53,7 @@ class UpstreamBindings(Construct):
                     "cognito-idp:AdminGetUser",
                     "cognito-idp:AdminAddUserToGroup",
                     "cognito-idp:ListUsers",
+                    "cognito-idp:ListUsersInGroup",
                 ],
                 resources=[identity.pool.user_pool_arn],
             )

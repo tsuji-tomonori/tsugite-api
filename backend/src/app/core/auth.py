@@ -29,6 +29,11 @@ class Actor:
     auditor: bool
     machine: bool
     admin: bool = False
+    departments: frozenset[str] = frozenset()
+    leads: frozenset[str] = frozenset()
+    titles: frozenset[str] = frozenset()
+    key_id: str = ""
+    key_shared: bool = False
 
 
 @lru_cache
@@ -104,7 +109,9 @@ def current(
         raise HTTPException(401, "ログインしてください")
     actor = identify(credentials.credentials)
     check_member(db, actor)
-    return actor
+    from app.core.workspace import populate
+
+    return populate(db, actor)
 
 
 def human(actor: Annotated[Actor, Depends(current)]) -> Actor:

@@ -46,8 +46,11 @@ def listing(row: Asset) -> Listing:
     )
 
 
-def right_id(asset_id: str, project: str, environment: str) -> str:
-    return f"{asset_id}/{project}/{environment}"
+def right_id(asset_id: str, project: str, environment: str, subject: str = "") -> str:
+    from hashlib import sha256
+
+    base = f"{asset_id}/{project}/{environment}"
+    return base + "/" + sha256(subject.encode()).hexdigest()[:32] if subject else base
 
 
 def allowed_spec(node):

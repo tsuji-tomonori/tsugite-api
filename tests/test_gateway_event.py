@@ -60,3 +60,47 @@ def test_stack_deletion_preserves_database():
     from app.migrate import handler as migrate
 
     assert migrate({"RequestType": "Delete"}, None)["PhysicalResourceId"] == "tsugite-catalog-schema"
+
+
+def test_gateway_scoped_key_authorizer(portal, monkeypatch):
+    from tests.test_governance import approved
+
+    monkeypatch.setenv("ORIGIN_SECRET", "origin")
+    owner, user = (headers(portal, p) for p in ("provider", "consumer"))
+    asset, _, path = approved(portal, owner, user)
+    key = (
+        portal.post(
+            "/api/keys",
+            headers=user,
+            json={
+                "project": "finance",
+                "name": "ゲートウェイ試験",
+                "kind": "personal",
+                "api_ids": [asset],
+            },
+        )
+        .raise_for_status()
+        .json()
+    )
+    context = {
+        "headers": {
+            "authorization": user["Authorization"],
+            "x-api-key": key["secret"],
+            "x-tsugite-origin": "origin",
+        },
+        "rawPath": path,
+        "requestContext": {"requestId": "key-test"},
+    }
+    assert handler(context, None)["isAuthorized"]
+    assert not handler(
+        {**context, "headers": {**context["headers"], "authorization": owner["Authorization"]}}, None
+    )["isAuthorized"]
+    assert not handler(
+        {
+            **context,
+            "headers": {"authorization": "Bearer " + key["secret"], "x-tsugite-origin": "origin"},
+        },
+        None,
+    )["isAuthorized"]
+    portal.delete("/api/keys/" + key["id"], headers=user).raise_for_status()
+    assert not handler(context, None)["isAuthorized"]
