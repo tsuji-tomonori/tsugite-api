@@ -1,6 +1,7 @@
 """Build a self-hosted PuePy distribution. Downloads are pinned by digest."""
 
 import json
+import re
 import shutil
 import subprocess
 import tarfile
@@ -22,11 +23,35 @@ BUNDLES = {
         "https://registry.npmjs.org/pyodide/-/pyodide-0.27.7.tgz",
         "89d5d952675eb08e11286e52c7238f1248ce71726e896db9703e73bef23dc343",
     ),
-    "tabler": (
-        "https://registry.npmjs.org/@tabler/core/-/core-1.2.0.tgz",
-        "ecd3fc94e0b4cb6cac420b28fe94bac27c84ce74a54f0d4818444d41b74ef01d",
+    "cloudscape-fonts": (
+        "https://registry.npmjs.org/@cloudscape-design/global-styles/-/global-styles-1.0.72.tgz",
+        "2544913edab01735414143e23a596344da65f42733ca3129b0a1d3ac2b890510",
+    ),
+    "cloudscape": (
+        "https://registry.npmjs.org/@cloudscape-design/design-tokens/-/design-tokens-3.0.119.tgz",
+        "a71895b6c8a0e5f62a70b3969c4e8398d583a9568b83a544579b9be051bd7a48",
     ),
 }
+
+
+def write_theme(definitions):
+    """Resolve only the official tokens that the Python portal's stylesheet consumes."""
+    names = sorted(set(re.findall(r"var\(--cs-([a-z0-9-]+)\)", (DIST / "ui.css").read_text())))
+    tables = {"light": [], "dark": []}
+    for name in names:
+        value = definitions["tokens"][name]["$value"]
+        for mode, table in tables.items():
+            resolved = value if isinstance(value, str) else value.get(mode, value.get("comfortable"))
+            if not isinstance(resolved, str):
+                raise ValueError(f"Cloudscape token has no value for {name}/{mode}")
+            table.append(f"  --cs-{name}: {resolved};")
+    light = "\n".join(tables["light"])
+    dark = "\n".join(tables["dark"])
+    (DIST / "cloudscape.css").write_text(
+        f":root {{color-scheme:light;\n{light}\n}}\n"
+        f':root[data-mode="dark"] {{color-scheme:dark;\n{dark}\n}}\n'
+        f'@media(prefers-color-scheme:dark) {{ :root:not([data-mode="light"]) {{color-scheme:dark;\n{dark}\n}} }}\n'
+    )
 
 
 def build():
@@ -45,13 +70,18 @@ def build():
                 path = Path(member.name)
                 if not member.isfile() or path.name.endswith(".map"):
                     continue
+                if name == "cloudscape" and path.name == "index-visual-refresh.json":
+                    with tar.extractfile(member) as file:
+                        write_theme(json.load(file))
                 selected = (
                     name == "pyscript"
                     and path.parent == Path("package/dist")
                     or name == "pyodide"
                     and path.suffix in {".js", ".mjs", ".wasm", ".json", ".zip"}
-                    or name == "tabler"
-                    and path.name == "tabler.min.css"
+                    or name == "cloudscape"
+                    and path.name == "NOTICE"
+                    or name == "cloudscape-fonts"
+                    and path.name in ("fonts.css", "NOTICE", "THIRD-PARTY-LICENSES.txt")
                 )
                 if selected or path.name.lower().startswith("license") and len(path.parts) == 2:
                     dest = DIST / "vendor" / name / path.name

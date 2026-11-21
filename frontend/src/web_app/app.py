@@ -111,9 +111,9 @@ def btn(label, fn, *args, primary=False):
 
 def field(label, name, options=None, textarea=False, text="", placeholder=""):
     with t.label(classes="field"):
-        t.span(label)
+        t.span(label, id=name + "-label")
         if options is not None:
-            with t.select(id=name, classes="form-select"):
+            with t.select(id=name, aria_labelledby=name + "-label", classes="form-select"):
                 for key, title in options:
                     t.option(title, value=key, selected=(key == text))
         elif textarea:
@@ -155,9 +155,11 @@ async def load():
         )
 
 
-async def go(page):
-    if page in ("catalog", "inventory") and page != route():
-        ctx.update(page=1, query="", env="")
+async def go(page, *, query=None):
+    if query is not None or (page in ("catalog", "inventory") and page != route()):
+        ctx.update(page=1, query=query or "", env="")
+    if window.matchMedia("(max-width: 780px)").matches:
+        ctx["nav_open"] = False
     window.history.pushState(None, "", "#/" + page)
     ctx["trial"] = ""
     await load()
@@ -293,6 +295,34 @@ async def invoke(asset):
     ctx["trial"] = f"HTTP {result.status}\n" + (await result.string())[:6000]
 
 
+def theme_changed(event):
+    mode = str(event.target.value)
+    window.localStorage.setItem("visual-mode", mode)
+    document.documentElement.setAttribute("data-mode", mode)
+
+
+def set_navigation(opened):
+    ctx["nav_open"] = opened
+    workspace = document.getElementById("workspace")
+    if workspace:
+        workspace.setAttribute("data-nav", "open" if opened else "closed")
+        document.getElementById("nav-toggle").setAttribute(
+            "aria-expanded", "true" if opened else "false"
+        )
+
+
+def toggle_navigation(event):
+    set_navigation(str(event.currentTarget.getAttribute("aria-expanded")) != "true")
+
+
+def adapt_navigation(event):
+    set_navigation(not event.matches)
+
+
+async def global_search():
+    await go("catalog", query=value("global-query"))
+
+
 def login_page():
     t.h1("継手APIにログイン")
     if ctx["config"]["demo"]:
@@ -337,18 +367,24 @@ def cards():
     count, page, size = ctx["total"], ctx["page"], ctx["size"]
     start = (page - 1) * size + 1 if count else 0
     pages = max(1, (count + size - 1) // size)
-    with t.form(classes="searchbar", on_submit=action(search)):
-        field("キーワードで検索", "search", text=ctx["query"], placeholder="API名、用途、提供元、操作名")
-        field(
-            "提供環境",
-            "filter-env",
-            options=[("", "すべての環境"), ("sandbox", "検証"), ("production", "本番")],
-            text=ctx["env"],
-        )
-        t.button("検索", type="submit", classes="btn btn-primary")
-    with t.div(classes="results-head"):
-        t.h2(f"API一覧（{count}件）")
-        t.span(f"{start}–{min(count, page * size)} 件を表示", classes="muted")
+    with t.div(classes="collection-tools"):
+        with t.div(classes="results-head"):
+            t.h2(f"API一覧（{count}件）")
+            t.span(f"{start}–{min(count, page * size)} 件を表示", classes="muted")
+        with t.form(classes="searchbar", on_submit=action(search)):
+            field(
+                "キーワードで検索",
+                "search",
+                text=ctx["query"],
+                placeholder="API名、用途、提供元、操作名",
+            )
+            field(
+                "提供環境",
+                "filter-env",
+                options=[("", "すべての環境"), ("sandbox", "検証"), ("production", "本番")],
+                text=ctx["env"],
+            )
+            t.button("検索", type="submit", classes="btn btn-primary")
     if not count:
         with t.div(classes="empty"):
             t.h3("該当するAPIはありません。")
@@ -356,18 +392,20 @@ def cards():
     with t.div(classes="card-grid"):
         for row in ctx["rows"]:
             with t.article(classes="asset-card"):
-                with t.div(classes="asset-meta"):
-                    t.span("API", classes="asset-symbol")
-                    t.span(row["owner"], classes="owner")
                 with t.h3():
                     t.a(row["name"], href="#/api/" + row["id"], classes="asset-title")
                 t.p(row["summary"], classes="description")
                 with t.div(classes="card-foot"):
-                    with t.div(classes="pills"):
-                        for env in row["environments"]:
-                            t.span(LABEL[env], classes="pill " + env)
-                        if not row["published"]:
-                            t.span("下書き", classes="pill pending")
+                    with t.div():
+                        t.strong("提供元", classes="key")
+                        t.span(row["owner"], classes="owner")
+                    with t.div():
+                        t.strong("提供環境", classes="key")
+                        with t.div(classes="pills"):
+                            for env in row["environments"]:
+                                t.span(LABEL[env], classes="pill " + env)
+                            if not row["published"]:
+                                t.span("下書き", classes="pill pending")
                     if route() == "inventory" and row["published"]:
                         t.span("公開中", classes="pill approved")
     if pages > 1:
@@ -388,7 +426,12 @@ def detail_page():
     t.p(a["summary"])
     t.p(a["owner"] + " · " + ("公開中" if a["published"] else "未掲載"), classes="muted")
     if a["owner"] in ctx["me"]["owners"]:
-        btn("掲載を取り下げる" if a["published"] else "公開する", publication, a, primary=True)
+        btn(
+            "掲載を取り下げる" if a["published"] else "公開する",
+            publication,
+            a,
+            primary=not a["published"],
+        )
     with t.div(classes="box"):
         t.h2("操作と仕様")
         for path, ops in a["spec"]["paths"].items():
@@ -446,7 +489,7 @@ def detail_page():
             )
             field("操作パス", "trial-path", text=next(iter(a["spec"]["paths"])))
             field("リクエスト本文", "trial-body", textarea=True)
-            btn("実行する", invoke, a)
+            btn("実行する", invoke, a, primary=True)
             if ctx["trial"]:
                 t.pre(ctx["trial"], classes="code")
                 if ctx["trace"]:
@@ -525,11 +568,29 @@ class Portal(Page):
     def populate(self):
         user, page = ctx["me"], route()
         title = PAGES.get(page, "APIの詳細" if page.startswith("api/") else "APIを登録")
+        nav_open = ctx.get("nav_open", not window.matchMedia("(max-width: 780px)").matches)
         with t.header(classes="mast"):
             with t.div(classes="identity"):
                 t.span("", classes="brand-mark", aria_hidden="true")
                 t.strong("継手API", classes="brand")
                 t.span("APIポータル", classes="product")
+            if user:
+                with t.form(classes="global-search", on_submit=action(global_search)):
+                    t.input(
+                        id="global-query",
+                        type="search",
+                        placeholder="APIカタログを検索",
+                        aria_label="すべての公開APIを検索",
+                    )
+            with t.label(classes="mode-control"):
+                t.span("表示", classes="mode-label")
+                with t.select(aria_label="表示モード", on_change=theme_changed):
+                    for key, label in (("auto", "端末設定"), ("light", "ライト"), ("dark", "ダーク")):
+                        t.option(
+                            label,
+                            value=key,
+                            selected=key == (window.localStorage.getItem("visual-mode") or "auto"),
+                        )
             if user:
                 t.span(
                     " / ".join(sorted(set(user["owners"] + user["projects"]))) or "監査担当",
@@ -545,8 +606,24 @@ class Portal(Page):
                 else:
                     t.p("カタログを読み込み中…")
             return
-        with t.div(classes="workspace"):
-            with t.nav(classes="rail", aria_label="ポータル"):
+        with t.div(classes="console-tools"):
+            with t.button(
+                type="button",
+                id="nav-toggle",
+                classes="menu-button",
+                aria_label="ナビゲーション",
+                aria_controls="portal-nav",
+                aria_expanded="true" if nav_open else "false",
+                on_click=toggle_navigation,
+            ):
+                t.span("", classes="menu-icon", aria_hidden="true")
+            with t.div(classes="crumb", aria_label="現在地"):
+                t.a("継手API", href="#/catalog")
+                t.span("›", aria_hidden="true")
+                t.strong(title)
+        with t.div(id="workspace", classes="workspace", data_nav="open" if nav_open else "closed"):
+            with t.nav(id="portal-nav", classes="rail", aria_label="ポータル"):
+                t.strong("継手API", classes="rail-title")
                 for label, pages in [
                     ("ワークスペース", ("catalog", "mine")),
                     ("提供者メニュー", ("inventory", "inbox")),
@@ -566,7 +643,6 @@ class Portal(Page):
                                 on_click=action(go, target),
                             )
             with t.section(classes="content"):
-                t.div("継手API　 /　" + title, classes="crumb")
                 if ctx["message"]:
                     t.div(
                         ctx["message"],
@@ -601,6 +677,9 @@ class Portal(Page):
 
 
 async def start():
+    document.documentElement.setAttribute(
+        "data-mode", window.localStorage.getItem("visual-mode") or "auto"
+    )
     client.prefix = (await (await pyfetch("/entry.json")).json())["api_prefix"]
     ctx["config"] = await client.api("/config")
     await client.callback(ctx["config"])
@@ -608,6 +687,7 @@ async def start():
         await refresh_session()
 
 
+add_event_listener(window.matchMedia("(max-width: 780px)"), "change", adapt_navigation)
 add_event_listener(window, "popstate", action(load))
 render()
 asyncio.ensure_future(run(start))
