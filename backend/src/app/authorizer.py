@@ -1,13 +1,15 @@
 """HTTP API request authorizer. The backend rechecks the grant before dispatch."""
 
+import json
 import os
 import secrets
 
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from app.apis.gateway import authorize
+from app.apis.gateway import authorize, operation_template
 from app.apis.governance.keys import invocation_actor
+from app.core.credential_policy import check_operation
 from app.core.workspace import attribute, private_project
 from app.db.models import AccessLog, Asset, Event
 from app.db.session import engine
@@ -30,7 +32,15 @@ def handler(event, context):
         except HTTPException:
             return {"isAuthorized": False}
         try:
-            authorize(db, key, project, environment, actor)
+            asset = authorize(db, key, project, environment, actor)
+            method = event["requestContext"].get("http", {}).get("method", "GET").upper()
+            pattern = (
+                operation_template(json.loads(asset.spec), method, "/" + parts[6])
+                if len(parts) > 6
+                else None
+            )
+            if pattern:
+                check_operation(db, asset, actor, method + " " + pattern, project)
         except HTTPException as exc:
             asset = db.get(Asset, key)
             if asset:

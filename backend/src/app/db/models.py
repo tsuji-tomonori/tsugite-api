@@ -138,9 +138,33 @@ class Affiliation(Base):
     active: Mapped[bool]
 
 
+class CredentialLease(Base):
+    __tablename__ = "credential_leases"
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    issued: Mapped[int]
+    expires: Mapped[int]
+    refresh_at: Mapped[int]
+    nonce: Mapped[str] = mapped_column(String(32))
+    generation: Mapped[int]
+    revision: Mapped[int] = mapped_column(default=1)
+    __mapper_args__ = {"version_id_col": revision}
+
+
+class CredentialRule(Base):
+    __tablename__ = "credential_rules"
+    id: Mapped[str] = mapped_column(String(255), primary_key=True)
+    limit_minutes: Mapped[int | None]
+    ops: Mapped[str | None] = mapped_column(Text)
+    revision: Mapped[int] = mapped_column(default=1)
+    __mapper_args__ = {"version_id_col": revision}
+
+
 class PortalKey(Base):
     __tablename__ = "api_keys"
     id: Mapped[str] = mapped_column(String(32), primary_key=True, default=new_id)
+    mode: Mapped[str | None] = mapped_column(String(10))
+    config: Mapped[str | None] = mapped_column(Text)
+    created: Mapped[int | None]
     digest: Mapped[str] = mapped_column(String(64))
     project: Mapped[str] = mapped_column(String(64))
     creator: Mapped[str] = mapped_column(String(180))

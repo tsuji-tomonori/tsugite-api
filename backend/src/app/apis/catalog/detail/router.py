@@ -2,6 +2,7 @@ import json
 
 from app.apis.catalog.common import DB, User, listing, record
 from app.apis.schemas import Detail
+from app.core.credential_policy import individual
 from app.core.workspace import allowed_audience
 from app.db.models import Access
 from fastapi import APIRouter, HTTPException
@@ -32,6 +33,7 @@ def detail(key: str, actor: User, db: DB):
     return Detail(
         **listing(a).model_dump(),
         spec=json.loads(a.spec),
+        allowed_operations=individual(db, key, actor.subject),
         base_path=a.base_path or "",
         bindings=json.loads(a.targets) if a.owner in actor.owners else {},
     )

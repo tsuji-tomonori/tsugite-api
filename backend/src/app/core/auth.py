@@ -34,6 +34,10 @@ class Actor:
     titles: frozenset[str] = frozenset()
     key_id: str = ""
     key_shared: bool = False
+    issued: int = 0
+    expires: int = 0
+    base_projects: frozenset[str] = frozenset()
+    generation: int = 0
 
 
 @lru_cache
@@ -55,7 +59,7 @@ def demo_token(persona: str, db: Session | None = None) -> str:
     if not local_demo() or groups is None:
         raise HTTPException(404)
     return jwt.encode(
-        {"sub": persona, "exp": int(time()) + 3600, "groups": groups},
+        {"sub": persona, "iat": int(time()), "exp": int(time()) + 3600, "groups": groups},
         _demo_key,
         algorithm="HS256",
     )
@@ -83,13 +87,31 @@ def identify(token: str) -> Actor:
             client = claims["client_id"]
             project = {m["client"]: m["project"] for m in cfg.get("machine_projects", [])}.get(client)
             if project and "hub/invoke" in claims.get("scope", "").split():
-                return Actor(client, frozenset([project]), frozenset(), False, True)
+                return Actor(
+                    client,
+                    frozenset([project]),
+                    frozenset(),
+                    False,
+                    True,
+                    issued=int(claims.get("iat", 0)),
+                    expires=int(claims["exp"]),
+                )
             if client != cfg["portal_client"]:
                 raise ValueError("client")
             groups = claims.get("cognito:groups", [])
         owners = frozenset(g[4:] for g in groups if g.startswith("own-"))
         projects = frozenset(g[4:] for g in groups if g.startswith("use-")) | owners
-        return Actor(claims["sub"], projects, owners, "audit" in groups, False, "admin" in groups)
+        return Actor(
+            claims["sub"],
+            projects,
+            owners,
+            "audit" in groups,
+            False,
+            "admin" in groups,
+            issued=int(claims.get("iat", 0)),
+            expires=int(claims["exp"]),
+            base_projects=projects,
+        )
     except (ValueError, KeyError, jwt.PyJWTError) as exc:
         raise HTTPException(401, "認証情報を確認してください") from exc
 

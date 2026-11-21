@@ -9,6 +9,7 @@ from app.apis.governance.keys import invoker
 from app.apis.schemas import Env
 from app.core.auth import Actor, check_member
 from app.core.config import targets
+from app.core.credential_policy import check_operation
 from app.core.workspace import allowed_audience, attribute, private_project, stopped
 from app.db.models import Access, AccessLog, PortalKey
 from app.integrations.upstream import MAX_BODY, dispatch
@@ -109,6 +110,7 @@ async def invoke(
         request.state.operation = operation_template(json.loads(asset.spec), request.method, path)
         if request.state.operation is None:
             raise HTTPException(404, "OpenAPIに定義されていない操作です")
+        check_operation(db, asset, actor, request.method + " " + request.state.operation, project)
         binding = targets().get(json.loads(asset.targets).get(environment))
         if not binding or (binding.owner, binding.environment) != (asset.owner, environment):
             raise HTTPException(503, "接続先を利用できません")
