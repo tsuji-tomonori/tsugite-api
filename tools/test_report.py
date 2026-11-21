@@ -17,7 +17,14 @@ from playwright.sync_api import sync_playwright
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "artifacts"
 CASE = {
-    "test_console_visual_modes": "ライト・ダークの配布値、文字コントラスト、端末への追随、強制カラーでのフォーカスを確認する",
+    "test_governance_console": "3役のホームからユーザー管理・通知・メトリクス・ログ保存・掲載終了を操作する",
+    "test_cognito_member_lifecycle": "AWS EmulatorのCognitoでユーザー追加・所属・削除・既発行トークンの停止を確認する",
+    "test_member_lifecycle": "管理者が追加・削除し、同一メールで再登録しても旧利用権を復活させない",
+    "test_listing_revisions": "掲載内容の修正と仕様の変更を区別し、競合を検知し、削除後も監査を保持する",
+    "test_alert_window_and_access_logs": "同時実行の上限、通知のみ・停止・解除、次期間の回復、メトリクス集計とログの閲覧範囲を確認する",
+    "test_notification_scope": "管理者・提供者の通知先を制御し、同じプロジェクトでも既読状態を利用者ごとに保持する",
+    "test_console_visual_modes": "11月の外観変更を反映した明暗テーマの文字コントラストとキーボード操作を確認する",
+    "test_report_image_viewer": "実行レポートの画像をオフラインで拡大し、キーボード・タッチ・印刷でも確認できる",
     "test_large_catalog": "6業務・20拠点の公開120件を全件照合し、PC・スマートフォンの検索とページ送りを確認する",
     "test_upstream_unavailable": "承認済みのHTTPS接続先が停止したとき、502と監査・アクセスログを同じIDで追跡できる",
     "test_marketplace_contracts": "6種類を個別に登録・公開・承認して実行し、HTTPSの受信・業務応答・監査記録を照合する",
@@ -86,6 +93,97 @@ article{padding:8px 0;border-bottom:1px solid #dfe7ef}li{overflow-wrap:anywhere}
 """
 
 
+CSS += """
+.shot-open { display:block; position:relative; width:100%; padding:0; border:0;
+  background:transparent; color:inherit; cursor:zoom-in; }
+.shot-open img { margin:8px auto 0; }
+.shot-open .zoom-label { position:absolute; bottom:6px; right:6px; padding:1px 9px; border-radius:16px;
+  background:#252525; color:white; font:600 13px/1.6 system-ui,sans-serif; }
+.shot-open:focus-visible, #shot-viewer :focus-visible { outline:3px solid #1674bc; outline-offset:2px; }
+#shot-viewer { width:min(96vw,1600px); height:94vh; height:94dvh; max-width:none; max-height:none;
+  padding:0; border:1px solid #888; border-radius:12px; background:white; color:#202020; }
+#shot-viewer[open] { display:grid; grid-template-rows:auto minmax(0,1fr); }
+#shot-viewer::backdrop { background:rgba(16,16,16,.78); }
+.viewer-tools { display:flex; align-items:center; flex-wrap:wrap; gap:8px 12px; padding:10px 16px;
+  border-bottom:1px solid #aaa; }
+.viewer-tools h2 { margin:0 auto 0 0; font-size:16px; }
+.viewer-tools select, .viewer-tools button { font:inherit; min-height:44px; border:1px solid #777;
+  border-radius:8px; padding:4px 10px; background:white; color:#222; cursor:pointer; }
+.shot-stage { overflow:auto; background:#eee; overscroll-behavior:contain; }
+.shot-stage:focus-visible { outline-offset:-3px !important; }
+.shot-stage img { display:block; margin:0 auto; max-width:none; max-height:none; }
+.shot-stage.fit img { width:100%; height:100%; object-fit:contain; }
+@media screen { html:has(#shot-viewer[open]) { overflow:hidden; } }
+@media (max-width:620px) {
+  #shot-viewer { width:100vw; height:100vh; height:100dvh; border-radius:0; border:0; }
+  .viewer-tools { padding:8px 12px; }
+  .viewer-tools h2 { flex-basis:100%; }
+}
+@media print {
+  #shot-viewer[open], #shot-viewer::backdrop, .zoom-label { display:none !important; }
+  .shot-open { cursor:auto; }
+}
+"""
+
+# Keep the image payload once per screenshot. The viewer reuses the selected thumbnail's data URL.
+IMAGE_VIEWER = """
+<dialog id="shot-viewer" aria-labelledby="shot-title">
+  <div class="viewer-tools"><h2 id="shot-title">画面の拡大</h2>
+    <label>表示倍率 <select id="shot-scale"><option value="fit">全体表示</option>
+      <option value="1">100%（原寸）</option><option value="2">200%</option></select></label>
+    <button type="button" id="shot-close" autofocus>閉じる</button>
+  </div>
+  <div class="shot-stage fit" tabindex="0" role="region" aria-label="拡大画像"></div>
+</dialog>
+<script>
+const viewer = document.getElementById("shot-viewer");
+const title = document.getElementById("shot-title");
+const stage = viewer.querySelector(".shot-stage");
+const scale = document.getElementById("shot-scale");
+let opener;
+
+function resizeImage() {
+  const image = stage.querySelector("img");
+  if (!image) return;
+  stage.classList.toggle("fit", scale.value === "fit");
+  image.style.width = scale.value === "fit" ? "" : image.naturalWidth * Number(scale.value) + "px";
+}
+
+document.getElementById("screens").addEventListener("click", event => {
+  const button = event.target.closest(".shot-open");
+  if (!button) return;
+  opener = button;
+  const source = button.querySelector("img");
+  const image = new Image();
+  image.alt = source.alt;
+  image.addEventListener("load", resizeImage, {once:true});
+  stage.replaceChildren(image);
+  scale.value = "fit";
+  title.textContent = source.alt;
+  image.src = source.currentSrc || source.src;
+  resizeImage();
+  viewer.showModal();
+  stage.scrollTo(0, 0);
+});
+scale.addEventListener("change", resizeImage);
+document.getElementById("shot-close").addEventListener("click", () => viewer.close());
+viewer.addEventListener("close", () => {
+  stage.replaceChildren();
+  if (opener) opener.focus({preventScroll:true});
+});
+let collapsed = [];
+window.addEventListener("beforeprint", () => {
+  collapsed = Array.from(document.querySelectorAll("#screens details:not([open])"));
+  for (const item of collapsed) item.open = true;
+});
+window.addEventListener("afterprint", () => {
+  for (const item of collapsed) item.open = false;
+  collapsed = [];
+});
+</script>
+"""
+
+
 def result(case):
     for tag, label in (("error", "エラー"), ("failure", "失敗"), ("skipped", "スキップ")):
         if case.find(tag) is not None:
@@ -124,6 +222,7 @@ def inventory():
 
 
 GALLERIES = {
+    "test_governance_console": ("役割別ホーム・通知・アラート・利用監査", 9),
     "test_console_visual_modes": ("AWSコンソールに合わせたライト・ダーク・強制カラー", 4),
     "test_large_catalog": ("公開120件のカタログ", 4),
     "test_cognito_browser": ("AWS Emulatorでの提供者・利用者の画面", 11),
@@ -131,6 +230,26 @@ GALLERIES = {
 }
 
 JOURNEYS = [
+    (
+        "ユーザー管理",
+        "所属と役割を指定して追加し、削除後は以前のアクセスも止める。",
+        ["test_cognito_member_lifecycle", "test_member_lifecycle"],
+    ),
+    (
+        "掲載内容の変更・削除",
+        "説明は掲載中も修正できる。仕様変更時は再承認、削除後は履歴を保持する。",
+        ["test_listing_revisions", "test_governance_console"],
+    ),
+    (
+        "通知と利用上限",
+        "ベルで対象者に通知し、設定した上限に達すると次の呼び出しを停止する。",
+        ["test_notification_scope", "test_alert_window_and_access_logs"],
+    ),
+    (
+        "利用状況とログ",
+        "役割別ホームから時系列を絞り込み、同じ期間のログを保存して業務監査を照合する。",
+        ["test_governance_console", "test_alert_window_and_access_logs"],
+    ),
     (
         "登録・公開",
         "下書きは提供元だけが参照できる。接続失敗は公開を止める。",
@@ -215,6 +334,17 @@ def build():
                 findings.append(
                     f"<details><summary>HTTP {code} の業務監査とアクセスログの原文</summary><pre>{escape(value)}</pre></details>"
                 )
+            for prop in case.findall("./properties/property[@name='access_sample']"):
+                logs = json.loads(prop.attrib["value"])
+                file = "".join(json.dumps(r, ensure_ascii=False) + "\n" for r in logs)
+                encoded = base64.b64encode(file.encode()).decode()
+                rows_html = "".join(
+                    f"<tr><td>{escape(r['at'])}</td><td>{escape(r['actor'])} / {escape(r['project'])}</td><td>{escape(r['method'])} {escape(r['operation'])}</td><td>{r['status']}</td><td>{r['duration_ms']}</td><td><code>{escape(r['request_id'])}</code></td></tr>"
+                    for r in logs
+                )
+                findings.append(
+                    f"<h3>利用上限テストのアクセスログ（{len(logs)}件）</h3><p>検証用の利用者が実際に送ったリクエストの記録です。応答コードとリクエストIDで照合できます。</p><table><tr><th>日時（UTC）</th><th>利用者 / 所属</th><th>操作</th><th>HTTP</th><th>ms</th><th>リクエストID</th></tr>{rows_html}</table><a download='access-log.jsonl' href='data:application/x-ndjson;base64,{encoded}'>このアクセスログを保存（JSONL）</a>"
+                )
             if readings:
                 findings.append(
                     "<article><h3>"
@@ -232,7 +362,11 @@ def build():
                     continue
                 encoded = base64.b64encode(image.read_bytes()).decode()
                 shots.append(
-                    f"<figure><figcaption>{escape(caption)}</figcaption><img loading='lazy' alt='{escape(caption, quote=True)}' src='data:image/png;base64,{encoded}'></figure>"
+                    f"<figure><figcaption>{escape(caption)}</figcaption>"
+                    f"<button type='button' class='shot-open' aria-haspopup='dialog' aria-controls='shot-viewer' "
+                    f"aria-label='{escape(caption, quote=True)}を拡大'>"
+                    f"<img loading='lazy' alt='{escape(caption, quote=True)}' src='data:image/png;base64,{encoded}'>"
+                    "<span class='zoom-label' aria-hidden='true'>拡大</span></button></figure>"
                 )
             if name in GALLERIES and status == "成功" and len(shots) < GALLERIES[name][1]:
                 missing.append(title + "の画面記録")
@@ -242,7 +376,7 @@ def build():
                 evidence = f" · <a href='#{anchor}'>画面{len(shots)}枚</a>"
                 label = GALLERIES.get(name, (name, 0))[0]
                 galleries.append(
-                    f"<details id='{anchor}' {'open' if name == 'test_console_visual_modes' else ''}><summary>{label}（{len(shots)}枚）</summary><div class='grid'>{''.join(shots)}</div></details>"
+                    f"<details id='{anchor}' {'open' if name == 'test_console_visual_modes' else ''}><summary>{escape(label)}（{len(shots)}枚）</summary><div class='grid'>{''.join(shots)}</div></details>"
                 )
             style = "ok" if status == "成功" else "bad"
             rows.append(
@@ -262,8 +396,8 @@ def build():
         results,
         [
             (
-                "AWSの表示仕様",
-                "ライト・ダークのリンク色、主要ボタン色、3種類の角丸を実画面で照合。配色変更後の入力保持、設定の保存、強制カラーでのフォーカスも確認する。",
+                "11月の表示仕様",
+                "グレーを基調とする明暗テーマで文字と背景のコントラスト、主要ボタン、リンクを実画面で照合。配色変更後の入力保持、設定の保存、強制カラーでのフォーカスも確認する。",
                 ["test_console_visual_modes"],
             ),
             (
@@ -292,12 +426,12 @@ def build():
     <header><h1>継手API テスト結果</h1><p>{date} 開始 · 対象コミット <code>{escape(rev[:12])}</code></p>
     <p class="numbers">{summary}</p>{gaps}<nav><a href="#flow">業務フロー</a><a href="#review">デザインレビュー</a><a href="#observed">実行記録</a><a href="#screens">画面の記録</a><a href="#cases">全テストケース</a><a href="#cdk">CDKのタグ</a></nav></header>
     <section id="flow"><h2>公開から利用終了まで</h2>{review_table(results, JOURNEYS)}</section>
-    <section id="review"><h2>デザインレビュー</h2><p>Amazon DataZoneの提供者インベントリ、公開カタログ、プロジェクト単位の利用申請を設計の基準にしました。外観はAWS公開資料の更新後の画面とCloudscape Visual Refreshの配布値に合わせています。主要操作はオレンジ、リンクと補助操作は青です。<a href="https://assets.community.aws/a/reCap-Summary-2024.pdf#page=18">比較に使ったAWSの画面（18ページ）</a>。</p>{design}<p>実装画面と操作テストによるレビューです。実利用者によるユーザビリティ調査や同時アクセスの負荷測定は今回の対象外です。</p></section>
+    <section id="review"><h2>デザインレビュー</h2><p>Amazon DataZoneの提供者インベントリ、公開カタログ、プロジェクト単位の利用申請を設計の基準にしました。ライトテーマは2026年11月13日（日本時間）に公開されたAWSコンソールの画像を基準にしました。薄いグレーの背景に白いカードを置き、主要操作を濃色、リンクを下線付きで表示します。ダークテーマの色と日本語の書体は継手APIの設計値です。<a href="https://x.com/darkosubotica/status/2121022986144895310">更新後の画面を紹介した投稿</a>。</p>{design}<p>実装画面と操作テストによるレビューです。実利用者によるユーザビリティ調査や同時アクセスの負荷測定は今回の対象外です。</p></section>
     <section id="observed"><h2>業務応答とログの照合記録</h2>{"".join(findings) or "実行記録なし"}</section>
     <section id="screens"><h2>画面の記録</h2>{"".join(reversed(galleries)) or "画面記録はありません。"}</section>
     <section id="cases"><h2>テストケースと実行結果</h2>{"".join(tables)}</section>
     <section id="cdk"><h2>CDKリソースのタグ</h2>{inventory()}</section>
-    <section><h2>検証環境</h2><p>画面はChromiumで撮影しました。AWS操作には公式AWS Emulatorを使い、DSQLはクラスターの稼働までを確認します。業務データとDB移行にはSQLite、システム用トークンにはテスト用署名鍵を使います。実AWSへの配備、CloudFront経由の全経路、Cognitoのホスト型ログイン・MFA・OAuth発行は今回の検証範囲外です。</p></section></main></html>"""
+    <section><h2>検証環境</h2><p>画面はChromiumで撮影しました。AWS操作には公式AWS Emulatorを使い、DSQLはクラスターの稼働までを確認します。業務データとDB移行にはSQLite、システム用トークンにはテスト用署名鍵を使います。実AWSへの配備、CloudFront経由の全経路、Cognitoのホスト型ログイン・MFA・OAuth発行は今回の検証範囲外です。</p></section></main>{IMAGE_VIEWER}</html>"""
     OUT.mkdir(exist_ok=True)
     (OUT / "test-report.html").write_text(output, encoding="utf-8")
     return not missing and not any(counts[v] for v in ("失敗", "エラー", "スキップ"))
