@@ -1,9 +1,12 @@
 import asyncio
 import json
+from copy import deepcopy
 from datetime import datetime, timedelta, timezone
 from urllib.parse import quote, urlencode
 
+import api_docs
 import client
+import workspace_views
 from js import document, window
 from puepy import Application, Page, t
 from pyodide.ffi.wrappers import add_event_listener
@@ -23,6 +26,7 @@ ctx = {
         "hours": "24",
         "minutes": "60",
         "measure": "calls",
+        "unit": "",
         "asset": "",
         "project": "",
         "env": "",
@@ -39,6 +43,8 @@ ctx = {
     "audit_action": "",
     "audit_offset": 0,
 }
+INITIAL_STATE = deepcopy(ctx)
+
 LABEL = {
     "pending": "承認待ち",
     "approved": "利用中",
@@ -78,6 +84,8 @@ SAMPLE = {
 }
 PAGES = {
     "home": "ホーム",
+    "keys": "APIキー",
+    "workspace": "組織・プロジェクト",
     "metrics": "メトリクス",
     "logs": "アクセスログ",
     "members": "ユーザー管理",
@@ -152,8 +160,15 @@ async def load():
     if not ctx["me"]:
         return
     page = route()
-    ctx["badge"] = (await client.api("/notifications/count"))["unread"]
-    if page == "home":
+    ctx["me"], badge = await asyncio.gather(client.api("/me"), client.api("/notifications/count"))
+    ctx["badge"] = badge["unread"]
+    if page in ("workspace", "keys"):
+        ctx["workspace"] = await client.api("/workspace")
+        if page == "keys":
+            ctx["keys"], ctx["key_assets"] = await asyncio.gather(
+                client.api("/keys"), client.api("/key-assets")
+            )
+    elif page == "home":
         ctx["dashboard"] = await client.api("/dashboard")
         ctx["home_metrics"], ctx["recent_logs"] = await asyncio.gather(
             client.api("/metrics?minutes=60"), client.api("/access-logs")
@@ -173,7 +188,12 @@ async def load():
         else:
             ctx["rules"] = await client.api("/alerts")
     elif page in ("metrics", "logs"):
-        ctx["dims"] = await client.api("/metric-dimensions")
+        ctx["workspace"] = await client.api("/workspace")
+        if ctx["filters"]["unit"] not in ctx["workspace"]["leads"]:
+            ctx["filters"]["unit"] = ""
+        ctx["dims"] = await client.api(
+            "/metric-dimensions?" + urlencode({"unit": ctx["filters"]["unit"]})
+        )
         params = time_params()
         if page == "metrics":
             ctx["metrics"] = await client.api(
@@ -193,7 +213,13 @@ async def load():
     elif page.startswith(("api/", "edit/")):
         if (ctx["detail"] or {}).get("id") != page.split("/", 1)[1]:
             ctx.update(trial="", trace="")
+        ctx["detail"] = None
         ctx["detail"] = await client.api("/apis/" + quote(page.split("/", 1)[1], safe=""))
+        ctx["keys"] = await client.api("/keys")
+        if ctx["detail"]["owner"] in ctx["me"]["owners"]:
+            ctx["policy"], ctx["policy_directory"] = await asyncio.gather(
+                client.api("/apis/" + ctx["detail"]["id"] + "/policy"), client.api("/workspace")
+            )
         ctx["rights"] = await client.api("/requests?" + urlencode({"asset_id": ctx["detail"]["id"]}))
     elif page in ("catalog", "inventory"):
         params = {"inventory": str(page == "inventory").lower(), "page": ctx["page"], "q": ctx["query"]}
@@ -220,6 +246,11 @@ async def load():
 
 
 async def go(page, *, query=None):
+    if page != "keys":
+        ctx.pop("issued_key", None)
+    if page != "workspace":
+        for name in ("workspace_usage", "membership_draft", "unit_draft", "directory_candidates"):
+            ctx.pop(name, None)
     if query is not None or (page in ("catalog", "inventory") and page != route()):
         ctx.update(page=1, query=query or "", env="")
     if window.matchMedia("(max-width: 780px)").matches:
@@ -245,7 +276,9 @@ async def login(persona=None):
 
 async def logout():
     client.store.removeItem("access")
-    ctx["me"] = None
+    config = ctx["config"]
+    ctx.clear()
+    ctx.update(deepcopy(INITIAL_STATE), config=config)
     await go("home")
     if not ctx["config"]["demo"]:
         window.location.assign(
@@ -328,7 +361,13 @@ async def apply(asset):
     await client.api(
         "/apis/" + asset["id"] + "/requests",
         "POST",
-        {"project": value("project"), "environment": value("environment"), "reason": value("reason")},
+        {
+            "project": value("project"),
+            "personal": value("grant-kind") == "personal"
+            or value("project") == ctx["me"]["personal_project"],
+            "environment": value("environment"),
+            "reason": value("reason"),
+        },
     )
     await go("mine")
     ctx["message"] = "利用申請を送信しました"
@@ -506,6 +545,59 @@ def cards():
                 btn("次へ", turn_page, page + 1)
 
 
+async def save_policy(asset):
+    data = {"visibility": value("policy-visibility")}
+    for key in ("projects", "departments", "auto_departments", "delegates"):
+        fields = document.querySelectorAll('input[name="policy-' + key + '"]:checked')
+        data[key] = [str(fields.item(i).value) for i in range(fields.length)]
+    data["auto_titles"] = [
+        v.strip() for v in value("policy-titles").replace("、", ",").split(",") if v.strip()
+    ]
+    await client.api("/apis/" + asset["id"] + "/policy?revision=" + str(asset["revision"]), "PUT", data)
+    await load()
+    ctx["message"] = "公開範囲と承認ルールを保存しました"
+
+
+def policy_form(asset):
+    rules = ctx["policy"]
+    tree = ctx["policy_directory"]["units"]
+    with t.details(classes="box"):
+        t.summary("公開範囲と承認ルール")
+        field(
+            "カタログの公開範囲",
+            "policy-visibility",
+            options=[("all", "全員"), ("restricted", "選択した所属だけ")],
+            text=rules["visibility"],
+        )
+        for key, label, kind in (
+            ("projects", "公開先プロジェクト", "project"),
+            ("departments", "公開先部署", "department"),
+            ("auto_departments", "自動承認する申請者の部署", "department"),
+            ("delegates", "判断を委任する部署のリーダー", "department"),
+        ):
+            with t.fieldset():
+                t.legend(label)
+                for u in tree:
+                    if u["kind"] == kind:
+                        with t.label(classes="scope-choice"):
+                            t.input(
+                                type="checkbox",
+                                name="policy-" + key,
+                                value=u["id"],
+                                checked=u["id"] in rules[key],
+                            )
+                            t.span(u["name"])
+        field(
+            "自動承認する役職（複数はカンマ区切り）",
+            "policy-titles",
+            text=", ".join(rules["auto_titles"]),
+        )
+        t.p(
+            "部署は子孫部署を含みます。申請者の部署または役職が一致すれば自動承認し、それ以外は提供者か委任先のリーダーが判断します。"
+        )
+        btn("公開・承認条件を保存", save_policy, asset, primary=True)
+
+
 def detail_page():
     a = ctx["detail"]
     if not a:
@@ -523,6 +615,7 @@ def detail_page():
         )
         btn("内容を編集", go, "edit/" + a["id"])
         btn("APIを削除", delete_listing, a)
+        policy_form(a)
     with t.div(classes="box"):
         t.h2("操作と仕様")
         for path, ops in a["spec"]["paths"].items():
@@ -534,16 +627,29 @@ def detail_page():
             t.pre(json.dumps(a["spec"], ensure_ascii=False, indent=2), classes="code")
     for row in ctx.get("rights", []):
         with t.div(classes="grant-status"):
+            if row.get("subject"):
+                t.small("個人の利用権")
             t.strong(
                 row["project"] + " · " + LABEL[row["environment"]] + " · " + LABEL[row["status"]],
                 classes="pill " + row["status"],
             )
             if row.get("decision_reason"):
                 t.span("判断理由　" + row["decision_reason"])
-    if a["published"] and ctx["me"]["projects"]:
+    api_docs.view(a, ctx.get("rights", []), ctx.get("keys", []), subject=ctx["me"]["subject"])
+    if a["published"]:
         with t.div(classes="box"):
             t.h2("利用申請")
-            field("利用プロジェクト", "project", options=[(p, p) for p in ctx["me"]["projects"]])
+            field(
+                "利用プロジェクト",
+                "project",
+                options=[(p, p) for p in ctx["me"]["projects"]]
+                + [(ctx["me"]["personal_project"], "個人ワークスペース")],
+            )
+            field(
+                "申請対象",
+                "grant-kind",
+                options=[("project", "プロジェクト全員"), ("personal", "自分だけ")],
+            )
             field("環境", "environment", options=[(e, LABEL[e]) for e in a["environments"]])
             field("利用目的", "reason", textarea=True)
             btn("申請する", apply, a, primary=True)
@@ -598,6 +704,12 @@ def rights_page(incoming):
                 f"{row['project']} · {LABEL[row['environment']]} · {LABEL[row['status']]}",
                 classes="pill " + row["status"],
             )
+            if row.get("applicant"):
+                t.p(
+                    ("個人申請" if row.get("subject") else "プロジェクト申請")
+                    + "　申請者 "
+                    + row["applicant"]
+                )
             t.p("利用目的　" + row["reason"])
             if row.get("decision_reason"):
                 t.p("判断理由　" + row["decision_reason"], classes="decision")
@@ -854,6 +966,7 @@ def time_params():
         for k, v in {
             "start": f["start"] or start.isoformat(),
             "end": f["end"] or end.isoformat(),
+            "unit": f["unit"],
             "asset_id": f["asset"],
             "project": f["project"],
             "environment": f["env"],
@@ -879,6 +992,15 @@ def filters_view(chart):
 
     with t.div(classes="box"):
         with t.div(classes="filter-grid"):
+            choices = [
+                (u["id"], u["name"])
+                for u in ctx["workspace"]["units"]
+                if u["id"] in ctx["workspace"]["leads"]
+            ]
+            if choices:
+                choice("unit", "集計する部署・プロジェクト", [("", "通常の閲覧範囲")] + choices)
+            else:
+                t.input(type="hidden", id="f-unit", value="")
             choice(
                 "hours",
                 "期間",
@@ -1038,6 +1160,8 @@ def logs_view():
                 f"{row['at'][:19]} UTC　{row['actor']}　{row['project']}　{row['environment']}　{row['duration_ms']} ms"
             )
             t.small("リクエストID　" + row["request_id"], classes="mono")
+            if row.get("key_id"):
+                t.small("キーID　" + row["key_id"], classes="mono")
             btn("対応する業務監査", trace_lookup, row["request_id"])
     if ctx.get("log_offset", 0):
         btn("前の50件", log_page, ctx["log_offset"] - 50)
@@ -1183,19 +1307,22 @@ class Portal(Page):
             with t.nav(id="portal-nav", classes="rail", aria_label="ポータル"):
                 t.strong("継手API", classes="rail-title")
                 for label, pages in [
-                    ("ワークスペース", ("home", "catalog", "mine", "notifications")),
+                    (
+                        "ワークスペース",
+                        ("home", "catalog", "keys", "mine", "notifications", "workspace"),
+                    ),
                     ("管理", ("members",)),
                     ("提供者メニュー", ("inventory", "inbox")),
                     ("ガバナンス", ("metrics", "logs", "alerts", "audit")),
                 ]:
                     if label == "管理" and not user["admin"]:
                         continue
-                    if label == "提供者メニュー" and not user["owners"]:
+                    if label == "提供者メニュー" and not (user["owners"] or user["leads"]):
                         continue
                     with t.div(classes="nav-group"):
                         t.small(label)
                         for target in pages:
-                            if target == "mine" and not user["projects"]:
+                            if target == "inventory" and not user["owners"]:
                                 continue
                             active = page == target or (page == "register" and target == "inventory")
                             t.button(
@@ -1231,6 +1358,10 @@ class Portal(Page):
                         btn("APIを登録", go, "register", primary=True)
                 if page == "home":
                     dashboard_view()
+                elif page == "workspace":
+                    workspace_views.workspace_view(ctx, field, btn, load)
+                elif page == "keys":
+                    workspace_views.keys_view(ctx, field, btn, load)
                 elif page == "members" and user["admin"]:
                     members_view()
                 elif page == "notifications":
