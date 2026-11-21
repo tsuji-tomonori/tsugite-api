@@ -73,3 +73,18 @@ def test_create_dsql_cluster(aws):
         time.sleep(0.25)
     assert state["status"] == "ACTIVE" and state["deletionProtectionEnabled"]
     assert state["endpoint"] == "127.0.0.1"
+
+
+def test_openapi_archive_versions(aws, resources, monkeypatch):
+    from app.integrations.spec_archive import archive_spec
+
+    from tests.test_catalog import SPEC
+
+    bucket = next(v for k, v in resources.items() if k.startswith("RuntimeSpecifications"))
+    monkeypatch.setenv("SPEC_BUCKET", bucket)
+    digest = archive_spec("warehouse", SPEC)
+    assert archive_spec("warehouse", SPEC) == digest
+    key = f"specs/warehouse/{digest}.json"
+    s3 = aws.client("s3")
+    assert json.load(s3.get_object(Bucket=bucket, Key=key)["Body"]) == SPEC
+    assert len(s3.list_object_versions(Bucket=bucket, Prefix=key)["Versions"]) == 1

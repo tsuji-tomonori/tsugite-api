@@ -8,6 +8,7 @@ import api_docs
 import client
 import guide_views
 import operation_views
+import product_views
 import workspace_views
 from js import document, window
 from puepy import Application, Page, t
@@ -54,6 +55,7 @@ LABEL = {
     "revoked": "取消済み",
     "withdrawn": "取下げ済み",
     "sandbox": "検証",
+    "staging": "準本番",
     "production": "本番",
 }
 ACTIONS = {
@@ -62,6 +64,7 @@ ACTIONS = {
     "unpublish": "掲載取り下げ",
     "apply": "利用申請",
     "approve": "承認",
+    "step.approve": "中間段階を承認",
     "reject": "却下",
     "withdraw": "申請取り下げ",
     "revoke": "権限取消",
@@ -81,7 +84,27 @@ SAMPLE = {
     "openapi": "3.0.3",
     "info": {"title": "在庫照会", "version": "1.0.0"},
     "paths": {
-        "/items": {"get": {"summary": "在庫を照会", "responses": {"200": {"description": "照会結果"}}}}
+        "/items": {
+            "get": {"summary": "在庫一覧を取得", "responses": {"200": {"description": "在庫一覧"}}}
+        },
+        "/items/{sku}": {
+            "get": {
+                "summary": "商品コードで在庫を取得",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "sku",
+                        "required": True,
+                        "schema": {"type": "string"},
+                        "example": "TS-01",
+                    }
+                ],
+                "responses": {
+                    "200": {"description": "該当商品の在庫"},
+                    "404": {"description": "商品が見つかりません"},
+                },
+            }
+        },
     },
 }
 PAGES = {
@@ -173,6 +196,8 @@ async def load():
             ctx["keys"], ctx["key_assets"] = await asyncio.gather(
                 client.api("/keys"), client.api("/key-assets")
             )
+    elif page == "register":
+        ctx["policy_directory"] = await client.api("/workspace")
     elif page == "home":
         ctx["dashboard"] = await client.api("/dashboard")
         ctx["home_metrics"], ctx["recent_logs"] = await asyncio.gather(
@@ -322,8 +347,8 @@ async def audit_page(offset):
     await load()
 
 
-async def register():
-    chosen = [value(k) for k in ("sandbox", "production") if value(k)]
+async def register(publish_now=False):
+    chosen = [value(k) for k in product_views.ENV if value(k)]
     if not chosen:
         raise ValueError("接続先を一つ以上選んでください")
     bindings = ctx["me"]["targets"]
@@ -334,23 +359,38 @@ async def register():
         if file.size > 500000:
             raise ValueError("500KB以内のファイルを選んでください")
         spec_text = str(await file.text())
+    try:
+        spec = json.loads(spec_text)
+        info = spec["info"]
+    except (ValueError, TypeError, KeyError) as exc:
+        raise ValueError("OpenAPI 3.0 / 3.1 のJSONファイルを指定してください") from exc
     data = {
+        "release_note": value("release-note"),
+        "offers": {
+            bindings[k]["environment"]: product_views.read_offer(bindings[k]["environment"], value)
+            for k in chosen
+        },
         "base_path": value("base-path"),
-        "name": value("name"),
-        "summary": value("summary"),
+        "name": value("name") or info.get("title", ""),
+        "summary": value("summary") or info.get("description") or info.get("title", ""),
         "owner": bindings[chosen[0]]["owner"],
         "targets": {bindings[k]["environment"]: k for k in chosen},
-        "spec": json.loads(spec_text),
+        "spec": spec,
     }
     if route().startswith("edit/"):
         row = ctx["detail"]
         asset = await client.api("/apis/" + row["id"] + "?revision=" + str(row["revision"]), "PUT", data)
-        await go("api/" + asset["id"])
-        ctx["message"] = "掲載内容を変更しました"
-        return
-    asset = await client.api("/apis", "POST", data)
+    else:
+        asset = await client.api("/apis", "POST", data)
     await go("api/" + asset["id"])
-    ctx["message"] = "下書きを保存しました。仕様を確認して公開してください。"
+    if publish_now and not asset["published"]:
+        await publication(asset)
+    else:
+        ctx["message"] = (
+            "掲載内容を保存しました"
+            if asset["published"]
+            else "下書きを保存しました。仕様を確認して公開してください。"
+        )
 
 
 async def publication(asset):
@@ -371,6 +411,7 @@ async def apply(asset):
             or value("project") == ctx["me"]["personal_project"],
             "environment": value("environment"),
             "reason": value("reason"),
+            **product_views.answers(asset, value("environment"), value),
         },
     )
     await go("mine")
@@ -462,17 +503,34 @@ async def login_member():
 
 def inventory_form(asset=None):
     item = asset or {}
-    t.p("接続先とOpenAPI仕様を登録し、下書きの詳細画面で公開します。", classes="muted")
+    t.p(
+        "出品する環境の接続先とOpenAPI 3.0 / 3.1のJSONを選びます。API名と説明はファイルから取り込めます。",
+        classes="muted",
+    )
     with t.div(classes="box"):
         field("API名", "name", text=item.get("name", ""))
         field("用途・説明", "summary", text=item.get("summary", ""))
-        for env in ("sandbox", "production"):
+        for env in product_views.ENV:
             opts = [("", "指定しない")] + [
                 (k, k + " · " + v["owner"])
                 for k, v in ctx["me"]["targets"].items()
                 if v["environment"] == env
             ]
             field(LABEL[env] + "の接続先", env, options=opts, text=item.get("bindings", {}).get(env, ""))
+            product_views.offer_editor(
+                env,
+                item.get("offers", {}).get(env, {}),
+                field,
+                bool(asset),
+                ctx["policy_directory"]["units"],
+            )
+        field(
+            "この版の変更内容",
+            "release-note",
+            textarea=True,
+            text=item.get("release_note", ""),
+            placeholder="例：在庫照会に倉庫別の検索を追加",
+        )
         field(
             "接続先のベースパス（任意）",
             "base-path",
@@ -491,8 +549,11 @@ def inventory_form(asset=None):
             else "",
         )
         if asset:
-            t.p("仕様や接続先を変えると下書きに戻り、現在の利用権と申請を終了します。")
-        btn("変更を保存" if asset else "下書きを保存", register, primary=True)
+            t.p(
+                "仕様や接続先を変えると全環境の利用権と申請を終了します。利用条件のみの変更では、変更した環境で再申請が必要です。"
+            )
+        btn("変更を保存" if asset else "下書きを保存", register)
+        btn("保存して公開", register, True, primary=True)
 
 
 def cards():
@@ -513,7 +574,12 @@ def cards():
             field(
                 "提供環境",
                 "filter-env",
-                options=[("", "すべての環境"), ("sandbox", "検証"), ("production", "本番")],
+                options=[
+                    ("", "すべての環境"),
+                    ("sandbox", "検証"),
+                    ("staging", "準本番"),
+                    ("production", "本番"),
+                ],
                 text=ctx["env"],
             )
             t.button("検索", type="submit", classes="btn btn-primary")
@@ -621,15 +687,9 @@ def detail_page():
         btn("APIを削除", delete_listing, a)
         policy_form(a)
         operation_views.provider_view(a, ctx, field, btn, load)
-    with t.div(classes="box"):
-        t.h2("操作と仕様")
-        for path, ops in a["spec"]["paths"].items():
-            for method, op in ops.items():
-                if method in {"get", "post", "put", "patch", "delete"}:
-                    t.p(f"{method.upper()}  {path}　{op.get('summary', '')}", classes="code")
-        with t.details():
-            t.summary("OpenAPI定義を表示")
-            t.pre(json.dumps(a["spec"], ensure_ascii=False, indent=2), classes="code")
+    with t.details(classes="box"):
+        t.summary("OpenAPI定義を表示")
+        t.pre(json.dumps(a["spec"], ensure_ascii=False, indent=2), classes="code")
     for row in ctx.get("rights", []):
         with t.div(classes="grant-status"):
             if row.get("subject"):
@@ -640,6 +700,7 @@ def detail_page():
             )
             if row.get("decision_reason"):
                 t.span("判断理由　" + row["decision_reason"])
+    product_views.release_history(a)
     api_docs.view(a, ctx.get("rights", []), ctx.get("keys", []), subject=ctx["me"]["subject"])
     if a["published"]:
         with t.div(classes="box"):
@@ -655,7 +716,7 @@ def detail_page():
                 "grant-kind",
                 options=[("project", "プロジェクト全員"), ("personal", "自分だけ")],
             )
-            field("環境", "environment", options=[(e, LABEL[e]) for e in a["environments"]])
+            product_views.application_form(a, field)
             field("利用目的", "reason", textarea=True)
             btn("申請する", apply, a, primary=True)
     rights = [r for r in ctx.get("rights", []) if r["asset_id"] == a["id"] and r["status"] == "approved"]
@@ -716,6 +777,30 @@ def rights_page(incoming):
                     + row["applicant"]
                 )
             t.p("利用目的　" + row["reason"])
+            stage = {"department": "所属部署の承認待ち", "provider": "提供者の承認待ち"}.get(
+                row.get("stage")
+            )
+            if row.get("stage", "") and row["stage"].startswith("unit/"):
+                stage = row["stage"][5:] + " 部署の承認待ち"
+            if stage:
+                t.p(stage)
+            evidence = row.get("application", {})
+            for decision in evidence.get("decisions", []):
+                t.p(
+                    product_views.step_label(decision["stage"])
+                    + " · "
+                    + ACTIONS[decision["action"]]
+                    + " · "
+                    + decision["actor"]
+                    + "　"
+                    + decision["reason"]
+                )
+            if evidence.get("terms_accepted"):
+                with t.details():
+                    t.summary("同意済みの利用規約")
+                    t.p(evidence["terms"], classes="terms-text")
+            for label, answer in evidence.get("answers", {}).items():
+                t.p(label + "　" + answer)
             if row.get("decision_reason"):
                 t.p("判断理由　" + row["decision_reason"], classes="decision")
             acts = (
@@ -1019,7 +1104,11 @@ def filters_view(chart):
                 "利用プロジェクト",
                 [("", "すべて")] + sorted({(v["project"], v["project"]) for v in dims if v["project"]}),
             )
-            choice("env", "対象環境", [("", "すべて"), ("sandbox", "検証"), ("production", "本番")])
+            choice(
+                "env",
+                "対象環境",
+                [("", "すべて"), ("sandbox", "検証"), ("staging", "準本番"), ("production", "本番")],
+            )
             field("HTTPステータス", "f-status", text=f["status"], placeholder="すべて")
             if chart:
                 choice("minutes", "集計間隔", [(str(n), str(n) + "分") for n in (1, 5, 15, 60, 1440)])

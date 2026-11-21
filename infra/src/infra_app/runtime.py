@@ -1,5 +1,6 @@
 from aws_cdk import ArnFormat, Stack
 from aws_cdk import aws_iam as iam
+from aws_cdk import aws_s3 as s3
 from aws_cdk import aws_secretsmanager as sm
 from constructs import Construct
 
@@ -47,6 +48,18 @@ class ApiRuntime(Construct):
         self.role = role
         self.origin_secret = secret
         self.api = catalog_function(self, "Api", "app.main.handler", runtime_env, code, role)
+        archive = s3.Bucket(
+            self,
+            "Specifications",
+            versioned=True,
+            enforce_ssl=True,
+            block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
+            encryption=s3.BucketEncryption.S3_MANAGED,
+        )
+        self.api.add_environment("SPEC_BUCKET", archive.bucket_name)
+        role.add_to_policy(
+            iam.PolicyStatement(actions=["s3:PutObject"], resources=[archive.arn_for_objects("specs/*")])
+        )
         self.authorizer = catalog_function(
             self, "Access", "app.authorizer.handler", runtime_env, code, role
         )

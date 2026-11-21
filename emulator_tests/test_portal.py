@@ -114,7 +114,7 @@ def live_portal(aws, resources, tmp_path, identity, binding=None, ca=None):
                 "owner": "supply",
                 "environment": env,
             }
-            for env in ("sandbox", "production")
+            for env in ("sandbox", "staging", "production")
         }
         param = "/tsugite/" + identity + ("-https" if binding else "-lambda")
         aws.client("ssm").put_parameter(Name=param, Type="String", Value=json.dumps(config))
@@ -126,6 +126,9 @@ def live_portal(aws, resources, tmp_path, identity, binding=None, ca=None):
             "TSUGITE_DEMO": "0",
             "SSL_CERT_FILE": str(ca or os.environ["AWS_CA_BUNDLE"]),
             "HUB_SETTINGS_PARAMETER": param,
+            "SPEC_BUCKET": next(
+                v for k, v in resources.items() if k.startswith("RuntimeSpecifications")
+            ),
             "DATABASE_URL": "sqlite:///" + str(tmp_path / "catalog.db"),
         }
         with (tmp_path / "access.log").open("w") as log, serve_portal(env, log=log) as url:
@@ -214,6 +217,12 @@ def test_approved_calls_reach_upstream(aws, resources, tmp_path, identity, upstr
         call = api.get(path, headers=invoker)
         assert call.status_code == 200, call.text
         assert call.json() == {"items": [{"sku": "TS-01", "stock": 12}]}
+        if upstream == "lambda":
+            assert api.get(path + "/TS-01", headers=invoker).raise_for_status().json() == {
+                "sku": "TS-01",
+                "stock": 12,
+            }
+            assert api.get(path + "/UNKNOWN", headers=invoker).status_code == 404
         audit = api.get(
             "audit", headers=owner, params={"request_id": call.headers["x-request-id"]}
         ).json()

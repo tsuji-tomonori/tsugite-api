@@ -3,6 +3,7 @@
 import json
 from time import time
 
+from app.core.openapi import path_items
 from app.core.workspace import ancestry, units
 from app.db.models import Access, CredentialRule, PortalKey
 from fastapi import HTTPException
@@ -17,7 +18,7 @@ def operations(asset):
     spec = json.loads(asset.spec)
     return sorted(
         f"{m.upper()} {p}"
-        for p, item in spec["paths"].items()
+        for p, item in path_items(spec)
         for m in item
         if m in ("get", "post", "put", "patch", "delete")
     )

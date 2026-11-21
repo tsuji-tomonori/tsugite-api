@@ -41,7 +41,7 @@ def test_schema_matches_models_and_replays(portal):
     with db.connect() as conn:
         legacy = conn.execute(text("SELECT mode,created,digest FROM api_keys WHERE id='old-key'")).one()
         assert legacy.mode is None and legacy.created > 0 and legacy.digest == "existing-digest"
-        assert conn.scalar(text("select version_num from alembic_version")) == "005"
+        assert conn.scalar(text("select version_num from alembic_version")) == "006"
         assert conn.execute(text("select name,base_path from assets where id='before'")).one() == (
             "旧版",
             None,

@@ -14,6 +14,30 @@
           }
         }
       }
+    },
+    "/items/{sku}": {
+      "get": {
+        "summary": "商品コードで在庫を取得",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sku",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "TS-01"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "該当商品の在庫"
+          },
+          "404": {
+            "description": "商品が見つかりません"
+          }
+        }
+      }
     }
   }
 }

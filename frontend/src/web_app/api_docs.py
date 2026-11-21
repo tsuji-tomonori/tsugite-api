@@ -12,7 +12,7 @@ from pyodide.http import pyfetch
 METHODS = ("get", "post", "put", "patch", "delete", "head", "options", "trace")
 INVOKABLE = frozenset(("get", "post", "put", "patch", "delete"))
 CREDENTIAL_MODES = {"bearer": "短期Bearer", "app": "アプリ", "system": "システム"}
-ENVIRONMENTS = {"sandbox": "検証", "production": "本番"}
+ENVIRONMENTS = {"sandbox": "検証", "staging": "準本番", "production": "本番"}
 
 
 def resolve(spec, node):
@@ -291,6 +291,16 @@ def try_operation(spec, asset, bindings, method, path, params, body, prefix):
     t.pre("", id=prefix + "-response", classes="code", aria_live="polite")
 
 
+def jump_to(anchor):
+    def jump(event):
+        panel = document.getElementById(anchor)
+        panel.open = True
+        panel.querySelector("summary").focus()
+        panel.scrollIntoView()
+
+    return jump
+
+
 def view(asset, rights, keys, *, subject=""):
     spec = asset["spec"]
     bindings = available_bindings(asset["id"], rights, keys, subject)
@@ -302,58 +312,69 @@ def view(asset, rights, keys, *, subject=""):
         )
         if info.get("description"):
             t.p(info["description"])
-        index = 0
-        for path, raw in spec["paths"].items():
-            item = resolve(spec, raw)
-            if not isinstance(item, dict):
-                continue
-            for method in METHODS:
-                if method not in item:
-                    continue
-                name = method.upper() + " " + path
-                allowed = asset.get("allowed_operations")
-                if allowed is not None and name not in allowed:
-                    continue
-                usable = [
-                    entry
-                    for entry in bindings
-                    if asset["id"] not in entry[0].get("operations", {})
-                    or name in entry[0]["operations"][asset["id"]]
-                ]
-                if bindings and not usable:
-                    continue
-                operation = item[method]
-                params = parameters(spec, item, operation)
-                body = resolve(spec, operation.get("requestBody", {}))
-                with t.details():
-                    t.summary(
-                        f"{method.upper()} {path}　{operation.get('summary') or operation.get('operationId', '')}"
-                    )
-                    if operation.get("description"):
-                        t.p(operation["description"])
-                    if params:
-                        t.h3("パラメータ")
-                    for p in params:
-                        required = "必須" if p["in"] == "path" or p.get("required") else "任意"
-                        t.p(
-                            f"{p['name']}（{p['in']} / {type_name(spec, p.get('schema', {}))} / {required}） {p.get('description', '')}"
-                        )
-                    if body:
-                        t.h3("リクエスト本文")
-                        if body.get("description"):
-                            t.p(body["description"])
-                        media_docs(spec, body.get("content", {}))
-                    t.h3("レスポンス")
-                    for code, raw_response in operation.get("responses", {}).items():
-                        if code.startswith("x-"):
+        menu = []
+        with t.div(classes="docs-layout"):
+            with t.div(classes="docs-content"):
+                index = 0
+                for path, raw in spec["paths"].items():
+                    item = resolve(spec, raw)
+                    if not isinstance(item, dict):
+                        continue
+                    for method in METHODS:
+                        if method not in item:
                             continue
-                        response = resolve(spec, raw_response)
-                        t.p(f"{code}　{response.get('description', '')}")
-                        media_docs(spec, response.get("content", {}))
-                    if usable and method in INVOKABLE:
-                        t.h3("この操作を呼び出す")
-                        try_operation(spec, asset, usable, method, path, params, body, f"docs-{index}")
-                    index += 1
+                        name = method.upper() + " " + path
+                        allowed = asset.get("allowed_operations")
+                        if allowed is not None and name not in allowed:
+                            continue
+                        usable = [
+                            entry
+                            for entry in bindings
+                            if asset["id"] not in entry[0].get("operations", {})
+                            or name in entry[0]["operations"][asset["id"]]
+                        ]
+                        if bindings and not usable:
+                            continue
+                        menu.append((f"operation-{index}", name, item[method].get("summary", "")))
+                        operation = item[method]
+                        params = parameters(spec, item, operation)
+                        body = resolve(spec, operation.get("requestBody", {}))
+                        with t.details(id=f"operation-{index}", classes="doc-operation"):
+                            t.summary(
+                                f"{method.upper()} {path}　{operation.get('summary') or operation.get('operationId', '')}"
+                            )
+                            if operation.get("description"):
+                                t.p(operation["description"])
+                            if params:
+                                t.h3("パラメータ")
+                            for p in params:
+                                required = "必須" if p["in"] == "path" or p.get("required") else "任意"
+                                t.p(
+                                    f"{p['name']}（{p['in']} / {type_name(spec, p.get('schema', {}))} / {required}） {p.get('description', '')}"
+                                )
+                            if body:
+                                t.h3("リクエスト本文")
+                                if body.get("description"):
+                                    t.p(body["description"])
+                                media_docs(spec, body.get("content", {}))
+                            t.h3("レスポンス")
+                            for code, raw_response in operation.get("responses", {}).items():
+                                if code.startswith("x-"):
+                                    continue
+                                response = resolve(spec, raw_response)
+                                t.p(f"{code}　{response.get('description', '')}")
+                                media_docs(spec, response.get("content", {}))
+                            if usable and method in INVOKABLE:
+                                t.h3("この操作を呼び出す")
+                                try_operation(
+                                    spec, asset, usable, method, path, params, body, f"docs-{index}"
+                                )
+                            index += 1
+            if menu:
+                with t.nav(classes="docs-menu", aria_label="API操作一覧"):
+                    t.h3("API操作一覧")
+                    for anchor, name, summary in menu:
+                        t.button(name, title=summary or name, type="button", on_click=jump_to(anchor))
         if not index:
             t.p("この利用者と認証情報で許可されている操作はありません。")
         if spec.get("components", {}).get("schemas"):

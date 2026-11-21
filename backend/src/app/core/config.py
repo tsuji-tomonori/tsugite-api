@@ -12,7 +12,7 @@ def local_demo() -> bool:
 
 class Target(BaseModel):
     owner: str = Field(pattern=r"^[a-z][a-z0-9-]{0,62}$")
-    environment: Literal["sandbox", "production"]
+    environment: Literal["sandbox", "staging", "production"]
     kind: Literal["lambda", "https", "demo"]
     address: str
     secret_arn: str = ""
@@ -55,6 +55,12 @@ def settings() -> dict:
                     "environment": "sandbox",
                     "kind": "demo",
                     "address": "sample",
+                },
+                "sample-staging": {
+                    "owner": "supply",
+                    "environment": "staging",
+                    "kind": "demo",
+                    "address": "sample-staging",
                 },
                 "sample-production": {
                     "owner": "supply",

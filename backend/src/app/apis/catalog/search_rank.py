@@ -9,6 +9,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from typing import Literal
 
+from app.core.openapi import path_items
 from app.db.models import Asset
 
 # Each axis describes a business concept. OpenAPI tags extend these axes with
@@ -81,9 +82,7 @@ def document(asset: Asset) -> Document:
         normalize(t["name"]): normalize(t.get("description", "")) for t in spec.get("tags", [])
     }
     tags = set()
-    for path, item in spec.get("paths", {}).items():
-        if not path.startswith("/"):
-            continue
+    for path, item in path_items(spec):
         ops.append(path)
         for method, op in item.items():
             if method not in METHODS:

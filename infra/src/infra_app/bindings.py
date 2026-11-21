@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from aws_cdk import Stack
 from aws_cdk import aws_iam as iam
 from aws_cdk import aws_lambda as fn
@@ -10,23 +12,30 @@ class UpstreamBindings(Construct):
         super().__init__(scope, key)
         targets = dict(cfg.get("targets", {}))
         if include_sample:
-            sample = fn.Function(
-                self,
-                "Sample",
-                runtime=fn.Runtime.PYTHON_3_14,
-                handler="index.handler",
-                code=fn.Code.from_inline(
-                    'import json\ndef handler(event, context):\n    return {"statusCode":200,"headers":{"content-type":"application/json"},"body":json.dumps({"items":[{"sku":"TS-01","stock":12}]})}'
-                ),
-            )
-            targets["stock-sandbox"] = {
-                "owner": "supply",
-                "environment": "sandbox",
-                "kind": "lambda",
-                "address": sample.function_arn,
-            }
+            for environment, name in (
+                ("sandbox", "Sample"),
+                ("staging", "StagingSample"),
+                ("production", "ProductionSample"),
+            ):
+                sample = fn.Function(
+                    self,
+                    name,
+                    runtime=fn.Runtime.PYTHON_3_14,
+                    handler="index.handler",
+                    code=fn.Code.from_inline(Path(__file__).with_name("stock_sample.py").read_text()),
+                )
+                targets["stock-" + environment] = {
+                    "owner": "supply",
+                    "environment": environment,
+                    "kind": "lambda",
+                    "address": sample.function_arn,
+                }
         for target in targets.values():
-            if target["owner"] not in projects or target["environment"] not in ("sandbox", "production"):
+            if target["owner"] not in projects or target["environment"] not in (
+                "sandbox",
+                "staging",
+                "production",
+            ):
                 raise ValueError("invalid target owner or environment")
             if target["kind"] == "lambda":
                 if "*" in target["address"]:
