@@ -17,6 +17,11 @@ from playwright.sync_api import sync_playwright
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "artifacts"
 CASE = {
+    "test_nested_token_lifetime": "提供者・部署・プロジェクトの上限、更新と失効の秒境界、発行後の上限短縮を確認する",
+    "test_persistent_system_and_legacy_expiry": "60日後もシステム資格で再発行でき、古いアクセストークン・従来キーは失効する",
+    "test_credentials_console": "ブラウザーで3方式を発行し、実時計で1分後に更新、シークレット変更・失効まで確認する",
+    "test_person_operation_console": "提供者が利用者の操作を選び、送料1,400円のHTTPS応答と権限変更直後の転送停止を照合する",
+    "test_client_tokens_reach_https": "AWS EmulatorのCognito利用者とシステムのトークンを発行し、HTTPS到達・拒否・秘密更新を確認する",
     "test_invitation_respects_identity_source": "Cognitoグループの除外が有効で、ポータルで新設したプロジェクトへの招待も反映される",
     "test_gateway_scoped_key_authorizer": "API Gateway用の認可関数で、本人キー・別ユーザー・失効の判定を確認する",
     "test_provider_policy_console": "提供者が公開・自動承認・委任の条件を保存し、部署リーダーが個人申請を画面から却下する",
@@ -232,6 +237,8 @@ def inventory():
 
 
 GALLERIES = {
+    "test_credentials_console": ("認証方式の選択と更新条件", 3),
+    "test_person_operation_console": ("利用者別の操作権限とAPI Docsからの実行", 2),
     "test_provider_policy_console": ("提供者の公開設定と部署リーダーの判断", 2),
     "test_workspace_key_console": ("組織・リーダーの利用状況とAPIキー", 3),
     "test_openapi_key_console": ("API DocsからHTTPSの送料計算を実行", 3),
@@ -243,6 +250,20 @@ GALLERIES = {
 }
 
 JOURNEYS = [
+    (
+        "認証方式・有効期限",
+        "提供者から利用者まで上限を引き継ぐ。短期Bearerの更新、アプリによる代理実行、長期間使うシステムのトークン再発行を確かめる。",
+        [
+            "test_nested_token_lifetime",
+            "test_credentials_console",
+            "test_persistent_system_and_legacy_expiry",
+        ],
+    ),
+    (
+        "人・アプリごとの操作権限",
+        "対象APIとOpenAPIの操作を選び、実際のHTTPS応答と受信件数を照合する。権限の取り消しは発行済みトークンにも適用する。",
+        ["test_person_operation_console", "test_client_tokens_reach_https"],
+    ),
     (
         "組織・利用範囲",
         "管理者が階層と兼務を設定し、リーダーは担当範囲の所属と利用状況を確認して停止・再開できる。",
