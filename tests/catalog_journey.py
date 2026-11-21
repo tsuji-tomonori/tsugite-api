@@ -66,7 +66,7 @@ def catalog_journey(url, case, tokens=None, consumer_subject="consumer"):
             else:
                 provider.get_by_role("button", name="提供チーム", exact=True).click()
             navigate(provider, "提供するAPI")
-            provider.get_by_role("button", name="APIを登録").click()
+            provider.get_by_role("button", name="APIを登録", exact=True).click()
             provider.get_by_label("API名", exact=True).fill("棚卸API")
             provider.get_by_label("用途・説明").fill("倉庫の在庫を照会する")
             provider.get_by_label("検証の接続先").select_option("sample-sandbox")

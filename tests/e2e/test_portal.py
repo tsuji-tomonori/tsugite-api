@@ -25,7 +25,7 @@ def test_large_catalog(demo_url, request):
     import httpx
     from playwright.sync_api import expect, sync_playwright
 
-    from tests.catalog_journey import browser_evidence
+    from tests.catalog_journey import browser_evidence, navigate
     from tools.seed_marketplace import CATALOG, offer, seed
 
     with httpx.Client(base_url=demo_url + "/api/", trust_env=False) as api:
@@ -56,6 +56,7 @@ def test_large_catalog(demo_url, request):
             for view in (desktop, mobile):
                 view.goto(demo_url)
                 view.get_by_role("button", name="利用チーム", exact=True).click()
+                navigate(view, "APIカタログ")
                 expect(view.get_by_role("heading", name="API一覧（120件）")).to_be_visible()
                 expect(view.locator(".asset-card")).to_have_count(12)
                 assert view.evaluate("document.documentElement.scrollWidth <= innerWidth")
@@ -120,17 +121,21 @@ def test_console_visual_modes(demo_url, request):
         with browser_evidence(request.node, "visual-modes", page, page) as capture:
             page.goto(demo_url)
             page.get_by_role("button", name="提供チーム", exact=True).click()
+            navigate(page, "APIカタログ")
             link = page.locator(".asset-title").first
             expect(link).to_be_visible()
             primary = page.get_by_role("button", name="検索", exact=True)
             mode = page.get_by_label("表示モード")
-            for theme, link_color in (("light", "rgb(0, 108, 224)"), ("dark", "rgb(66, 180, 255)")):
+            for theme, link_color in (("light", "rgb(37, 36, 32)"), ("dark", "rgb(239, 238, 235)")):
                 mode.select_option(theme)
                 expect(link).to_have_css("color", link_color)
-                expect(primary).to_have_css("background-color", "rgb(255, 153, 0)")
-                expect(primary).to_have_css("border-radius", "20px")
-                expect(page.locator(".asset-card").first).to_have_css("border-radius", "16px")
-                expect(page.locator(".form-select").first).to_have_css("border-radius", "8px")
+                expect(primary).to_have_css("background-color", link_color)
+                expect(page.locator("body")).to_have_css(
+                    "background-color", "rgb(249, 249, 249)" if theme == "light" else "rgb(16, 15, 14)"
+                )
+                expect(primary).to_have_css("border-radius", "4px")
+                expect(page.locator(".asset-card").first).to_have_css("border-radius", "4px")
+                expect(page.locator(".form-select").first).to_have_css("border-radius", "4px")
                 readings = [
                     (label, contrast(item))
                     for label, item in (
@@ -170,7 +175,7 @@ def test_console_visual_modes(demo_url, request):
             expect(link).to_contain_text("配送")
             mode.select_option("auto")
             page.emulate_media(color_scheme="dark")
-            expect(link).to_have_css("color", "rgb(66, 180, 255)")
+            expect(link).to_have_css("color", "rgb(239, 238, 235)")
             page.set_viewport_size({"width": 390, "height": 844})
             page.reload()
             navigate(page, "監査履歴")
@@ -184,4 +189,101 @@ def test_console_visual_modes(demo_url, request):
             expect(button).to_be_focused()
             expect(button).to_have_css("outline-style", "solid")
             capture(page, "forced", "OSの強制カラーで表示した監査履歴とキーボードのフォーカス枠")
+        browser.close()
+
+
+def test_governance_console(demo_url, request):
+    import json
+
+    import httpx
+    from playwright.sync_api import expect, sync_playwright
+
+    from tests.catalog_journey import browser_evidence, navigate
+    from tests.test_catalog import headers
+    from tests.test_governance import approved
+
+    with httpx.Client(base_url=demo_url, trust_env=False) as api, sync_playwright() as pw:
+        owner, consumer = (headers(api, r) for r in ("provider", "consumer"))
+        key, _, path = approved(api, owner, consumer)
+        browser = pw.chromium.launch(executable_path=os.getenv("CHROMIUM_PATH") or None)
+        admin, provider, user = (
+            browser.new_page(viewport={"width": 1440, "height": 960}) for _ in range(3)
+        )
+        for view in (admin, provider):
+            view.on("dialog", lambda dialog: dialog.accept())
+        with browser_evidence(request.node, "governance", provider, user) as capture:
+            for view, label, role in (
+                (admin, "管理者", "管理者"),
+                (provider, "提供チーム", "提供者"),
+                (user, "利用チーム", "利用者"),
+            ):
+                view.goto(demo_url)
+                view.get_by_role("button", name=label, exact=True).click()
+                expect(view.get_by_text(role + "としての利用状況")).to_be_visible()
+                capture(view, "home-" + role, role + "のホームと利用状況")
+            navigate(admin, "ユーザー管理")
+            admin.get_by_label("メールアドレス").fill("catalog-reader@example.org")
+            admin.get_by_label("所属プロジェクト").select_option("finance")
+            admin.get_by_role("button", name="追加する").click()
+            row = admin.locator(".compact-row").filter(has_text="catalog-reader@example.org")
+            expect(row).to_be_visible()
+            capture(admin, "members", "管理者が追加した利用者と所属プロジェクト")
+            row.get_by_role("button", name="削除", exact=True).click()
+            expect(row).to_have_count(0)
+            for view, label in ((admin, "管理者からのお知らせ"), (provider, "在庫API更新予定")):
+                view.locator(".bell-button").click()
+                view.get_by_text("利用者に通知を送る").click()
+                view.get_by_label("件名").fill(label)
+                view.get_by_label("お知らせ本文").fill("検証環境の利用時間を変更します。")
+                view.get_by_role("button", name="通知を送信", exact=True).click()
+                expect(view.get_by_text("通知を送信しました")).to_be_visible()
+            navigate(provider, "アラート")
+            provider.get_by_label("しきい値（件）").fill("2")
+            provider.get_by_label("集計期間").select_option("1440")
+            provider.get_by_label("到達時の動作").select_option("stop")
+            provider.get_by_role("button", name="ルールを保存").click()
+            expect(provider.get_by_text("アラート設定を保存しました")).to_be_visible()
+            capture(provider, "alert", "提供者が設定した検証環境の上限と停止条件")
+            assert [api.get(path, headers=consumer).status_code for _ in range(3)] == [200, 200, 429]
+            user.locator(".bell-button").click()
+            expect(user.get_by_role("heading", name="利用件数アラート")).to_be_visible()
+            notice = user.locator("article").filter(has_text="在庫API更新予定")
+            notice.get_by_role("button", name="既読にする").click()
+            expect(notice.get_by_text("既読", exact=False)).to_be_visible()
+            expect(user.get_by_role("heading", name="管理者からのお知らせ")).to_be_visible()
+            capture(user, "notices", "管理者・提供者・しきい値からの通知と個人の既読状態")
+            navigate(user, "メトリクス")
+            user.get_by_label("表示指標").select_option("denied")
+            user.get_by_label("期間", exact=True).select_option("1")
+            user.get_by_label("集計間隔").select_option("5")
+            user.get_by_role("button", name="条件を適用").click()
+            expect(user.get_by_role("heading", name="拒否件数")).to_be_visible()
+            capture(user, "metrics", "利用者の拒否件数。直近1時間を5分間隔で表示")
+            user.get_by_role("button", name=__import__("re").compile(r"UTC · 1$")).click()
+            expect(user.get_by_text("429　GET /items")).to_be_visible()
+            capture(user, "access", "グラフから開いた同じ時間帯のアクセスログ")
+            with user.expect_download() as saved:
+                user.get_by_role("button", name="アクセスログをダウンロード").click()
+            assert sorted(
+                json.loads(line)["status"] for line in saved.value.path().read_text().splitlines()
+            ) == [200, 200, 429]
+            user.locator("article").filter(has_text="429").get_by_role(
+                "button", name="対応する業務監査"
+            ).click()
+            expect(user.get_by_text("呼び出し拒否", exact=True).last).to_be_visible()
+            with user.expect_download() as audit_file:
+                user.get_by_role("button", name="業務監査をダウンロード").click()
+            assert json.loads(audit_file.value.path().read_text())["action"] == "invoke.denied"
+            capture(user, "audit", "429のリクエストIDで照合した業務監査")
+            navigate(provider, "提供するAPI")
+            provider.get_by_role("link", name="在庫", exact=True).click()
+            provider.get_by_role("button", name="内容を編集").click()
+            provider.get_by_label("API名", exact=True).fill("棚卸・在庫照会")
+            provider.get_by_role("button", name="変更を保存").click()
+            expect(provider.get_by_role("heading", name="棚卸・在庫照会")).to_be_visible()
+            provider.get_by_role("button", name="掲載を取り下げる").click()
+            expect(provider.get_by_role("button", name="公開する")).to_be_visible()
+            provider.get_by_role("button", name="APIを削除").click()
+            expect(provider.get_by_text("APIを削除しました")).to_be_visible()
+            assert api.get(path, headers=consumer).status_code == 404
         browser.close()

@@ -1,5 +1,6 @@
 import asyncio
 import json
+from datetime import datetime, timedelta, timezone
 from urllib.parse import quote, urlencode
 
 import client
@@ -18,6 +19,18 @@ ctx = {
     "error": False,
     "busy": False,
     "query": "",
+    "filters": {
+        "hours": "24",
+        "minutes": "60",
+        "measure": "calls",
+        "asset": "",
+        "project": "",
+        "env": "",
+        "status": "",
+        "start": "",
+        "end": "",
+    },
+    "badge": 0,
     "trial": "",
     "trace": "",
     "page": 1,
@@ -44,6 +57,13 @@ ACTIONS = {
     "reject": "却下",
     "withdraw": "申請取り下げ",
     "revoke": "権限取消",
+    "edit": "掲載内容変更",
+    "delete": "API削除",
+    "member.add": "ユーザー追加",
+    "member.delete": "ユーザー削除",
+    "notify": "通知送信",
+    "alert.configure": "ルール変更",
+    "alert.trigger": "しきい値到達",
     "invoke.start": "呼び出し開始",
     "invoke.end": "応答",
     "invoke.denied": "呼び出し拒否",
@@ -57,6 +77,12 @@ SAMPLE = {
     },
 }
 PAGES = {
+    "home": "ホーム",
+    "metrics": "メトリクス",
+    "logs": "アクセスログ",
+    "members": "ユーザー管理",
+    "notifications": "通知",
+    "alerts": "アラート",
     "catalog": "APIカタログ",
     "mine": "自分の申請",
     "inventory": "提供するAPI",
@@ -70,7 +96,7 @@ def value(name):
 
 
 def route():
-    return str(window.location.hash).lstrip("#/") or "catalog"
+    return str(window.location.hash).lstrip("#/") or "home"
 
 
 def render():
@@ -126,10 +152,48 @@ async def load():
     if not ctx["me"]:
         return
     page = route()
-    if page.startswith("api/"):
-        if (ctx["detail"] or {}).get("id") != page[4:]:
+    ctx["badge"] = (await client.api("/notifications/count"))["unread"]
+    if page == "home":
+        ctx["dashboard"] = await client.api("/dashboard")
+        ctx["home_metrics"], ctx["recent_logs"] = await asyncio.gather(
+            client.api("/metrics?minutes=60"), client.api("/access-logs")
+        )
+    elif page == "members" and ctx["me"]["admin"]:
+        ctx["members"] = await client.api(
+            "/members?" + urlencode({"cursor": ctx.get("member_cursor", "")})
+        )
+    elif page in ("notifications", "alerts"):
+        ctx["targets"] = (
+            await client.api("/management-targets") if ctx["me"]["owners"] or ctx["me"]["admin"] else []
+        )
+        if page == "notifications":
+            ctx["notices"] = await client.api(
+                "/notifications?offset=" + str(ctx.get("notice_offset", 0))
+            )
+        else:
+            ctx["rules"] = await client.api("/alerts")
+    elif page in ("metrics", "logs"):
+        ctx["dims"] = await client.api("/metric-dimensions")
+        params = time_params()
+        if page == "metrics":
+            ctx["metrics"] = await client.api(
+                "/metrics?" + urlencode({**params, "minutes": ctx["filters"]["minutes"]})
+            )
+        else:
+            ctx["log_rows"] = await client.api(
+                "/access-logs?"
+                + urlencode(
+                    {
+                        **params,
+                        "request_id": ctx.get("access_id", ""),
+                        "offset": ctx.get("log_offset", 0),
+                    }
+                )
+            )
+    elif page.startswith(("api/", "edit/")):
+        if (ctx["detail"] or {}).get("id") != page.split("/", 1)[1]:
             ctx.update(trial="", trace="")
-        ctx["detail"] = await client.api("/apis/" + quote(page[4:], safe=""))
+        ctx["detail"] = await client.api("/apis/" + quote(page.split("/", 1)[1], safe=""))
         ctx["rights"] = await client.api("/requests?" + urlencode({"asset_id": ctx["detail"]["id"]}))
     elif page in ("catalog", "inventory"):
         params = {"inventory": str(page == "inventory").lower(), "page": ctx["page"], "q": ctx["query"]}
@@ -182,7 +246,7 @@ async def login(persona=None):
 async def logout():
     client.store.removeItem("access")
     ctx["me"] = None
-    await go("catalog")
+    await go("home")
     if not ctx["config"]["demo"]:
         window.location.assign(
             ctx["config"]["domain"]
@@ -241,6 +305,12 @@ async def register():
         "targets": {bindings[k]["environment"]: k for k in chosen},
         "spec": json.loads(spec_text),
     }
+    if route().startswith("edit/"):
+        row = ctx["detail"]
+        asset = await client.api("/apis/" + row["id"] + "?revision=" + str(row["revision"]), "PUT", data)
+        await go("api/" + asset["id"])
+        ctx["message"] = "掲載内容を変更しました"
+        return
     asset = await client.api("/apis", "POST", data)
     await go("api/" + asset["id"])
     ctx["message"] = "下書きを保存しました。仕様を確認して公開してください。"
@@ -332,25 +402,40 @@ def login_page():
                 ("provider", "提供チーム"),
                 ("consumer", "利用チーム"),
                 ("auditor", "監査担当"),
+                ("admin", "管理者"),
             ]:
                 btn(title, login, key, primary=key == "consumer")
+        with t.details():
+            t.summary("追加したユーザーでログイン")
+            field("登録メールアドレス", "login-email")
+            btn("このユーザーでログイン", login_member)
     else:
         btn("社内アカウントでログイン", login, primary=True)
 
 
-def inventory_form():
+async def login_member():
+    await login(quote(value("login-email").lower(), safe=""))
+
+
+def inventory_form(asset=None):
+    item = asset or {}
     t.p("接続先とOpenAPI仕様を登録し、下書きの詳細画面で公開します。", classes="muted")
     with t.div(classes="box"):
-        field("API名", "name")
-        field("用途・説明", "summary")
+        field("API名", "name", text=item.get("name", ""))
+        field("用途・説明", "summary", text=item.get("summary", ""))
         for env in ("sandbox", "production"):
             opts = [("", "指定しない")] + [
                 (k, k + " · " + v["owner"])
                 for k, v in ctx["me"]["targets"].items()
                 if v["environment"] == env
             ]
-            field(LABEL[env] + "の接続先", env, options=opts)
-        field("接続先のベースパス（任意）", "base-path", placeholder="/inventory/v1")
+            field(LABEL[env] + "の接続先", env, options=opts, text=item.get("bindings", {}).get(env, ""))
+        field(
+            "接続先のベースパス（任意）",
+            "base-path",
+            text=item.get("base_path", ""),
+            placeholder="/inventory/v1",
+        )
         with t.label(classes="field"):
             t.span("OpenAPIファイル（JSON）")
             t.input(id="spec-file", type="file", accept=".json,application/json", classes="form-control")
@@ -358,9 +443,13 @@ def inventory_form():
             "またはOpenAPI定義を貼り付け（JSON）",
             "spec",
             textarea=True,
-            text=json.dumps(SAMPLE, ensure_ascii=False, indent=2) if ctx["config"]["demo"] else "",
+            text=json.dumps(item.get("spec", SAMPLE), ensure_ascii=False, indent=2)
+            if asset or ctx["config"]["demo"]
+            else "",
         )
-        btn("下書きを保存", register, primary=True)
+        if asset:
+            t.p("仕様や接続先を変えると下書きに戻り、現在の利用権と申請を終了します。")
+        btn("変更を保存" if asset else "下書きを保存", register, primary=True)
 
 
 def cards():
@@ -432,6 +521,8 @@ def detail_page():
             a,
             primary=not a["published"],
         )
+        btn("内容を編集", go, "edit/" + a["id"])
+        btn("APIを削除", delete_listing, a)
     with t.div(classes="box"):
         t.h2("操作と仕様")
         for path, ops in a["spec"]["paths"].items():
@@ -528,6 +619,7 @@ def rights_page(incoming):
 
 
 def audit_view():
+    btn("業務監査をダウンロード", download_audit)
     with t.form(classes="searchbar", on_submit=action(audit_filter)):
         field("リクエストID", "audit-id", text=ctx["audit_id"], placeholder="実行結果に表示されたID")
         field(
@@ -563,11 +655,464 @@ def audit_view():
             btn("以前の記録", audit_page, ctx["audit_offset"] + 30)
 
 
+def role_title():
+    me = ctx["me"]
+    return (
+        "管理者"
+        if me["admin"]
+        else "提供者"
+        if me["owners"]
+        else "監査担当"
+        if me["auditor"]
+        else "利用者"
+    )
+
+
+def dashboard_view():
+    summary = ctx["dashboard"]
+    t.p(role_title() + "としての利用状況", classes="subtitle")
+    with t.div(classes="stat-grid"):
+        cards = [("直近24時間の呼び出し", summary["calls"]), ("直近24時間のエラー", summary["errors"])]
+        if ctx["me"]["owners"] or ctx["me"]["admin"]:
+            cards.append(("管理対象のAPI", summary["inventory"]))
+        cards.extend([("承認待ち", summary["pending"]), ("利用中の契約", summary["approved"])])
+        for label, count in cards:
+            with t.article(classes="stat"):
+                t.span(label)
+                t.strong(str(count))
+    with t.div(classes="home-panels"):
+        with t.section(classes="box"):
+            t.h2("呼び出し件数の推移")
+            t.p("直近24時間・1時間ごと（UTC）", classes="muted")
+            data = ctx["home_metrics"]
+            graph(data["points"], "calls", data["minutes"])
+            btn("メトリクスを開く", go, "metrics")
+        with t.section(classes="box"):
+            t.h2("最近の呼び出し")
+            for row in ctx["recent_logs"][:4]:
+                with t.div(classes="recent-call"):
+                    t.strong(str(row["status"]))
+                    t.span(row["method"] + " " + (row["operation"] or "操作未確定"))
+                    t.small(row["at"][11:19] + " UTC")
+            if not ctx["recent_logs"]:
+                t.p("直近24時間の呼び出しはありません。", classes="muted")
+            btn("アクセスログを開く", go, "logs")
+    with t.div(classes="box"):
+        t.h2("業務メニュー")
+        with t.div(classes="btn-grouping"):
+            btn("APIを探す", go, "catalog", primary=True)
+            if ctx["me"]["owners"]:
+                btn("新しいAPIを登録", go, "register")
+                btn("届いた申請を確認", go, "inbox")
+            if ctx["me"]["admin"]:
+                btn("ユーザーを管理", go, "members")
+            if ctx["me"]["admin"] or ctx["me"]["owners"]:
+                btn("利用者へのお知らせ", go, "notifications")
+            btn("メトリクスを分析", go, "metrics")
+
+
+async def member_add():
+    await client.api(
+        "/members",
+        "POST",
+        {
+            "email": value("member-email"),
+            "role": value("member-role"),
+            "project": value("member-project"),
+        },
+    )
+    await load()
+    ctx["message"] = "ユーザーを追加しました"
+
+
+async def member_remove(row):
+    if not window.confirm(row["username"] + " を削除してログインを停止しますか？"):
+        return
+    await client.api(
+        "/members/" + quote(row["subject"], safe="") + "?" + urlencode({"username": row["username"]}),
+        "DELETE",
+    )
+    ctx["member_cursor"] = ""
+    await load()
+
+
+async def member_page(cursor):
+    ctx["member_cursor"] = cursor
+    await load()
+
+
+def members_view():
+    data = ctx["members"]
+    with t.div(classes="box"):
+        t.h2("ユーザーを追加")
+        field("メールアドレス", "member-email")
+        field("役割", "member-role", options=[("consumer", "利用者"), ("provider", "提供者")])
+        field("所属プロジェクト", "member-project", options=[(p, p) for p in data["projects"]])
+        btn("追加する", member_add, primary=True)
+    t.h2("登録ユーザー")
+    for row in data["items"]:
+        with t.div(classes="compact-row"):
+            t.strong(row["username"])
+            t.span(ROLE_LABELS.get(row["role"], row["role"]) + "　" + row.get("project", ""))
+            if row["subject"] != ctx["me"]["subject"]:
+                btn("削除", member_remove, row)
+    if data["next"]:
+        btn("次のユーザー", member_page, data["next"])
+    if ctx.get("member_cursor"):
+        btn("先頭に戻る", member_page, "")
+
+
+def target_options():
+    return [
+        (r["id"], f"{r['name']} · {r['project']} · {LABEL[r['environment']]}")
+        for r in ctx.get("targets", [])
+    ]
+
+
+async def send_notice():
+    if ctx["me"]["admin"]:
+        project, asset = value("notify-project"), ""
+    else:
+        asset, project, _ = value("notify-target").split("/")
+    await client.api(
+        "/notifications",
+        "POST",
+        {
+            "title": value("notify-title"),
+            "body": value("notify-body"),
+            "asset_id": asset,
+            "project": project,
+        },
+    )
+    await load()
+    ctx["message"] = "通知を送信しました"
+
+
+async def read_notice(key):
+    await client.api("/notifications/" + key + "/read", "PUT")
+    await load()
+
+
+async def more_notices(offset):
+    ctx["notice_offset"] = offset
+    await load()
+
+
+def notices_view():
+    me = ctx["me"]
+    rows = ctx["notices"]["items"]
+    if me["admin"] or me["owners"] and ctx.get("targets"):
+        with t.details(classes="box"):
+            t.summary("利用者に通知を送る")
+            if me["admin"]:
+                field(
+                    "送信先",
+                    "notify-project",
+                    options=[("*", "全プロジェクト")] + [(p, p) for p in me["known_projects"]],
+                )
+            else:
+                field("送信先のAPIと利用プロジェクト", "notify-target", options=target_options())
+            field("件名", "notify-title")
+            field("お知らせ本文", "notify-body", textarea=True)
+            btn("通知を送信", send_notice, primary=True)
+    if not rows:
+        t.p("届いている通知はありません。", classes="empty")
+    for n in rows:
+        with t.article(classes="box"):
+            t.small(
+                ("未読" if n["unread"] else "既読") + " · " + n["at"][:16].replace("T", " ") + " UTC",
+                classes="muted",
+            )
+            t.h2(n["title"])
+            t.p(n["body"])
+            t.small("送信者 " + n["sender"] + "　宛先 " + n["project"])
+            if n["unread"]:
+                btn("既読にする", read_notice, n["id"])
+    if ctx.get("notice_offset", 0):
+        btn("新しい通知", more_notices, ctx["notice_offset"] - 30)
+    if len(rows) == 30:
+        btn("以前の通知", more_notices, ctx.get("notice_offset", 0) + 30)
+
+
+MEASURES = {
+    "calls": "呼び出し件数",
+    "success": "成功件数",
+    "errors": "エラー件数",
+    "denied": "拒否件数",
+    "avg_ms": "平均応答時間（ms）",
+    "max_ms": "最大応答時間（ms）",
+}
+ROLE_LABELS = {"provider": "提供者", "consumer": "利用者", "admin": "管理者", "auditor": "監査担当"}
+
+
+def time_params():
+    f = ctx["filters"]
+    end = datetime.now(timezone.utc)
+    start = end - timedelta(hours=int(f["hours"]))
+    return {
+        k: v
+        for k, v in {
+            "start": f["start"] or start.isoformat(),
+            "end": f["end"] or end.isoformat(),
+            "asset_id": f["asset"],
+            "project": f["project"],
+            "environment": f["env"],
+            "status": f["status"],
+        }.items()
+        if v
+    }
+
+
+async def apply_filters():
+    f = {k: value("f-" + k) for k in ctx["filters"]}
+    ctx["filters"] = f
+    ctx["log_offset"] = 0
+    await load()
+
+
+def filters_view(chart):
+    f = ctx["filters"]
+    dims = ctx["dims"]
+
+    def choice(k, title, opts):
+        field(title, "f-" + k, options=opts, text=f[k])
+
+    with t.div(classes="box"):
+        with t.div(classes="filter-grid"):
+            choice(
+                "hours",
+                "期間",
+                [("1", "過去1時間"), ("24", "過去24時間"), ("168", "過去7日"), ("720", "過去30日")],
+            )
+            choice(
+                "asset", "対象API", [("", "すべて")] + sorted({(v["asset_id"], v["name"]) for v in dims})
+            )
+            choice(
+                "project",
+                "利用プロジェクト",
+                [("", "すべて")] + sorted({(v["project"], v["project"]) for v in dims if v["project"]}),
+            )
+            choice("env", "対象環境", [("", "すべて"), ("sandbox", "検証"), ("production", "本番")])
+            field("HTTPステータス", "f-status", text=f["status"], placeholder="すべて")
+            if chart:
+                choice("minutes", "集計間隔", [(str(n), str(n) + "分") for n in (1, 5, 15, 60, 1440)])
+                choice("measure", "表示指標", list(MEASURES.items()))
+            else:
+                t.input(type="hidden", id="f-minutes", value=f["minutes"])
+                t.input(type="hidden", id="f-measure", value=f["measure"])
+        with t.details():
+            t.summary("日時を指定（UTC）")
+            field("開始日時", "f-start", text=f["start"], placeholder="2026-11-21T00:00:00Z")
+            field("終了日時", "f-end", text=f["end"], placeholder="2026-11-21T01:00:00Z")
+        btn("条件を適用", apply_filters, primary=True)
+
+
+async def inspect_bucket(at, minutes):
+    begin = datetime.fromisoformat(at)
+    ctx["filters"].update(start=begin.isoformat(), end=(begin + timedelta(minutes=minutes)).isoformat())
+    ctx["log_offset"] = 0
+    await go("logs")
+
+
+def graph(pts, key, minutes):
+    maximum = max([1] + [p[key] for p in pts])
+    t.small("最大目盛 " + str(maximum))
+    with t.div(classes="time-chart", aria_label="時間帯別の" + MEASURES[key]):
+        for p in pts:
+            label = p["at"][:16] + " UTC · " + str(p[key])
+            t.button(
+                "",
+                type="button",
+                title=label,
+                aria_label=label,
+                classes="time-bar",
+                style=f"--height:{100 * p[key] / maximum:.2f}%",
+                on_click=action(inspect_bucket, p["at"], minutes),
+            )
+    with t.div(classes="chart-axis"):
+        for p in (pts[0], pts[len(pts) // 2], pts[-1]):
+            t.span(p["at"][5:16].replace("T", " "))
+
+
+def metrics_view():
+    filters_view(True)
+    data = ctx["metrics"]
+    key = ctx["filters"]["measure"]
+    pts = data["points"]
+    with t.section(classes="box"):
+        t.h2(MEASURES[key])
+        t.p(
+            data["start"][:16].replace("T", " ") + " ～ " + data["end"][:16].replace("T", " ") + " UTC",
+            classes="muted",
+        )
+        if not any(p["calls"] for p in pts):
+            t.p("この期間に呼び出しの記録はありません。")
+        else:
+            graph(pts, key, data["minutes"])
+        with t.details():
+            t.summary("データを表で確認")
+            with t.div(classes="table-scroll"), t.table():
+                with t.thead(), t.tr():
+                    for title in ("期間の開始（UTC）", MEASURES[key], "記録"):
+                        t.th(title)
+                with t.tbody():
+                    for p in pts:
+                        with t.tr():
+                            t.td(p["at"][:16].replace("T", " "))
+                            t.td(str(p[key]))
+                            with t.td():
+                                btn("ログを見る", inspect_bucket, p["at"], data["minutes"])
+
+
+async def download_logs():
+    params = {**time_params(), "request_id": ctx.get("access_id", "")}
+    parts = window.Array.new()
+    while True:
+        res = await pyfetch(
+            client.prefix + "/access-logs/download?" + urlencode(params),
+            headers={"Authorization": "Bearer " + str(client.store.getItem("access"))},
+        )
+        if not res.ok:
+            raise ValueError("ログを取得できませんでした")
+        parts.push(await res.js_response.blob())
+        cursor = res.js_response.headers.get("x-next-cursor")
+        if not cursor:
+            break
+        params["cursor"] = str(cursor)
+    save_blob(window.Blob.new(parts), "access-log.jsonl")
+
+
+async def download_audit():
+    parts = window.Array.new()
+    params = {"action": ctx["audit_action"], "request_id": ctx["audit_id"], "limit": 250}
+    offset = 0
+    while True:
+        rows = await client.api("/audit?" + urlencode({**params, "offset": offset}))
+        parts.push("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in rows))
+        if len(rows) < 250:
+            break
+        offset += len(rows)
+    save_blob(window.Blob.new(parts), "audit-log.jsonl")
+
+
+def save_blob(blob, filename):
+    url = window.URL.createObjectURL(blob)
+    a = document.createElement("a")
+    a.href = url
+    a.download = filename
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    window.URL.revokeObjectURL(url)
+
+
+async def log_lookup():
+    ctx.update(access_id=value("access-id"), log_offset=0)
+    await load()
+
+
+async def log_page(offset):
+    ctx["log_offset"] = offset
+    await load()
+
+
+def logs_view():
+    filters_view(False)
+    with t.div(classes="box"):
+        field("照合するリクエストID", "access-id", text=ctx.get("access_id", ""))
+        with t.div(classes="btn-grouping"):
+            btn("IDで検索", log_lookup)
+            btn("アクセスログをダウンロード", download_logs)
+    rows = ctx["log_rows"]
+    if not rows:
+        t.p("条件に一致するアクセスログはありません。", classes="empty")
+    for row in rows:
+        with t.article(classes="audit-row"):
+            t.strong(f"{row['status']}　{row['method']} {row['operation']}")
+            t.p(
+                f"{row['at'][:19]} UTC　{row['actor']}　{row['project']}　{row['environment']}　{row['duration_ms']} ms"
+            )
+            t.small("リクエストID　" + row["request_id"], classes="mono")
+            btn("対応する業務監査", trace_lookup, row["request_id"])
+    if ctx.get("log_offset", 0):
+        btn("前の50件", log_page, ctx["log_offset"] - 50)
+    if len(rows) == 50:
+        btn("次の50件", log_page, ctx.get("log_offset", 0) + 50)
+
+
+async def save_alert():
+    asset, project, env = value("alert-target").split("/")
+    await client.api(
+        "/alerts",
+        "PUT",
+        {
+            "asset_id": asset,
+            "project": project,
+            "environment": env,
+            "threshold": int(value("alert-threshold")),
+            "minutes": int(value("alert-minutes")),
+            "stop": value("alert-action") == "stop",
+            "enabled": value("alert-action") != "off",
+        },
+    )
+    await load()
+    ctx["message"] = "アラート設定を保存しました"
+
+
+def alerts_view():
+    if target_options():
+        with t.div(classes="box"):
+            t.h2("利用件数のルール")
+            field("対象の利用申請", "alert-target", options=target_options())
+            field(
+                "集計期間",
+                "alert-minutes",
+                options=[(str(n), str(n) + "分") for n in (1, 5, 15, 60, 1440)],
+            )
+            field("しきい値（件）", "alert-threshold", text="100")
+            field(
+                "到達時の動作",
+                "alert-action",
+                options=[
+                    ("notify", "通知する"),
+                    ("stop", "通知し、次の期間まで停止"),
+                    ("off", "ルールを無効にする"),
+                ],
+            )
+            t.p(
+                "UTCの固定区間で集計します。しきい値に達した呼び出しを通し、停止設定では次の呼び出しから429を返します。設定を保存するとカウンターをリセットします。"
+            )
+            btn("ルールを保存", save_alert, primary=True)
+    for r in ctx["rules"]:
+        with t.article(classes="box"):
+            t.h3(r["name"] + " · " + r["project"] + " · " + LABEL[r["environment"]])
+            t.p(
+                f"{r['minutes']}分 / {r['threshold']}件　現在 {r['calls']}件　"
+                + ("無効" if not r["enabled"] else "通知と停止" if r["stop"] else "通知")
+            )
+    if not ctx["rules"]:
+        t.p("設定済みのルールはありません。", classes="empty")
+
+
+async def delete_listing(asset):
+    if window.confirm(asset["name"] + "を削除し、既存の利用権も終了しますか？"):
+        await client.api("/apis/" + asset["id"] + "?revision=" + str(asset["revision"]), "DELETE")
+        await go("inventory")
+        ctx["message"] = "APIを削除しました"
+
+
 @app.page()
 class Portal(Page):
     def populate(self):
         user, page = ctx["me"], route()
-        title = PAGES.get(page, "APIの詳細" if page.startswith("api/") else "APIを登録")
+        title = PAGES.get(
+            page,
+            "APIの詳細"
+            if page.startswith("api/")
+            else "掲載内容を編集"
+            if page.startswith("edit/")
+            else "APIを登録",
+        )
         nav_open = ctx.get("nav_open", not window.matchMedia("(max-width: 780px)").matches)
         with t.header(classes="mast"):
             with t.div(classes="identity"):
@@ -592,8 +1137,16 @@ class Portal(Page):
                             selected=key == (window.localStorage.getItem("visual-mode") or "auto"),
                         )
             if user:
+                with t.button(
+                    type="button",
+                    classes="bell-button",
+                    aria_label="通知を開く（未読" + str(ctx["badge"]) + "件）",
+                    on_click=action(go, "notifications"),
+                ):
+                    t.span("", classes="bell-icon", aria_hidden="true")
+                    t.strong(str(ctx["badge"]) if ctx["badge"] else "", id="unread-count")
                 t.span(
-                    " / ".join(sorted(set(user["owners"] + user["projects"]))) or "監査担当",
+                    " / ".join(sorted(set(user["owners"] + user["projects"]))) or role_title(),
                     classes="project",
                 )
                 btn("ログアウト", logout)
@@ -618,22 +1171,27 @@ class Portal(Page):
             ):
                 t.span("", classes="menu-icon", aria_hidden="true")
             with t.div(classes="crumb", aria_label="現在地"):
-                t.a("継手API", href="#/catalog")
+                t.a("継手API", href="#/home")
                 t.span("›", aria_hidden="true")
                 t.strong(title)
         with t.div(id="workspace", classes="workspace", data_nav="open" if nav_open else "closed"):
             with t.nav(id="portal-nav", classes="rail", aria_label="ポータル"):
                 t.strong("継手API", classes="rail-title")
                 for label, pages in [
-                    ("ワークスペース", ("catalog", "mine")),
+                    ("ワークスペース", ("home", "catalog", "mine", "notifications")),
+                    ("管理", ("members",)),
                     ("提供者メニュー", ("inventory", "inbox")),
-                    ("ガバナンス", ("audit",)),
+                    ("ガバナンス", ("metrics", "logs", "alerts", "audit")),
                 ]:
+                    if label == "管理" and not user["admin"]:
+                        continue
                     if label == "提供者メニュー" and not user["owners"]:
                         continue
                     with t.div(classes="nav-group"):
                         t.small(label)
                         for target in pages:
+                            if target == "mine" and not user["projects"]:
+                                continue
                             active = page == target or (page == "register" and target == "inventory")
                             t.button(
                                 PAGES[target],
@@ -666,7 +1224,21 @@ class Portal(Page):
                             t.p(descriptions[page], classes="subtitle")
                     if page == "inventory":
                         btn("APIを登録", go, "register", primary=True)
-                if page in ("catalog", "inventory"):
+                if page == "home":
+                    dashboard_view()
+                elif page == "members" and user["admin"]:
+                    members_view()
+                elif page == "notifications":
+                    notices_view()
+                elif page == "metrics":
+                    metrics_view()
+                elif page == "logs":
+                    logs_view()
+                elif page == "alerts":
+                    alerts_view()
+                elif page.startswith("edit/") and user["owners"]:
+                    inventory_form(ctx["detail"])
+                elif page in ("catalog", "inventory"):
                     cards()
                 elif page == "register" and user["owners"]:
                     inventory_form()
@@ -674,6 +1246,22 @@ class Portal(Page):
                     rights_page(page == "inbox")
                 elif page == "audit":
                     audit_view()
+
+
+async def poll_badge():
+    while True:
+        await asyncio.sleep(30)
+        if not ctx["me"] or ctx["busy"] or document.hidden:
+            continue
+        try:
+            count = (await client.api("/notifications/count"))["unread"]
+            indicator = document.getElementById("unread-count")
+            if indicator:
+                ctx["badge"] = count
+                indicator.textContent = str(count) if count else ""
+                indicator.parentElement.setAttribute("aria-label", f"通知を開く（未読{count}件）")
+        except Exception:
+            continue
 
 
 async def start():
@@ -691,3 +1279,5 @@ add_event_listener(window.matchMedia("(max-width: 780px)"), "change", adapt_navi
 add_event_listener(window, "popstate", action(load))
 render()
 asyncio.ensure_future(run(start))
+
+asyncio.ensure_future(poll_badge())
