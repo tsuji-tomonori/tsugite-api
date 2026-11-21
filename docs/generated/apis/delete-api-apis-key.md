@@ -57,11 +57,13 @@ AWS環境ではCloudFrontが内部ヘッダー `X-Tsugite-Origin` を付与し�
 | SQL | access_rights | U | status に代入 | [close_rights:96](../../../packages/backend/src/app/apis/catalog/register/router.py#L96) |
 | SQL | affiliations | R | select | [populate:69](../../../packages/backend/src/app/core/workspace.py#L69) |
 | SQL | assets | R | db.get | [record:31](../../../packages/backend/src/app/apis/catalog/common.py#L31) |
+| SQL | assets | U | decision_note に代入 | [close_rights:95](../../../packages/backend/src/app/apis/catalog/register/router.py#L95) |
+| SQL | assets | U | status に代入 | [close_rights:96](../../../packages/backend/src/app/apis/catalog/register/router.py#L96) |
 | SQL | assets | U | removed_at に代入 | [delete:107](../../../packages/backend/src/app/apis/catalog/register/router.py#L107) |
 | SQL | assets | U | published に代入 | [delete:108](../../../packages/backend/src/app/apis/catalog/register/router.py#L108) |
 | SQL | audit_events | C | db.add | [event:16](../../../packages/backend/src/app/apis/catalog/common.py#L16) |
 | SQL | directory_tree | R | db.get | [units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
-| SQL | portal_members | R | db.get | [check_member:99](../../../packages/backend/src/app/core/auth.py#L99) |
+| SQL | portal_members | R | db.get | [check_member:121](../../../packages/backend/src/app/core/auth.py#L121) |
 | SQL | portal_members | R | db.get | [populate:56](../../../packages/backend/src/app/core/workspace.py#L56) |
 
 <details><summary>解析した関数・依存</summary>

@@ -12,8 +12,16 @@ class ApiRuntime(Construct):
         secret = sm.Secret(
             self, "OriginKey", generate_secret_string=sm.SecretStringGenerator(exclude_punctuation=True)
         )
+        token_signer = sm.Secret(
+            self,
+            "TokenSigner",
+            generate_secret_string=sm.SecretStringGenerator(
+                password_length=64, exclude_punctuation=True
+            ),
+        )
         role = iam.Role(self, "RuntimeRole", assumed_by=iam.ServicePrincipal("lambda.amazonaws.com"))
         runtime_env = {
+            "TOKEN_SIGNING_KEY": token_signer.secret_value.unsafe_unwrap(),
             "DSQL_HOST": cluster.attr_endpoint,
             "DSQL_USER": "tsugite_app",
             "HUB_SETTINGS_PARAMETER": param,

@@ -4,7 +4,7 @@
 
 [API一覧](../README.md) · [CRUD一覧](../crud.md)
 
-共通 · `revoke_api_keys__key__delete` · [revoke:114](../../../packages/backend/src/app/apis/governance/keys.py#L114)
+共通 · `revoke_api_keys__key__delete` · [revoke:123](../../../packages/backend/src/app/apis/governance/keys.py#L123)
 
 ## 入力
 
@@ -52,11 +52,11 @@ AWS環境ではCloudFrontが内部ヘッダー `X-Tsugite-Origin` を付与し�
 | --- | --- | --- | --- | --- |
 | AWS | ssm | R | get_parameter | [settings:45](../../../packages/backend/src/app/core/config.py#L45) |
 | SQL | affiliations | R | select | [populate:69](../../../packages/backend/src/app/core/workspace.py#L69) |
-| SQL | api_keys | R | db.get | [revoke:115](../../../packages/backend/src/app/apis/governance/keys.py#L115) |
-| SQL | api_keys | U | revoked に代入 | [revoke:122](../../../packages/backend/src/app/apis/governance/keys.py#L122) |
+| SQL | api_keys | R | db.get | [revoke:124](../../../packages/backend/src/app/apis/governance/keys.py#L124) |
+| SQL | api_keys | U | revoked に代入 | [revoke:131](../../../packages/backend/src/app/apis/governance/keys.py#L131) |
 | SQL | audit_events | C | db.add | [audit:37](../../../packages/backend/src/app/apis/governance/directory.py#L37) |
 | SQL | directory_tree | R | db.get | [units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
-| SQL | portal_members | R | db.get | [check_member:99](../../../packages/backend/src/app/core/auth.py#L99) |
+| SQL | portal_members | R | db.get | [check_member:121](../../../packages/backend/src/app/core/auth.py#L121) |
 | SQL | portal_members | R | db.get | [populate:56](../../../packages/backend/src/app/core/workspace.py#L56) |
 
 <details><summary>解析した関数・依存</summary>

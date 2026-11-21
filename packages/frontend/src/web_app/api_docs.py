@@ -12,6 +12,7 @@ from pyodide.http import pyfetch
 
 METHODS = ("get", "post", "put", "patch", "delete", "head", "options", "trace")
 INVOKABLE = frozenset(("get", "post", "put", "patch", "delete"))
+CREDENTIAL_MODES = {"bearer": "短期Bearer", "app": "アプリ", "system": "システム"}
 ENVIRONMENTS = {"sandbox": "検証", "production": "本番"}
 
 
@@ -51,9 +52,11 @@ def available_bindings(asset_id, rights, keys, subject):
     options = []
     seen = set()
     for key in keys:
-        if key.get("revoked") or key.get("revoked_at"):
+        if key.get("revoked") or key.get("revoked_at") or not key.get("can_portal_exchange", True):
             continue
         if key.get("api_ids") and asset_id not in key["api_ids"]:
+            continue
+        if key.get("users") and subject not in key["users"]:
             continue
         personal = key["kind"] == "personal"
         if personal and key.get("creator") != subject:
@@ -73,7 +76,9 @@ def available_bindings(asset_id, rights, keys, subject):
             seen.add(key_env)
             env = grant["environment"]
             label = f"{key['name']}（{'個人' if personal else '共有'}） · {key['project']} · {ENVIRONMENTS.get(env, env)}"
-            options.append((key["id"], env, key["project"], label))
+            if mode := CREDENTIAL_MODES.get(key.get("mode")):
+                label += " · " + mode
+            options.append((key, env, key["project"], label))
     return options
 
 
@@ -175,6 +180,24 @@ def input_param(spec, param, element_id):
         )
 
 
+async def credential_headers(key):
+    portal_auth = {"Authorization": "Bearer " + str(client.store.getItem("access"))}
+    if key.get("mode") not in CREDENTIAL_MODES:
+        return {**portal_auth, "X-Tsugite-Key-Id": key["id"]}
+    issued = await pyfetch(
+        client.prefix + "/credentials/" + quote(key["id"], safe="") + "/token",
+        method="POST",
+        headers=portal_auth,
+    )
+    payload = await issued.json()
+    if not issued.ok:
+        raise ValueError(
+            f"HTTP {issued.status}　"
+            + str(payload.get("detail", "アクセストークンを取得できませんでした"))
+        )
+    return {"Authorization": "Bearer " + payload["access_token"]}
+
+
 def try_operation(spec, asset, bindings, method, path, params, body, prefix):
     option_list(
         "利用するAPIキーと環境",
@@ -193,17 +216,14 @@ def try_operation(spec, asset, bindings, method, path, params, body, prefix):
 
     async def send(button, out):
         try:
-            kid, env, project, _ = bindings[int(value(prefix + "-key"))]
+            key, env, project, _ = bindings[int(value(prefix + "-key"))]
             entered = {
                 i: value(prefix + f"-param-{i}")
                 for i, p in enumerate(params)
                 if p["in"] in ("query", "path")
             }
             location = build_location(spec, path, params, entered)
-            headers = {
-                "Authorization": "Bearer " + str(client.store.getItem("access")),
-                "X-Tsugite-Key-Id": kid,
-            }
+            headers = {}
             opts = {"method": method.upper(), "headers": headers}
             if content:
                 text = value(prefix + "-body")
@@ -218,6 +238,7 @@ def try_operation(spec, asset, bindings, method, path, params, body, prefix):
                             raise ValueError("リクエスト本文は正しいJSONで入力してください") from exc
                     headers["Content-Type"] = media
                     opts["body"] = text
+            headers.update(await credential_headers(key))
             segments = [quote(part, safe="") for part in (asset["id"], env, project)]
             result = await pyfetch(client.prefix + "/invoke/" + "/".join(segments) + location, **opts)
             trace = result.headers.get("x-request-id", "")
@@ -262,6 +283,18 @@ def view(asset, rights, keys, *, subject=""):
             for method in METHODS:
                 if method not in item:
                     continue
+                name = method.upper() + " " + path
+                allowed = asset.get("allowed_operations")
+                if allowed is not None and name not in allowed:
+                    continue
+                usable = [
+                    entry
+                    for entry in bindings
+                    if asset["id"] not in entry[0].get("operations", {})
+                    or name in entry[0]["operations"][asset["id"]]
+                ]
+                if bindings and not usable:
+                    continue
                 operation = item[method]
                 params = parameters(spec, item, operation)
                 body = resolve(spec, operation.get("requestBody", {}))
@@ -290,10 +323,12 @@ def view(asset, rights, keys, *, subject=""):
                         response = resolve(spec, raw_response)
                         t.p(f"{code}　{response.get('description', '')}")
                         media_docs(spec, response.get("content", {}))
-                    if bindings and method in INVOKABLE:
+                    if usable and method in INVOKABLE:
                         t.h3("この操作を呼び出す")
-                        try_operation(spec, asset, bindings, method, path, params, body, f"docs-{index}")
+                        try_operation(spec, asset, usable, method, path, params, body, f"docs-{index}")
                     index += 1
+        if not index:
+            t.p("この利用者と認証情報で許可されている操作はありません。")
         if spec.get("components", {}).get("schemas"):
             with t.details():
                 t.summary("データモデル")

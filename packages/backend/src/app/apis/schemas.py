@@ -37,6 +37,7 @@ class CatalogPage(BaseModel):
 
 
 class Detail(Listing):
+    allowed_operations: list[str] | None = None
     base_path: str = ""
     bindings: dict[str, str] = Field(default_factory=dict)
     spec: dict[str, Any]

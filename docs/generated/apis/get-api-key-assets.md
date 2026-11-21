@@ -4,7 +4,7 @@
 
 [API一覧](../README.md) · [CRUD一覧](../crud.md)
 
-共通 · `key_assets_api_key_assets_get` · [key_assets:56](../../../packages/backend/src/app/apis/governance/keys.py#L56)
+共通 · `key_assets_api_key_assets_get` · [key_assets:64](../../../packages/backend/src/app/apis/governance/keys.py#L64)
 
 ## 入力
 
@@ -43,11 +43,11 @@ AWS環境ではCloudFrontが内部ヘッダー `X-Tsugite-Origin` を付与し�
 | 種別 | 対象 | 操作 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- |
 | AWS | ssm | R | get_parameter | [settings:45](../../../packages/backend/src/app/core/config.py#L45) |
-| SQL | access_rights | R | select | [key_assets:60](../../../packages/backend/src/app/apis/governance/keys.py#L60) |
+| SQL | access_rights | R | select | [key_assets:68](../../../packages/backend/src/app/apis/governance/keys.py#L68) |
 | SQL | affiliations | R | select | [populate:69](../../../packages/backend/src/app/core/workspace.py#L69) |
-| SQL | assets | R | select | [key_assets:68](../../../packages/backend/src/app/apis/governance/keys.py#L68) |
+| SQL | assets | R | select | [key_assets:76](../../../packages/backend/src/app/apis/governance/keys.py#L76) |
 | SQL | directory_tree | R | db.get | [units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
-| SQL | portal_members | R | db.get | [check_member:99](../../../packages/backend/src/app/core/auth.py#L99) |
+| SQL | portal_members | R | db.get | [check_member:121](../../../packages/backend/src/app/core/auth.py#L121) |
 | SQL | portal_members | R | db.get | [populate:56](../../../packages/backend/src/app/core/workspace.py#L56) |
 
 <details><summary>解析した関数・依存</summary>

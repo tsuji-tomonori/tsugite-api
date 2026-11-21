@@ -41,6 +41,7 @@ class Facts:
     status: set = field(default_factory=set)
     calls: set = field(default_factory=set)
     unresolved: set = field(default_factory=set)
+    edges: set = field(default_factory=set)
 
 
 def raw_sql(sql):
@@ -130,7 +131,7 @@ class SourceIndex:
         return ".".join([self.scopes[func].get(parts[0], parts[0]), *parts[1:]])
 
     @cache
-    def inspect(self, func):
+    def inspect(self, func, bindings=()):
         node = self.functions[func]
         facts = Facts()
         # Sort in source order so a reassignment on another branch adds a possible type.
@@ -144,6 +145,8 @@ class SourceIndex:
             key=lambda n: (getattr(n, "lineno", 0), getattr(n, "col_offset", 0)),
         )
         types = defaultdict(set)
+        for param, table in bindings:
+            types[param].add(table)
         services = defaultdict(set)
 
         def model(expr):
@@ -208,7 +211,18 @@ class SourceIndex:
             candidates = [full]
             if full in {"starlette.concurrency.run_in_threadpool", "asyncio.to_thread"} and part.args:
                 candidates.append(self.resolve(func, part.args[0]))
-            facts.calls.update(k for k in candidates if k in self.functions)
+            for candidate in candidates:
+                if candidate not in self.functions:
+                    continue
+                target = self.functions[candidate]
+                names = [a.arg for a in [*target.args.posonlyargs, *target.args.args]]
+                args = part.args if candidate == full else part.args[1:]
+                values = [
+                    *zip(names, args),
+                    *((item.arg, item.value) for item in part.keywords if item.arg),
+                ]
+                passed = tuple(sorted({(k, table) for k, v in values for table in entities(v)}))
+                facts.edges.add((candidate, passed))
             arg = part.args[0] if part.args else None
             if full == "setattr":
                 for table in entities(arg):
@@ -271,15 +285,18 @@ class SourceIndex:
 
     def trace(self, roots):
         result = Facts()
-        todo = list(roots)
+        todo = [(func, ()) for func in roots]
+        seen = set()
         while todo:
-            func = todo.pop()
-            if func in result.calls or func not in self.functions:
+            frame = todo.pop()
+            func, bindings = frame
+            if frame in seen or func not in self.functions:
                 continue
+            seen.add(frame)
             result.calls.add(func)
-            facts = self.inspect(func)
+            facts = self.inspect(func, bindings)
             result.effects.update(facts.effects)
             result.status.update(facts.status)
             result.unresolved.update(facts.unresolved)
-            todo.extend(facts.calls - result.calls)
+            todo.extend(facts.edges - seen)
         return result

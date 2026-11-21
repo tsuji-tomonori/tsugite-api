@@ -103,6 +103,8 @@ def catalog(demo):
 
 
 def security(spec, op):
+    if "x-design-auth" in op:
+        return op["x-design-auth"]
     choices = []
     for group in op.get("security", spec.get("security", [])):
         schemes = []
@@ -126,6 +128,10 @@ def fields(spec, schema, path="", parents=()):
     chain = (*parents, id(schema))
     if schema.get("type") == "array":
         yield from fields(spec, schema.get("items"), path + "[]", chain)
+    for group in ("anyOf", "oneOf", "allOf"):
+        for variant in schema.get(group, []):
+            prefix = variant.get("$ref", "").rsplit("/", 1)[-1]
+            yield from fields(spec, variant, f"{path}({prefix})" if prefix else path, chain)
     for key, child in schema.get("properties", {}).items():
         field = f"{path}.{key}" if path else key
         yield (field, "必須" if key in schema.get("required", []) else "任意", schema_label(child))

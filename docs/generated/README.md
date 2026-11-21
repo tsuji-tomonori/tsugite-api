@@ -2,7 +2,7 @@
 
 # API実装設計書
 
-48操作。[SQL・AWS CRUD一覧](crud.md) · [入出力スキーマ](schemas.md)
+57操作。[SQL・AWS CRUD一覧](crud.md) · [入出力スキーマ](schemas.md)
 
 FastAPIに登録された業務ルートをメソッド別に掲載します。認証条件・入力・応答・呼び出し先は各操作を開いて確認できます。
 
@@ -17,13 +17,22 @@ FastAPIに登録された業務ルートをメソッド別に掲載します。�
 | [DELETE `/api/apis/{key}`](apis/delete-api-apis-key.md) | 共通 | delete_api_apis__key__delete | Authorization: Bearer <資格情報> |
 | [GET `/api/apis/{key}`](apis/get-api-apis-key.md) | 共通 | detail | Authorization: Bearer <資格情報> |
 | [PUT `/api/apis/{key}`](apis/put-api-apis-key.md) | 共通 | edit_api_apis__key__put | Authorization: Bearer <資格情報> |
+| [GET `/api/apis/{key}/operation-policy`](apis/get-api-apis-key-operation-policy.md) | 共通 | get_operations_api_apis__key__operation_policy_get | Authorization: Bearer <資格情報> |
+| [PUT `/api/apis/{key}/operation-policy`](apis/put-api-apis-key-operation-policy.md) | 共通 | set_operations_api_apis__key__operation_policy_put | Authorization: Bearer <資格情報> |
 | [GET `/api/apis/{key}/policy`](apis/get-api-apis-key-policy.md) | 共通 | read_api_apis__key__policy_get | Authorization: Bearer <資格情報> |
 | [PUT `/api/apis/{key}/policy`](apis/put-api-apis-key-policy.md) | 共通 | configure_api_apis__key__policy_put | Authorization: Bearer <資格情報> |
 | [PUT `/api/apis/{key}/publication`](apis/put-api-apis-key-publication.md) | 共通 | publish | Authorization: Bearer <資格情報> |
 | [POST `/api/apis/{key}/requests`](apis/post-api-apis-key-requests.md) | 共通 | apply | Authorization: Bearer <資格情報> |
 | [GET `/api/audit`](apis/get-api-audit.md) | 共通 | audit | Authorization: Bearer <資格情報> |
+| [POST `/api/auth/token`](apis/post-api-auth-token.md) | 共通 | exchange_api_auth_token_post | ボディのclient_id・client_secretが必須。appでは本人のAuthorization: Bearerが必須。systemではAuthorizationを送信すると400。 |
 | [GET `/api/catalog-page`](apis/get-api-catalog-page.md) | 共通 | catalogPage | Authorization: Bearer <資格情報> |
 | [GET `/api/config`](apis/get-api-config.md) | 共通 | config_api_config_get | 認証不要 |
+| [GET `/api/credential-limits/{kind}/{key}`](apis/get-api-credential-limits-kind-key.md) | 共通 | get_limit_api_credential_limits__kind___key__get | Authorization: Bearer <資格情報> |
+| [PUT `/api/credential-limits/{kind}/{key}`](apis/put-api-credential-limits-kind-key.md) | 共通 | set_limit_api_credential_limits__kind___key__put | Authorization: Bearer <資格情報> |
+| [POST `/api/credentials`](apis/post-api-credentials.md) | 共通 | issue_api_credentials_post | Authorization: Bearer <資格情報> |
+| [GET `/api/credentials/options`](apis/get-api-credentials-options.md) | 共通 | options_api_credentials_options_get | Authorization: Bearer <資格情報> |
+| [POST `/api/credentials/{key_id}/rotate`](apis/post-api-credentials-key_id-rotate.md) | 共通 | rotate_api_credentials__key_id__rotate_post | Authorization: Bearer <資格情報> |
+| [POST `/api/credentials/{key_id}/token`](apis/post-api-credentials-key_id-token.md) | 共通 | portal_token_api_credentials__key_id__token_post | Authorization: Bearer <資格情報> |
 | [GET `/api/dashboard`](apis/get-api-dashboard.md) | 共通 | dashboard_api_dashboard_get | Authorization: Bearer <資格情報> |
 | [POST `/api/demo/{persona}`](apis/post-api-demo-persona.md) | デモ限定 | local_login_api_demo__persona__post | 認証不要 |
 | [GET `/api/health`](apis/get-api-health.md) | 共通 | health_api_health_get | 認証不要 |

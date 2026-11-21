@@ -267,9 +267,9 @@ def test_governance_console(demo_url, request):
             assert sorted(
                 json.loads(line)["status"] for line in saved.value.path().read_text().splitlines()
             ) == [200, 200, 429]
-            user.locator("article").filter(has_text="429").get_by_role(
-                "button", name="対応する業務監査"
-            ).click()
+            user.locator("article").filter(
+                has=user.get_by_text("429　GET /items", exact=True)
+            ).get_by_role("button", name="対応する業務監査").click()
             expect(user.get_by_text("呼び出し拒否", exact=True).last).to_be_visible()
             with user.expect_download() as audit_file:
                 user.get_by_role("button", name="業務監査をダウンロード").click()

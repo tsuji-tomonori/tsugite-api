@@ -4,9 +4,9 @@
 
 [API一覧](../README.md) · [CRUD一覧](../crud.md)
 
-転送用（公開スキーマ外） · `invoke_api_invoke__key___environment___project___tail__put` · [invoke:91](../../../packages/backend/src/app/apis/gateway.py#L91)
+転送用（公開スキーマ外） · `invoke_api_invoke__key___environment___project___tail__put` · [invoke:92](../../../packages/backend/src/app/apis/gateway.py#L92)
 
-転送先に登録されたOpenAPIの操作に従います。共有キーまたはCognitoアクセストークンをBearerで渡します。本人限定キーを使う場合は本人のトークンとX-API-Key、ポータルで選択したキーを使う場合は本人のトークンとX-Tsugite-Key-Idを渡します。
+転送先に登録されたOpenAPIの操作に従います。短期アクセストークン（tst_）、共有キー、またはCognitoアクセストークンをBearerで渡します。短期トークンには追加のキーヘッダーを併用できません。本人限定キーを使う場合は本人のトークンとX-API-Key、ポータルで選択したキーを使う場合は本人のトークンとX-Tsugite-Key-Idを渡します。
 
 ## 入力
 
@@ -55,20 +55,25 @@ AWS環境ではCloudFrontが内部ヘッダー `X-Tsugite-Origin` を付与し�
 | AWS | lambda | 実行 | invoke | [dispatch:92](../../../packages/backend/src/app/integrations/upstream.py#L92) |
 | AWS | secretsmanager | R | get_secret_value | [auth_headers:26](../../../packages/backend/src/app/integrations/upstream.py#L26) |
 | AWS | ssm | R | get_parameter | [settings:45](../../../packages/backend/src/app/core/config.py#L45) |
-| SQL | access_rights | R | db.get | [authorize:45](../../../packages/backend/src/app/apis/gateway.py#L45) |
-| SQL | access_rights | R | db.get | [authorize:53](../../../packages/backend/src/app/apis/gateway.py#L53) |
+| SQL | access_rights | R | db.get | [authorize:46](../../../packages/backend/src/app/apis/gateway.py#L46) |
+| SQL | access_rights | R | db.get | [authorize:54](../../../packages/backend/src/app/apis/gateway.py#L54) |
 | SQL | affiliations | R | select | [populate:69](../../../packages/backend/src/app/core/workspace.py#L69) |
 | SQL | alert_rules | R | db.get | [admit:90](../../../packages/backend/src/app/apis/governance/alerts.py#L90) |
 | SQL | alert_rules | U | update | [admit:96](../../../packages/backend/src/app/apis/governance/alerts.py#L96) |
-| SQL | api_keys | R | db.get | [authorize:47](../../../packages/backend/src/app/apis/gateway.py#L47) |
-| SQL | api_keys | R | db.get | [invocation_actor:146](../../../packages/backend/src/app/apis/governance/keys.py#L146) |
+| SQL | api_keys | R | db.get | [authorize:48](../../../packages/backend/src/app/apis/gateway.py#L48) |
+| SQL | api_keys | R | db.get | [invocation_actor:159](../../../packages/backend/src/app/apis/governance/keys.py#L159) |
+| SQL | api_keys | R | db.get | [resolve:81](../../../packages/backend/src/app/core/access_token.py#L81) |
+| SQL | api_keys | R | db.get | [check_operation:65](../../../packages/backend/src/app/core/credential_policy.py#L65) |
 | SQL | assets | R | db.get | [record:31](../../../packages/backend/src/app/apis/catalog/common.py#L31) |
 | SQL | audit_events | C | db.add | [event:16](../../../packages/backend/src/app/apis/catalog/common.py#L16) |
+| SQL | credential_rules | R | select | [check_operation:88](../../../packages/backend/src/app/core/credential_policy.py#L88) |
+| SQL | credential_rules | R | db.get | [individual:27](../../../packages/backend/src/app/core/credential_policy.py#L27) |
+| SQL | credential_rules | R | db.get | [minutes:32](../../../packages/backend/src/app/core/credential_policy.py#L32) |
 | SQL | directory_tree | R | db.get | [units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
-| SQL | invocation_logs | C | db.add | [log_result:108](../../../packages/backend/src/app/apis/gateway.py#L108) |
+| SQL | invocation_logs | C | db.add | [log_result:109](../../../packages/backend/src/app/apis/gateway.py#L109) |
 | SQL | invocation_units | C | db.add | [attribute:122](../../../packages/backend/src/app/core/workspace.py#L122) |
 | SQL | notices | C | db.add | [admit:120](../../../packages/backend/src/app/apis/governance/alerts.py#L120) |
-| SQL | portal_members | R | db.get | [check_member:99](../../../packages/backend/src/app/core/auth.py#L99) |
+| SQL | portal_members | R | db.get | [check_member:121](../../../packages/backend/src/app/core/auth.py#L121) |
 | SQL | portal_members | R | db.get | [populate:56](../../../packages/backend/src/app/core/workspace.py#L56) |
 
 <details><summary>解析した関数・依存</summary>
@@ -83,12 +88,22 @@ AWS環境ではCloudFrontが内部ヘッダー `X-Tsugite-Origin` を付与し�
 - `app.apis.governance.alerts.admit`
 - `app.apis.governance.keys.invocation_actor`
 - `app.apis.governance.keys.invoker`
+- `app.core.access_token.machine_actor`
+- `app.core.access_token.may_use`
+- `app.core.access_token.resolve`
+- `app.core.access_token.signer`
 - `app.core.auth.check_member`
 - `app.core.auth.identify`
 - `app.core.auth.keyset`
 - `app.core.config.local_demo`
 - `app.core.config.settings`
 - `app.core.config.targets`
+- `app.core.credential_policy.check_operation`
+- `app.core.credential_policy.clock`
+- `app.core.credential_policy.effective`
+- `app.core.credential_policy.individual`
+- `app.core.credential_policy.minutes`
+- `app.core.credential_policy.unit_bounds`
 - `app.core.workspace.allowed_audience`
 - `app.core.workspace.ancestry`
 - `app.core.workspace.attribute`

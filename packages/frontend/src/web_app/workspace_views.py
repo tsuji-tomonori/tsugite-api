@@ -3,6 +3,7 @@
 from urllib.parse import quote, urlencode
 
 import client
+import credential_views
 from js import document, window
 from puepy import t
 
@@ -221,6 +222,8 @@ def workspace_view(ctx, field, btn, reload):
                 if admin or identifier in leads:
                     btn("メンバーと利用状況", show_usage, unit)
                     btn("利用を再開" if unit["stopped"] else "利用を停止", toggle, unit)
+            if admin or identifier in leads:
+                credential_views.limit_view(ctx, field, btn, reload, kind="units", identifier=identifier)
             if admin:
                 rows = [r for r in memberships if r["unit_id"] == identifier]
                 if rows:
@@ -301,8 +304,11 @@ def keys_view(ctx, field, btn, reload):
             await reload()
             ctx["message"] = "キーを失効しました"
 
+    credential_views.credentials_view(ctx, field, btn, reload, projects)
+    legacy = [k for k in ctx["keys"] if k.get("mode") not in credential_views.MODES]
+    t.h2("従来のAPIキー")
     secret = ctx.get("issued_key") or {}
-    if secret.get("subject") == me["subject"]:
+    if secret.get("subject") == me["subject"] and not secret.get("mode"):
         with t.section(classes="box"):
             t.h2("発行したAPIキー")
             t.p("キー全文はこの画面で一度だけ表示します。安全な保管先にコピーしてください。")
@@ -341,9 +347,9 @@ def keys_view(ctx, field, btn, reload):
                         t.p("選択できるAPIはありません。", classes="muted")
             btn("キーを発行", create_key, primary=True)
     t.h2("APIキー一覧")
-    if not ctx["keys"]:
+    if not legacy:
         t.p("表示できるキーはありません。", classes="empty")
-    for row in ctx["keys"]:
+    for row in legacy:
         with t.article(classes="box"):
             t.h3(row["name"])
             kind = "本人専用" if row["kind"] == "personal" else "プロジェクト共有"

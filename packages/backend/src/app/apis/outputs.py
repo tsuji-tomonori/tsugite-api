@@ -124,6 +124,12 @@ class Usage(TypedDict):
 
 
 class KeyMetadata(TypedDict):
+    mode: Literal["legacy", "bearer", "app", "system"]
+    ttl_minutes: NotRequired[int]
+    refresh_minutes: NotRequired[int]
+    operations: NotRequired[dict[str, list[str]]]
+    users: NotRequired[list[str]]
+    can_portal_exchange: NotRequired[bool]
     id: str
     name: str
     project: str
@@ -201,3 +207,56 @@ class Dimension(TypedDict):
 class ManagementTarget(Dimension):
     id: str
     environment: str
+
+
+class Token(TypedDict):
+    access_token: str
+    token_type: Literal["Bearer"]
+    expires_in: int
+    refresh_after: int
+    expires_at: int
+    refresh_at: int
+
+
+class ClientCredential(TypedDict):
+    client_id: str
+    client_secret: str
+
+
+class IssuedBearer(KeyMetadata, Token):
+    pass
+
+
+class IssuedClient(KeyMetadata, ClientCredential):
+    pass
+
+
+class OperationPolicy(TypedDict):
+    operations: list[str]
+    members: list[Person]
+    permissions: dict[str, list[str]]
+
+
+class Limit(TypedDict):
+    inherited_minutes: int
+    max_minutes: int | None
+
+
+class CredentialAsset(TypedDict):
+    id: str
+    name: str
+    operations: list[str]
+    max_minutes: int
+
+
+class UnitLimit(TypedDict):
+    name: str
+    minutes: int
+
+
+class CredentialOptions(TypedDict):
+    assets: list[CredentialAsset]
+    members: list[Person]
+    limits: list[UnitLimit]
+    max_minutes: int
+    may_manage: bool

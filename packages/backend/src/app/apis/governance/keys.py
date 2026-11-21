@@ -9,6 +9,8 @@ from app.apis import outputs
 from app.apis.catalog.common import DB, User, record
 from app.apis.governance.directory import audit, manages
 from app.apis.schemas import Input, Listing
+from app.core import credential_policy
+from app.core.access_token import resolve
 from app.core.auth import Actor, bearer, check_member, identify
 from app.core.workspace import allowed_audience, ancestry, populate, private_project, units
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -29,6 +31,8 @@ class KeyInput(Input):
 
 def metadata(k):
     return {
+        **json.loads(k.config or "{}"),
+        "mode": k.mode or "legacy",
         "id": k.id,
         "name": k.name,
         "project": k.project,
@@ -49,7 +53,11 @@ def list_keys(actor: User, db: DB):
                 (PortalKey.kind == "shared") & PortalKey.project.in_(actor.projects),
             )
         )
-    return [metadata(k) for k in db.scalars(stmt.order_by(PortalKey.name, PortalKey.id))]
+    tree = units(db)
+    return [
+        {**metadata(k), "can_portal_exchange": k.mode != "system" or manages(actor, tree, k.project)}
+        for k in db.scalars(stmt.order_by(PortalKey.name, PortalKey.id))
+    ]
 
 
 @router.get("/key-assets", responses={200: {"model": list[Listing]}})
@@ -102,6 +110,7 @@ def issue(data: KeyInput, request: Request, actor: User, db: DB):
         project=data.project,
         kind=data.kind,
         scopes=json.dumps(sorted(set(data.api_ids))),
+        created=credential_policy.clock(),
         digest=hashlib.sha256(secret.encode()).hexdigest(),
     )
     db.add(k)
@@ -128,6 +137,10 @@ def revoke(key: str, request: Request, actor: User, db: DB):
 def invocation_actor(db, token, headers) -> Actor:
     raw = headers.get("x-api-key", "")
     selected = headers.get("x-tsugite-key-id", "")
+    if token.startswith("tst_"):
+        if raw or selected:
+            raise HTTPException(401)
+        return resolve(db, token)
     actor = None
     if token.startswith("tsu_"):
         if raw or selected:
@@ -146,6 +159,7 @@ def invocation_actor(db, token, headers) -> Actor:
     k = db.get(PortalKey, kid) if len(kid) == 32 else None
     if (
         not k
+        or k.mode
         or k.revoked
         or (raw and not hmac.compare_digest(k.digest, hashlib.sha256(raw.encode()).hexdigest()))
     ):

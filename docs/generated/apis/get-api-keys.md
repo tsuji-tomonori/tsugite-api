@@ -4,7 +4,7 @@
 
 [API一覧](../README.md) · [CRUD一覧](../crud.md)
 
-共通 · `list_keys_api_keys_get` · [list_keys:43](../../../packages/backend/src/app/apis/governance/keys.py#L43)
+共通 · `list_keys_api_keys_get` · [list_keys:47](../../../packages/backend/src/app/apis/governance/keys.py#L47)
 
 ## 入力
 
@@ -26,6 +26,12 @@
 
 | 項目 | 指定 | 型・制約 |
 | --- | --- | --- |
+| [].mode | 必須 | `{"enum": ["legacy", "bearer", "app", "system"], "title": "Mode", "type": "string"}` |
+| [].ttl_minutes | 任意 | `{"title": "Ttl Minutes", "type": "integer"}` |
+| [].refresh_minutes | 任意 | `{"title": "Refresh Minutes", "type": "integer"}` |
+| [].operations | 任意 | `{"additionalProperties": {"items": {"type": "string"}, "type": "array"}, "title": "Operations", "type": "object"}` |
+| [].users | 任意 | 配列 / `{"type": "string"}` |
+| [].can_portal_exchange | 任意 | `{"title": "Can Portal Exchange", "type": "boolean"}` |
 | [].id | 必須 | `{"title": "Id", "type": "string"}` |
 | [].name | 必須 | `{"title": "Name", "type": "string"}` |
 | [].project | 必須 | `{"title": "Project", "type": "string"}` |
@@ -44,13 +50,14 @@ AWS環境ではCloudFrontが内部ヘッダー `X-Tsugite-Origin` を付与し�
 | --- | --- | --- | --- | --- |
 | AWS | ssm | R | get_parameter | [settings:45](../../../packages/backend/src/app/core/config.py#L45) |
 | SQL | affiliations | R | select | [populate:69](../../../packages/backend/src/app/core/workspace.py#L69) |
-| SQL | api_keys | R | select | [list_keys:44](../../../packages/backend/src/app/apis/governance/keys.py#L44) |
+| SQL | api_keys | R | select | [list_keys:48](../../../packages/backend/src/app/apis/governance/keys.py#L48) |
 | SQL | directory_tree | R | db.get | [units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
-| SQL | portal_members | R | db.get | [check_member:99](../../../packages/backend/src/app/core/auth.py#L99) |
+| SQL | portal_members | R | db.get | [check_member:121](../../../packages/backend/src/app/core/auth.py#L121) |
 | SQL | portal_members | R | db.get | [populate:56](../../../packages/backend/src/app/core/workspace.py#L56) |
 
 <details><summary>解析した関数・依存</summary>
 
+- `app.apis.governance.directory.manages`
 - `app.apis.governance.keys.list_keys`
 - `app.apis.governance.keys.metadata`
 - `app.core.auth.check_member`

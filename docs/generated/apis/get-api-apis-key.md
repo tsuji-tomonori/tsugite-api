@@ -4,7 +4,7 @@
 
 [API一覧](../README.md) · [CRUD一覧](../crud.md)
 
-共通 · `detail` · [detail:14](../../../packages/backend/src/app/apis/catalog/detail/router.py#L14)
+共通 · `detail` · [detail:15](../../../packages/backend/src/app/apis/catalog/detail/router.py#L15)
 
 ## 入力
 
@@ -36,6 +36,7 @@
 | environments | 必須 | 配列 / `{"enum": ["sandbox", "production"], "type": "string"}` |
 | published | 必須 | `{"title": "Published", "type": "boolean"}` |
 | revision | 必須 | `{"title": "Revision", "type": "integer"}` |
+| allowed_operations | 任意 | `{"anyOf": [{"items": {"type": "string"}, "type": "array"}, {"type": "null"}], "title": "Allowed Operations"}` |
 | base_path | 任意 | `{"default": "", "title": "Base Path", "type": "string"}` |
 | bindings | 任意 | `{"additionalProperties": {"type": "string"}, "title": "Bindings", "type": "object"}` |
 | spec | 必須 | `{"additionalProperties": true, "title": "Spec", "type": "object"}` |
@@ -60,11 +61,12 @@ AWS環境ではCloudFrontが内部ヘッダー `X-Tsugite-Origin` を付与し�
 | 種別 | 対象 | 操作 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- |
 | AWS | ssm | R | get_parameter | [settings:45](../../../packages/backend/src/app/core/config.py#L45) |
-| SQL | access_rights | R | select | [detail:17](../../../packages/backend/src/app/apis/catalog/detail/router.py#L17) |
+| SQL | access_rights | R | select | [detail:18](../../../packages/backend/src/app/apis/catalog/detail/router.py#L18) |
 | SQL | affiliations | R | select | [populate:69](../../../packages/backend/src/app/core/workspace.py#L69) |
 | SQL | assets | R | db.get | [record:31](../../../packages/backend/src/app/apis/catalog/common.py#L31) |
+| SQL | credential_rules | R | db.get | [individual:27](../../../packages/backend/src/app/core/credential_policy.py#L27) |
 | SQL | directory_tree | R | db.get | [units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
-| SQL | portal_members | R | db.get | [check_member:99](../../../packages/backend/src/app/core/auth.py#L99) |
+| SQL | portal_members | R | db.get | [check_member:121](../../../packages/backend/src/app/core/auth.py#L121) |
 | SQL | portal_members | R | db.get | [populate:56](../../../packages/backend/src/app/core/workspace.py#L56) |
 
 <details><summary>解析した関数・依存</summary>
@@ -79,6 +81,7 @@ AWS環境ではCloudFrontが内部ヘッダー `X-Tsugite-Origin` を付与し�
 - `app.core.auth.keyset`
 - `app.core.config.local_demo`
 - `app.core.config.settings`
+- `app.core.credential_policy.individual`
 - `app.core.workspace.allowed_audience`
 - `app.core.workspace.ancestry`
 - `app.core.workspace.configured_projects`

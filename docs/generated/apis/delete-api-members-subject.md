@@ -59,7 +59,7 @@ AWS環境ではCloudFrontが内部ヘッダー `X-Tsugite-Origin` を付与し�
 | SQL | directory_tree | R | db.get | [units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
 | SQL | portal_members | C | db.add | [remove_member:157](../../../packages/backend/src/app/apis/governance/members.py#L157) |
 | SQL | portal_members | R | db.get | [remove_member:139](../../../packages/backend/src/app/apis/governance/members.py#L139) |
-| SQL | portal_members | R | db.get | [check_member:99](../../../packages/backend/src/app/core/auth.py#L99) |
+| SQL | portal_members | R | db.get | [check_member:121](../../../packages/backend/src/app/core/auth.py#L121) |
 | SQL | portal_members | R | db.get | [populate:56](../../../packages/backend/src/app/core/workspace.py#L56) |
 | SQL | portal_members | U | deleted に代入 | [remove_member:159](../../../packages/backend/src/app/apis/governance/members.py#L159) |
 

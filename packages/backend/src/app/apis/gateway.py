@@ -9,6 +9,7 @@ from app.apis.governance.keys import invoker
 from app.apis.schemas import Env
 from app.core.auth import Actor, check_member
 from app.core.config import targets
+from app.core.credential_policy import check_operation
 from app.core.workspace import allowed_audience, attribute, private_project, stopped
 from app.integrations.upstream import MAX_BODY, dispatch
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -71,7 +72,7 @@ def authorize(db, key, project, environment, actor):
     include_in_schema=False,
     openapi_extra={
         "x-design-proxy": True,
-        "description": "転送先に登録されたOpenAPIの操作に従います。共有キーまたはCognitoアクセストークンをBearerで渡します。本人限定キーを使う場合は本人のトークンとX-API-Key、ポータルで選択したキーを使う場合は本人のトークンとX-Tsugite-Key-Idを渡します。",
+        "description": "転送先に登録されたOpenAPIの操作に従います。短期アクセストークン（tst_）、共有キー、またはCognitoアクセストークンをBearerで渡します。短期トークンには追加のキーヘッダーを併用できません。本人限定キーを使う場合は本人のトークンとX-API-Key、ポータルで選択したキーを使う場合は本人のトークンとX-Tsugite-Key-Idを渡します。",
         "parameters": [
             {
                 "in": "header",
@@ -127,6 +128,7 @@ async def invoke(
         request.state.operation = operation_template(json.loads(asset.spec), request.method, path)
         if request.state.operation is None:
             raise HTTPException(404, "OpenAPIに定義されていない操作です")
+        check_operation(db, asset, actor, request.method + " " + request.state.operation, project)
         binding = targets().get(json.loads(asset.targets).get(environment))
         if not binding or (binding.owner, binding.environment) != (asset.owner, environment):
             raise HTTPException(503, "接続先を利用できません")

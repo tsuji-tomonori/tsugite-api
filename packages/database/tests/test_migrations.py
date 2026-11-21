@@ -32,9 +32,19 @@ def test_schema_matches_models_and_replays(tmp_path, monkeypatch):
                 published=False,
             ),
         )
+    command.upgrade(cfg, "004")
+    with db.begin() as conn:
+        conn.execute(
+            text(
+                "INSERT INTO api_keys (id,digest,project,creator,name,kind,scopes,revoked,revision) "
+                "VALUES ('old-key','existing-digest','finance','reader','既存キー','shared','[]',false,1)"
+            )
+        )
     command.upgrade(cfg, "head")
     with db.connect() as conn:
-        assert conn.scalar(text("select version_num from alembic_version")) == "004"
+        legacy = conn.execute(text("SELECT mode,created,digest FROM api_keys WHERE id='old-key'")).one()
+        assert legacy.mode is None and legacy.created > 0 and legacy.digest == "existing-digest"
+        assert conn.scalar(text("select version_num from alembic_version")) == "005"
         assert conn.execute(text("select name,base_path from assets where id='before'")).one() == (
             "旧版",
             None,

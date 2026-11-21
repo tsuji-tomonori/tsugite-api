@@ -403,6 +403,144 @@
 
 </details>
 
+## ClientCredential
+
+| 項目 | 指定 | 型・制約 |
+| --- | --- | --- |
+| client_id | 必須 | `{"title": "Client Id", "type": "string"}` |
+| client_secret | 必須 | `{"title": "Client Secret", "type": "string"}` |
+
+<details><summary>JSON Schema</summary>
+
+```json
+{
+  "properties": {
+    "client_id": {
+      "title": "Client Id",
+      "type": "string"
+    },
+    "client_secret": {
+      "title": "Client Secret",
+      "type": "string"
+    }
+  },
+  "required": [
+    "client_id",
+    "client_secret"
+  ],
+  "title": "ClientCredential",
+  "type": "object"
+}
+```
+
+</details>
+
+## CredentialAsset
+
+| 項目 | 指定 | 型・制約 |
+| --- | --- | --- |
+| id | 必須 | `{"title": "Id", "type": "string"}` |
+| name | 必須 | `{"title": "Name", "type": "string"}` |
+| operations | 必須 | 配列 / `{"type": "string"}` |
+| max_minutes | 必須 | `{"title": "Max Minutes", "type": "integer"}` |
+
+<details><summary>JSON Schema</summary>
+
+```json
+{
+  "properties": {
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "max_minutes": {
+      "title": "Max Minutes",
+      "type": "integer"
+    },
+    "name": {
+      "title": "Name",
+      "type": "string"
+    },
+    "operations": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Operations",
+      "type": "array"
+    }
+  },
+  "required": [
+    "id",
+    "name",
+    "operations",
+    "max_minutes"
+  ],
+  "title": "CredentialAsset",
+  "type": "object"
+}
+```
+
+</details>
+
+## CredentialOptions
+
+| 項目 | 指定 | 型・制約 |
+| --- | --- | --- |
+| assets | 必須 | 配列 / [CredentialAsset](#credentialasset) |
+| members | 必須 | 配列 / [Person](#person) |
+| limits | 必須 | 配列 / [UnitLimit](#unitlimit) |
+| max_minutes | 必須 | `{"title": "Max Minutes", "type": "integer"}` |
+| may_manage | 必須 | `{"title": "May Manage", "type": "boolean"}` |
+
+<details><summary>JSON Schema</summary>
+
+```json
+{
+  "properties": {
+    "assets": {
+      "items": {
+        "$ref": "#/components/schemas/CredentialAsset"
+      },
+      "title": "Assets",
+      "type": "array"
+    },
+    "limits": {
+      "items": {
+        "$ref": "#/components/schemas/UnitLimit"
+      },
+      "title": "Limits",
+      "type": "array"
+    },
+    "max_minutes": {
+      "title": "Max Minutes",
+      "type": "integer"
+    },
+    "may_manage": {
+      "title": "May Manage",
+      "type": "boolean"
+    },
+    "members": {
+      "items": {
+        "$ref": "#/components/schemas/Person"
+      },
+      "title": "Members",
+      "type": "array"
+    }
+  },
+  "required": [
+    "assets",
+    "members",
+    "limits",
+    "max_minutes",
+    "may_manage"
+  ],
+  "title": "CredentialOptions",
+  "type": "object"
+}
+```
+
+</details>
+
 ## Dashboard
 
 | 項目 | 指定 | 型・制約 |
@@ -576,6 +714,7 @@
 | environments | 必須 | 配列 / `{"enum": ["sandbox", "production"], "type": "string"}` |
 | published | 必須 | `{"title": "Published", "type": "boolean"}` |
 | revision | 必須 | `{"title": "Revision", "type": "integer"}` |
+| allowed_operations | 任意 | `{"anyOf": [{"items": {"type": "string"}, "type": "array"}, {"type": "null"}], "title": "Allowed Operations"}` |
 | base_path | 任意 | `{"default": "", "title": "Base Path", "type": "string"}` |
 | bindings | 任意 | `{"additionalProperties": {"type": "string"}, "title": "Bindings", "type": "object"}` |
 | spec | 必須 | `{"additionalProperties": true, "title": "Spec", "type": "object"}` |
@@ -585,6 +724,20 @@
 ```json
 {
   "properties": {
+    "allowed_operations": {
+      "anyOf": [
+        {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Allowed Operations"
+    },
     "base_path": {
       "default": "",
       "title": "Base Path",
@@ -687,6 +840,43 @@
     "project"
   ],
   "title": "Dimension",
+  "type": "object"
+}
+```
+
+</details>
+
+## Exchange
+
+| 項目 | 指定 | 型・制約 |
+| --- | --- | --- |
+| client_id | 必須 | `{"maxLength": 32, "minLength": 32, "title": "Client Id", "type": "string"}` |
+| client_secret | 必須 | `{"format": "password", "title": "Client Secret", "type": "string", "writeOnly": true}` |
+
+<details><summary>JSON Schema</summary>
+
+```json
+{
+  "additionalProperties": false,
+  "properties": {
+    "client_id": {
+      "maxLength": 32,
+      "minLength": 32,
+      "title": "Client Id",
+      "type": "string"
+    },
+    "client_secret": {
+      "format": "password",
+      "title": "Client Secret",
+      "type": "string",
+      "writeOnly": true
+    }
+  },
+  "required": [
+    "client_id",
+    "client_secret"
+  ],
+  "title": "Exchange",
   "type": "object"
 }
 ```
@@ -851,10 +1041,400 @@
 
 </details>
 
+## Issue
+
+| 項目 | 指定 | 型・制約 |
+| --- | --- | --- |
+| name | 必須 | `{"maxLength": 120, "minLength": 1, "title": "Name", "type": "string"}` |
+| project | 必須 | `{"title": "Project", "type": "string"}` |
+| kind | 必須 | `{"enum": ["shared", "personal"], "title": "Kind", "type": "string"}` |
+| api_ids | 任意 | 配列 / `{"type": "string"}` |
+| mode | 必須 | `{"enum": ["bearer", "app", "system"], "title": "Mode", "type": "string"}` |
+| ttl_minutes | 任意 | `{"default": 60, "maximum": 60.0, "minimum": 1.0, "title": "Ttl Minutes", "type": "integer"}` |
+| refresh_minutes | 任意 | `{"anyOf": [{"maximum": 60.0, "minimum": 1.0, "type": "integer"}, {"type": "null"}], "title": "Refresh Minutes"}` |
+| operations | 任意 | `{"additionalProperties": {"items": {"type": "string"}, "type": "array"}, "title": "Operations", "type": "object"}` |
+| users | 任意 | 配列 / `{"type": "string"}` |
+
+<details><summary>JSON Schema</summary>
+
+```json
+{
+  "additionalProperties": false,
+  "properties": {
+    "api_ids": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Api Ids",
+      "type": "array"
+    },
+    "kind": {
+      "enum": [
+        "shared",
+        "personal"
+      ],
+      "title": "Kind",
+      "type": "string"
+    },
+    "mode": {
+      "enum": [
+        "bearer",
+        "app",
+        "system"
+      ],
+      "title": "Mode",
+      "type": "string"
+    },
+    "name": {
+      "maxLength": 120,
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+    },
+    "operations": {
+      "additionalProperties": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "title": "Operations",
+      "type": "object"
+    },
+    "project": {
+      "title": "Project",
+      "type": "string"
+    },
+    "refresh_minutes": {
+      "anyOf": [
+        {
+          "maximum": 60.0,
+          "minimum": 1.0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Refresh Minutes"
+    },
+    "ttl_minutes": {
+      "default": 60,
+      "maximum": 60.0,
+      "minimum": 1.0,
+      "title": "Ttl Minutes",
+      "type": "integer"
+    },
+    "users": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Users",
+      "type": "array"
+    }
+  },
+  "required": [
+    "name",
+    "project",
+    "kind",
+    "mode"
+  ],
+  "title": "Issue",
+  "type": "object"
+}
+```
+
+</details>
+
+## IssuedBearer
+
+| 項目 | 指定 | 型・制約 |
+| --- | --- | --- |
+| mode | 必須 | `{"enum": ["legacy", "bearer", "app", "system"], "title": "Mode", "type": "string"}` |
+| ttl_minutes | 任意 | `{"title": "Ttl Minutes", "type": "integer"}` |
+| refresh_minutes | 任意 | `{"title": "Refresh Minutes", "type": "integer"}` |
+| operations | 任意 | `{"additionalProperties": {"items": {"type": "string"}, "type": "array"}, "title": "Operations", "type": "object"}` |
+| users | 任意 | 配列 / `{"type": "string"}` |
+| can_portal_exchange | 任意 | `{"title": "Can Portal Exchange", "type": "boolean"}` |
+| id | 必須 | `{"title": "Id", "type": "string"}` |
+| name | 必須 | `{"title": "Name", "type": "string"}` |
+| project | 必須 | `{"title": "Project", "type": "string"}` |
+| kind | 必須 | `{"enum": ["personal", "shared"], "title": "Kind", "type": "string"}` |
+| creator | 必須 | `{"title": "Creator", "type": "string"}` |
+| api_ids | 必須 | 配列 / `{"type": "string"}` |
+| revoked | 必須 | `{"title": "Revoked", "type": "boolean"}` |
+| access_token | 必須 | `{"title": "Access Token", "type": "string"}` |
+| token_type | 必須 | `{"const": "Bearer", "title": "Token Type", "type": "string"}` |
+| expires_in | 必須 | `{"title": "Expires In", "type": "integer"}` |
+| refresh_after | 必須 | `{"title": "Refresh After", "type": "integer"}` |
+| expires_at | 必須 | `{"title": "Expires At", "type": "integer"}` |
+| refresh_at | 必須 | `{"title": "Refresh At", "type": "integer"}` |
+
+<details><summary>JSON Schema</summary>
+
+```json
+{
+  "properties": {
+    "access_token": {
+      "title": "Access Token",
+      "type": "string"
+    },
+    "api_ids": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Api Ids",
+      "type": "array"
+    },
+    "can_portal_exchange": {
+      "title": "Can Portal Exchange",
+      "type": "boolean"
+    },
+    "creator": {
+      "title": "Creator",
+      "type": "string"
+    },
+    "expires_at": {
+      "title": "Expires At",
+      "type": "integer"
+    },
+    "expires_in": {
+      "title": "Expires In",
+      "type": "integer"
+    },
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "kind": {
+      "enum": [
+        "personal",
+        "shared"
+      ],
+      "title": "Kind",
+      "type": "string"
+    },
+    "mode": {
+      "enum": [
+        "legacy",
+        "bearer",
+        "app",
+        "system"
+      ],
+      "title": "Mode",
+      "type": "string"
+    },
+    "name": {
+      "title": "Name",
+      "type": "string"
+    },
+    "operations": {
+      "additionalProperties": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "title": "Operations",
+      "type": "object"
+    },
+    "project": {
+      "title": "Project",
+      "type": "string"
+    },
+    "refresh_after": {
+      "title": "Refresh After",
+      "type": "integer"
+    },
+    "refresh_at": {
+      "title": "Refresh At",
+      "type": "integer"
+    },
+    "refresh_minutes": {
+      "title": "Refresh Minutes",
+      "type": "integer"
+    },
+    "revoked": {
+      "title": "Revoked",
+      "type": "boolean"
+    },
+    "token_type": {
+      "const": "Bearer",
+      "title": "Token Type",
+      "type": "string"
+    },
+    "ttl_minutes": {
+      "title": "Ttl Minutes",
+      "type": "integer"
+    },
+    "users": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Users",
+      "type": "array"
+    }
+  },
+  "required": [
+    "mode",
+    "id",
+    "name",
+    "project",
+    "kind",
+    "creator",
+    "api_ids",
+    "revoked",
+    "access_token",
+    "token_type",
+    "expires_in",
+    "refresh_after",
+    "expires_at",
+    "refresh_at"
+  ],
+  "title": "IssuedBearer",
+  "type": "object"
+}
+```
+
+</details>
+
+## IssuedClient
+
+| 項目 | 指定 | 型・制約 |
+| --- | --- | --- |
+| mode | 必須 | `{"enum": ["legacy", "bearer", "app", "system"], "title": "Mode", "type": "string"}` |
+| ttl_minutes | 任意 | `{"title": "Ttl Minutes", "type": "integer"}` |
+| refresh_minutes | 任意 | `{"title": "Refresh Minutes", "type": "integer"}` |
+| operations | 任意 | `{"additionalProperties": {"items": {"type": "string"}, "type": "array"}, "title": "Operations", "type": "object"}` |
+| users | 任意 | 配列 / `{"type": "string"}` |
+| can_portal_exchange | 任意 | `{"title": "Can Portal Exchange", "type": "boolean"}` |
+| id | 必須 | `{"title": "Id", "type": "string"}` |
+| name | 必須 | `{"title": "Name", "type": "string"}` |
+| project | 必須 | `{"title": "Project", "type": "string"}` |
+| kind | 必須 | `{"enum": ["personal", "shared"], "title": "Kind", "type": "string"}` |
+| creator | 必須 | `{"title": "Creator", "type": "string"}` |
+| api_ids | 必須 | 配列 / `{"type": "string"}` |
+| revoked | 必須 | `{"title": "Revoked", "type": "boolean"}` |
+| client_id | 必須 | `{"title": "Client Id", "type": "string"}` |
+| client_secret | 必須 | `{"title": "Client Secret", "type": "string"}` |
+
+<details><summary>JSON Schema</summary>
+
+```json
+{
+  "properties": {
+    "api_ids": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Api Ids",
+      "type": "array"
+    },
+    "can_portal_exchange": {
+      "title": "Can Portal Exchange",
+      "type": "boolean"
+    },
+    "client_id": {
+      "title": "Client Id",
+      "type": "string"
+    },
+    "client_secret": {
+      "title": "Client Secret",
+      "type": "string"
+    },
+    "creator": {
+      "title": "Creator",
+      "type": "string"
+    },
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "kind": {
+      "enum": [
+        "personal",
+        "shared"
+      ],
+      "title": "Kind",
+      "type": "string"
+    },
+    "mode": {
+      "enum": [
+        "legacy",
+        "bearer",
+        "app",
+        "system"
+      ],
+      "title": "Mode",
+      "type": "string"
+    },
+    "name": {
+      "title": "Name",
+      "type": "string"
+    },
+    "operations": {
+      "additionalProperties": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "title": "Operations",
+      "type": "object"
+    },
+    "project": {
+      "title": "Project",
+      "type": "string"
+    },
+    "refresh_minutes": {
+      "title": "Refresh Minutes",
+      "type": "integer"
+    },
+    "revoked": {
+      "title": "Revoked",
+      "type": "boolean"
+    },
+    "ttl_minutes": {
+      "title": "Ttl Minutes",
+      "type": "integer"
+    },
+    "users": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Users",
+      "type": "array"
+    }
+  },
+  "required": [
+    "mode",
+    "id",
+    "name",
+    "project",
+    "kind",
+    "creator",
+    "api_ids",
+    "revoked",
+    "client_id",
+    "client_secret"
+  ],
+  "title": "IssuedClient",
+  "type": "object"
+}
+```
+
+</details>
+
 ## IssuedKey
 
 | 項目 | 指定 | 型・制約 |
 | --- | --- | --- |
+| mode | 必須 | `{"enum": ["legacy", "bearer", "app", "system"], "title": "Mode", "type": "string"}` |
+| ttl_minutes | 任意 | `{"title": "Ttl Minutes", "type": "integer"}` |
+| refresh_minutes | 任意 | `{"title": "Refresh Minutes", "type": "integer"}` |
+| operations | 任意 | `{"additionalProperties": {"items": {"type": "string"}, "type": "array"}, "title": "Operations", "type": "object"}` |
+| users | 任意 | 配列 / `{"type": "string"}` |
+| can_portal_exchange | 任意 | `{"title": "Can Portal Exchange", "type": "boolean"}` |
 | id | 必須 | `{"title": "Id", "type": "string"}` |
 | name | 必須 | `{"title": "Name", "type": "string"}` |
 | project | 必須 | `{"title": "Project", "type": "string"}` |
@@ -876,6 +1456,10 @@
       "title": "Api Ids",
       "type": "array"
     },
+    "can_portal_exchange": {
+      "title": "Can Portal Exchange",
+      "type": "boolean"
+    },
     "creator": {
       "title": "Creator",
       "type": "string"
@@ -892,13 +1476,37 @@
       "title": "Kind",
       "type": "string"
     },
+    "mode": {
+      "enum": [
+        "legacy",
+        "bearer",
+        "app",
+        "system"
+      ],
+      "title": "Mode",
+      "type": "string"
+    },
     "name": {
       "title": "Name",
       "type": "string"
     },
+    "operations": {
+      "additionalProperties": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "title": "Operations",
+      "type": "object"
+    },
     "project": {
       "title": "Project",
       "type": "string"
+    },
+    "refresh_minutes": {
+      "title": "Refresh Minutes",
+      "type": "integer"
     },
     "revoked": {
       "title": "Revoked",
@@ -907,9 +1515,21 @@
     "secret": {
       "title": "Secret",
       "type": "string"
+    },
+    "ttl_minutes": {
+      "title": "Ttl Minutes",
+      "type": "integer"
+    },
+    "users": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Users",
+      "type": "array"
     }
   },
   "required": [
+    "mode",
     "id",
     "name",
     "project",
@@ -983,6 +1603,12 @@
 
 | 項目 | 指定 | 型・制約 |
 | --- | --- | --- |
+| mode | 必須 | `{"enum": ["legacy", "bearer", "app", "system"], "title": "Mode", "type": "string"}` |
+| ttl_minutes | 任意 | `{"title": "Ttl Minutes", "type": "integer"}` |
+| refresh_minutes | 任意 | `{"title": "Refresh Minutes", "type": "integer"}` |
+| operations | 任意 | `{"additionalProperties": {"items": {"type": "string"}, "type": "array"}, "title": "Operations", "type": "object"}` |
+| users | 任意 | 配列 / `{"type": "string"}` |
+| can_portal_exchange | 任意 | `{"title": "Can Portal Exchange", "type": "boolean"}` |
 | id | 必須 | `{"title": "Id", "type": "string"}` |
 | name | 必須 | `{"title": "Name", "type": "string"}` |
 | project | 必須 | `{"title": "Project", "type": "string"}` |
@@ -1003,6 +1629,10 @@
       "title": "Api Ids",
       "type": "array"
     },
+    "can_portal_exchange": {
+      "title": "Can Portal Exchange",
+      "type": "boolean"
+    },
     "creator": {
       "title": "Creator",
       "type": "string"
@@ -1019,20 +1649,56 @@
       "title": "Kind",
       "type": "string"
     },
+    "mode": {
+      "enum": [
+        "legacy",
+        "bearer",
+        "app",
+        "system"
+      ],
+      "title": "Mode",
+      "type": "string"
+    },
     "name": {
       "title": "Name",
       "type": "string"
+    },
+    "operations": {
+      "additionalProperties": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "title": "Operations",
+      "type": "object"
     },
     "project": {
       "title": "Project",
       "type": "string"
     },
+    "refresh_minutes": {
+      "title": "Refresh Minutes",
+      "type": "integer"
+    },
     "revoked": {
       "title": "Revoked",
       "type": "boolean"
+    },
+    "ttl_minutes": {
+      "title": "Ttl Minutes",
+      "type": "integer"
+    },
+    "users": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Users",
+      "type": "array"
     }
   },
   "required": [
+    "mode",
     "id",
     "name",
     "project",
@@ -1042,6 +1708,78 @@
     "revoked"
   ],
   "title": "KeyMetadata",
+  "type": "object"
+}
+```
+
+</details>
+
+## Lifetime
+
+| 項目 | 指定 | 型・制約 |
+| --- | --- | --- |
+| max_minutes | 任意 | `{"anyOf": [{"maximum": 60.0, "minimum": 1.0, "type": "integer"}, {"type": "null"}], "title": "Max Minutes"}` |
+
+<details><summary>JSON Schema</summary>
+
+```json
+{
+  "additionalProperties": false,
+  "properties": {
+    "max_minutes": {
+      "anyOf": [
+        {
+          "maximum": 60.0,
+          "minimum": 1.0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Max Minutes"
+    }
+  },
+  "title": "Lifetime",
+  "type": "object"
+}
+```
+
+</details>
+
+## Limit
+
+| 項目 | 指定 | 型・制約 |
+| --- | --- | --- |
+| inherited_minutes | 必須 | `{"title": "Inherited Minutes", "type": "integer"}` |
+| max_minutes | 必須 | `{"anyOf": [{"type": "integer"}, {"type": "null"}], "title": "Max Minutes"}` |
+
+<details><summary>JSON Schema</summary>
+
+```json
+{
+  "properties": {
+    "inherited_minutes": {
+      "title": "Inherited Minutes",
+      "type": "integer"
+    },
+    "max_minutes": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Max Minutes"
+    }
+  },
+  "required": [
+    "inherited_minutes",
+    "max_minutes"
+  ],
+  "title": "Limit",
   "type": "object"
 }
 ```
@@ -1527,6 +2265,101 @@
     "unread"
   ],
   "title": "Notice",
+  "type": "object"
+}
+```
+
+</details>
+
+## OperationPolicy
+
+| 項目 | 指定 | 型・制約 |
+| --- | --- | --- |
+| operations | 必須 | 配列 / `{"type": "string"}` |
+| members | 必須 | 配列 / [Person](#person) |
+| permissions | 必須 | `{"additionalProperties": {"items": {"type": "string"}, "type": "array"}, "title": "Permissions", "type": "object"}` |
+
+<details><summary>JSON Schema</summary>
+
+```json
+{
+  "properties": {
+    "members": {
+      "items": {
+        "$ref": "#/components/schemas/Person"
+      },
+      "title": "Members",
+      "type": "array"
+    },
+    "operations": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Operations",
+      "type": "array"
+    },
+    "permissions": {
+      "additionalProperties": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "title": "Permissions",
+      "type": "object"
+    }
+  },
+  "required": [
+    "operations",
+    "members",
+    "permissions"
+  ],
+  "title": "OperationPolicy",
+  "type": "object"
+}
+```
+
+</details>
+
+## Permission
+
+| 項目 | 指定 | 型・制約 |
+| --- | --- | --- |
+| subject | 必須 | `{"maxLength": 180, "minLength": 1, "title": "Subject", "type": "string"}` |
+| operations | 必須 | `{"anyOf": [{"items": {"type": "string"}, "type": "array"}, {"type": "null"}], "title": "Operations"}` |
+
+<details><summary>JSON Schema</summary>
+
+```json
+{
+  "additionalProperties": false,
+  "properties": {
+    "operations": {
+      "anyOf": [
+        {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Operations"
+    },
+    "subject": {
+      "maxLength": 180,
+      "minLength": 1,
+      "title": "Subject",
+      "type": "string"
+    }
+  },
+  "required": [
+    "subject",
+    "operations"
+  ],
+  "title": "Permission",
   "type": "object"
 }
 ```
@@ -2240,6 +3073,63 @@
 
 </details>
 
+## Token
+
+| 項目 | 指定 | 型・制約 |
+| --- | --- | --- |
+| access_token | 必須 | `{"title": "Access Token", "type": "string"}` |
+| token_type | 必須 | `{"const": "Bearer", "title": "Token Type", "type": "string"}` |
+| expires_in | 必須 | `{"title": "Expires In", "type": "integer"}` |
+| refresh_after | 必須 | `{"title": "Refresh After", "type": "integer"}` |
+| expires_at | 必須 | `{"title": "Expires At", "type": "integer"}` |
+| refresh_at | 必須 | `{"title": "Refresh At", "type": "integer"}` |
+
+<details><summary>JSON Schema</summary>
+
+```json
+{
+  "properties": {
+    "access_token": {
+      "title": "Access Token",
+      "type": "string"
+    },
+    "expires_at": {
+      "title": "Expires At",
+      "type": "integer"
+    },
+    "expires_in": {
+      "title": "Expires In",
+      "type": "integer"
+    },
+    "refresh_after": {
+      "title": "Refresh After",
+      "type": "integer"
+    },
+    "refresh_at": {
+      "title": "Refresh At",
+      "type": "integer"
+    },
+    "token_type": {
+      "const": "Bearer",
+      "title": "Token Type",
+      "type": "string"
+    }
+  },
+  "required": [
+    "access_token",
+    "token_type",
+    "expires_in",
+    "refresh_after",
+    "expires_at",
+    "refresh_at"
+  ],
+  "title": "Token",
+  "type": "object"
+}
+```
+
+</details>
+
 ## Unit
 
 | 項目 | 指定 | 型・制約 |
@@ -2333,6 +3223,38 @@
     "name"
   ],
   "title": "UnitData",
+  "type": "object"
+}
+```
+
+</details>
+
+## UnitLimit
+
+| 項目 | 指定 | 型・制約 |
+| --- | --- | --- |
+| name | 必須 | `{"title": "Name", "type": "string"}` |
+| minutes | 必須 | `{"title": "Minutes", "type": "integer"}` |
+
+<details><summary>JSON Schema</summary>
+
+```json
+{
+  "properties": {
+    "minutes": {
+      "title": "Minutes",
+      "type": "integer"
+    },
+    "name": {
+      "title": "Name",
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "minutes"
+  ],
+  "title": "UnitLimit",
   "type": "object"
 }
 ```

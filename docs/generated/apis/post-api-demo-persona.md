@@ -50,7 +50,7 @@ AWS環境ではCloudFrontが内部ヘッダー `X-Tsugite-Origin` を付与し�
 
 | 種別 | 対象 | 操作 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- |
-| SQL | portal_members | R | select | [demo_token:51](../../../packages/backend/src/app/core/auth.py#L51) |
+| SQL | portal_members | R | select | [demo_token:55](../../../packages/backend/src/app/core/auth.py#L55) |
 
 <details><summary>解析した関数・依存</summary>
 

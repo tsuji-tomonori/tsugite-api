@@ -23,6 +23,13 @@ def test_all_routes_inputs_outputs_and_cleanup(tmp_path):
     assert all(t in issue for t in ["Authorization: Bearer", "KeyInput", "IssuedKey", "201", "422"])
     invoke = (pages / "post-api-invoke-key-environment-project-tail.md").read_text()
     assert all(t in invoke for t in ["X-API-Key", "invocation_logs", "secretsmanager", "lambda", "502"])
+    exchange = (pages / "post-api-auth-token.md").read_text()
+    assert all(
+        t in exchange
+        for t in ["client_secret", "Authorization: Bearer", "expires_in", "credential_leases"]
+    )
+    rotate = (pages / "post-api-credentials-key_id-rotate.md").read_text()
+    assert "| SQL | api_keys | U | digest に代入" in rotate
     ndjson = (pages / "get-api-access-logs-download.md").read_text()
     assert all(t in ndjson for t in ["application/x-ndjson", "X-Next-Cursor", "Content-Disposition"])
 

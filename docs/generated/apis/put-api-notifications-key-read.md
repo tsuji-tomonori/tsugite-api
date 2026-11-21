@@ -57,7 +57,7 @@ AWS環境ではCloudFrontが内部ヘッダー `X-Tsugite-Origin` を付与し�
 | SQL | notice_reads | R | db.get | [mark_read:111](../../../packages/backend/src/app/apis/governance/notifications.py#L111) |
 | SQL | notice_reads | R | db.get | [mark_read:117](../../../packages/backend/src/app/apis/governance/notifications.py#L117) |
 | SQL | notices | R | select | [mark_read:109](../../../packages/backend/src/app/apis/governance/notifications.py#L109) |
-| SQL | portal_members | R | db.get | [check_member:99](../../../packages/backend/src/app/core/auth.py#L99) |
+| SQL | portal_members | R | db.get | [check_member:121](../../../packages/backend/src/app/core/auth.py#L121) |
 | SQL | portal_members | R | db.get | [populate:56](../../../packages/backend/src/app/core/workspace.py#L56) |
 
 <details><summary>解析した関数・依存</summary>
