@@ -32,6 +32,9 @@ jobs:
           echo "AWS_EMULATOR_BINARY=$RUNNER_TEMP/emulator/opt/aws-emulator/bin/aws-emulator" >> "$GITHUB_ENV"
       - name: Run AWS Emulator E2E
         run: uv run --locked python tools/emulator_e2e.py --junitxml=artifacts/aws-emulator.xml
+      - name: Build screenshot report
+        if: always() && !cancelled()
+        run: uv run --locked python tools/test_report.py --pdf
       - uses: actions/upload-artifact@v4
         if: always()
         with:

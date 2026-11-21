@@ -127,13 +127,13 @@ def live_portal(aws, resources, tmp_path, identity, binding=None, ca=None):
 @scenario(
     "Cognitoで識別した2人が画面から申請し、承認済みの在庫照会Lambdaを呼ぶ", tags=["CAT", "AUTH", "AUDIT"]
 )
-def test_cognito_browser(aws, resources, tmp_path):
+def test_cognito_browser(aws, resources, tmp_path, request):
     with live_portal(aws, resources, tmp_path, "cognito-browser") as (url, tokens):
         response = httpx.get(
             url + "/api/me", headers={"Authorization": "Bearer " + tokens["user"]}, trust_env=False
         )
         response.raise_for_status()
-        catalog_journey(url, tokens, response.json()["subject"])
+        catalog_journey(url, request.node, tokens, response.json()["subject"])
 
 
 @pytest.mark.parametrize(

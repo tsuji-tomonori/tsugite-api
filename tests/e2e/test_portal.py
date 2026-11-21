@@ -17,5 +17,5 @@ def demo_url(tmp_path):
 
 
 @scenario("提供者の公開から承認・取消までを画面で操作する", tags=["CAT", "AUTH", "AUDIT"])
-def test_user_flow(demo_url):
-    catalog_journey(demo_url)
+def test_user_flow(demo_url, request):
+    catalog_journey(demo_url, request.node)
