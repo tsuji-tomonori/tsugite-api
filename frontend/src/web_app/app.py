@@ -6,6 +6,7 @@ from urllib.parse import quote, urlencode
 
 import api_docs
 import client
+import guide_views
 import operation_views
 import workspace_views
 from js import document, window
@@ -85,6 +86,7 @@ SAMPLE = {
 }
 PAGES = {
     "home": "ホーム",
+    "guide": "使い方ガイド",
     "keys": "APIキー",
     "workspace": "組織・プロジェクト",
     "metrics": "メトリクス",
@@ -161,6 +163,8 @@ async def load():
     if not ctx["me"]:
         return
     page = route()
+    if page != "keys":
+        ctx.pop("issued_key", None)
     ctx["me"], badge = await asyncio.gather(client.api("/me"), client.api("/notifications/count"))
     ctx["badge"] = badge["unread"]
     if page in ("workspace", "keys"):
@@ -248,8 +252,6 @@ async def load():
 
 
 async def go(page, *, query=None):
-    if page != "keys":
-        ctx.pop("issued_key", None)
     if page != "workspace":
         for name in ("workspace_usage", "membership_draft", "unit_draft", "directory_candidates"):
             ctx.pop(name, None)
@@ -1245,6 +1247,10 @@ class Portal(Page):
             if page.startswith("edit/")
             else "APIを登録",
         )
+        guide_detail = page.startswith("guide/")
+        if guide_detail:
+            guide = guide_views.BY_ID.get(page.split("/", 1)[1])
+            title = guide.title if guide else "使い方ガイド"
         nav_open = ctx.get("nav_open", not window.matchMedia("(max-width: 780px)").matches)
         with t.header(classes="mast"):
             with t.div(classes="identity"):
@@ -1306,6 +1312,13 @@ class Portal(Page):
                 t.a("継手API", href="#/home")
                 t.span("›", aria_hidden="true")
                 t.strong(title)
+            if page != "guide" and not guide_detail:
+                t.a(
+                    "使い方ガイド",
+                    href="#/guide",
+                    classes="guide-shortcut",
+                    on_click=action(go, "guide"),
+                )
         with t.div(id="workspace", classes="workspace", data_nav="open" if nav_open else "closed"):
             with t.nav(id="portal-nav", classes="rail", aria_label="ポータル"):
                 t.strong("継手API", classes="rail-title")
@@ -1314,6 +1327,7 @@ class Portal(Page):
                         "ワークスペース",
                         ("home", "catalog", "keys", "mine", "notifications", "workspace"),
                     ),
+                    ("ヘルプ", ("guide",)),
                     ("管理", ("members",)),
                     ("提供者メニュー", ("inventory", "inbox")),
                     ("ガバナンス", ("metrics", "logs", "alerts", "audit")),
@@ -1327,7 +1341,11 @@ class Portal(Page):
                         for target in pages:
                             if target == "inventory" and not user["owners"]:
                                 continue
-                            active = page == target or (page == "register" and target == "inventory")
+                            active = (
+                                page == target
+                                or (page == "register" and target == "inventory")
+                                or (guide_detail and target == "guide")
+                            )
                             t.button(
                                 PAGES[target],
                                 type="button",
@@ -1361,6 +1379,10 @@ class Portal(Page):
                         btn("APIを登録", go, "register", primary=True)
                 if page == "home":
                     dashboard_view()
+                elif page == "guide":
+                    guide_views.index(ctx)
+                elif guide_detail:
+                    guide_views.article(page.split("/", 1)[1], user, PAGES, go, btn)
                 elif page == "workspace":
                     workspace_views.workspace_view(ctx, field, btn, load)
                 elif page == "keys":
