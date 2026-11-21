@@ -406,7 +406,7 @@ class Portal(Page):
                     "キーワードで検索",
                     "search",
                     text=ctx["query"],
-                    placeholder="API名、用途、提供チーム",
+                    placeholder="API名、用途、提供チーム、OpenAPIの仕様",
                 )
                 btn("検索", search)
                 cards()

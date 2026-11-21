@@ -17,6 +17,7 @@ def catalog(actor: User, db: DB, q: str = Query("", max_length=120), inventory: 
                 Asset.name.icontains(term, autoescape=True),
                 Asset.summary.icontains(term, autoescape=True),
                 Asset.owner.icontains(term, autoescape=True),
+                Asset.spec.icontains(term, autoescape=True),
             )
         )
     return [listing(a) for a in db.scalars(stmt.order_by(Asset.name, Asset.id))]
