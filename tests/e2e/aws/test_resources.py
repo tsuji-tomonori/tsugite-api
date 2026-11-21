@@ -78,7 +78,7 @@ def test_create_dsql_cluster(aws):
 def test_openapi_archive_versions(aws, resources, monkeypatch):
     from app.integrations.spec_archive import archive_spec
 
-    from tests.test_catalog import SPEC
+    from tests.support.catalog import SPEC
 
     bucket = next(v for k, v in resources.items() if k.startswith("RuntimeSpecifications"))
     monkeypatch.setenv("SPEC_BUCKET", bucket)
