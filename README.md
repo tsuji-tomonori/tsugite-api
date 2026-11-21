@@ -11,6 +11,12 @@ uv run python tools/manage.py demo
 
 `http://127.0.0.1:8000` で「提供チーム」を選び、API名と用途を入力します。検証の接続先に `sample-sandbox` を選び、用意されたOpenAPIを使って公開できます。別のタブで「利用チーム」を選ぶと、申請、承認後の呼び出し、取消後の拒否を試せます。
 
+## APIキーを発行して呼び出す
+
+利用者でログインし、左メニューの「APIキー」→「APIキーを作成」から、プロジェクト、共有か本人限定か、対象APIを選びます。秘密値は発行時に1回だけ表示されます。利用申請が承認されたら、API詳細の「API Docs」で操作を開き、キーと環境を選んで送信できます。
+
+外部アプリでは共有キーを `Authorization: Bearer <共有キー>` に指定します。本人限定キーの場合は `Authorization: Bearer <本人のCognitoアクセストークン>` と `X-API-Key: <本人限定キー>` の両方を送ります。呼び出しURLは `/api/invoke/{API識別子}/{環境}/{プロジェクト}/{OpenAPIに定義した操作パス}` です。
+
 ## AWSで使う
 
 Python CDKでCloudFront、非公開S3、API Gateway、Lambda、Cognito、Aurora DSQLを構築します。フロントはPuePyとPyScript、APIはFastAPI、DB変更はAlembicです。Pythonのブラウザ実行環境とCSSも同じ配信元に配置します。

@@ -17,6 +17,14 @@ from playwright.sync_api import sync_playwright
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "artifacts"
 CASE = {
+    "test_gateway_scoped_key_authorizer": "API Gateway用の認可関数で、本人キー・別ユーザー・失効の判定を確認する",
+    "test_provider_policy_console": "提供者が公開・自動承認・委任の条件を保存し、部署リーダーが個人申請を画面から却下する",
+    "test_hybrid_retrieval": "語句・意味の両方で業務APIを検索し、同義語を含めて順位付けする",
+    "test_visible_openapi_tags_supply_custom_meaning": "閲覧可能なOpenAPIタグの説明だけを意味検索に使う",
+    "test_workspace_key_console": "管理者が組織階層と兼務を設定し、リーダーがキー・利用状況・停止と再開を操作する",
+    "test_scoped_keys_reach_https": "EmulatorのCognitoと共有・本人キーでHTTPS接続先を呼び、別人・範囲外・失効を拒否する",
+    "test_delegation_search_and_personal_isolation": "公開範囲、委任判断、個人・プロジェクト別申請、部署・役職の自動承認を確認する",
+    "test_openapi_key_console": "OpenAPIの型からパス・クエリ・JSONを入力し、選択したキーでHTTPSの送料計算を実行する",
     "test_governance_console": "3役のホームからユーザー管理・通知・メトリクス・ログ保存・掲載終了を操作する",
     "test_cognito_member_lifecycle": "AWS EmulatorのCognitoでユーザー追加・所属・削除・既発行トークンの停止を確認する",
     "test_member_lifecycle": "管理者が追加・削除し、同一メールで再登録しても旧利用権を復活させない",
@@ -223,6 +231,9 @@ def inventory():
 
 
 GALLERIES = {
+    "test_provider_policy_console": ("提供者の公開設定と部署リーダーの判断", 2),
+    "test_workspace_key_console": ("組織・リーダーの利用状況とAPIキー", 3),
+    "test_openapi_key_console": ("API DocsからHTTPSの送料計算を実行", 3),
     "test_governance_console": ("役割別ホーム・通知・アラート・利用監査", 9),
     "test_console_visual_modes": ("AWSコンソールに合わせたライト・ダーク・強制カラー", 4),
     "test_large_catalog": ("公開120件のカタログ", 4),
@@ -231,6 +242,25 @@ GALLERIES = {
 }
 
 JOURNEYS = [
+    (
+        "組織・利用範囲",
+        "管理者が階層と兼務を設定し、リーダーは担当範囲の所属と利用状況を確認して停止・再開できる。",
+        ["test_workspace_key_console", "test_delegation_search_and_personal_isolation"],
+    ),
+    (
+        "公開範囲・申請と判断",
+        "閲覧可能な商品だけをハイブリッド検索する。提供者のルールに応じ、プロジェクト・個人の申請を自動承認または委任する。",
+        [
+            "test_hybrid_retrieval",
+            "test_visible_openapi_tags_supply_custom_meaning",
+            "test_delegation_search_and_personal_isolation",
+        ],
+    ),
+    (
+        "キー選択・実呼び出し",
+        "キーを発行し、OpenAPIに沿ってパラメーターを入力する。HTTPS接続先の応答・監査を照合し、失効後は転送を拒否する。",
+        ["test_scoped_keys_reach_https", "test_openapi_key_console"],
+    ),
     (
         "ユーザー管理",
         "所属と役割を指定して追加し、削除後は以前のアクセスも止める。",
