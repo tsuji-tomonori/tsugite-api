@@ -1,0 +1,24 @@
+[project]
+name = "tsugite-api"
+version = "0.1.0"
+requires-python = ">=3.14,<3.15"
+dependencies = ["tsugite-backend", "tsugite-frontend", "tsugite-infra"]
+
+[tool.uv.workspace]
+members = ["backend","frontend","infra"]
+
+[tool.uv.sources]
+tsugite-backend = { workspace = true }
+tsugite-frontend = { workspace = true }
+tsugite-infra = { workspace = true }
+
+[dependency-groups]
+dev = ["pytest>=9","pytest-given","ruff","playwright","pytest-cov","pyright","mypy","pytestarch","pip-audit"]
+
+[tool.pytest.ini_options]
+pythonpath = ["backend/src","infra","."]
+testpaths = ["tests","backend/tests","infra/tests"]
+
+[tool.ruff]
+target-version = "py314"
+line-length = 105
