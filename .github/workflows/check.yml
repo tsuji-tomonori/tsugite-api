@@ -1,0 +1,30 @@
+name: Verify
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv python install 3.14 && uv sync --locked --all-packages
+      - run: uv run --locked ruff format --check . && uv run --locked ruff check .
+      - run: uv run --locked pyright && uv run --locked mypy
+      - run: uv run --locked python tools/manage.py synth > /dev/null
+      - run: uv run --locked playwright install --with-deps chromium --only-shell
+      - run: uv run --locked python tools/manage.py contracts
+      - run: uv run --locked pytest -q --cov=app --cov-branch --junitxml=artifacts/junit.xml --given-md=artifacts/scenarios.md --given-html=artifacts/scenarios.html
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: contracts-and-test-results
+          path: |
+            artifacts/
+            infra/cdk.out/*.template.json
