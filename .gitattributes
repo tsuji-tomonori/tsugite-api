@@ -13,5 +13,6 @@
 .githooks/* text eol=lf
 *.png binary
 *.jpg binary
+*.webp binary
 *.pdf binary
 *.zip binary

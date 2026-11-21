@@ -145,8 +145,12 @@ class SourceIndex:
             key=lambda n: (getattr(n, "lineno", 0), getattr(n, "col_offset", 0)),
         )
         types = defaultdict(set)
-        for param, table in bindings:
+        transient = set()
+        added = set()
+        for param, table, is_new in bindings:
             types[param].add(table)
+            if is_new:
+                transient.add(param)
         services = defaultdict(set)
 
         def model(expr):
@@ -156,6 +160,28 @@ class SourceIndex:
                 {self.models[symbol[len(prefix) :]]}
                 if symbol.startswith(prefix) and symbol[len(prefix) :] in self.models
                 else set()
+            )
+
+        # A variable loaded on one branch and constructed on another can represent an UPDATE.
+        assignments = defaultdict(list)
+        for statement in nodes:
+            if isinstance(statement, (ast.Assign, ast.AnnAssign, ast.NamedExpr)):
+                targets = statement.targets if isinstance(statement, ast.Assign) else [statement.target]
+                for target in targets:
+                    if isinstance(target, ast.Name):
+                        assignments[target.id].append(statement.value)
+        constructed = {
+            key
+            for key, values in assignments.items()
+            if all(isinstance(value, ast.Call) and model(value.func) for value in values)
+        }
+
+        def is_transient(expr):
+            return (
+                isinstance(expr, ast.Name)
+                and expr.id in transient
+                or isinstance(expr, ast.Call)
+                and bool(model(expr.func))
             )
 
         def entities(expr):
@@ -199,15 +225,28 @@ class SourceIndex:
                 value = part.iter if isinstance(part, ast.For) else part.value
                 for target in targets:
                     if isinstance(target, ast.Name):
+                        if target.id in constructed:
+                            transient.add(target.id)
+                        else:
+                            transient.discard(target.id)
                         types[target.id].update(entities(value))
                         services[target.id].update(service(value))
                     for attr in ast.walk(target):
-                        if isinstance(attr, ast.Attribute) and isinstance(attr.ctx, ast.Store):
+                        if (
+                            isinstance(attr, ast.Attribute)
+                            and isinstance(attr.ctx, ast.Store)
+                            and not is_transient(attr.value)
+                        ):
                             for table in entities(attr.value):
                                 add("SQL", table, "U", part, attr.attr + " に代入")
             if not isinstance(part, ast.Call):
                 continue
             full = self.resolve(func, part.func)
+            if full == "db.add" and part.args and isinstance(part.args[0], ast.Name):
+                added.add(part.args[0].id)
+            if full in {"db.flush", "db.commit"}:
+                transient.difference_update(added)
+                added.clear()
             candidates = [full]
             if full in {"starlette.concurrency.run_in_threadpool", "asyncio.to_thread"} and part.args:
                 candidates.append(self.resolve(func, part.args[0]))
@@ -221,10 +260,12 @@ class SourceIndex:
                     *zip(names, args),
                     *((item.arg, item.value) for item in part.keywords if item.arg),
                 ]
-                passed = tuple(sorted({(k, table) for k, v in values for table in entities(v)}))
+                passed = tuple(
+                    sorted({(k, table, is_transient(v)) for k, v in values for table in entities(v)})
+                )
                 facts.edges.add((candidate, passed))
             arg = part.args[0] if part.args else None
-            if full == "setattr":
+            if full == "setattr" and not is_transient(arg):
                 for table in entities(arg):
                     add("SQL", table, "U", part, ast.unparse(part.func) + " による属性更新")
             if isinstance(part.func, ast.Attribute) and part.func.attr in {

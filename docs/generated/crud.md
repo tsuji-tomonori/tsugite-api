@@ -29,7 +29,7 @@ SQLテーブルはAWS環境ではAurora DSQL、ローカルデモではSQLiteを
 | [GET `/api/config`](apis/get-api-config.md) | — | ssm (R) | 0 |
 | [GET `/api/credential-limits/{kind}/{key}`](apis/get-api-credential-limits-kind-key.md) | access_rights (R)、affiliations (R)、assets (R)、credential_rules (R)、directory_tree (R)、portal_members (R) | ssm (R) | 0 |
 | [PUT `/api/credential-limits/{kind}/{key}`](apis/put-api-credential-limits-kind-key.md) | access_rights (R)、affiliations (R)、assets (R)、audit_events (C)、credential_rules (C/R/U)、directory_tree (R)、portal_members (R) | ssm (R) | 0 |
-| [POST `/api/credentials`](apis/post-api-credentials.md) | access_rights (R)、affiliations (R)、api_keys (C/U)、assets (R)、audit_events (C)、credential_leases (C/R/U)、credential_rules (R)、directory_tree (R)、portal_members (R) | cognito-idp (R)、ssm (R) | 0 |
+| [POST `/api/credentials`](apis/post-api-credentials.md) | access_rights (R)、affiliations (R)、api_keys (C)、assets (R)、audit_events (C)、credential_leases (C/R/U)、credential_rules (R)、directory_tree (R)、portal_members (R) | cognito-idp (R)、ssm (R) | 0 |
 | [GET `/api/credentials/options`](apis/get-api-credentials-options.md) | access_rights (R)、affiliations (R)、assets (R)、credential_rules (R)、directory_tree (R)、portal_members (R) | cognito-idp (R)、ssm (R) | 0 |
 | [POST `/api/credentials/{key_id}/rotate`](apis/post-api-credentials-key_id-rotate.md) | affiliations (R)、api_keys (R/U)、audit_events (C)、directory_tree (R)、portal_members (R) | ssm (R) | 0 |
 | [POST `/api/credentials/{key_id}/token`](apis/post-api-credentials-key_id-token.md) | access_rights (R)、affiliations (R)、api_keys (R)、audit_events (C)、credential_leases (C/R/U)、credential_rules (R)、directory_tree (R)、portal_members (R) | ssm (R) | 0 |

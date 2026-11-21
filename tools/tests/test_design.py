@@ -28,6 +28,8 @@ def test_all_routes_inputs_outputs_and_cleanup(tmp_path):
         t in exchange
         for t in ["client_secret", "Authorization: Bearer", "expires_in", "credential_leases"]
     )
+    credential = (pages / "post-api-credentials.md").read_text()
+    assert "| SQL | api_keys | C |" in credential and "| SQL | api_keys | U |" not in credential
     rotate = (pages / "post-api-credentials-key_id-rotate.md").read_text()
     assert "| SQL | api_keys | U | digest に代入" in rotate
     ndjson = (pages / "get-api-access-logs-download.md").read_text()

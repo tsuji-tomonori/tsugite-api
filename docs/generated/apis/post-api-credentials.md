@@ -107,7 +107,6 @@ AWS環境ではCloudFrontが内部ヘッダー `X-Tsugite-Origin` を付与し�
 | SQL | affiliations | R | select | [roster:59](../../../packages/backend/src/app/apis/governance/directory.py#L59) |
 | SQL | affiliations | R | select | [populate:69](../../../packages/backend/src/app/core/workspace.py#L69) |
 | SQL | api_keys | C | db.add | [issue:165](../../../packages/backend/src/app/apis/governance/credentials.py#L165) |
-| SQL | api_keys | U | digest に代入 | [secret_for:39](../../../packages/backend/src/app/apis/governance/credentials.py#L39) |
 | SQL | assets | R | db.get | [issue:140](../../../packages/backend/src/app/apis/governance/credentials.py#L140) |
 | SQL | assets | R | select | [key_assets:76](../../../packages/backend/src/app/apis/governance/keys.py#L76) |
 | SQL | audit_events | C | db.add | [audit:37](../../../packages/backend/src/app/apis/governance/directory.py#L37) |
