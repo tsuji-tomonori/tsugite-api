@@ -371,8 +371,9 @@ def credentials_view(ctx, field, btn, reload, projects):
             )
             t.p(f"トークン有効期限 {row['ttl_minutes']}分　更新開始 {row['refresh_minutes']}分後")
             for asset in row["api_ids"]:
-                ops = row.get("operations", {}).get(asset, [])
-                t.p(names.get(asset, asset) + "　" + ("、".join(ops) if ops else "すべての操作"))
+                ops = row.get("operations", {}).get(asset)
+                scope = "すべての操作" if ops is None else ("、".join(ops) or "許可された操作なし")
+                t.p(names.get(asset, asset) + "　" + scope)
             if not row["api_ids"]:
                 t.p("利用を承認されたすべてのAPI")
             if row["mode"] in ("system", "app"):
