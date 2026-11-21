@@ -1,0 +1,31 @@
+import json
+
+from app.apis.catalog.common import DB, User, event, listing, record
+from app.apis.schemas import Listing
+from app.core.config import targets
+from app.integrations.upstream import probe
+from fastapi import APIRouter, HTTPException, Request
+
+router = APIRouter()
+
+
+@router.put("/apis/{key}/publication", response_model=Listing, operation_id="publish")
+def publish(key: str, published: bool, request: Request, actor: User, db: DB):
+    a = record(db, key)
+    if a.owner not in actor.owners:
+        raise HTTPException(403)
+    if a.published != published:
+        if published:
+            bindings = targets()
+            if any(
+                name not in bindings
+                or (bindings[name].owner, bindings[name].environment) != (a.owner, env)
+                for env, name in json.loads(a.targets).items()
+            ):
+                raise HTTPException(409, "接続設定を確認してください")
+            for name in set(json.loads(a.targets).values()):
+                probe(bindings[name])
+        a.published = published
+        event(db, request, actor, a, "publish" if published else "unpublish", a.owner)
+        db.commit()
+    return listing(a)

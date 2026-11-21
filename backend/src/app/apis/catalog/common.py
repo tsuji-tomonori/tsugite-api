@@ -1,0 +1,73 @@
+import json
+from typing import Annotated
+
+from app.apis.schemas import Listing
+from app.core.auth import Actor, human
+from app.db.models import Asset, Event
+from app.db.session import session
+from fastapi import Depends, HTTPException
+from sqlalchemy.orm import Session
+
+DB = Annotated[Session, Depends(session)]
+User = Annotated[Actor, Depends(human)]
+
+
+def event(db, request, actor, asset, action, project="", environment="", detail=""):
+    db.add(
+        Event(
+            actor=actor.subject,
+            asset_id=asset.id,
+            owner=asset.owner,
+            project=project,
+            environment=environment,
+            action=action,
+            detail=detail,
+            request_id=request.state.request_id,
+        )
+    )
+
+
+def record(db: Session, key: str) -> Asset:
+    row = db.get(Asset, key)
+    if row is None:
+        raise HTTPException(404, "APIが見つかりません")
+    return row
+
+
+def listing(row: Asset) -> Listing:
+    return Listing(
+        id=row.id,
+        owner=row.owner,
+        name=row.name,
+        summary=row.summary,
+        environments=list(json.loads(row.targets)),
+        published=row.published,
+        revision=row.revision,
+    )
+
+
+def right_id(asset_id: str, project: str, environment: str) -> str:
+    return f"{asset_id}/{project}/{environment}"
+
+
+def allowed_spec(node):
+    if isinstance(node, dict):
+        return all(
+            (
+                key not in {"$ref", "$dynamicRef", "$recursiveRef"}
+                or isinstance(v, str)
+                and v.startswith("#/")
+            )
+            and key not in {"$id", "$dynamicAnchor"}
+            and allowed_spec(v)
+            for key, v in node.items()
+        )
+    return not isinstance(node, list) or all(allowed_spec(v) for v in node)
+
+
+NEXT = {
+    "approve": ("pending", "approved"),
+    "reject": ("pending", "rejected"),
+    "withdraw": ("pending", "withdrawn"),
+    "revoke": ("approved", "revoked"),
+}

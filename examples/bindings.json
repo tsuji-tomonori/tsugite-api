@@ -1,0 +1,14 @@
+{
+  "projects": [
+    "supply",
+    "finance"
+  ],
+  "targets": {
+    "warehouse-sandbox": {
+      "owner": "supply",
+      "environment": "sandbox",
+      "kind": "https",
+      "address": "https://inventory.example.com"
+    }
+  }
+}

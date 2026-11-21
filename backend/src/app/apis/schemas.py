@@ -1,22 +1,22 @@
 from datetime import datetime
 from typing import Any, Literal
+
 from pydantic import BaseModel, ConfigDict, Field
 
-Env = Literal["sandbox","production"]
-Project = str
+Env = Literal["sandbox", "production"]
 
 
 class Input(BaseModel):
-    model_config = ConfigDict(extra="forbid",str_strip_whitespace=True)
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
 
 class Register(Input):
-    owner: str = Field(min_length=1,max_length=63)
-    name: str = Field(min_length=1,max_length=120)
-    summary: str = Field(min_length=1,max_length=1000)
-    targets: dict[Env,str] = Field(min_length=1,max_length=2)
-    base_path: str = Field("",pattern=r"^(?:/[A-Za-z0-9_-]+)*$",max_length=300)
-    spec: dict[str,Any]
+    owner: str = Field(min_length=1, max_length=63)
+    name: str = Field(min_length=1, max_length=120)
+    summary: str = Field(min_length=1, max_length=1000)
+    targets: dict[Env, str] = Field(min_length=1, max_length=2)
+    base_path: str = Field("", pattern=r"^(?:/[A-Za-z0-9_-]+)*$", max_length=300)
+    spec: dict[str, Any]
 
 
 class Listing(BaseModel):
@@ -30,19 +30,19 @@ class Listing(BaseModel):
 
 
 class Detail(Listing):
-    spec: dict[str,Any]
+    spec: dict[str, Any]
 
 
 class Apply(Input):
     project: str = Field(pattern=r"^[a-z][a-z0-9-]{0,62}$")
     environment: Env
-    reason: str = Field(min_length=1,max_length=1000)
+    reason: str = Field(min_length=1, max_length=1000)
 
 
 class Decision(Input):
-    action: Literal["approve","reject","revoke","withdraw"]
+    action: Literal["approve", "reject", "revoke", "withdraw"]
     revision: int = Field(ge=1)
-    reason: str = Field(min_length=1,max_length=1000)
+    reason: str = Field(min_length=1, max_length=1000)
 
 
 class Right(BaseModel):
@@ -53,7 +53,7 @@ class Right(BaseModel):
     environment: Env
     reason: str
     asset_name: str = ""
-    status: Literal["pending","approved","rejected","revoked","withdrawn"]
+    status: Literal["pending", "approved", "rejected", "revoked", "withdrawn"]
     revision: int
 
 
