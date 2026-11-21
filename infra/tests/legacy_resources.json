@@ -1,0 +1,63 @@
+{
+  "Bindings": [
+    "PortalSettings3D69E125",
+    "Sample9DACD4DE",
+    "SampleServiceRole93281BDB"
+  ],
+  "Database": [
+    "Database",
+    "MigrationC13A4580",
+    "MigrationLogs670D4322",
+    "MigrationServiceRoleD1A96261",
+    "MigrationServiceRoleDefaultPolicyADF9DCD5",
+    "Schema",
+    "SchemaProviderframeworkonEvent33CC9CF6",
+    "SchemaProviderframeworkonEventServiceRole112B01E5",
+    "SchemaProviderframeworkonEventServiceRoleDefaultPolicyB5A9A421"
+  ],
+  "Gateway": [
+    "Gateway43CB3636",
+    "GatewayANYapiinvokeproxyBD262200",
+    "GatewayANYapiinvokeproxyFastAPID630882A",
+    "GatewayANYapiinvokeproxyFastAPIPermission90FA3531",
+    "GatewayANYapiproxyDDDE8D72",
+    "GatewayANYapiproxyFastAPIPermission50F5BE38",
+    "GatewayDefaultStage5D47CCA1",
+    "GatewayProjectAccessEED0D117",
+    "GatewayTsugiteApiGatewayProjectAccess032035CAPermission78664B72",
+    "HttpAccessLog2F8A15F0"
+  ],
+  "Identities": [
+    "Auditors",
+    "Identities1D2FC062",
+    "IdentitiesHubScopeAC0542B3",
+    "IdentitiesLogin52266816",
+    "IdentitiesMachinefinance215ED571",
+    "IdentitiesMachinesupply12CFCB77",
+    "IdentitiesWebClientA2442E52",
+    "ownfinance",
+    "ownsupply",
+    "usefinance",
+    "usesupply"
+  ],
+  "Portal": [
+    "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C512MiB6723FB92",
+    "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C512MiBServiceRoleBA21DBC1",
+    "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C512MiBServiceRoleDefaultPolicy96C3E726",
+    "PortalDF61C365",
+    "PortalOrigin1S3OriginAccessControl8908121C",
+    "Web3C8945DB",
+    "WebFilesAwsCliLayer2C3327E8",
+    "WebFilesCustomResource512MiB4D7D8575",
+    "WebPolicy83ABEB90"
+  ],
+  "Runtime": [
+    "Access9901B1FF",
+    "AccessLogs8B620ECA",
+    "ApiF70053CD",
+    "ApiLogs3D05D88B",
+    "OriginKey10CF34FB",
+    "RuntimeRoleDefaultPolicy31263C89",
+    "RuntimeRoleFD8790A4"
+  ]
+}

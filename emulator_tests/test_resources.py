@@ -7,25 +7,29 @@ from urllib.request import urlopen
 
 
 def test_deployed_resources(aws, resources):
-    path = "TsugiteApi/"
-    bucket = resources[path + "Web/Resource"]
+    bucket = resources["Web3C8945DB"]
     s3 = aws.client("s3")
     assert all(s3.get_public_access_block(Bucket=bucket)["PublicAccessBlockConfiguration"].values())
+    assert {t["Key"]: t["Value"] for t in s3.get_bucket_tagging(Bucket=bucket)["TagSet"]}.items() >= {
+        "Application": "TsugiteAPI",
+        "ManagedBy": "AWS-CDK",
+        "Component": "Portal",
+    }.items()
     index = Path("frontend/dist/index.html").read_bytes()
     s3.put_object(Bucket=bucket, Key="index.html", Body=index)
     assert s3.get_object(Bucket=bucket, Key="index.html")["Body"].read() == index
-    secret = resources[path + "OriginKey/Resource"]
+    secret = resources["OriginKey10CF34FB"]
     assert aws.client("secretsmanager").get_secret_value(SecretId=secret)["SecretString"]
     logs = aws.client("logs")
-    group = resources[path + "HttpAccessLog/Resource"]
+    group = resources["HttpAccessLog2F8A15F0"]
     assert logs.describe_log_groups(logGroupNamePrefix=group)["logGroups"][0]["retentionInDays"] == 90
     gateway = aws.client("apigatewayv2")
-    api_id = resources[path + "Gateway/Resource"]
+    api_id = resources["Gateway43CB3636"]
     stage = gateway.get_stage(ApiId=api_id, StageName="$default")
     assert group in stage["AccessLogSettings"]["DestinationArn"]
     assert "requestId" in json.loads(stage["AccessLogSettings"]["Format"])
     functions = aws.client("lambda")
-    name = resources[path + "Sample/Resource"]
+    name = resources["Sample9DACD4DE"]
     functions.get_waiter("function_active_v2").wait(
         FunctionName=name, WaiterConfig={"Delay": 1, "MaxAttempts": 30}
     )
@@ -47,6 +51,8 @@ def test_deployed_resources(aws, resources):
         ApiId=api_id, RouteKey="GET /stock", Target="integrations/" + integration["IntegrationId"]
     )
     api = gateway.get_api(ApiId=api_id)
+    assert api["Tags"]["Component"] == "Gateway"
+    assert functions.list_tags(Resource=arn)["Tags"]["Component"] == "Bindings"
     endpoint = api["ApiEndpoint"]
     assert endpoint.startswith(os.environ["AWS_ENDPOINT_URL"] + "/")
     with urlopen(

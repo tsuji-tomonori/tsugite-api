@@ -42,7 +42,4 @@ def resources(aws):
     deployed = stack.list_stack_resources(StackName=name)["StackResourceSummaries"]
     assert {v["LogicalResourceId"] for v in deployed} == set(selected)
     assert all(v["ResourceStatus"] == "CREATE_COMPLETE" for v in deployed)
-    return {
-        selected[v["LogicalResourceId"]]["Metadata"]["aws:cdk:path"]: v["PhysicalResourceId"]
-        for v in deployed
-    }
+    return {v["LogicalResourceId"]: v["PhysicalResourceId"] for v in deployed}

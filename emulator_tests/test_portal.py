@@ -99,7 +99,7 @@ def machine_tokens(folder):
 def live_portal(aws, resources, tmp_path, identity, binding=None, ca=None):
     auth = cognito_users(aws) if identity != "machine" else machine_tokens(tmp_path)
     with auth as (config, tokens):
-        function = resources["TsugiteApi/Sample/Resource"]
+        function = resources["Sample9DACD4DE"]
         config["targets"] = {
             "sample-" + env: {
                 **(binding or {"kind": "lambda", "address": function}),
