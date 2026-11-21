@@ -14,21 +14,25 @@ from starlette.concurrency import run_in_threadpool
 router = APIRouter()
 
 
-def allowed_path(spec: dict, method: str, path: str) -> bool:
+def operation_template(spec: dict, method: str, path: str) -> str | None:
     parts = path.split("/")[1:]
     if any(p in {".", ".."} or not re.fullmatch(r"[A-Za-z0-9_~.\-]*", p) for p in parts):
-        return False
+        return None
     # Prefer a literal OpenAPI path over a templated path.
     patterns = spec["paths"]
     if path in patterns:
-        return method.lower() in patterns[path]
+        return path if method.lower() in patterns[path] else None
     for template, ops in patterns.items():
         segments = template.split("/")[1:]
         if len(segments) == len(parts) and all(
             s == p or (p and re.fullmatch(r"\{[^{}]+\}", s)) for s, p in zip(segments, parts)
         ):
-            return method.lower() in ops
-    return False
+            return template if method.lower() in ops else None
+    return None
+
+
+def allowed_path(spec: dict, method: str, path: str) -> bool:
+    return operation_template(spec, method, path) is not None
 
 
 def authorize(db, key, project, environment, actor):
@@ -58,7 +62,8 @@ async def invoke(
     try:
         authorize(db, key, project, environment, actor)
         path = "/" + tail
-        if not allowed_path(json.loads(asset.spec), request.method, path):
+        request.state.operation = operation_template(json.loads(asset.spec), request.method, path)
+        if request.state.operation is None:
             raise HTTPException(404, "OpenAPIに定義されていない操作です")
         binding = targets().get(json.loads(asset.targets).get(environment))
         if not binding or (binding.owner, binding.environment) != (asset.owner, environment):

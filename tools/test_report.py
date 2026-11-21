@@ -18,6 +18,7 @@ ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "artifacts"
 CASE = {
     "test_large_catalog": "6業務・20拠点の公開120件を全件照合し、PC・スマートフォンの検索とページ送りを確認する",
+    "test_upstream_unavailable": "承認済みのHTTPS接続先が停止したとき、502と監査・アクセスログを同じIDで追跡できる",
     "test_marketplace_contracts": "6種類を個別に登録・公開・承認して実行し、HTTPSの受信・業務応答・監査記録を照合する",
     "test_withdrawal_and_audit_visibility": "未申請・取下げ後の権限を拒否し、他プロジェクトに監査記録を開示しない",
     "test_persistence_has_no_http_dependencies": "DB層はHTTPのルーターに依存しない",
@@ -78,7 +79,7 @@ figcaption{font-size:14px;font-weight:650}details{margin:12px 0}summary{cursor:p
 CSS += """
 body{color:#182c42;background:#f3f6fa}header{border:0;border-radius:14px;background:#162c44;color:#fff}
 header a{color:#c3e2ff}header .numbers{color:#ffe1aa}section{border-color:#cedae5}a{color:#075ca8}
-th{background:#edf3f9}tbody th{background:white;font-weight:650}h3{font-size:17px;margin-top:14px}
+pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#eef3f8;padding:12px;font-size:13px}th{background:#edf3f9}tbody th{background:white;font-weight:650}h3{font-size:17px;margin-top:14px}
 article{padding:8px 0;border-bottom:1px solid #dfe7ef}li{overflow-wrap:anywhere}figure{background:#f3f6fa;border-color:#d6e1ec}
 @media print{header{color:#162c44;background:white}header .numbers{color:#174b34}nav{display:none}}
 """
@@ -206,6 +207,12 @@ def build():
             readings = [
                 escape(p.attrib["value"]) for p in case.findall("./properties/property[@name='finding']")
             ]
+            for sample in case.findall("./properties/property[@name='trace_sample']"):
+                value = sample.attrib["value"]
+                code = json.loads(value)["HTTPアクセスログ"]["status"]
+                findings.append(
+                    f"<details><summary>HTTP {code} の業務監査とアクセスログの原文</summary><pre>{escape(value)}</pre></details>"
+                )
             if readings:
                 findings.append(
                     "<article><h3>"

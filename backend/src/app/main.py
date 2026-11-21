@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import secrets
+from datetime import UTC, datetime
 from pathlib import Path
 from uuid import uuid4
 
@@ -50,6 +51,8 @@ def create_app() -> FastAPI:
                 json.dumps(
                     {
                         "event": "http.access",
+                        "at": datetime.now(UTC).isoformat(),
+                        "operation": getattr(request.state, "operation", None),
                         "request_id": request.state.request_id,
                         "method": request.method,
                         "route": getattr(request.scope.get("route"), "path", ""),

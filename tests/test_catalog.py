@@ -1,6 +1,6 @@
 from copy import deepcopy
 
-from app.apis.gateway import allowed_path
+from app.apis.gateway import allowed_path, operation_template
 from pytest_given import given, scenario, then, when
 
 SPEC = {
@@ -152,6 +152,7 @@ def test_registration_validation(portal):
 
 def test_route_contract():
     spec = {"paths": {"/notes/{id}": {"get": {}}, "/notes/admin": {"post": {}}}}
+    assert operation_template(spec, "GET", "/notes/123") == "/notes/{id}"
     assert allowed_path(spec, "GET", "/notes/123")
     assert not allowed_path(spec, "GET", "/notes/admin")
     assert not allowed_path(spec, "GET", "/notes/..")

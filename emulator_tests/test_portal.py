@@ -1,7 +1,7 @@
 import json
 import os
 import secrets
-from contextlib import contextmanager, nullcontext
+from contextlib import ExitStack, contextmanager, nullcontext
 from datetime import datetime
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
@@ -230,7 +230,31 @@ def test_approved_calls_reach_upstream(aws, resources, tmp_path, identity, upstr
             matches = [row for row in log_rows if row["request_id"] == response.headers["x-request-id"]]
             assert len(matches) == 1
             assert (matches[0]["status"], matches[0]["method"]) == (response.status_code, "GET")
-            assert set(matches[0]) == {"event", "route", "method", "request_id", "status"}
+            assert datetime.fromisoformat(matches[0]["at"]).tzinfo
+            assert matches[0]["operation"] == ("/items" if response.is_success else None)
+            assert set(matches[0]) == {
+                "event",
+                "at",
+                "route",
+                "operation",
+                "method",
+                "request_id",
+                "status",
+            }
+            if upstream == "https":
+                request.node.user_properties.append(
+                    (
+                        "trace_sample",
+                        json.dumps(
+                            {
+                                "業務監査": denied if response.status_code == 403 else audit[::-1],
+                                "HTTPアクセスログ": matches[0],
+                            },
+                            ensure_ascii=False,
+                            indent=2,
+                        ),
+                    )
+                )
         request.node.user_properties.append(
             (
                 "finding",
@@ -301,3 +325,59 @@ def test_marketplace_contracts(aws, resources, tmp_path, request):
         assert [(m, p) for m, p in calls if m != "HEAD"] == [
             (item["method"], "/warehouse/v1" + item["path"]) for item in CATALOG
         ]
+
+
+def test_upstream_unavailable(aws, resources, tmp_path, request):
+    from tools.seed_marketplace import CATALOG, offer
+
+    with ExitStack() as stack:
+        with https_stock(aws, tmp_path, os.environ["AWS_CA_BUNDLE"]) as (binding, ca, _):
+            url, tokens = stack.enter_context(
+                live_portal(aws, resources, tmp_path, "upstream-stop", binding, ca)
+            )
+            api = stack.enter_context(httpx.Client(base_url=url + "/api/", trust_env=False))
+            owner, user = ({"Authorization": "Bearer " + tokens[k]} for k in ("owner", "user"))
+            asset = (
+                api.post("apis", headers=owner, json={**offer(CATALOG[0]), "base_path": "/v1"})
+                .raise_for_status()
+                .json()["id"]
+            )
+            api.put(
+                f"apis/{asset}/publication", params={"published": True}, headers=owner
+            ).raise_for_status()
+            right = (
+                api.post(
+                    f"apis/{asset}/requests",
+                    headers=user,
+                    json={"project": "finance", "environment": "production", "reason": "在庫確認"},
+                )
+                .raise_for_status()
+                .json()
+            )
+            api.post(
+                "requests/" + right["id"],
+                headers=owner,
+                json={"action": "approve", "revision": right["revision"], "reason": "用途を確認"},
+            ).raise_for_status()
+        response = api.get(f"invoke/{asset}/production/finance/items", headers=user)
+        assert response.status_code == 502
+        trace = response.headers["x-request-id"]
+        events = api.get("audit", headers=owner, params={"request_id": trace}).raise_for_status().json()
+        assert [(e["action"], e["detail"]) for e in reversed(events)] == [
+            ("invoke.start", "GET"),
+            ("invoke.error", "502"),
+        ]
+        logs = [
+            json.loads(line)
+            for line in (tmp_path / "access.log").read_text().splitlines()
+            if line.startswith('{"event":')
+        ]
+        assert [(e["status"], e["operation"]) for e in logs if e["request_id"] == trace] == [
+            (502, "/items")
+        ]
+        request.node.user_properties.append(
+            (
+                "finding",
+                f"接続先停止後 GET /items → 502。開始・通信失敗・HTTPアクセスログをID {trace} で照合。",
+            )
+        )
