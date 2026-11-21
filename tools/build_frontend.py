@@ -6,6 +6,7 @@ import subprocess
 import tarfile
 import tomllib
 from hashlib import sha256
+from importlib.metadata import distribution
 from importlib.util import find_spec
 from pathlib import Path
 
@@ -64,6 +65,10 @@ def build():
         dest.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy(src, dest)
         files["/vendor/puepy/" + src.name] = "./puepy/" + src.name
+    wheel = distribution("puepy")
+    for file in wheel.files or ():
+        if file.name.upper() == "LICENSE":
+            shutil.copy(wheel.locate_file(file), DIST / "vendor/puepy/LICENSE")
     for src in sorted((ROOT / "frontend/src/web_app").glob("*.py")):
         shutil.copy(src, DIST / src.name)
         if src.name != "app.py":

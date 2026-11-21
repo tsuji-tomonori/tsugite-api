@@ -20,6 +20,8 @@ jobs:
       - run: uv run --locked python tools/manage.py synth > /dev/null
       - run: uv run --locked playwright install --with-deps chromium --only-shell
       - run: uv run --locked python tools/manage.py contracts
+      - run: uv run --locked python tools/audit_infra.py
+      - run: uv run --locked pip-audit --disable-pip --no-deps -r build/runtime.txt --format json --output artifacts/dependency-audit.json
       - run: uv run --locked pytest -q --cov=app --cov-branch --junitxml=artifacts/junit.xml --given-md=artifacts/scenarios.md --given-html=artifacts/scenarios.html
       - uses: actions/upload-artifact@v4
         if: always()

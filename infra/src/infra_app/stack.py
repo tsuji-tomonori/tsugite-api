@@ -222,6 +222,15 @@ class CatalogStack(Stack):
             self,
             "Identities",
             self_sign_up_enabled=False,
+            mfa=cog.Mfa.REQUIRED,
+            mfa_second_factor=cog.MfaSecondFactor(otp=True, sms=False),
+            password_policy=cog.PasswordPolicy(
+                min_length=14,
+                require_lowercase=True,
+                require_uppercase=True,
+                require_digits=True,
+                require_symbols=True,
+            ),
             sign_in_aliases=cog.SignInAliases(username=True),
             removal_policy=RemovalPolicy.RETAIN,
         )
