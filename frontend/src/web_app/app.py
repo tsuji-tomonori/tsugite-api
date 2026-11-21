@@ -984,7 +984,12 @@ async def download_logs():
 
 async def download_audit():
     parts = window.Array.new()
-    params = {"action": ctx["audit_action"], "request_id": ctx["audit_id"], "limit": 250}
+    params = {
+        "action": ctx["audit_action"],
+        "request_id": ctx["audit_id"],
+        "limit": 250,
+        "until": datetime.now(timezone.utc).isoformat(),
+    }
     offset = 0
     while True:
         rows = await client.api("/audit?" + urlencode({**params, "offset": offset}))

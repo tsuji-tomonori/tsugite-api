@@ -5,6 +5,7 @@ from app.db.models import Access, Event, Notice, NoticeRead
 from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import Field
 from sqlalchemy import exists, func, or_, select
+from sqlalchemy.exc import IntegrityError
 
 router = APIRouter()
 
@@ -103,5 +104,10 @@ def mark_read(key: str, actor: User, db: DB):
         raise HTTPException(404)
     if not db.get(NoticeRead, (key, actor.subject)):
         db.add(NoticeRead(notice_id=key, subject=actor.subject))
-        db.commit()
+        try:
+            db.commit()
+        except IntegrityError:
+            db.rollback()
+            if not db.get(NoticeRead, (key, actor.subject)):
+                raise
     return {"read": True}

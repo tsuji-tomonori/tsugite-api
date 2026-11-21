@@ -10,6 +10,7 @@ from botocore.exceptions import ClientError
 from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import Field
 from sqlalchemy import select
+from sqlalchemy.exc import SQLAlchemyError
 
 router = APIRouter()
 
@@ -121,7 +122,13 @@ def invite(data: Invitation, request: Request, actor: User, db: DB):
             raise
     db.add(Member(subject=subject, username=username, project=data.project, role=data.role))
     member_event(db, request, actor, "member.add", username)
-    db.commit()
+    try:
+        db.commit()
+    except SQLAlchemyError:
+        db.rollback()
+        if not local_demo() and not db.get(Member, subject):
+            boto3.client("cognito-idp").admin_delete_user(UserPoolId=pool(), Username=username)
+        raise
     return {"subject": subject, "username": username}
 
 

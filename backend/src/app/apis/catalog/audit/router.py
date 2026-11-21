@@ -1,3 +1,5 @@
+from datetime import UTC, datetime
+
 from app.apis.catalog.common import DB, User
 from app.apis.schemas import Audit
 from app.db.models import Event
@@ -14,12 +16,15 @@ def audit(
     asset_id: str = "",
     request_id: str = "",
     action: str = "",
+    until: datetime | None = None,
     offset: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=500),
 ):
     stmt = select(Event)
     if not (actor.auditor or actor.admin):
         stmt = stmt.where(or_(Event.owner.in_(actor.owners), Event.project.in_(actor.projects)))
+    if until:
+        stmt = stmt.where(Event.at <= until.astimezone(UTC))
     if asset_id:
         stmt = stmt.where(Event.asset_id == asset_id)
     if action:

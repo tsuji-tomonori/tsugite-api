@@ -170,3 +170,47 @@ def test_alert_window_and_access_logs(portal, monkeypatch, request):
     assert portal.get("/api/notifications/count", headers=user).json()["unread"] == 2
     portal.put("/api/alerts", headers=admin, json={**rule, "enabled": False}).raise_for_status()
     assert portal.get(path, headers=user).status_code == 200
+
+
+def test_log_download_pages(portal):
+    from datetime import UTC, datetime, timedelta, timezone
+
+    from app.db.models import AccessLog
+    from app.db.session import engine
+    from sqlalchemy.orm import Session
+
+    user = headers(portal, "consumer")
+    stamp = datetime.now(UTC)
+    with Session(engine()) as db:
+        for n in range(251):
+            db.add(
+                AccessLog(
+                    request_id=f"req{n:03}",
+                    at=stamp,
+                    actor="consumer",
+                    owner="supply",
+                    project="finance",
+                    asset_id="example",
+                    environment="sandbox",
+                    method="GET",
+                    operation="/stock",
+                    status=200,
+                    duration_ms=n,
+                )
+            )
+        db.commit()
+    jst = timezone(timedelta(hours=9))
+    params = {
+        "start": (stamp - timedelta(seconds=1)).astimezone(jst).isoformat(),
+        "end": (stamp + timedelta(seconds=1)).astimezone(jst).isoformat(),
+    }
+    path = "/api/access-logs/download"
+    first = portal.get(path, headers=user, params=params).raise_for_status()
+    second = portal.get(
+        path, headers=user, params={**params, "cursor": first.headers["x-next-cursor"]}
+    ).raise_for_status()
+    assert len(first.text.splitlines()) == 250 and len(second.text.splitlines()) == 1
+    assert [json.loads(row)["request_id"] for row in (first.text + second.text).splitlines()] == [
+        f"req{n:03}" for n in range(251)
+    ]
+    assert "x-next-cursor" not in second.headers

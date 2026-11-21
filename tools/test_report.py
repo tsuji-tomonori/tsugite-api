@@ -20,6 +20,7 @@ CASE = {
     "test_governance_console": "3役のホームからユーザー管理・通知・メトリクス・ログ保存・掲載終了を操作する",
     "test_cognito_member_lifecycle": "AWS EmulatorのCognitoでユーザー追加・所属・削除・既発行トークンの停止を確認する",
     "test_member_lifecycle": "管理者が追加・削除し、同一メールで再登録しても旧利用権を復活させない",
+    "test_log_download_pages": "同じ時刻の251件を複数ページに分けて全件取得し、重複・欠落と時差を確認する",
     "test_listing_revisions": "掲載内容の修正と仕様の変更を区別し、競合を検知し、削除後も監査を保持する",
     "test_alert_window_and_access_logs": "同時実行の上限、通知のみ・停止・解除、次期間の回復、メトリクス集計とログの閲覧範囲を確認する",
     "test_notification_scope": "管理者・提供者の通知先を制御し、同じプロジェクトでも既読状態を利用者ごとに保持する",

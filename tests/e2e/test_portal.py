@@ -194,6 +194,7 @@ def test_console_visual_modes(demo_url, request):
 
 def test_governance_console(demo_url, request):
     import json
+    import re
 
     import httpx
     from playwright.sync_api import expect, sync_playwright
@@ -220,7 +221,7 @@ def test_governance_console(demo_url, request):
                 view.goto(demo_url)
                 view.get_by_role("button", name=label, exact=True).click()
                 expect(view.get_by_text(role + "としての利用状況")).to_be_visible()
-                capture(view, "home-" + role, role + "のホームと利用状況")
+
             navigate(admin, "ユーザー管理")
             admin.get_by_label("メールアドレス").fill("catalog-reader@example.org")
             admin.get_by_label("所属プロジェクト").select_option("finance")
@@ -259,7 +260,7 @@ def test_governance_console(demo_url, request):
             user.get_by_role("button", name="条件を適用").click()
             expect(user.get_by_role("heading", name="拒否件数")).to_be_visible()
             capture(user, "metrics", "利用者の拒否件数。直近1時間を5分間隔で表示")
-            user.get_by_role("button", name=__import__("re").compile(r"UTC · 1$")).click()
+            user.get_by_role("button", name=re.compile(r"UTC · 1$")).click()
             expect(user.get_by_text("429　GET /items")).to_be_visible()
             capture(user, "access", "グラフから開いた同じ時間帯のアクセスログ")
             with user.expect_download() as saved:
@@ -275,6 +276,13 @@ def test_governance_console(demo_url, request):
                 user.get_by_role("button", name="業務監査をダウンロード").click()
             assert json.loads(audit_file.value.path().read_text())["action"] == "invoke.denied"
             capture(user, "audit", "429のリクエストIDで照合した業務監査")
+            for view, role in ((admin, "管理者"), (provider, "提供者"), (user, "利用者")):
+                navigate(view, "ホーム")
+                expect(view.locator(".recent-call")).to_have_count(3)
+                expect(
+                    view.locator(".stat").filter(has_text="直近24時間の呼び出し").locator("strong")
+                ).to_have_text("3")
+                capture(view, "home-" + role, role + "の利用状況。直近の呼び出し3件と429の記録")
             navigate(provider, "提供するAPI")
             provider.get_by_role("link", name="在庫", exact=True).click()
             provider.get_by_role("button", name="内容を編集").click()
