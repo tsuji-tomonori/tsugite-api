@@ -42,3 +42,5 @@ uv run python tools/emulator_e2e.py
 データベース・移行、API実行、ゲートウェイ、画面配信、認証、接続先設定を個別のコンストラクトで管理します。スタックとタグ対応リソースには `Application=TsugiteAPI`、`ManagedBy=AWS-CDK`、所属を示す `Component` を設定します。CloudFormationでタグを指定できない型には、同じ情報をテンプレートの `Metadata.Tsugite` に記録します。
 
 GitHub Actions の **Verify** から成果物 **contracts-and-test-results** 内の `test-report.html` または `test-report.pdf` を開くと、ケースごとの期待結果、成否、実行時間、実際の画面とタグ一覧を確認できます。手元では通常のテストに `--junitxml=artifacts/junit.xml`、エミュレーターのテストに `--junitxml=artifacts/aws-emulator.xml` を付けて実行し、`uv run python tools/test_report.py --pdf` で同じレポートを作れます。
+
+[ポータルの画面仕様と業務フロー](docs/design/portal.md)。デモ起動中に別の端末で `uv run python tools/seed_marketplace.py --editions 20` を実行すると、在庫・配送・為替・店舗・発注・営業日の6種類を20拠点分、計120件公開できます。同じ名前の出品は再利用します。デモでの実行結果は接続情報の折り返しです。業務ごとの応答はHTTPS接続のE2Eで確認します。

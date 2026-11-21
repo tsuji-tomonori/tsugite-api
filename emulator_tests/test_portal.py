@@ -120,7 +120,7 @@ def live_portal(aws, resources, tmp_path, identity, binding=None, ca=None):
             "HUB_SETTINGS_PARAMETER": param,
             "DATABASE_URL": "sqlite:///" + str(tmp_path / "catalog.db"),
         }
-        with serve_portal(env) as url:
+        with (tmp_path / "access.log").open("w") as log, serve_portal(env, log=log) as url:
             yield url, tokens
 
 
@@ -139,7 +139,7 @@ def test_cognito_browser(aws, resources, tmp_path, request):
 @pytest.mark.parametrize(
     ("identity", "upstream"), [("cognito", "lambda"), ("machine", "lambda"), ("cognito", "https")]
 )
-def test_approved_calls_reach_upstream(aws, resources, tmp_path, identity, upstream):
+def test_approved_calls_reach_upstream(aws, resources, tmp_path, identity, upstream, request):
     service = (
         https_stock(aws, tmp_path, os.environ["AWS_CA_BUNDLE"])
         if upstream == "https"
@@ -185,6 +185,17 @@ def test_approved_calls_reach_upstream(aws, resources, tmp_path, identity, upstr
         path = f"invoke/{key}/sandbox/finance/items"
         assert api.get(path, headers=invoker).status_code == 403
         decide = "requests/" + right["id"]
+        rejection = {"action": "reject", "reason": "倉庫の指定が必要", "revision": right["revision"]}
+        api.post(decide, headers=owner, json=rejection).raise_for_status()
+        rejected = api.get(path, headers=invoker)
+        assert rejected.status_code == 403
+        denied_id = rejected.headers["x-request-id"]
+        denied = api.get("audit", headers=owner, params={"request_id": denied_id}).json()
+        assert [(e["action"], e["detail"]) for e in denied] == [("invoke.denied", "403")]
+        if calls is not None:
+            assert all(method == "HEAD" for method, _ in calls)
+        form["reason"] = "岐阜倉庫の棚卸し"
+        right = api.post(asset + "/requests", headers=user, json=form).raise_for_status().json()
         approval = {"action": "approve", "reason": "用途を確認", "revision": right["revision"]}
         assert api.post(decide, headers=user, json=approval).status_code == 403
         result = api.post(decide, headers=owner, json=approval)
@@ -210,6 +221,83 @@ def test_approved_calls_reach_upstream(aws, resources, tmp_path, identity, upstr
         revoke = {"action": "revoke", "reason": "終了", "revision": approved["revision"]}
         assert api.post(decide, headers=owner, json=revoke).status_code == 200
         assert api.get(path, headers=invoker).status_code == 403
+        log_rows = [
+            json.loads(line)
+            for line in (tmp_path / "access.log").read_text().splitlines()
+            if line.startswith('{"event":')
+        ]
+        for response in (rejected, call):
+            matches = [row for row in log_rows if row["request_id"] == response.headers["x-request-id"]]
+            assert len(matches) == 1
+            assert (matches[0]["status"], matches[0]["method"]) == (response.status_code, "GET")
+            assert set(matches[0]) == {"event", "route", "method", "request_id", "status"}
+        request.node.user_properties.append(
+            (
+                "finding",
+                f"却下後 GET 403 → invoke.denied（{denied_id}）。再申請・承認後 GET 200 → invoke.start / invoke.end（{call.headers['x-request-id']}）。両IDをHTTPアクセスログの同一ステータスと照合。",
+            )
+        )
         if calls is not None:
             assert ("HEAD", "/warehouse") in calls
             assert [path for method, path in calls if method == "GET"] == ["/warehouse/v1/items"]
+
+
+def test_marketplace_contracts(aws, resources, tmp_path, request):
+    from tools.seed_marketplace import CATALOG, offer
+
+    expected = [
+        {"items": [{"sku": "TS-01", "stock": 12}]},
+        {"parcel": "JP17", "status": "配送中"},
+        {"currency": "JPY", "rate": 1},
+        {"stores": ["岐阜", "名古屋"]},
+        {"order": "PO-17", "units": 3},
+        {"business_date": "2026-11-24"},
+    ]
+    with (
+        https_stock(aws, tmp_path, os.environ["AWS_CA_BUNDLE"]) as (binding, ca, calls),
+        live_portal(aws, resources, tmp_path, "catalog-six", binding, ca) as (url, tokens),
+        httpx.Client(base_url=url + "/api/", trust_env=False) as api,
+    ):
+        owner, user = ({"Authorization": "Bearer " + tokens[k]} for k in ("owner", "user"))
+        for product, answer in zip(CATALOG, expected, strict=True):
+            data = {**offer(product), "base_path": "/v1"}
+            asset = api.post("apis", headers=owner, json=data).raise_for_status().json()["id"]
+            api.put(
+                f"apis/{asset}/publication", params={"published": True}, headers=owner
+            ).raise_for_status()
+            env = product["environment"]
+            form = {"project": "finance", "environment": env, "reason": "月次集計"}
+            right = api.post(f"apis/{asset}/requests", headers=user, json=form).raise_for_status().json()
+            api.post(
+                "requests/" + right["id"],
+                headers=owner,
+                json={"action": "approve", "reason": "利用目的を確認", "revision": right["revision"]},
+            ).raise_for_status()
+            response = api.request(
+                product["method"],
+                f"invoke/{asset}/{env}/finance" + product["path"],
+                headers=user,
+                json={"units": 3} if product["method"] == "POST" else None,
+            )
+            assert response.raise_for_status().json() == answer
+            events = (
+                api.get("audit", headers=owner, params={"asset_id": asset}).raise_for_status().json()
+            )
+            assert [e["action"] for e in reversed(events)] == [
+                "register",
+                "publish",
+                "apply",
+                "approve",
+                "invoke.start",
+                "invoke.end",
+            ]
+            assert len({e["request_id"] for e in events[:2]}) == 1
+            request.node.user_properties.append(
+                (
+                    "finding",
+                    f"{product['name']}　{product['method']} {product['path']} → {response.status_code}　{json.dumps(answer, ensure_ascii=False)}",
+                )
+            )
+        assert [(m, p) for m, p in calls if m != "HEAD"] == [
+            (item["method"], "/warehouse/v1" + item["path"]) for item in CATALOG
+        ]

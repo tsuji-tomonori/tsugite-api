@@ -11,7 +11,9 @@ from threading import Thread
 @contextmanager
 def https_stock(aws, directory, emulator_ca):
     token = secrets.token_urlsafe(32)
-    secret = aws.client("secretsmanager").create_secret(Name="stock/https", SecretString=token)
+    secret = aws.client("secretsmanager").create_secret(
+        Name="stock/https-" + secrets.token_hex(4), SecretString=token
+    )
     calls = []
 
     class Stock(BaseHTTPRequestHandler):
@@ -29,10 +31,24 @@ def https_stock(aws, directory, emulator_ca):
             self.reply(b"")
 
         def do_GET(self):
-            if self.path != "/warehouse/v1/items":
+            responses = {
+                "/warehouse/v1/items": {"items": [{"sku": "TS-01", "stock": 12}]},
+                "/warehouse/v1/parcels/JP17": {"parcel": "JP17", "status": "配送中"},
+                "/warehouse/v1/rates/JPY": {"currency": "JPY", "rate": 1},
+                "/warehouse/v1/stores": {"stores": ["岐阜", "名古屋"]},
+                "/warehouse/v1/calendar/next": {"business_date": "2026-11-24"},
+            }
+            if self.path not in responses:
                 self.send_error(404)
                 return
-            self.reply(json.dumps({"items": [{"sku": "TS-01", "stock": 12}]}).encode())
+            self.reply(json.dumps(responses[self.path]).encode())
+
+        def do_POST(self):
+            if self.path != "/warehouse/v1/orders":
+                self.send_error(404)
+                return
+            order = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
+            self.reply(json.dumps({"order": "PO-17", "units": order["units"]}).encode())
 
     cert, key = directory / "cert.pem", directory / "key.pem"
     subprocess.run(

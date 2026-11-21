@@ -20,4 +20,4 @@ Amazon DataZoneのデータポータルで使う「提供プロジェクトの�
 - 狭い画面ではナビゲーションとカードを縦の流れに収める。長い識別子や応答を折り返す。390px幅でページ全体の横スクロールが生じないことを確認する。
 - レビューでは公開済みデータを使い、検索、ページ境界、空の検索結果、判断理由、取消後の応答を確認する。自動検証と撮影した実画面を対応づける。
 
-参考資料：[Amazon DataZoneの公開](https://docs.aws.amazon.com/datazone/latest/userguide/publishing-data.html) ／ [サブスクリプション申請](https://docs.aws.amazon.com/datazone/latest/userguide/requesting-subscription-to-data.html)
+参考資料：[Amazon DataZoneの公開](https://docs.aws.amazon.com/datazone/latest/userguide/publishing-data.html) ／ [サブスクリプション申請](https://docs.aws.amazon.com/datazone/latest/userguide/subscribe-to-data-assets-managed-by-datazone.html)

@@ -167,3 +167,36 @@ def test_demo_disabled_on_lambda(monkeypatch):
     assert not any(
         getattr(route, "path", None) == "/api/demo/{persona}" for route in create_app().routes
     )
+
+
+def test_withdrawal_and_audit_visibility(portal, monkeypatch):
+    from app.core.auth import DEMO_GROUPS
+
+    monkeypatch.setitem(DEMO_GROUPS, "other", ["use-procurement"])
+    owner, user, other, auditor = (
+        headers(portal, who) for who in ("provider", "consumer", "other", "auditor")
+    )
+    created = portal.post("/api/apis", headers=owner, json=FORM).json()
+    asset = created["id"]
+    url = f"/api/apis/{asset}"
+    portal.put(url + "/publication?published=true", headers=owner).raise_for_status()
+    path = f"/api/invoke/{asset}/sandbox/finance/items"
+    assert portal.get(path, headers=user).status_code == 403
+    right = portal.post(
+        url + "/requests",
+        headers=user,
+        json={"project": "finance", "environment": "sandbox", "reason": "検証"},
+    ).json()
+    decision = {"action": "withdraw", "revision": right["revision"], "reason": "依頼中止"}
+    assert portal.post("/api/requests/" + right["id"], headers=other, json=decision).status_code == 403
+    portal.post("/api/requests/" + right["id"], headers=user, json=decision).raise_for_status()
+    denied = portal.get(path, headers=user)
+    assert denied.status_code == 403
+    trace = {"request_id": denied.headers["x-request-id"], "action": "invoke.denied"}
+    for allowed in (owner, user, auditor):
+        assert [e["detail"] for e in portal.get("/api/audit", params=trace, headers=allowed).json()] == [
+            "403"
+        ]
+    assert portal.get("/api/audit", params=trace, headers=other).json() == []
+    assert portal.get("/api/requests", headers=other, params={"asset_id": asset}).json() == []
+    assert portal.get("/api/requests", headers=user).json()[0]["decision_reason"] == "依頼中止"

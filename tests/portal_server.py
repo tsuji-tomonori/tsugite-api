@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 @contextmanager
-def serve_portal(env):
+def serve_portal(env, *, log=None):
     subprocess.run(
         [sys.executable, "-m", "alembic", "-c", "backend/alembic.ini", "upgrade", "head"],
         cwd=ROOT,
@@ -22,7 +22,11 @@ def serve_portal(env):
         port = sock.getsockname()[1]
     url = f"http://127.0.0.1:{port}"
     proc = subprocess.Popen(
-        [sys.executable, "-m", "uvicorn", "app.main:app", "--port", str(port)], cwd=ROOT, env=env
+        [sys.executable, "-m", "uvicorn", "app.main:app", "--port", str(port)],
+        cwd=ROOT,
+        env=env,
+        stdout=log,
+        stderr=subprocess.STDOUT,
     )
     try:
         for _ in range(100):

@@ -17,6 +17,9 @@ from playwright.sync_api import sync_playwright
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "artifacts"
 CASE = {
+    "test_large_catalog": "6業務・20拠点の公開120件を全件照合し、PC・スマートフォンの検索とページ送りを確認する",
+    "test_marketplace_contracts": "6種類を個別に登録・公開・承認して実行し、HTTPSの受信・業務応答・監査記録を照合する",
+    "test_withdrawal_and_audit_visibility": "未申請・取下げ後の権限を拒否し、他プロジェクトに監査記録を開示しない",
     "test_persistence_has_no_http_dependencies": "DB層はHTTPのルーターに依存しない",
     "test_published_operations_have_stable_ids": "公開操作のOpenAPI IDと実装が対応する",
     "test_user_flow": "デモの提供者と利用者が公開・申請・承認・実行・権限取消を画面で完了できる",
@@ -72,6 +75,15 @@ figcaption{font-size:14px;font-weight:650}details{margin:12px 0}summary{cursor:p
 """
 
 
+CSS += """
+body{color:#182c42;background:#f3f6fa}header{border:0;border-radius:14px;background:#162c44;color:#fff}
+header a{color:#c3e2ff}header .numbers{color:#ffe1aa}section{border-color:#cedae5}a{color:#075ca8}
+th{background:#edf3f9}tbody th{background:white;font-weight:650}h3{font-size:17px;margin-top:14px}
+article{padding:8px 0;border-bottom:1px solid #dfe7ef}li{overflow-wrap:anywhere}figure{background:#f3f6fa;border-color:#d6e1ec}
+@media print{header{color:#162c44;background:white}header .numbers{color:#174b34}nav{display:none}}
+"""
+
+
 def result(case):
     for tag, label in (("error", "エラー"), ("failure", "失敗"), ("skipped", "スキップ")):
         if case.find(tag) is not None:
@@ -109,8 +121,72 @@ def inventory():
     )
 
 
+GALLERIES = {
+    "test_large_catalog": ("公開120件のカタログ", 4),
+    "test_cognito_browser": ("AWS Emulatorでの提供者・利用者の画面", 11),
+    "test_user_flow": ("ローカルデモでの提供者・利用者の画面", 11),
+}
+
+JOURNEYS = [
+    (
+        "登録・公開",
+        "下書きは提供元だけが参照できる。接続失敗は公開を止める。",
+        ["test_lifecycle", "test_failed_probe_keeps_draft"],
+    ),
+    (
+        "発見・申請",
+        "仕様中の操作名で検索し、プロジェクトと環境を指定して申請する。",
+        ["test_cognito_browser", "test_large_catalog"],
+    ),
+    (
+        "却下・再申請",
+        "目的の補足を求めて却下し、申請者に理由を返す。却下直後の業務呼び出しは接続先に届かない。",
+        ["test_cognito_browser", "test_approved_calls_reach_upstream[cognito-https]"],
+    ),
+    (
+        "取下げ・競合",
+        "申請者による取下げと、古い版の承認の拒否を確認する。",
+        ["test_reapply", "test_withdrawal_and_audit_visibility"],
+    ),
+    (
+        "承認・利用",
+        "承認された組み合わせでGET・POSTを転送する。異なるプロジェクト・環境は403になる。",
+        ["test_marketplace_contracts", "test_approved_calls_reach_upstream[machine-lambda]"],
+    ),
+    (
+        "掲載終了・権限取消",
+        "掲載終了後は新規申請を止める。既存利用者は権限取消まで呼べ、取消直後から同じトークンで403になる。",
+        ["test_cognito_browser", "test_lifecycle"],
+    ),
+    (
+        "監査",
+        "呼び出し開始・応答または拒否とHTTPアクセスログのIDが一致する。第三のプロジェクトには記録が見えない。",
+        ["test_approved_calls_reach_upstream[cognito-https]", "test_withdrawal_and_audit_visibility"],
+    ),
+]
+
+
+def review_table(results, entries):
+    rows = []
+    for area, expected, cases in entries:
+        verdict = "確認済み" if all(results.get(name) == "成功" for name in cases) else "要確認"
+        evidence = " ".join(
+            f'<a href="#case-{escape(name, quote=True)}">試験{i}</a>' for i, name in enumerate(cases, 1)
+        )
+        rows.append(
+            f"<tr><th scope='row'>{area}</th><td>{expected}</td><td>{verdict}<small>{evidence}</small></td></tr>"
+        )
+    return (
+        "<table><thead><tr><th>観点</th><th>確認内容</th><th>結果</th></tr></thead><tbody>"
+        + "".join(rows)
+        + "</tbody></table>"
+    )
+
+
 def build():
     counts = Counter()
+    results = {}
+    findings = []
     tables, galleries, missing, dates = [], [], [], []
     for source, title in (("junit.xml", "アプリ・CDK・デモ画面"), ("aws-emulator.xml", "AWS Emulator")):
         xml = OUT / source
@@ -126,6 +202,18 @@ def build():
             name = case.attrib["name"]
             status = result(case)
             counts[status] += 1
+            results[name] = status
+            readings = [
+                escape(p.attrib["value"]) for p in case.findall("./properties/property[@name='finding']")
+            ]
+            if readings:
+                findings.append(
+                    "<article><h3>"
+                    + escape(CASE.get(name, name))
+                    + "</h3><ul>"
+                    + "".join(f"<li>{v}</li>" for v in readings)
+                    + "</ul></article>"
+                )
             shots = []
             for prop in case.findall("./properties/property[@name='screenshot']"):
                 path, caption = prop.attrib["value"].split("|", 1)
@@ -137,23 +225,19 @@ def build():
                 shots.append(
                     f"<figure><figcaption>{escape(caption)}</figcaption><img loading='lazy' alt='{escape(caption, quote=True)}' src='data:image/png;base64,{encoded}'></figure>"
                 )
-            if (
-                status == "成功"
-                and name in ("test_cognito_browser", "test_user_flow")
-                and len(shots) < 9
-            ):
+            if name in GALLERIES and status == "成功" and len(shots) < GALLERIES[name][1]:
                 missing.append(title + "の画面記録")
             evidence = ""
             if shots:
                 anchor = "images-" + str(len(galleries))
                 evidence = f" · <a href='#{anchor}'>画面{len(shots)}枚</a>"
-                label = "Cognitoの利用者で操作" if name == "test_cognito_browser" else "デモ利用者で操作"
+                label = GALLERIES.get(name, (name, 0))[0]
                 galleries.append(
-                    f"<details id='{anchor}' {'open' if name == 'test_cognito_browser' else ''}><summary>{label}（{len(shots)}枚）</summary><div class='grid'>{''.join(shots)}</div></details>"
+                    f"<details id='{anchor}' {'open' if name == 'test_large_catalog' else ''}><summary>{label}（{len(shots)}枚）</summary><div class='grid'>{''.join(shots)}</div></details>"
                 )
             style = "ok" if status == "成功" else "bad"
             rows.append(
-                f"<tr><td>{escape(CASE.get(name, name))}<small>{escape(name)}{evidence}</small></td><td class='status {style}'>{status}</td><td>{float(case.get('time', '0')):.2f} 秒</td></tr>"
+                f"<tr id='case-{escape(name, quote=True)}'><td>{escape(CASE.get(name, name))}<small>{escape(name)}{evidence}</small></td><td class='status {style}'>{status}</td><td>{float(case.get('time', '0')):.2f} 秒</td></tr>"
             )
         tables.append(
             f"<h3>{title} · {len(rows)}件</h3><table><tr><th>テストケースと期待結果</th><th>実行結果</th><th>時間</th></tr>{''.join(rows)}</table>"
@@ -165,16 +249,44 @@ def build():
     date = min(dates).strftime("%Y年%m月%d日 %H:%M JST") if dates else "実行時刻不明"
     summary = "　".join(f"{label} {counts[label]}件" for label in ("成功", "失敗", "エラー", "スキップ"))
     gaps = f"<p class='bad'>未取得：{escape('、'.join(missing))}</p>" if missing else ""
+    design = review_table(
+        results,
+        [
+            (
+                "探しやすさ",
+                "拠点と業務をAPI名で識別し、名前から詳細に移動する。120件を12件ずつ表示し、キーワードと環境で3件に絞る。",
+                ["test_large_catalog", "test_cognito_browser"],
+            ),
+            (
+                "判断の伝わり方",
+                "承認待ち・却下・利用中・取消済みを文字でも示す。利用者は却下理由を読み、目的を補って再申請できる。",
+                ["test_cognito_browser"],
+            ),
+            (
+                "画面幅・キーボード",
+                "390px幅と1440px幅で一覧の横はみ出しを調べ、Tabのフォーカス枠、Enterでの検索、空の検索結果を確認する。実行結果の文字と背景のコントラスト比は4.5以上。",
+                ["test_large_catalog", "test_user_flow"],
+            ),
+            (
+                "監査への導線",
+                "実行結果から対応する記録だけを開ける。ID、主体、環境、結果を表示する。",
+                ["test_cognito_browser"],
+            ),
+        ],
+    )
     output = f"""<!doctype html><html lang="ja"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>継手API テスト結果</title><style>{CSS}</style><main>
     <header><h1>継手API テスト結果</h1><p>{date} 開始 · 対象コミット <code>{escape(rev[:12])}</code></p>
-    <p class="numbers">{summary}</p>{gaps}<nav><a href="#screens">画面の記録</a><a href="#cases">全テストケース</a><a href="#cdk">CDKのタグ</a></nav></header>
-    <section id="screens"><h2>申請から利用・取消までの画面</h2>{"".join(reversed(galleries)) or "画面記録はありません。"}</section>
+    <p class="numbers">{summary}</p>{gaps}<nav><a href="#flow">業務フロー</a><a href="#review">デザインレビュー</a><a href="#observed">実行記録</a><a href="#screens">画面の記録</a><a href="#cases">全テストケース</a><a href="#cdk">CDKのタグ</a></nav></header>
+    <section id="flow"><h2>公開から利用終了まで</h2>{review_table(results, JOURNEYS)}</section>
+    <section id="review"><h2>デザインレビュー</h2><p>Amazon DataZoneの提供者インベントリ、公開カタログ、プロジェクト単位の利用申請を設計の基準にしました。初回レビューで、先頭に同名の拠点違いが並んだため、出品例を「拠点｜業務名」に改め、API名から直接詳細を開けるようにしました。</p>{design}<p>実装画面と操作テストによるレビューです。実利用者によるユーザビリティ調査や同時アクセスの負荷測定は今回の対象外です。</p></section>
+    <section id="observed"><h2>業務応答とログの照合記録</h2>{"".join(findings) or "実行記録なし"}</section>
+    <section id="screens"><h2>画面の記録</h2>{"".join(reversed(galleries)) or "画面記録はありません。"}</section>
     <section id="cases"><h2>テストケースと実行結果</h2>{"".join(tables)}</section>
     <section id="cdk"><h2>CDKリソースのタグ</h2>{inventory()}</section>
     <section><h2>検証環境</h2><p>画面はChromiumで撮影しました。AWS操作には公式AWS Emulatorを使い、DSQLはクラスターの稼働までを確認します。業務データとDB移行にはSQLite、システム用トークンにはテスト用署名鍵を使います。実AWSへの配備、CloudFront経由の全経路、Cognitoのホスト型ログイン・MFA・OAuth発行は今回の検証範囲外です。</p></section></main></html>"""
     OUT.mkdir(exist_ok=True)
     (OUT / "test-report.html").write_text(output, encoding="utf-8")
-    return not missing
+    return not missing and not any(counts[v] for v in ("失敗", "エラー", "スキップ"))
 
 
 if __name__ == "__main__":
