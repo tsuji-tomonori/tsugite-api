@@ -9,6 +9,18 @@
       "environment": "sandbox",
       "kind": "https",
       "address": "https://inventory.example.com"
+    },
+    "warehouse-staging": {
+      "owner": "supply",
+      "environment": "staging",
+      "kind": "https",
+      "address": "https://staging.inventory.example.com"
+    },
+    "warehouse-production": {
+      "owner": "supply",
+      "environment": "production",
+      "kind": "https",
+      "address": "https://production.inventory.example.com"
     }
   }
 }

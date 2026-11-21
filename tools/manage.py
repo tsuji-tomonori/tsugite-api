@@ -49,21 +49,25 @@ def main():
         )
     elif args.command == "contracts":
         from app.main import create_app
-        from tsugite_db.models import Base
+        from tsugite_db.design_names import design_tables, table_names
 
         out = Path("artifacts")
         out.mkdir(exist_ok=True)
+        names = table_names()
         schema = {
             table.name: [
                 {
                     "column": c.name,
+                    "column_name_ja": names[table.name]["columns"][c.name],
+                    "table_name_ja": names[table.name]["table"],
+                    "record_name_ja": names[table.name]["record"],
                     "type": str(c.type),
                     "nullable": c.nullable,
                     "primary_key": c.primary_key,
                 }
                 for c in table.columns
             ]
-            for table in Base.metadata.sorted_tables
+            for table, _ in design_tables()
         }
         for name, data in (("openapi", create_app().openapi()), ("tables", schema)):
             (out / (name + ".json")).write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n")

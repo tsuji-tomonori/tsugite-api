@@ -189,10 +189,14 @@ class SourceIndex:
                 return types[expr.id] | model(expr)
             if isinstance(expr, ast.Call):
                 values = model(expr.func)
-                if name(expr.func) in ("db.get", "db.scalar", "db.scalars", "select", "session.get"):
-                    for part in ast.walk(expr.args[0]) if expr.args else []:
-                        if isinstance(part, ast.Name):
-                            values |= model(part) | types[part.id]
+                if name(expr.func) in ("db.get", "session.get", "select") and expr.args:
+                    values |= model(expr.args[0])
+                if name(expr.func) in ("db.scalar", "db.scalars") and expr.args:
+                    query = expr.args[0]
+                    # Predicates may reference other tables. Only the selected entity is returned.
+                    while isinstance(query, ast.Call) and isinstance(query.func, ast.Attribute):
+                        query = query.func.value
+                    values |= entities(query)
                 callee = self.functions.get(self.resolve(func, expr.func))
                 if callee and callee.returns:
                     cls = self.resolve(self.resolve(func, expr.func), callee.returns).split(".")[-1]
@@ -238,7 +242,8 @@ class SourceIndex:
                             and not is_transient(attr.value)
                         ):
                             for table in entities(attr.value):
-                                add("SQL", table, "U", part, attr.attr + " に代入")
+                                if attr.attr in Base.metadata.tables[table].columns:
+                                    add("SQL", table, "U", part, attr.attr + " に代入")
             if not isinstance(part, ast.Call):
                 continue
             full = self.resolve(func, part.func)

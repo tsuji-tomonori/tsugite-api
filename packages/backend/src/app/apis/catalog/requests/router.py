@@ -1,6 +1,6 @@
 from app.apis.catalog.common import DB, User
+from app.apis.catalog.offers import can_review
 from app.apis.schemas import Right
-from app.core.workspace import delegated
 from fastapi import APIRouter
 from sqlalchemy import select
 from tsugite_db.models import Access, Asset, Event
@@ -46,6 +46,6 @@ def requests(actor: User, db: DB, incoming: bool = False, asset_id: str = ""):
             stmt.order_by(Asset.name, Access.project, Access.environment)
         )
         if not incoming
-        or asset.owner in actor.owners
-        or (row.status == "pending" and delegated(db, actor, asset, row))
+        or (row.status != "pending" and asset.owner in actor.owners)
+        or (row.status == "pending" and can_review(db, actor, asset, row))
     ]

@@ -4,22 +4,24 @@
 
 [API一覧](README.md)
 
-## AccessLog
+<a id="accesslog"></a>
 
-| 項目 | 指定 | 型・制約 |
-| --- | --- | --- |
-| at | 必須 | `{"format": "date-time", "title": "At", "type": "string"}` |
-| request_id | 必須 | `{"title": "Request Id", "type": "string"}` |
-| actor | 必須 | `{"title": "Actor", "type": "string"}` |
-| key_id | 必須 | `{"anyOf": [{"type": "string"}, {"type": "null"}], "title": "Key Id"}` |
-| owner | 必須 | `{"title": "Owner", "type": "string"}` |
-| project | 必須 | `{"title": "Project", "type": "string"}` |
-| asset_id | 必須 | `{"title": "Asset Id", "type": "string"}` |
-| environment | 必須 | `{"title": "Environment", "type": "string"}` |
-| method | 必須 | `{"title": "Method", "type": "string"}` |
-| operation | 必須 | `{"title": "Operation", "type": "string"}` |
-| status | 必須 | `{"title": "Status", "type": "integer"}` |
-| duration_ms | 必須 | `{"title": "Duration Ms", "type": "integer"}` |
+## API呼び出し履歴（AccessLog）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| APIの呼び出し日時 | at | 必須 | 文字列、形式 `"date-time"` |
+| リクエスト識別子 | request_id | 必須 | 文字列 |
+| 呼び出し元の利用者・システム識別子 | actor | 必須 | 文字列 |
+| 認証情報の識別子 | key_id | 必須 | 文字列 または 空値 |
+| 提供プロジェクトの識別子 | owner | 必須 | 文字列 |
+| 利用プロジェクトの識別子 | project | 必須 | 文字列 |
+| カタログ掲載APIの識別子 | asset_id | 必須 | 文字列 |
+| 提供環境 | environment | 必須 | 文字列 |
+| HTTPメソッド | method | 必須 | 文字列 |
+| 呼び出したAPI操作 | operation | 必須 | 文字列 |
+| HTTPステータスコード | status | 必須 | 整数 |
+| 応答時間（ミリ秒） | duration_ms | 必須 | 整数 |
 
 <details><summary>JSON Schema</summary>
 
@@ -27,24 +29,24 @@
 {
   "properties": {
     "actor": {
-      "title": "Actor",
+      "title": "呼び出し元の利用者・システム識別子",
       "type": "string"
     },
     "asset_id": {
-      "title": "Asset Id",
+      "title": "カタログ掲載APIの識別子",
       "type": "string"
     },
     "at": {
       "format": "date-time",
-      "title": "At",
+      "title": "APIの呼び出し日時",
       "type": "string"
     },
     "duration_ms": {
-      "title": "Duration Ms",
+      "title": "応答時間（ミリ秒）",
       "type": "integer"
     },
     "environment": {
-      "title": "Environment",
+      "title": "提供環境",
       "type": "string"
     },
     "key_id": {
@@ -56,30 +58,30 @@
           "type": "null"
         }
       ],
-      "title": "Key Id"
+      "title": "認証情報の識別子"
     },
     "method": {
-      "title": "Method",
+      "title": "HTTPメソッド",
       "type": "string"
     },
     "operation": {
-      "title": "Operation",
+      "title": "呼び出したAPI操作",
       "type": "string"
     },
     "owner": {
-      "title": "Owner",
+      "title": "提供プロジェクトの識別子",
       "type": "string"
     },
     "project": {
-      "title": "Project",
+      "title": "利用プロジェクトの識別子",
       "type": "string"
     },
     "request_id": {
-      "title": "Request Id",
+      "title": "リクエスト識別子",
       "type": "string"
     },
     "status": {
-      "title": "Status",
+      "title": "HTTPステータスコード",
       "type": "integer"
     }
   },
@@ -97,23 +99,25 @@
     "status",
     "duration_ms"
   ],
-  "title": "AccessLog",
+  "title": "API呼び出し履歴",
   "type": "object"
 }
 ```
 
 </details>
 
-## Affiliation
+<a id="affiliation"></a>
 
-| 項目 | 指定 | 型・制約 |
-| --- | --- | --- |
-| subject | 必須 | `{"title": "Subject", "type": "string"}` |
-| username | 必須 | `{"title": "Username", "type": "string"}` |
-| unit_id | 必須 | `{"title": "Unit Id", "type": "string"}` |
-| title | 必須 | `{"title": "Title", "type": "string"}` |
-| leader | 必須 | `{"title": "Leader", "type": "boolean"}` |
-| active | 任意 | `{"title": "Active", "type": "boolean"}` |
+## 利用者の所属情報（Affiliation）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 対象利用者の識別子 | subject | 必須 | 文字列 |
+| ログイン名 | username | 必須 | 文字列 |
+| 部署・プロジェクトの識別子 | unit_id | 必須 | 文字列 |
+| 役職名 | title | 必須 | 文字列 |
+| 所属先の管理者か | leader | 必須 | 真偽値 |
+| 所属が有効か | active | 任意 | 真偽値 |
 
 <details><summary>JSON Schema</summary>
 
@@ -121,27 +125,27 @@
 {
   "properties": {
     "active": {
-      "title": "Active",
+      "title": "所属が有効か",
       "type": "boolean"
     },
     "leader": {
-      "title": "Leader",
+      "title": "所属先の管理者か",
       "type": "boolean"
     },
     "subject": {
-      "title": "Subject",
+      "title": "対象利用者の識別子",
       "type": "string"
     },
     "title": {
-      "title": "Title",
+      "title": "役職名",
       "type": "string"
     },
     "unit_id": {
-      "title": "Unit Id",
+      "title": "部署・プロジェクトの識別子",
       "type": "string"
     },
     "username": {
-      "title": "Username",
+      "title": "ログイン名",
       "type": "string"
     }
   },
@@ -152,21 +156,99 @@
     "title",
     "leader"
   ],
-  "title": "Affiliation",
+  "title": "利用者の所属情報",
   "type": "object"
 }
 ```
 
 </details>
 
-## Apply
+<a id="applicationevidence"></a>
 
-| 項目 | 指定 | 型・制約 |
-| --- | --- | --- |
-| personal | 任意 | `{"default": false, "title": "Personal", "type": "boolean"}` |
-| project | 必須 | `{"pattern": "^[a-z][a-z0-9-]{0,62}$", "title": "Project", "type": "string"}` |
-| environment | 必須 | `{"enum": ["sandbox", "production"], "title": "Environment", "type": "string"}` |
-| reason | 必須 | `{"maxLength": 1000, "minLength": 1, "title": "Reason", "type": "string"}` |
+## 申請時点の利用条件と審査記録（ApplicationEvidence）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 申請の承認経路 | route | 任意 | 文字列 |
+| 承認担当の順序 | steps | 任意 | 配列 / 文字列 |
+| 段階ごとの審査結果 | decisions | 任意 | 配列 / [承認段階ごとの審査記録（ReviewStep）](#reviewstep) |
+| 申請時点の申請者の所属部署 | departments | 任意 | 配列 / 文字列 |
+| 利用規約の本文 | terms | 任意 | 文字列 |
+| 利用申請の受付日時 | submitted_at | 任意 | 文字列 |
+| 利用規約に同意したか | terms_accepted | 任意 | 真偽値 |
+| 申請条件の版番号 | version | 任意 | 文字列 |
+| 追加の申請項目に対する回答 | answers | 任意 | オブジェクト（キーに対応する値は文字列） |
+
+<details><summary>JSON Schema</summary>
+
+```json
+{
+  "properties": {
+    "answers": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "追加の申請項目に対する回答",
+      "type": "object"
+    },
+    "decisions": {
+      "items": {
+        "$ref": "#/components/schemas/ReviewStep"
+      },
+      "title": "段階ごとの審査結果",
+      "type": "array"
+    },
+    "departments": {
+      "items": {
+        "type": "string"
+      },
+      "title": "申請時点の申請者の所属部署",
+      "type": "array"
+    },
+    "route": {
+      "title": "申請の承認経路",
+      "type": "string"
+    },
+    "steps": {
+      "items": {
+        "type": "string"
+      },
+      "title": "承認担当の順序",
+      "type": "array"
+    },
+    "submitted_at": {
+      "title": "利用申請の受付日時",
+      "type": "string"
+    },
+    "terms": {
+      "title": "利用規約の本文",
+      "type": "string"
+    },
+    "terms_accepted": {
+      "title": "利用規約に同意したか",
+      "type": "boolean"
+    },
+    "version": {
+      "title": "申請条件の版番号",
+      "type": "string"
+    }
+  },
+  "title": "申請時点の利用条件と審査記録",
+  "type": "object"
+}
+```
+
+</details>
+
+<a id="applicationfield"></a>
+
+## 利用申請の追加質問（ApplicationField）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 申請画面の質問名 | label | 必須 | 文字列、最小文字数 `1`、最大文字数 `100` |
+| 回答が必須か | required | 任意 | 真偽値、既定値 `true` |
+| 申請で受理する回答の候補 | allowed_values | 任意 | 配列 / 文字列、最小文字数 `1`、最大文字数 `500`、最大要素数 `100` |
 
 <details><summary>JSON Schema</summary>
 
@@ -174,29 +256,106 @@
 {
   "additionalProperties": false,
   "properties": {
+    "allowed_values": {
+      "items": {
+        "maxLength": 500,
+        "minLength": 1,
+        "type": "string"
+      },
+      "maxItems": 100,
+      "title": "申請で受理する回答の候補",
+      "type": "array"
+    },
+    "label": {
+      "maxLength": 100,
+      "minLength": 1,
+      "title": "申請画面の質問名",
+      "type": "string"
+    },
+    "required": {
+      "default": true,
+      "title": "回答が必須か",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "label"
+  ],
+  "title": "利用申請の追加質問",
+  "type": "object"
+}
+```
+
+</details>
+
+<a id="apply"></a>
+
+## API利用申請の入力（Apply）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 利用規約に同意したか | terms_accepted | 任意 | 真偽値、既定値 `false` |
+| 申請者が確認した利用条件の版 | offer_version | 任意 | 文字列、既定値 `""` |
+| 追加の申請項目に対する回答 | answers | 任意 | オブジェクト（キーに対応する値は文字列、最小文字数 `1`、最大文字数 `500`）、最大項目数 `20` |
+| 個人として申請するか | personal | 任意 | 真偽値、既定値 `false` |
+| 利用を申請するプロジェクトの識別子 | project | 必須 | 文字列、正規表現 `"^[a-z][a-z0-9-]{0,62}$"` |
+| 提供環境 | environment | 必須 | 文字列、指定値 検証環境（`sandbox`）、準本番環境（`staging`）、本番環境（`production`） |
+| 利用申請の理由 | reason | 必須 | 文字列、最小文字数 `1`、最大文字数 `1000` |
+
+<details><summary>JSON Schema</summary>
+
+```json
+{
+  "additionalProperties": false,
+  "properties": {
+    "answers": {
+      "additionalProperties": {
+        "maxLength": 500,
+        "minLength": 1,
+        "type": "string"
+      },
+      "maxProperties": 20,
+      "propertyNames": {
+        "maxLength": 100,
+        "minLength": 1
+      },
+      "title": "追加の申請項目に対する回答",
+      "type": "object"
+    },
     "environment": {
       "enum": [
         "sandbox",
+        "staging",
         "production"
       ],
-      "title": "Environment",
+      "title": "提供環境",
+      "type": "string"
+    },
+    "offer_version": {
+      "default": "",
+      "title": "申請者が確認した利用条件の版",
       "type": "string"
     },
     "personal": {
       "default": false,
-      "title": "Personal",
+      "title": "個人として申請するか",
       "type": "boolean"
     },
     "project": {
       "pattern": "^[a-z][a-z0-9-]{0,62}$",
-      "title": "Project",
+      "title": "利用を申請するプロジェクトの識別子",
       "type": "string"
     },
     "reason": {
       "maxLength": 1000,
       "minLength": 1,
-      "title": "Reason",
+      "title": "利用申請の理由",
       "type": "string"
+    },
+    "terms_accepted": {
+      "default": false,
+      "title": "利用規約に同意したか",
+      "type": "boolean"
     }
   },
   "required": [
@@ -204,26 +363,28 @@
     "environment",
     "reason"
   ],
-  "title": "Apply",
+  "title": "API利用申請の入力",
   "type": "object"
 }
 ```
 
 </details>
 
-## Audit
+<a id="audit"></a>
 
-| 項目 | 指定 | 型・制約 |
-| --- | --- | --- |
-| at | 必須 | `{"format": "date-time", "title": "At", "type": "string"}` |
-| actor | 必須 | `{"title": "Actor", "type": "string"}` |
-| project | 必須 | `{"title": "Project", "type": "string"}` |
-| owner | 必須 | `{"title": "Owner", "type": "string"}` |
-| asset_id | 必須 | `{"title": "Asset Id", "type": "string"}` |
-| environment | 必須 | `{"title": "Environment", "type": "string"}` |
-| action | 必須 | `{"title": "Action", "type": "string"}` |
-| detail | 必須 | `{"title": "Detail", "type": "string"}` |
-| request_id | 必須 | `{"title": "Request Id", "type": "string"}` |
+## 監査履歴の明細（Audit）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 監査対象の操作日時 | at | 必須 | 文字列、形式 `"date-time"` |
+| 操作した利用者・システムの識別子 | actor | 必須 | 文字列 |
+| 利用プロジェクトの識別子 | project | 必須 | 文字列 |
+| 提供プロジェクトの識別子 | owner | 必須 | 文字列 |
+| カタログ掲載APIの識別子 | asset_id | 必須 | 文字列 |
+| 提供環境 | environment | 必須 | 文字列 |
+| 操作種別 | action | 必須 | 文字列 |
+| 監査記録の詳細 | detail | 必須 | 文字列 |
+| リクエスト識別子 | request_id | 必須 | 文字列 |
 
 <details><summary>JSON Schema</summary>
 
@@ -231,40 +392,40 @@
 {
   "properties": {
     "action": {
-      "title": "Action",
+      "title": "操作種別",
       "type": "string"
     },
     "actor": {
-      "title": "Actor",
+      "title": "操作した利用者・システムの識別子",
       "type": "string"
     },
     "asset_id": {
-      "title": "Asset Id",
+      "title": "カタログ掲載APIの識別子",
       "type": "string"
     },
     "at": {
       "format": "date-time",
-      "title": "At",
+      "title": "監査対象の操作日時",
       "type": "string"
     },
     "detail": {
-      "title": "Detail",
+      "title": "監査記録の詳細",
       "type": "string"
     },
     "environment": {
-      "title": "Environment",
+      "title": "提供環境",
       "type": "string"
     },
     "owner": {
-      "title": "Owner",
+      "title": "提供プロジェクトの識別子",
       "type": "string"
     },
     "project": {
-      "title": "Project",
+      "title": "利用プロジェクトの識別子",
       "type": "string"
     },
     "request_id": {
-      "title": "Request Id",
+      "title": "リクエスト識別子",
       "type": "string"
     }
   },
@@ -279,20 +440,22 @@
     "detail",
     "request_id"
   ],
-  "title": "Audit",
+  "title": "監査履歴の明細",
   "type": "object"
 }
 ```
 
 </details>
 
-## ByAPI
+<a id="byapi"></a>
 
-| 項目 | 指定 | 型・制約 |
-| --- | --- | --- |
-| asset_id | 必須 | `{"title": "Asset Id", "type": "string"}` |
-| name | 必須 | `{"title": "Name", "type": "string"}` |
-| calls | 必須 | `{"title": "Calls", "type": "integer"}` |
+## API別の呼び出し件数（ByAPI）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| カタログ掲載APIの識別子 | asset_id | 必須 | 文字列 |
+| API名 | name | 必須 | 文字列 |
+| 呼び出し件数 | calls | 必須 | 整数 |
 
 <details><summary>JSON Schema</summary>
 
@@ -300,15 +463,15 @@
 {
   "properties": {
     "asset_id": {
-      "title": "Asset Id",
+      "title": "カタログ掲載APIの識別子",
       "type": "string"
     },
     "calls": {
-      "title": "Calls",
+      "title": "呼び出し件数",
       "type": "integer"
     },
     "name": {
-      "title": "Name",
+      "title": "API名",
       "type": "string"
     }
   },
@@ -317,19 +480,21 @@
     "name",
     "calls"
   ],
-  "title": "ByAPI",
+  "title": "API別の呼び出し件数",
   "type": "object"
 }
 ```
 
 </details>
 
-## ByProject
+<a id="byproject"></a>
 
-| 項目 | 指定 | 型・制約 |
-| --- | --- | --- |
-| project | 必須 | `{"title": "Project", "type": "string"}` |
-| calls | 必須 | `{"title": "Calls", "type": "integer"}` |
+## プロジェクト別の呼び出し件数（ByProject）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 利用プロジェクトの識別子 | project | 必須 | 文字列 |
+| 呼び出し件数 | calls | 必須 | 整数 |
 
 <details><summary>JSON Schema</summary>
 
@@ -337,11 +502,11 @@
 {
   "properties": {
     "calls": {
-      "title": "Calls",
+      "title": "呼び出し件数",
       "type": "integer"
     },
     "project": {
-      "title": "Project",
+      "title": "利用プロジェクトの識別子",
       "type": "string"
     }
   },
@@ -349,21 +514,23 @@
     "project",
     "calls"
   ],
-  "title": "ByProject",
+  "title": "プロジェクト別の呼び出し件数",
   "type": "object"
 }
 ```
 
 </details>
 
-## CatalogPage
+<a id="catalogpage"></a>
 
-| 項目 | 指定 | 型・制約 |
-| --- | --- | --- |
-| items | 必須 | 配列 / [Listing](#listing) |
-| page | 必須 | `{"title": "Page", "type": "integer"}` |
-| page_size | 必須 | `{"title": "Page Size", "type": "integer"}` |
-| total | 必須 | `{"title": "Total", "type": "integer"}` |
+## APIカタログの検索結果ページ（CatalogPage）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| このページの掲載API | items | 必須 | 配列 / [カタログ掲載APIの概要（Listing）](#listing) |
+| ページ番号 | page | 必須 | 整数 |
+| 1ページの表示件数 | page_size | 必須 | 整数 |
+| 検索結果の総件数 | total | 必須 | 整数 |
 
 <details><summary>JSON Schema</summary>
 
@@ -374,19 +541,19 @@
       "items": {
         "$ref": "#/components/schemas/Listing"
       },
-      "title": "Items",
+      "title": "このページの掲載API",
       "type": "array"
     },
     "page": {
-      "title": "Page",
+      "title": "ページ番号",
       "type": "integer"
     },
     "page_size": {
-      "title": "Page Size",
+      "title": "1ページの表示件数",
       "type": "integer"
     },
     "total": {
-      "title": "Total",
+      "title": "検索結果の総件数",
       "type": "integer"
     }
   },
@@ -396,19 +563,21 @@
     "page_size",
     "total"
   ],
-  "title": "CatalogPage",
+  "title": "APIカタログの検索結果ページ",
   "type": "object"
 }
 ```
 
 </details>
 
-## ClientCredential
+<a id="clientcredential"></a>
 
-| 項目 | 指定 | 型・制約 |
-| --- | --- | --- |
-| client_id | 必須 | `{"title": "Client Id", "type": "string"}` |
-| client_secret | 必須 | `{"title": "Client Secret", "type": "string"}` |
+## クライアント認証情報（ClientCredential）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| クライアント識別子 | client_id | 必須 | 文字列 |
+| クライアントシークレット | client_secret | 必須 | 文字列 |
 
 <details><summary>JSON Schema</summary>
 
@@ -416,11 +585,11 @@
 {
   "properties": {
     "client_id": {
-      "title": "Client Id",
+      "title": "クライアント識別子",
       "type": "string"
     },
     "client_secret": {
-      "title": "Client Secret",
+      "title": "クライアントシークレット",
       "type": "string"
     }
   },
@@ -428,21 +597,23 @@
     "client_id",
     "client_secret"
   ],
-  "title": "ClientCredential",
+  "title": "クライアント認証情報",
   "type": "object"
 }
 ```
 
 </details>
 
-## CredentialAsset
+<a id="credentialasset"></a>
 
-| 項目 | 指定 | 型・制約 |
-| --- | --- | --- |
-| id | 必須 | `{"title": "Id", "type": "string"}` |
-| name | 必須 | `{"title": "Name", "type": "string"}` |
-| operations | 必須 | 配列 / `{"type": "string"}` |
-| max_minutes | 必須 | `{"title": "Max Minutes", "type": "integer"}` |
+## 認証情報の発行対象API（CredentialAsset）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| カタログ掲載APIの識別子 | id | 必須 | 文字列 |
+| API名 | name | 必須 | 文字列 |
+| 対象のAPI操作 | operations | 必須 | 配列 / 文字列 |
+| トークンの有効期間上限（分） | max_minutes | 必須 | 整数 |
 
 <details><summary>JSON Schema</summary>
 
@@ -450,22 +621,22 @@
 {
   "properties": {
     "id": {
-      "title": "Id",
+      "title": "カタログ掲載APIの識別子",
       "type": "string"
     },
     "max_minutes": {
-      "title": "Max Minutes",
+      "title": "トークンの有効期間上限（分）",
       "type": "integer"
     },
     "name": {
-      "title": "Name",
+      "title": "API名",
       "type": "string"
     },
     "operations": {
       "items": {
         "type": "string"
       },
-      "title": "Operations",
+      "title": "対象のAPI操作",
       "type": "array"
     }
   },
@@ -475,22 +646,24 @@
     "operations",
     "max_minutes"
   ],
-  "title": "CredentialAsset",
+  "title": "認証情報の発行対象API",
   "type": "object"
 }
 ```
 
 </details>
 
-## CredentialOptions
+<a id="credentialoptions"></a>
 
-| 項目 | 指定 | 型・制約 |
-| --- | --- | --- |
-| assets | 必須 | 配列 / [CredentialAsset](#credentialasset) |
-| members | 必須 | 配列 / [Person](#person) |
-| limits | 必須 | 配列 / [UnitLimit](#unitlimit) |
-| max_minutes | 必須 | `{"title": "Max Minutes", "type": "integer"}` |
-| may_manage | 必須 | `{"title": "May Manage", "type": "boolean"}` |
+## 認証情報の発行条件と選択肢（CredentialOptions）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 発行対象に選べるAPI | assets | 必須 | 配列 / [認証情報の発行対象API（CredentialAsset）](#credentialasset) |
+| 対象の利用者一覧 | members | 必須 | 配列 / [利用者の識別情報（Person）](#person) |
+| 組織別の有効期間上限 | limits | 必須 | 配列 / [組織ごとのトークン有効期間上限（UnitLimit）](#unitlimit) |
+| トークンの有効期間上限（分） | max_minutes | 必須 | 整数 |
+| 対象プロジェクトの管理権限があるか | may_manage | 必須 | 真偽値 |
 
 <details><summary>JSON Schema</summary>
 
@@ -501,29 +674,29 @@
       "items": {
         "$ref": "#/components/schemas/CredentialAsset"
       },
-      "title": "Assets",
+      "title": "発行対象に選べるAPI",
       "type": "array"
     },
     "limits": {
       "items": {
         "$ref": "#/components/schemas/UnitLimit"
       },
-      "title": "Limits",
+      "title": "組織別の有効期間上限",
       "type": "array"
     },
     "max_minutes": {
-      "title": "Max Minutes",
+      "title": "トークンの有効期間上限（分）",
       "type": "integer"
     },
     "may_manage": {
-      "title": "May Manage",
+      "title": "対象プロジェクトの管理権限があるか",
       "type": "boolean"
     },
     "members": {
       "items": {
         "$ref": "#/components/schemas/Person"
       },
-      "title": "Members",
+      "title": "対象の利用者一覧",
       "type": "array"
     }
   },
@@ -534,24 +707,26 @@
     "max_minutes",
     "may_manage"
   ],
-  "title": "CredentialOptions",
+  "title": "認証情報の発行条件と選択肢",
   "type": "object"
 }
 ```
 
 </details>
 
-## Dashboard
+<a id="dashboard"></a>
 
-| 項目 | 指定 | 型・制約 |
-| --- | --- | --- |
-| unread | 必須 | `{"title": "Unread", "type": "integer"}` |
-| published | 必須 | `{"title": "Published", "type": "integer"}` |
-| inventory | 必須 | `{"title": "Inventory", "type": "integer"}` |
-| pending | 必須 | `{"title": "Pending", "type": "integer"}` |
-| approved | 必須 | `{"title": "Approved", "type": "integer"}` |
-| calls | 必須 | `{"title": "Calls", "type": "integer"}` |
-| errors | 必須 | `{"title": "Errors", "type": "integer"}` |
+## ダッシュボードの集計結果（Dashboard）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 未読通知件数 | unread | 必須 | 整数 |
+| 公開中のAPI件数 | published | 必須 | 整数 |
+| 管理対象の掲載API件数 | inventory | 必須 | 整数 |
+| 審査待ちの利用申請件数 | pending | 必須 | 整数 |
+| 承認済みの利用申請件数 | approved | 必須 | 整数 |
+| 呼び出し件数 | calls | 必須 | 整数 |
+| エラー応答件数 | errors | 必須 | 整数 |
 
 <details><summary>JSON Schema</summary>
 
@@ -559,31 +734,31 @@
 {
   "properties": {
     "approved": {
-      "title": "Approved",
+      "title": "承認済みの利用申請件数",
       "type": "integer"
     },
     "calls": {
-      "title": "Calls",
+      "title": "呼び出し件数",
       "type": "integer"
     },
     "errors": {
-      "title": "Errors",
+      "title": "エラー応答件数",
       "type": "integer"
     },
     "inventory": {
-      "title": "Inventory",
+      "title": "管理対象の掲載API件数",
       "type": "integer"
     },
     "pending": {
-      "title": "Pending",
+      "title": "審査待ちの利用申請件数",
       "type": "integer"
     },
     "published": {
-      "title": "Published",
+      "title": "公開中のAPI件数",
       "type": "integer"
     },
     "unread": {
-      "title": "Unread",
+      "title": "未読通知件数",
       "type": "integer"
     }
   },
@@ -596,20 +771,22 @@
     "calls",
     "errors"
   ],
-  "title": "Dashboard",
+  "title": "ダッシュボードの集計結果",
   "type": "object"
 }
 ```
 
 </details>
 
-## Decision
+<a id="decision"></a>
 
-| 項目 | 指定 | 型・制約 |
-| --- | --- | --- |
-| action | 必須 | `{"enum": ["approve", "reject", "revoke", "withdraw"], "title": "Action", "type": "string"}` |
-| revision | 必須 | `{"minimum": 1.0, "title": "Revision", "type": "integer"}` |
-| reason | 必須 | `{"maxLength": 1000, "minLength": 1, "title": "Reason", "type": "string"}` |
+## 利用申請への処理指示（Decision）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 申請への処理（承認・却下・取り下げ・取消） | action | 必須 | 文字列、指定値 承認（`approve`）、却下（`reject`）、取消（`revoke`）、取り下げ（`withdraw`） |
+| 更新時の競合検出に使う版番号 | revision | 必須 | 整数、最小値 `1.0` |
+| 審査・取り下げ・取消の理由 | reason | 必須 | 文字列、最小文字数 `1`、最大文字数 `1000` |
 
 <details><summary>JSON Schema</summary>
 
@@ -624,18 +801,18 @@
         "revoke",
         "withdraw"
       ],
-      "title": "Action",
+      "title": "申請への処理（承認・却下・取り下げ・取消）",
       "type": "string"
     },
     "reason": {
       "maxLength": 1000,
       "minLength": 1,
-      "title": "Reason",
+      "title": "審査・取り下げ・取消の理由",
       "type": "string"
     },
     "revision": {
       "minimum": 1.0,
-      "title": "Revision",
+      "title": "更新時の競合検出に使う版番号",
       "type": "integer"
     }
   },
@@ -644,18 +821,20 @@
     "revision",
     "reason"
   ],
-  "title": "Decision",
+  "title": "利用申請への処理指示",
   "type": "object"
 }
 ```
 
 </details>
 
-## Deleted
+<a id="deleted"></a>
 
-| 項目 | 指定 | 型・制約 |
-| --- | --- | --- |
-| deleted | 必須 | `{"title": "Deleted", "type": "boolean"}` |
+## 削除結果（Deleted）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 削除済みか | deleted | 必須 | 真偽値 |
 
 <details><summary>JSON Schema</summary>
 
@@ -663,25 +842,27 @@
 {
   "properties": {
     "deleted": {
-      "title": "Deleted",
+      "title": "削除済みか",
       "type": "boolean"
     }
   },
   "required": [
     "deleted"
   ],
-  "title": "Deleted",
+  "title": "削除結果",
   "type": "object"
 }
 ```
 
 </details>
 
-## DemoToken
+<a id="demotoken"></a>
 
-| 項目 | 指定 | 型・制約 |
-| --- | --- | --- |
-| access_token | 必須 | `{"title": "Access Token", "type": "string"}` |
+## デモログインの認証結果（DemoToken）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| アクセストークン | access_token | 必須 | 文字列 |
 
 <details><summary>JSON Schema</summary>
 
@@ -689,35 +870,40 @@
 {
   "properties": {
     "access_token": {
-      "title": "Access Token",
+      "title": "アクセストークン",
       "type": "string"
     }
   },
   "required": [
     "access_token"
   ],
-  "title": "DemoToken",
+  "title": "デモログインの認証結果",
   "type": "object"
 }
 ```
 
 </details>
 
-## Detail
+<a id="detail"></a>
 
-| 項目 | 指定 | 型・制約 |
-| --- | --- | --- |
-| id | 必須 | `{"title": "Id", "type": "string"}` |
-| name | 必須 | `{"title": "Name", "type": "string"}` |
-| owner | 必須 | `{"title": "Owner", "type": "string"}` |
-| summary | 必須 | `{"title": "Summary", "type": "string"}` |
-| environments | 必須 | 配列 / `{"enum": ["sandbox", "production"], "type": "string"}` |
-| published | 必須 | `{"title": "Published", "type": "boolean"}` |
-| revision | 必須 | `{"title": "Revision", "type": "integer"}` |
-| allowed_operations | 任意 | `{"anyOf": [{"items": {"type": "string"}, "type": "array"}, {"type": "null"}], "title": "Allowed Operations"}` |
-| base_path | 任意 | `{"default": "", "title": "Base Path", "type": "string"}` |
-| bindings | 任意 | `{"additionalProperties": {"type": "string"}, "title": "Bindings", "type": "object"}` |
-| spec | 必須 | `{"additionalProperties": true, "title": "Spec", "type": "object"}` |
+## カタログ掲載APIの詳細（Detail）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| カタログ掲載APIの識別子 | id | 必須 | 文字列 |
+| API名 | name | 必須 | 文字列 |
+| 提供プロジェクトの識別子 | owner | 必須 | 文字列 |
+| APIの用途・概要 | summary | 必須 | 文字列 |
+| 利用できる提供環境 | environments | 必須 | 配列 / 文字列、指定値 検証環境（`sandbox`）、準本番環境（`staging`）、本番環境（`production`） |
+| カタログで公開中か | published | 必須 | 真偽値 |
+| 更新時の競合検出に使う版番号 | revision | 必須 | 整数 |
+| 提供環境ごとの利用条件 | offers | 任意 | オブジェクト（キーに対応する値は[公開中の環境別利用条件（PublishedOffer）](#publishedoffer)） |
+| API仕様の公開履歴 | releases | 任意 | 配列 / [API仕様の公開版（ReleaseEntry）](#releaseentry) |
+| 公開版の変更説明 | release_note | 任意 | 文字列、既定値 `""` |
+| 許可されたAPI操作 | allowed_operations | 任意 | 配列 / 文字列 または 空値 |
+| 接続先APIの基底パス | base_path | 任意 | 文字列、既定値 `""` |
+| 環境別の接続先設定 | bindings | 任意 | オブジェクト（キーに対応する値は文字列） |
+| 提供者が登録したOpenAPI仕様 | spec | 必須 | オブジェクト |
 
 <details><summary>JSON Schema</summary>
 
@@ -736,58 +922,78 @@
           "type": "null"
         }
       ],
-      "title": "Allowed Operations"
+      "title": "許可されたAPI操作"
     },
     "base_path": {
       "default": "",
-      "title": "Base Path",
+      "title": "接続先APIの基底パス",
       "type": "string"
     },
     "bindings": {
       "additionalProperties": {
         "type": "string"
       },
-      "title": "Bindings",
+      "title": "環境別の接続先設定",
       "type": "object"
     },
     "environments": {
       "items": {
         "enum": [
           "sandbox",
+          "staging",
           "production"
         ],
         "type": "string"
       },
-      "title": "Environments",
+      "title": "利用できる提供環境",
       "type": "array"
     },
     "id": {
-      "title": "Id",
+      "title": "カタログ掲載APIの識別子",
       "type": "string"
     },
     "name": {
-      "title": "Name",
+      "title": "API名",
       "type": "string"
     },
+    "offers": {
+      "additionalProperties": {
+        "$ref": "#/components/schemas/PublishedOffer"
+      },
+      "title": "提供環境ごとの利用条件",
+      "type": "object"
+    },
     "owner": {
-      "title": "Owner",
+      "title": "提供プロジェクトの識別子",
       "type": "string"
     },
     "published": {
-      "title": "Published",
+      "title": "カタログで公開中か",
       "type": "boolean"
     },
+    "release_note": {
+      "default": "",
+      "title": "公開版の変更説明",
+      "type": "string"
+    },
+    "releases": {
+      "items": {
+        "$ref": "#/components/schemas/ReleaseEntry"
+      },
+      "title": "API仕様の公開履歴",
+      "type": "array"
+    },
     "revision": {
-      "title": "Revision",
+      "title": "更新時の競合検出に使う版番号",
       "type": "integer"
     },
     "spec": {
       "additionalProperties": true,
-      "title": "Spec",
+      "title": "提供者が登録したOpenAPI仕様",
       "type": "object"
     },
     "summary": {
-      "title": "Summary",
+      "title": "APIの用途・概要",
       "type": "string"
     }
   },
@@ -801,20 +1007,22 @@
     "revision",
     "spec"
   ],
-  "title": "Detail",
+  "title": "カタログ掲載APIの詳細",
   "type": "object"
 }
 ```
 
 </details>
 
-## Dimension
+<a id="dimension"></a>
 
-| 項目 | 指定 | 型・制約 |
-| --- | --- | --- |
-| asset_id | 必須 | `{"title": "Asset Id", "type": "string"}` |
-| name | 必須 | `{"title": "Name", "type": "string"}` |
-| project | 必須 | `{"title": "Project", "type": "string"}` |
+## 利用統計の集計対象（Dimension）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| カタログ掲載APIの識別子 | asset_id | 必須 | 文字列 |
+| API名 | name | 必須 | 文字列 |
+| 利用プロジェクトの識別子 | project | 必須 | 文字列 |
 
 <details><summary>JSON Schema</summary>
 
@@ -822,15 +1030,15 @@
 {
   "properties": {
     "asset_id": {
-      "title": "Asset Id",
+      "title": "カタログ掲載APIの識別子",
       "type": "string"
     },
     "name": {
-      "title": "Name",
+      "title": "API名",
       "type": "string"
     },
     "project": {
-      "title": "Project",
+      "title": "利用プロジェクトの識別子",
       "type": "string"
     }
   },
@@ -839,19 +1047,21 @@
     "name",
     "project"
   ],
-  "title": "Dimension",
+  "title": "利用統計の集計対象",
   "type": "object"
 }
 ```
 
 </details>
 
-## Exchange
+<a id="exchange"></a>
 
-| 項目 | 指定 | 型・制約 |
-| --- | --- | --- |
-| client_id | 必須 | `{"maxLength": 32, "minLength": 32, "title": "Client Id", "type": "string"}` |
-| client_secret | 必須 | `{"format": "password", "title": "Client Secret", "type": "string", "writeOnly": true}` |
+## トークン交換の入力（Exchange）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| クライアント識別子 | client_id | 必須 | 文字列、最小文字数 `32`、最大文字数 `32` |
+| クライアントシークレット | client_secret | 必須 | 文字列、形式 `"password"`、入力専用 |
 
 <details><summary>JSON Schema</summary>
 
@@ -862,12 +1072,12 @@
     "client_id": {
       "maxLength": 32,
       "minLength": 32,
-      "title": "Client Id",
+      "title": "クライアント識別子",
       "type": "string"
     },
     "client_secret": {
       "format": "password",
-      "title": "Client Secret",
+      "title": "クライアントシークレット",
       "type": "string",
       "writeOnly": true
     }
@@ -876,18 +1086,20 @@
     "client_id",
     "client_secret"
   ],
-  "title": "Exchange",
+  "title": "トークン交換の入力",
   "type": "object"
 }
 ```
 
 </details>
 
-## HTTPValidationError
+<a id="httpvalidationerror"></a>
 
-| 項目 | 指定 | 型・制約 |
-| --- | --- | --- |
-| detail | 任意 | 配列 / [ValidationError](#validationerror) |
+## リクエスト入力エラー（HTTPValidationError）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 入力エラーの明細一覧 | detail | 任意 | 配列 / [入力エラーの項目別明細（ValidationError）](#validationerror) |
 
 <details><summary>JSON Schema</summary>
 
@@ -898,22 +1110,24 @@
       "items": {
         "$ref": "#/components/schemas/ValidationError"
       },
-      "title": "Detail",
+      "title": "入力エラーの明細一覧",
       "type": "array"
     }
   },
-  "title": "HTTPValidationError",
+  "title": "リクエスト入力エラー",
   "type": "object"
 }
 ```
 
 </details>
 
-## Health
+<a id="health"></a>
 
-| 項目 | 指定 | 型・制約 |
-| --- | --- | --- |
-| status | 必須 | `{"title": "Status", "type": "string"}` |
+## サービスの稼働状態（Health）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| サービスの稼働状態 | status | 必須 | 文字列 |
 
 <details><summary>JSON Schema</summary>
 
@@ -921,25 +1135,27 @@
 {
   "properties": {
     "status": {
-      "title": "Status",
+      "title": "サービスの稼働状態",
       "type": "string"
     }
   },
   "required": [
     "status"
   ],
-  "title": "Health",
+  "title": "サービスの稼働状態",
   "type": "object"
 }
 ```
 
 </details>
 
-## Identifier
+<a id="identifier"></a>
 
-| 項目 | 指定 | 型・制約 |
-| --- | --- | --- |
-| id | 必須 | `{"title": "Id", "type": "string"}` |
+## 登録した項目の識別子（Identifier）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 識別子 | id | 必須 | 文字列 |
 
 <details><summary>JSON Schema</summary>
 
@@ -947,26 +1163,28 @@
 {
   "properties": {
     "id": {
-      "title": "Id",
+      "title": "識別子",
       "type": "string"
     }
   },
   "required": [
     "id"
   ],
-  "title": "Identifier",
+  "title": "登録した項目の識別子",
   "type": "object"
 }
 ```
 
 </details>
 
-## Inbox
+<a id="inbox"></a>
 
-| 項目 | 指定 | 型・制約 |
-| --- | --- | --- |
-| unread | 必須 | `{"title": "Unread", "type": "integer"}` |
-| items | 必須 | 配列 / [Notice](#notice) |
+## 受信通知一覧（Inbox）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 未読通知件数 | unread | 必須 | 整数 |
+| 受信した通知の明細 | items | 必須 | 配列 / [受信通知の明細（Notice）](#notice) |
 
 <details><summary>JSON Schema</summary>
 
@@ -977,11 +1195,11 @@
       "items": {
         "$ref": "#/components/schemas/Notice"
       },
-      "title": "Items",
+      "title": "受信した通知の明細",
       "type": "array"
     },
     "unread": {
-      "title": "Unread",
+      "title": "未読通知件数",
       "type": "integer"
     }
   },
@@ -989,20 +1207,22 @@
     "unread",
     "items"
   ],
-  "title": "Inbox",
+  "title": "受信通知一覧",
   "type": "object"
 }
 ```
 
 </details>
 
-## Invitation
+<a id="invitation"></a>
 
-| 項目 | 指定 | 型・制約 |
-| --- | --- | --- |
-| email | 必須 | `{"maxLength": 150, "pattern": "^[^\\s@/]+@[^\\s@/]+\\.[^\\s@/]+$", "title": "Email", "type": "string"}` |
-| project | 必須 | `{"title": "Project", "type": "string"}` |
-| role | 必須 | `{"enum": ["consumer", "provider"], "title": "Role", "type": "string"}` |
+## ポータル利用者の招待内容（Invitation）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 招待先メールアドレス | email | 必須 | 文字列、最大文字数 `150`、正規表現 `"^[^\\s@/]+@[^\\s@/]+\\.[^\\s@/]+$"` |
+| 招待先プロジェクトの識別子 | project | 必須 | 文字列 |
+| 利用者の役割 | role | 必須 | 文字列、指定値 利用者（`consumer`）、提供者（`provider`） |
 
 <details><summary>JSON Schema</summary>
 
@@ -1013,11 +1233,11 @@
     "email": {
       "maxLength": 150,
       "pattern": "^[^\\s@/]+@[^\\s@/]+\\.[^\\s@/]+$",
-      "title": "Email",
+      "title": "招待先メールアドレス",
       "type": "string"
     },
     "project": {
-      "title": "Project",
+      "title": "招待先プロジェクトの識別子",
       "type": "string"
     },
     "role": {
@@ -1025,7 +1245,7 @@
         "consumer",
         "provider"
       ],
-      "title": "Role",
+      "title": "利用者の役割",
       "type": "string"
     }
   },
@@ -1034,26 +1254,28 @@
     "project",
     "role"
   ],
-  "title": "Invitation",
+  "title": "ポータル利用者の招待内容",
   "type": "object"
 }
 ```
 
 </details>
 
-## Issue
+<a id="issue"></a>
 
-| 項目 | 指定 | 型・制約 |
-| --- | --- | --- |
-| name | 必須 | `{"maxLength": 120, "minLength": 1, "title": "Name", "type": "string"}` |
-| project | 必須 | `{"title": "Project", "type": "string"}` |
-| kind | 必須 | `{"enum": ["shared", "personal"], "title": "Kind", "type": "string"}` |
-| api_ids | 任意 | 配列 / `{"type": "string"}` |
-| mode | 必須 | `{"enum": ["bearer", "app", "system"], "title": "Mode", "type": "string"}` |
-| ttl_minutes | 任意 | `{"default": 60, "maximum": 60.0, "minimum": 1.0, "title": "Ttl Minutes", "type": "integer"}` |
-| refresh_minutes | 任意 | `{"anyOf": [{"maximum": 60.0, "minimum": 1.0, "type": "integer"}, {"type": "null"}], "title": "Refresh Minutes"}` |
-| operations | 任意 | `{"additionalProperties": {"items": {"type": "string"}, "type": "array"}, "title": "Operations", "type": "object"}` |
-| users | 任意 | 配列 / `{"type": "string"}` |
+## 認証情報の発行条件（Issue）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 認証情報の表示名 | name | 必須 | 文字列、最小文字数 `1`、最大文字数 `120` |
+| 利用プロジェクトの識別子 | project | 必須 | 文字列 |
+| APIキーの利用範囲（個人・共有） | kind | 必須 | 文字列、指定値 共有（`shared`）、個人用（`personal`） |
+| 対象APIの識別子一覧 | api_ids | 任意 | 配列 / 文字列 |
+| 認証方式 | mode | 必須 | 文字列、指定値 短期トークン方式（`bearer`）、利用者を伴うアプリ認証（`app`）、システム間認証（`system`） |
+| 希望するトークン有効期間（分） | ttl_minutes | 任意 | 整数、最小値 `1.0`、最大値 `60.0`、既定値 `60` |
+| 発行から更新可能になるまでの時間（分） | refresh_minutes | 任意 | 整数、最小値 `1.0`、最大値 `60.0` または 空値 |
+| 対象のAPI操作 | operations | 任意 | オブジェクト（キーに対応する値は配列 / 文字列） |
+| 利用を許可する利用者 | users | 任意 | 配列 / 文字列 |
 
 <details><summary>JSON Schema</summary>
 
@@ -1065,7 +1287,7 @@
       "items": {
         "type": "string"
       },
-      "title": "Api Ids",
+      "title": "対象APIの識別子一覧",
       "type": "array"
     },
     "kind": {
@@ -1073,7 +1295,7 @@
         "shared",
         "personal"
       ],
-      "title": "Kind",
+      "title": "APIキーの利用範囲（個人・共有）",
       "type": "string"
     },
     "mode": {
@@ -1082,13 +1304,13 @@
         "app",
         "system"
       ],
-      "title": "Mode",
+      "title": "認証方式",
       "type": "string"
     },
     "name": {
       "maxLength": 120,
       "minLength": 1,
-      "title": "Name",
+      "title": "認証情報の表示名",
       "type": "string"
     },
     "operations": {
@@ -1098,11 +1320,11 @@
         },
         "type": "array"
       },
-      "title": "Operations",
+      "title": "対象のAPI操作",
       "type": "object"
     },
     "project": {
-      "title": "Project",
+      "title": "利用プロジェクトの識別子",
       "type": "string"
     },
     "refresh_minutes": {
@@ -1116,20 +1338,20 @@
           "type": "null"
         }
       ],
-      "title": "Refresh Minutes"
+      "title": "発行から更新可能になるまでの時間（分）"
     },
     "ttl_minutes": {
       "default": 60,
       "maximum": 60.0,
       "minimum": 1.0,
-      "title": "Ttl Minutes",
+      "title": "希望するトークン有効期間（分）",
       "type": "integer"
     },
     "users": {
       "items": {
         "type": "string"
       },
-      "title": "Users",
+      "title": "利用を許可する利用者",
       "type": "array"
     }
   },
@@ -1139,36 +1361,38 @@
     "kind",
     "mode"
   ],
-  "title": "Issue",
+  "title": "認証情報の発行条件",
   "type": "object"
 }
 ```
 
 </details>
 
-## IssuedBearer
+<a id="issuedbearer"></a>
 
-| 項目 | 指定 | 型・制約 |
-| --- | --- | --- |
-| mode | 必須 | `{"enum": ["legacy", "bearer", "app", "system"], "title": "Mode", "type": "string"}` |
-| ttl_minutes | 任意 | `{"title": "Ttl Minutes", "type": "integer"}` |
-| refresh_minutes | 任意 | `{"title": "Refresh Minutes", "type": "integer"}` |
-| operations | 任意 | `{"additionalProperties": {"items": {"type": "string"}, "type": "array"}, "title": "Operations", "type": "object"}` |
-| users | 任意 | 配列 / `{"type": "string"}` |
-| can_portal_exchange | 任意 | `{"title": "Can Portal Exchange", "type": "boolean"}` |
-| id | 必須 | `{"title": "Id", "type": "string"}` |
-| name | 必須 | `{"title": "Name", "type": "string"}` |
-| project | 必須 | `{"title": "Project", "type": "string"}` |
-| kind | 必須 | `{"enum": ["personal", "shared"], "title": "Kind", "type": "string"}` |
-| creator | 必須 | `{"title": "Creator", "type": "string"}` |
-| api_ids | 必須 | 配列 / `{"type": "string"}` |
-| revoked | 必須 | `{"title": "Revoked", "type": "boolean"}` |
-| access_token | 必須 | `{"title": "Access Token", "type": "string"}` |
-| token_type | 必須 | `{"const": "Bearer", "title": "Token Type", "type": "string"}` |
-| expires_in | 必須 | `{"title": "Expires In", "type": "integer"}` |
-| refresh_after | 必須 | `{"title": "Refresh After", "type": "integer"}` |
-| expires_at | 必須 | `{"title": "Expires At", "type": "integer"}` |
-| refresh_at | 必須 | `{"title": "Refresh At", "type": "integer"}` |
+## 発行した認証情報と短期トークン（IssuedBearer）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 認証方式 | mode | 必須 | 文字列、指定値 従来方式（`legacy`）、短期トークン方式（`bearer`）、利用者を伴うアプリ認証（`app`）、システム間認証（`system`） |
+| 希望するトークン有効期間（分） | ttl_minutes | 任意 | 整数 |
+| 発行から更新可能になるまでの時間（分） | refresh_minutes | 任意 | 整数 |
+| 対象のAPI操作 | operations | 任意 | オブジェクト（キーに対応する値は配列 / 文字列） |
+| 利用を許可する利用者 | users | 任意 | 配列 / 文字列 |
+| ポータルからトークンを取得できるか | can_portal_exchange | 任意 | 真偽値 |
+| 認証情報の識別子 | id | 必須 | 文字列 |
+| 認証情報の表示名 | name | 必須 | 文字列 |
+| 利用プロジェクトの識別子 | project | 必須 | 文字列 |
+| APIキーの利用範囲（個人・共有） | kind | 必須 | 文字列、指定値 個人用（`personal`）、共有（`shared`） |
+| 認証情報の発行者 | creator | 必須 | 文字列 |
+| 対象APIの識別子一覧 | api_ids | 必須 | 配列 / 文字列 |
+| 認証情報が失効済みか | revoked | 必須 | 真偽値 |
+| アクセストークン | access_token | 必須 | 文字列 |
+| トークンの種類 | token_type | 必須 | 文字列、指定値 ベアラートークン（`Bearer`） |
+| 有効期限までの秒数 | expires_in | 必須 | 整数 |
+| 更新可能になるまでの秒数 | refresh_after | 必須 | 整数 |
+| 有効期限（UNIX秒） | expires_at | 必須 | 整数 |
+| 更新可能になる時刻（UNIX秒） | refresh_at | 必須 | 整数 |
 
 <details><summary>JSON Schema</summary>
 
@@ -1176,34 +1400,34 @@
 {
   "properties": {
     "access_token": {
-      "title": "Access Token",
+      "title": "アクセストークン",
       "type": "string"
     },
     "api_ids": {
       "items": {
         "type": "string"
       },
-      "title": "Api Ids",
+      "title": "対象APIの識別子一覧",
       "type": "array"
     },
     "can_portal_exchange": {
-      "title": "Can Portal Exchange",
+      "title": "ポータルからトークンを取得できるか",
       "type": "boolean"
     },
     "creator": {
-      "title": "Creator",
+      "title": "認証情報の発行者",
       "type": "string"
     },
     "expires_at": {
-      "title": "Expires At",
+      "title": "有効期限（UNIX秒）",
       "type": "integer"
     },
     "expires_in": {
-      "title": "Expires In",
+      "title": "有効期限までの秒数",
       "type": "integer"
     },
     "id": {
-      "title": "Id",
+      "title": "認証情報の識別子",
       "type": "string"
     },
     "kind": {
@@ -1211,7 +1435,7 @@
         "personal",
         "shared"
       ],
-      "title": "Kind",
+      "title": "APIキーの利用範囲（個人・共有）",
       "type": "string"
     },
     "mode": {
@@ -1221,11 +1445,11 @@
         "app",
         "system"
       ],
-      "title": "Mode",
+      "title": "認証方式",
       "type": "string"
     },
     "name": {
-      "title": "Name",
+      "title": "認証情報の表示名",
       "type": "string"
     },
     "operations": {
@@ -1235,43 +1459,43 @@
         },
         "type": "array"
       },
-      "title": "Operations",
+      "title": "対象のAPI操作",
       "type": "object"
     },
     "project": {
-      "title": "Project",
+      "title": "利用プロジェクトの識別子",
       "type": "string"
     },
     "refresh_after": {
-      "title": "Refresh After",
+      "title": "更新可能になるまでの秒数",
       "type": "integer"
     },
     "refresh_at": {
-      "title": "Refresh At",
+      "title": "更新可能になる時刻（UNIX秒）",
       "type": "integer"
     },
     "refresh_minutes": {
-      "title": "Refresh Minutes",
+      "title": "発行から更新可能になるまでの時間（分）",
       "type": "integer"
     },
     "revoked": {
-      "title": "Revoked",
+      "title": "認証情報が失効済みか",
       "type": "boolean"
     },
     "token_type": {
       "const": "Bearer",
-      "title": "Token Type",
+      "title": "トークンの種類",
       "type": "string"
     },
     "ttl_minutes": {
-      "title": "Ttl Minutes",
+      "title": "希望するトークン有効期間（分）",
       "type": "integer"
     },
     "users": {
       "items": {
         "type": "string"
       },
-      "title": "Users",
+      "title": "利用を許可する利用者",
       "type": "array"
     }
   },
@@ -1291,32 +1515,34 @@
     "expires_at",
     "refresh_at"
   ],
-  "title": "IssuedBearer",
+  "title": "発行した認証情報と短期トークン",
   "type": "object"
 }
 ```
 
 </details>
 
-## IssuedClient
+<a id="issuedclient"></a>
 
-| 項目 | 指定 | 型・制約 |
-| --- | --- | --- |
-| mode | 必須 | `{"enum": ["legacy", "bearer", "app", "system"], "title": "Mode", "type": "string"}` |
-| ttl_minutes | 任意 | `{"title": "Ttl Minutes", "type": "integer"}` |
-| refresh_minutes | 任意 | `{"title": "Refresh Minutes", "type": "integer"}` |
-| operations | 任意 | `{"additionalProperties": {"items": {"type": "string"}, "type": "array"}, "title": "Operations", "type": "object"}` |
-| users | 任意 | 配列 / `{"type": "string"}` |
-| can_portal_exchange | 任意 | `{"title": "Can Portal Exchange", "type": "boolean"}` |
-| id | 必須 | `{"title": "Id", "type": "string"}` |
-| name | 必須 | `{"title": "Name", "type": "string"}` |
-| project | 必須 | `{"title": "Project", "type": "string"}` |
-| kind | 必須 | `{"enum": ["personal", "shared"], "title": "Kind", "type": "string"}` |
-| creator | 必須 | `{"title": "Creator", "type": "string"}` |
-| api_ids | 必須 | 配列 / `{"type": "string"}` |
-| revoked | 必須 | `{"title": "Revoked", "type": "boolean"}` |
-| client_id | 必須 | `{"title": "Client Id", "type": "string"}` |
-| client_secret | 必須 | `{"title": "Client Secret", "type": "string"}` |
+## 発行した認証情報とクライアントシークレット（IssuedClient）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 認証方式 | mode | 必須 | 文字列、指定値 従来方式（`legacy`）、短期トークン方式（`bearer`）、利用者を伴うアプリ認証（`app`）、システム間認証（`system`） |
+| 希望するトークン有効期間（分） | ttl_minutes | 任意 | 整数 |
+| 発行から更新可能になるまでの時間（分） | refresh_minutes | 任意 | 整数 |
+| 対象のAPI操作 | operations | 任意 | オブジェクト（キーに対応する値は配列 / 文字列） |
+| 利用を許可する利用者 | users | 任意 | 配列 / 文字列 |
+| ポータルからトークンを取得できるか | can_portal_exchange | 任意 | 真偽値 |
+| 認証情報の識別子 | id | 必須 | 文字列 |
+| 認証情報の表示名 | name | 必須 | 文字列 |
+| 利用プロジェクトの識別子 | project | 必須 | 文字列 |
+| APIキーの利用範囲（個人・共有） | kind | 必須 | 文字列、指定値 個人用（`personal`）、共有（`shared`） |
+| 認証情報の発行者 | creator | 必須 | 文字列 |
+| 対象APIの識別子一覧 | api_ids | 必須 | 配列 / 文字列 |
+| 認証情報が失効済みか | revoked | 必須 | 真偽値 |
+| クライアント識別子 | client_id | 必須 | 文字列 |
+| クライアントシークレット | client_secret | 必須 | 文字列 |
 
 <details><summary>JSON Schema</summary>
 
@@ -1327,27 +1553,27 @@
       "items": {
         "type": "string"
       },
-      "title": "Api Ids",
+      "title": "対象APIの識別子一覧",
       "type": "array"
     },
     "can_portal_exchange": {
-      "title": "Can Portal Exchange",
+      "title": "ポータルからトークンを取得できるか",
       "type": "boolean"
     },
     "client_id": {
-      "title": "Client Id",
+      "title": "クライアント識別子",
       "type": "string"
     },
     "client_secret": {
-      "title": "Client Secret",
+      "title": "クライアントシークレット",
       "type": "string"
     },
     "creator": {
-      "title": "Creator",
+      "title": "認証情報の発行者",
       "type": "string"
     },
     "id": {
-      "title": "Id",
+      "title": "認証情報の識別子",
       "type": "string"
     },
     "kind": {
@@ -1355,7 +1581,7 @@
         "personal",
         "shared"
       ],
-      "title": "Kind",
+      "title": "APIキーの利用範囲（個人・共有）",
       "type": "string"
     },
     "mode": {
@@ -1365,11 +1591,11 @@
         "app",
         "system"
       ],
-      "title": "Mode",
+      "title": "認証方式",
       "type": "string"
     },
     "name": {
-      "title": "Name",
+      "title": "認証情報の表示名",
       "type": "string"
     },
     "operations": {
@@ -1379,30 +1605,30 @@
         },
         "type": "array"
       },
-      "title": "Operations",
+      "title": "対象のAPI操作",
       "type": "object"
     },
     "project": {
-      "title": "Project",
+      "title": "利用プロジェクトの識別子",
       "type": "string"
     },
     "refresh_minutes": {
-      "title": "Refresh Minutes",
+      "title": "発行から更新可能になるまでの時間（分）",
       "type": "integer"
     },
     "revoked": {
-      "title": "Revoked",
+      "title": "認証情報が失効済みか",
       "type": "boolean"
     },
     "ttl_minutes": {
-      "title": "Ttl Minutes",
+      "title": "希望するトークン有効期間（分）",
       "type": "integer"
     },
     "users": {
       "items": {
         "type": "string"
       },
-      "title": "Users",
+      "title": "利用を許可する利用者",
       "type": "array"
     }
   },
@@ -1418,31 +1644,33 @@
     "client_id",
     "client_secret"
   ],
-  "title": "IssuedClient",
+  "title": "発行した認証情報とクライアントシークレット",
   "type": "object"
 }
 ```
 
 </details>
 
-## IssuedKey
+<a id="issuedkey"></a>
 
-| 項目 | 指定 | 型・制約 |
-| --- | --- | --- |
-| mode | 必須 | `{"enum": ["legacy", "bearer", "app", "system"], "title": "Mode", "type": "string"}` |
-| ttl_minutes | 任意 | `{"title": "Ttl Minutes", "type": "integer"}` |
-| refresh_minutes | 任意 | `{"title": "Refresh Minutes", "type": "integer"}` |
-| operations | 任意 | `{"additionalProperties": {"items": {"type": "string"}, "type": "array"}, "title": "Operations", "type": "object"}` |
-| users | 任意 | 配列 / `{"type": "string"}` |
-| can_portal_exchange | 任意 | `{"title": "Can Portal Exchange", "type": "boolean"}` |
-| id | 必須 | `{"title": "Id", "type": "string"}` |
-| name | 必須 | `{"title": "Name", "type": "string"}` |
-| project | 必須 | `{"title": "Project", "type": "string"}` |
-| kind | 必須 | `{"enum": ["personal", "shared"], "title": "Kind", "type": "string"}` |
-| creator | 必須 | `{"title": "Creator", "type": "string"}` |
-| api_ids | 必須 | 配列 / `{"type": "string"}` |
-| revoked | 必須 | `{"title": "Revoked", "type": "boolean"}` |
-| secret | 必須 | `{"title": "Secret", "type": "string"}` |
+## 発行した従来方式のAPIキー（IssuedKey）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 認証方式 | mode | 必須 | 文字列、指定値 従来方式（`legacy`）、短期トークン方式（`bearer`）、利用者を伴うアプリ認証（`app`）、システム間認証（`system`） |
+| 希望するトークン有効期間（分） | ttl_minutes | 任意 | 整数 |
+| 発行から更新可能になるまでの時間（分） | refresh_minutes | 任意 | 整数 |
+| 対象のAPI操作 | operations | 任意 | オブジェクト（キーに対応する値は配列 / 文字列） |
+| 利用を許可する利用者 | users | 任意 | 配列 / 文字列 |
+| ポータルからトークンを取得できるか | can_portal_exchange | 任意 | 真偽値 |
+| 認証情報の識別子 | id | 必須 | 文字列 |
+| 認証情報の表示名 | name | 必須 | 文字列 |
+| 利用プロジェクトの識別子 | project | 必須 | 文字列 |
+| APIキーの利用範囲（個人・共有） | kind | 必須 | 文字列、指定値 個人用（`personal`）、共有（`shared`） |
+| 認証情報の発行者 | creator | 必須 | 文字列 |
+| 対象APIの識別子一覧 | api_ids | 必須 | 配列 / 文字列 |
+| 認証情報が失効済みか | revoked | 必須 | 真偽値 |
+| 発行時のみ表示するAPIキーの秘密値 | secret | 必須 | 文字列 |
 
 <details><summary>JSON Schema</summary>
 
@@ -1453,19 +1681,19 @@
       "items": {
         "type": "string"
       },
-      "title": "Api Ids",
+      "title": "対象APIの識別子一覧",
       "type": "array"
     },
     "can_portal_exchange": {
-      "title": "Can Portal Exchange",
+      "title": "ポータルからトークンを取得できるか",
       "type": "boolean"
     },
     "creator": {
-      "title": "Creator",
+      "title": "認証情報の発行者",
       "type": "string"
     },
     "id": {
-      "title": "Id",
+      "title": "認証情報の識別子",
       "type": "string"
     },
     "kind": {
@@ -1473,7 +1701,7 @@
         "personal",
         "shared"
       ],
-      "title": "Kind",
+      "title": "APIキーの利用範囲（個人・共有）",
       "type": "string"
     },
     "mode": {
@@ -1483,11 +1711,11 @@
         "app",
         "system"
       ],
-      "title": "Mode",
+      "title": "認証方式",
       "type": "string"
     },
     "name": {
-      "title": "Name",
+      "title": "認証情報の表示名",
       "type": "string"
     },
     "operations": {
@@ -1497,34 +1725,34 @@
         },
         "type": "array"
       },
-      "title": "Operations",
+      "title": "対象のAPI操作",
       "type": "object"
     },
     "project": {
-      "title": "Project",
+      "title": "利用プロジェクトの識別子",
       "type": "string"
     },
     "refresh_minutes": {
-      "title": "Refresh Minutes",
+      "title": "発行から更新可能になるまでの時間（分）",
       "type": "integer"
     },
     "revoked": {
-      "title": "Revoked",
+      "title": "認証情報が失効済みか",
       "type": "boolean"
     },
     "secret": {
-      "title": "Secret",
+      "title": "発行時のみ表示するAPIキーの秘密値",
       "type": "string"
     },
     "ttl_minutes": {
-      "title": "Ttl Minutes",
+      "title": "希望するトークン有効期間（分）",
       "type": "integer"
     },
     "users": {
       "items": {
         "type": "string"
       },
-      "title": "Users",
+      "title": "利用を許可する利用者",
       "type": "array"
     }
   },
@@ -1539,21 +1767,23 @@
     "revoked",
     "secret"
   ],
-  "title": "IssuedKey",
+  "title": "発行した従来方式のAPIキー",
   "type": "object"
 }
 ```
 
 </details>
 
-## KeyInput
+<a id="keyinput"></a>
 
-| 項目 | 指定 | 型・制約 |
-| --- | --- | --- |
-| name | 必須 | `{"maxLength": 120, "minLength": 1, "title": "Name", "type": "string"}` |
-| project | 必須 | `{"title": "Project", "type": "string"}` |
-| kind | 必須 | `{"enum": ["shared", "personal"], "title": "Kind", "type": "string"}` |
-| api_ids | 任意 | 配列 / `{"type": "string"}` |
+## APIキーの発行条件（KeyInput）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 認証情報の表示名 | name | 必須 | 文字列、最小文字数 `1`、最大文字数 `120` |
+| 利用プロジェクトの識別子 | project | 必須 | 文字列 |
+| APIキーの利用範囲（個人・共有） | kind | 必須 | 文字列、指定値 共有（`shared`）、個人用（`personal`） |
+| 対象APIの識別子一覧 | api_ids | 任意 | 配列 / 文字列 |
 
 <details><summary>JSON Schema</summary>
 
@@ -1565,7 +1795,7 @@
       "items": {
         "type": "string"
       },
-      "title": "Api Ids",
+      "title": "対象APIの識別子一覧",
       "type": "array"
     },
     "kind": {
@@ -1573,17 +1803,17 @@
         "shared",
         "personal"
       ],
-      "title": "Kind",
+      "title": "APIキーの利用範囲（個人・共有）",
       "type": "string"
     },
     "name": {
       "maxLength": 120,
       "minLength": 1,
-      "title": "Name",
+      "title": "認証情報の表示名",
       "type": "string"
     },
     "project": {
-      "title": "Project",
+      "title": "利用プロジェクトの識別子",
       "type": "string"
     }
   },
@@ -1592,30 +1822,32 @@
     "project",
     "kind"
   ],
-  "title": "KeyInput",
+  "title": "APIキーの発行条件",
   "type": "object"
 }
 ```
 
 </details>
 
-## KeyMetadata
+<a id="keymetadata"></a>
 
-| 項目 | 指定 | 型・制約 |
-| --- | --- | --- |
-| mode | 必須 | `{"enum": ["legacy", "bearer", "app", "system"], "title": "Mode", "type": "string"}` |
-| ttl_minutes | 任意 | `{"title": "Ttl Minutes", "type": "integer"}` |
-| refresh_minutes | 任意 | `{"title": "Refresh Minutes", "type": "integer"}` |
-| operations | 任意 | `{"additionalProperties": {"items": {"type": "string"}, "type": "array"}, "title": "Operations", "type": "object"}` |
-| users | 任意 | 配列 / `{"type": "string"}` |
-| can_portal_exchange | 任意 | `{"title": "Can Portal Exchange", "type": "boolean"}` |
-| id | 必須 | `{"title": "Id", "type": "string"}` |
-| name | 必須 | `{"title": "Name", "type": "string"}` |
-| project | 必須 | `{"title": "Project", "type": "string"}` |
-| kind | 必須 | `{"enum": ["personal", "shared"], "title": "Kind", "type": "string"}` |
-| creator | 必須 | `{"title": "Creator", "type": "string"}` |
-| api_ids | 必須 | 配列 / `{"type": "string"}` |
-| revoked | 必須 | `{"title": "Revoked", "type": "boolean"}` |
+## 発行済み認証情報の登録内容（KeyMetadata）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 認証方式 | mode | 必須 | 文字列、指定値 従来方式（`legacy`）、短期トークン方式（`bearer`）、利用者を伴うアプリ認証（`app`）、システム間認証（`system`） |
+| 希望するトークン有効期間（分） | ttl_minutes | 任意 | 整数 |
+| 発行から更新可能になるまでの時間（分） | refresh_minutes | 任意 | 整数 |
+| 対象のAPI操作 | operations | 任意 | オブジェクト（キーに対応する値は配列 / 文字列） |
+| 利用を許可する利用者 | users | 任意 | 配列 / 文字列 |
+| ポータルからトークンを取得できるか | can_portal_exchange | 任意 | 真偽値 |
+| 認証情報の識別子 | id | 必須 | 文字列 |
+| 認証情報の表示名 | name | 必須 | 文字列 |
+| 利用プロジェクトの識別子 | project | 必須 | 文字列 |
+| APIキーの利用範囲（個人・共有） | kind | 必須 | 文字列、指定値 個人用（`personal`）、共有（`shared`） |
+| 認証情報の発行者 | creator | 必須 | 文字列 |
+| 対象APIの識別子一覧 | api_ids | 必須 | 配列 / 文字列 |
+| 認証情報が失効済みか | revoked | 必須 | 真偽値 |
 
 <details><summary>JSON Schema</summary>
 
@@ -1626,19 +1858,19 @@
       "items": {
         "type": "string"
       },
-      "title": "Api Ids",
+      "title": "対象APIの識別子一覧",
       "type": "array"
     },
     "can_portal_exchange": {
-      "title": "Can Portal Exchange",
+      "title": "ポータルからトークンを取得できるか",
       "type": "boolean"
     },
     "creator": {
-      "title": "Creator",
+      "title": "認証情報の発行者",
       "type": "string"
     },
     "id": {
-      "title": "Id",
+      "title": "認証情報の識別子",
       "type": "string"
     },
     "kind": {
@@ -1646,7 +1878,7 @@
         "personal",
         "shared"
       ],
-      "title": "Kind",
+      "title": "APIキーの利用範囲（個人・共有）",
       "type": "string"
     },
     "mode": {
@@ -1656,11 +1888,11 @@
         "app",
         "system"
       ],
-      "title": "Mode",
+      "title": "認証方式",
       "type": "string"
     },
     "name": {
-      "title": "Name",
+      "title": "認証情報の表示名",
       "type": "string"
     },
     "operations": {
@@ -1670,30 +1902,30 @@
         },
         "type": "array"
       },
-      "title": "Operations",
+      "title": "対象のAPI操作",
       "type": "object"
     },
     "project": {
-      "title": "Project",
+      "title": "利用プロジェクトの識別子",
       "type": "string"
     },
     "refresh_minutes": {
-      "title": "Refresh Minutes",
+      "title": "発行から更新可能になるまでの時間（分）",
       "type": "integer"
     },
     "revoked": {
-      "title": "Revoked",
+      "title": "認証情報が失効済みか",
       "type": "boolean"
     },
     "ttl_minutes": {
-      "title": "Ttl Minutes",
+      "title": "希望するトークン有効期間（分）",
       "type": "integer"
     },
     "users": {
       "items": {
         "type": "string"
       },
-      "title": "Users",
+      "title": "利用を許可する利用者",
       "type": "array"
     }
   },
@@ -1707,18 +1939,20 @@
     "api_ids",
     "revoked"
   ],
-  "title": "KeyMetadata",
+  "title": "発行済み認証情報の登録内容",
   "type": "object"
 }
 ```
 
 </details>
 
-## Lifetime
+<a id="lifetime"></a>
 
-| 項目 | 指定 | 型・制約 |
-| --- | --- | --- |
-| max_minutes | 任意 | `{"anyOf": [{"maximum": 60.0, "minimum": 1.0, "type": "integer"}, {"type": "null"}], "title": "Max Minutes"}` |
+## 有効期間上限の設定値（Lifetime）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| トークンの有効期間上限（分） | max_minutes | 任意 | 整数、最小値 `1.0`、最大値 `60.0` または 空値 |
 
 <details><summary>JSON Schema</summary>
 
@@ -1737,22 +1971,24 @@
           "type": "null"
         }
       ],
-      "title": "Max Minutes"
+      "title": "トークンの有効期間上限（分）"
     }
   },
-  "title": "Lifetime",
+  "title": "有効期間上限の設定値",
   "type": "object"
 }
 ```
 
 </details>
 
-## Limit
+<a id="limit"></a>
 
-| 項目 | 指定 | 型・制約 |
-| --- | --- | --- |
-| inherited_minutes | 必須 | `{"title": "Inherited Minutes", "type": "integer"}` |
-| max_minutes | 必須 | `{"anyOf": [{"type": "integer"}, {"type": "null"}], "title": "Max Minutes"}` |
+## 設定した有効期間上限と継承上限（Limit）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 上位の設定による有効期間上限（分） | inherited_minutes | 必須 | 整数 |
+| トークンの有効期間上限（分） | max_minutes | 必須 | 整数 または 空値 |
 
 <details><summary>JSON Schema</summary>
 
@@ -1760,7 +1996,7 @@
 {
   "properties": {
     "inherited_minutes": {
-      "title": "Inherited Minutes",
+      "title": "上位の設定による有効期間上限（分）",
       "type": "integer"
     },
     "max_minutes": {
@@ -1772,31 +2008,33 @@
           "type": "null"
         }
       ],
-      "title": "Max Minutes"
+      "title": "トークンの有効期間上限（分）"
     }
   },
   "required": [
     "inherited_minutes",
     "max_minutes"
   ],
-  "title": "Limit",
+  "title": "設定した有効期間上限と継承上限",
   "type": "object"
 }
 ```
 
 </details>
 
-## Listing
+<a id="listing"></a>
 
-| 項目 | 指定 | 型・制約 |
-| --- | --- | --- |
-| id | 必須 | `{"title": "Id", "type": "string"}` |
-| name | 必須 | `{"title": "Name", "type": "string"}` |
-| owner | 必須 | `{"title": "Owner", "type": "string"}` |
-| summary | 必須 | `{"title": "Summary", "type": "string"}` |
-| environments | 必須 | 配列 / `{"enum": ["sandbox", "production"], "type": "string"}` |
-| published | 必須 | `{"title": "Published", "type": "boolean"}` |
-| revision | 必須 | `{"title": "Revision", "type": "integer"}` |
+## カタログ掲載APIの概要（Listing）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| カタログ掲載APIの識別子 | id | 必須 | 文字列 |
+| API名 | name | 必須 | 文字列 |
+| 提供プロジェクトの識別子 | owner | 必須 | 文字列 |
+| APIの用途・概要 | summary | 必須 | 文字列 |
+| 利用できる提供環境 | environments | 必須 | 配列 / 文字列、指定値 検証環境（`sandbox`）、準本番環境（`staging`）、本番環境（`production`） |
+| カタログで公開中か | published | 必須 | 真偽値 |
+| 更新時の競合検出に使う版番号 | revision | 必須 | 整数 |
 
 <details><summary>JSON Schema</summary>
 
@@ -1807,35 +2045,36 @@
       "items": {
         "enum": [
           "sandbox",
+          "staging",
           "production"
         ],
         "type": "string"
       },
-      "title": "Environments",
+      "title": "利用できる提供環境",
       "type": "array"
     },
     "id": {
-      "title": "Id",
+      "title": "カタログ掲載APIの識別子",
       "type": "string"
     },
     "name": {
-      "title": "Name",
+      "title": "API名",
       "type": "string"
     },
     "owner": {
-      "title": "Owner",
+      "title": "提供プロジェクトの識別子",
       "type": "string"
     },
     "published": {
-      "title": "Published",
+      "title": "カタログで公開中か",
       "type": "boolean"
     },
     "revision": {
-      "title": "Revision",
+      "title": "更新時の競合検出に使う版番号",
       "type": "integer"
     },
     "summary": {
-      "title": "Summary",
+      "title": "APIの用途・概要",
       "type": "string"
     }
   },
@@ -1848,22 +2087,24 @@
     "published",
     "revision"
   ],
-  "title": "Listing",
+  "title": "カタログ掲載APIの概要",
   "type": "object"
 }
 ```
 
 </details>
 
-## ManagementTarget
+<a id="managementtarget"></a>
 
-| 項目 | 指定 | 型・制約 |
-| --- | --- | --- |
-| asset_id | 必須 | `{"title": "Asset Id", "type": "string"}` |
-| name | 必須 | `{"title": "Name", "type": "string"}` |
-| project | 必須 | `{"title": "Project", "type": "string"}` |
-| id | 必須 | `{"title": "Id", "type": "string"}` |
-| environment | 必須 | `{"title": "Environment", "type": "string"}` |
+## 監視対象のAPI・プロジェクト・環境（ManagementTarget）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| カタログ掲載APIの識別子 | asset_id | 必須 | 文字列 |
+| API名 | name | 必須 | 文字列 |
+| 利用プロジェクトの識別子 | project | 必須 | 文字列 |
+| 監視対象の識別子 | id | 必須 | 文字列 |
+| 提供環境 | environment | 必須 | 文字列 |
 
 <details><summary>JSON Schema</summary>
 
@@ -1871,23 +2112,23 @@
 {
   "properties": {
     "asset_id": {
-      "title": "Asset Id",
+      "title": "カタログ掲載APIの識別子",
       "type": "string"
     },
     "environment": {
-      "title": "Environment",
+      "title": "提供環境",
       "type": "string"
     },
     "id": {
-      "title": "Id",
+      "title": "監視対象の識別子",
       "type": "string"
     },
     "name": {
-      "title": "Name",
+      "title": "API名",
       "type": "string"
     },
     "project": {
-      "title": "Project",
+      "title": "利用プロジェクトの識別子",
       "type": "string"
     }
   },
@@ -1898,22 +2139,24 @@
     "id",
     "environment"
   ],
-  "title": "ManagementTarget",
+  "title": "監視対象のAPI・プロジェクト・環境",
   "type": "object"
 }
 ```
 
 </details>
 
-## Member
+<a id="member"></a>
 
-| 項目 | 指定 | 型・制約 |
-| --- | --- | --- |
-| subject | 必須 | `{"title": "Subject", "type": "string"}` |
-| username | 必須 | `{"title": "Username", "type": "string"}` |
-| role | 必須 | `{"title": "Role", "type": "string"}` |
-| project | 任意 | `{"title": "Project", "type": "string"}` |
-| deleted | 任意 | `{"title": "Deleted", "type": "boolean"}` |
+## ポータル利用者（Member）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 対象利用者の識別子 | subject | 必須 | 文字列 |
+| ログイン名 | username | 必須 | 文字列 |
+| 利用者の役割 | role | 必須 | 文字列 |
+| 所属プロジェクトの識別子 | project | 任意 | 文字列 |
+| 削除済みか | deleted | 任意 | 真偽値 |
 
 <details><summary>JSON Schema</summary>
 
@@ -1921,23 +2164,23 @@
 {
   "properties": {
     "deleted": {
-      "title": "Deleted",
+      "title": "削除済みか",
       "type": "boolean"
     },
     "project": {
-      "title": "Project",
+      "title": "所属プロジェクトの識別子",
       "type": "string"
     },
     "role": {
-      "title": "Role",
+      "title": "利用者の役割",
       "type": "string"
     },
     "subject": {
-      "title": "Subject",
+      "title": "対象利用者の識別子",
       "type": "string"
     },
     "username": {
-      "title": "Username",
+      "title": "ログイン名",
       "type": "string"
     }
   },
@@ -1946,20 +2189,22 @@
     "username",
     "role"
   ],
-  "title": "Member",
+  "title": "ポータル利用者",
   "type": "object"
 }
 ```
 
 </details>
 
-## MemberPage
+<a id="memberpage"></a>
 
-| 項目 | 指定 | 型・制約 |
-| --- | --- | --- |
-| items | 必須 | 配列 / [Member](#member) |
-| next | 必須 | `{"title": "Next", "type": "string"}` |
-| projects | 必須 | 配列 / `{"type": "string"}` |
+## 利用者一覧のページ（MemberPage）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| このページの利用者 | items | 必須 | 配列 / [ポータル利用者（Member）](#member) |
+| 次ページを取得するためのカーソル | next | 必須 | 文字列 |
+| 招待先に選べるプロジェクト | projects | 必須 | 配列 / 文字列 |
 
 <details><summary>JSON Schema</summary>
 
@@ -1970,18 +2215,18 @@
       "items": {
         "$ref": "#/components/schemas/Member"
       },
-      "title": "Items",
+      "title": "このページの利用者",
       "type": "array"
     },
     "next": {
-      "title": "Next",
+      "title": "次ページを取得するためのカーソル",
       "type": "string"
     },
     "projects": {
       "items": {
         "type": "string"
       },
-      "title": "Projects",
+      "title": "招待先に選べるプロジェクト",
       "type": "array"
     }
   },
@@ -1990,21 +2235,23 @@
     "next",
     "projects"
   ],
-  "title": "MemberPage",
+  "title": "利用者一覧のページ",
   "type": "object"
 }
 ```
 
 </details>
 
-## Membership
+<a id="membership"></a>
 
-| 項目 | 指定 | 型・制約 |
-| --- | --- | --- |
-| subject | 必須 | `{"maxLength": 180, "minLength": 1, "title": "Subject", "type": "string"}` |
-| unit_id | 必須 | `{"title": "Unit Id", "type": "string"}` |
-| leader | 任意 | `{"default": false, "title": "Leader", "type": "boolean"}` |
-| title | 任意 | `{"default": "", "maxLength": 120, "title": "Title", "type": "string"}` |
+## 組織への所属設定（Membership）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 対象利用者の識別子 | subject | 必須 | 文字列、最小文字数 `1`、最大文字数 `180` |
+| 部署・プロジェクトの識別子 | unit_id | 必須 | 文字列 |
+| 所属先の管理者か | leader | 任意 | 真偽値、既定値 `false` |
+| 役職名 | title | 任意 | 文字列、最大文字数 `120`、既定値 `""` |
 
 <details><summary>JSON Schema</summary>
 
@@ -2014,23 +2261,23 @@
   "properties": {
     "leader": {
       "default": false,
-      "title": "Leader",
+      "title": "所属先の管理者か",
       "type": "boolean"
     },
     "subject": {
       "maxLength": 180,
       "minLength": 1,
-      "title": "Subject",
+      "title": "対象利用者の識別子",
       "type": "string"
     },
     "title": {
       "default": "",
       "maxLength": 120,
-      "title": "Title",
+      "title": "役職名",
       "type": "string"
     },
     "unit_id": {
-      "title": "Unit Id",
+      "title": "部署・プロジェクトの識別子",
       "type": "string"
     }
   },
@@ -2038,21 +2285,23 @@
     "subject",
     "unit_id"
   ],
-  "title": "Membership",
+  "title": "組織への所属設定",
   "type": "object"
 }
 ```
 
 </details>
 
-## Message
+<a id="message"></a>
 
-| 項目 | 指定 | 型・制約 |
-| --- | --- | --- |
-| title | 必須 | `{"maxLength": 160, "minLength": 1, "title": "Title", "type": "string"}` |
-| body | 必須 | `{"maxLength": 3000, "minLength": 1, "title": "Body", "type": "string"}` |
-| project | 必須 | `{"maxLength": 64, "minLength": 1, "title": "Project", "type": "string"}` |
-| asset_id | 任意 | `{"default": "", "title": "Asset Id", "type": "string"}` |
+## 送信する通知（Message）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 通知の件名 | title | 必須 | 文字列、最小文字数 `1`、最大文字数 `160` |
+| 通知本文 | body | 必須 | 文字列、最小文字数 `1`、最大文字数 `3000` |
+| 通知先プロジェクトの識別子 | project | 必須 | 文字列、最小文字数 `1`、最大文字数 `64` |
+| カタログ掲載APIの識別子 | asset_id | 任意 | 文字列、既定値 `""` |
 
 <details><summary>JSON Schema</summary>
 
@@ -2062,25 +2311,25 @@
   "properties": {
     "asset_id": {
       "default": "",
-      "title": "Asset Id",
+      "title": "カタログ掲載APIの識別子",
       "type": "string"
     },
     "body": {
       "maxLength": 3000,
       "minLength": 1,
-      "title": "Body",
+      "title": "通知本文",
       "type": "string"
     },
     "project": {
       "maxLength": 64,
       "minLength": 1,
-      "title": "Project",
+      "title": "通知先プロジェクトの識別子",
       "type": "string"
     },
     "title": {
       "maxLength": 160,
       "minLength": 1,
-      "title": "Title",
+      "title": "通知の件名",
       "type": "string"
     }
   },
@@ -2089,24 +2338,26 @@
     "body",
     "project"
   ],
-  "title": "Message",
+  "title": "送信する通知",
   "type": "object"
 }
 ```
 
 </details>
 
-## MetricPoint
+<a id="metricpoint"></a>
 
-| 項目 | 指定 | 型・制約 |
-| --- | --- | --- |
-| at | 必須 | `{"format": "date-time", "title": "At", "type": "string"}` |
-| calls | 必須 | `{"title": "Calls", "type": "integer"}` |
-| success | 必須 | `{"title": "Success", "type": "integer"}` |
-| errors | 必須 | `{"title": "Errors", "type": "integer"}` |
-| denied | 必須 | `{"title": "Denied", "type": "integer"}` |
-| max_ms | 必須 | `{"title": "Max Ms", "type": "integer"}` |
-| avg_ms | 必須 | `{"title": "Avg Ms", "type": "number"}` |
+## 集計区間ごとの呼び出し実績（MetricPoint）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 集計区間の開始日時 | at | 必須 | 文字列、形式 `"date-time"` |
+| 呼び出し件数 | calls | 必須 | 整数 |
+| 成功応答件数 | success | 必須 | 整数 |
+| エラー応答件数 | errors | 必須 | 整数 |
+| アクセス拒否件数 | denied | 必須 | 整数 |
+| 最長応答時間（ミリ秒） | max_ms | 必須 | 整数 |
+| 平均応答時間（ミリ秒） | avg_ms | 必須 | 数値 |
 
 <details><summary>JSON Schema</summary>
 
@@ -2115,31 +2366,31 @@
   "properties": {
     "at": {
       "format": "date-time",
-      "title": "At",
+      "title": "集計区間の開始日時",
       "type": "string"
     },
     "avg_ms": {
-      "title": "Avg Ms",
+      "title": "平均応答時間（ミリ秒）",
       "type": "number"
     },
     "calls": {
-      "title": "Calls",
+      "title": "呼び出し件数",
       "type": "integer"
     },
     "denied": {
-      "title": "Denied",
+      "title": "アクセス拒否件数",
       "type": "integer"
     },
     "errors": {
-      "title": "Errors",
+      "title": "エラー応答件数",
       "type": "integer"
     },
     "max_ms": {
-      "title": "Max Ms",
+      "title": "最長応答時間（ミリ秒）",
       "type": "integer"
     },
     "success": {
-      "title": "Success",
+      "title": "成功応答件数",
       "type": "integer"
     }
   },
@@ -2152,21 +2403,23 @@
     "max_ms",
     "avg_ms"
   ],
-  "title": "MetricPoint",
+  "title": "集計区間ごとの呼び出し実績",
   "type": "object"
 }
 ```
 
 </details>
 
-## Metrics
+<a id="metrics"></a>
 
-| 項目 | 指定 | 型・制約 |
-| --- | --- | --- |
-| start | 必須 | `{"format": "date-time", "title": "Start", "type": "string"}` |
-| end | 必須 | `{"format": "date-time", "title": "End", "type": "string"}` |
-| minutes | 必須 | `{"title": "Minutes", "type": "integer"}` |
-| points | 必須 | 配列 / [MetricPoint](#metricpoint) |
+## 期間別のAPI利用統計（Metrics）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 集計開始日時 | start | 必須 | 文字列、形式 `"date-time"` |
+| 集計終了日時 | end | 必須 | 文字列、形式 `"date-time"` |
+| 集計間隔（分） | minutes | 必須 | 整数 |
+| 集計区間ごとの実績 | points | 必須 | 配列 / [集計区間ごとの呼び出し実績（MetricPoint）](#metricpoint) |
 
 <details><summary>JSON Schema</summary>
 
@@ -2175,23 +2428,23 @@
   "properties": {
     "end": {
       "format": "date-time",
-      "title": "End",
+      "title": "集計終了日時",
       "type": "string"
     },
     "minutes": {
-      "title": "Minutes",
+      "title": "集計間隔（分）",
       "type": "integer"
     },
     "points": {
       "items": {
         "$ref": "#/components/schemas/MetricPoint"
       },
-      "title": "Points",
+      "title": "集計区間ごとの実績",
       "type": "array"
     },
     "start": {
       "format": "date-time",
-      "title": "Start",
+      "title": "集計開始日時",
       "type": "string"
     }
   },
@@ -2201,24 +2454,26 @@
     "minutes",
     "points"
   ],
-  "title": "Metrics",
+  "title": "期間別のAPI利用統計",
   "type": "object"
 }
 ```
 
 </details>
 
-## Notice
+<a id="notice"></a>
 
-| 項目 | 指定 | 型・制約 |
-| --- | --- | --- |
-| id | 必須 | `{"title": "Id", "type": "string"}` |
-| title | 必須 | `{"title": "Title", "type": "string"}` |
-| body | 必須 | `{"title": "Body", "type": "string"}` |
-| project | 必須 | `{"title": "Project", "type": "string"}` |
-| sender | 必須 | `{"title": "Sender", "type": "string"}` |
-| at | 必須 | `{"format": "date-time", "title": "At", "type": "string"}` |
-| unread | 必須 | `{"title": "Unread", "type": "boolean"}` |
+## 受信通知の明細（Notice）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 通知の識別子 | id | 必須 | 文字列 |
+| 通知の件名 | title | 必須 | 文字列 |
+| 通知本文 | body | 必須 | 文字列 |
+| 通知先プロジェクトの識別子 | project | 必須 | 文字列 |
+| 通知の送信者 | sender | 必須 | 文字列 |
+| 通知の送信日時 | at | 必須 | 文字列、形式 `"date-time"` |
+| この通知が未読か | unread | 必須 | 真偽値 |
 
 <details><summary>JSON Schema</summary>
 
@@ -2227,31 +2482,31 @@
   "properties": {
     "at": {
       "format": "date-time",
-      "title": "At",
+      "title": "通知の送信日時",
       "type": "string"
     },
     "body": {
-      "title": "Body",
+      "title": "通知本文",
       "type": "string"
     },
     "id": {
-      "title": "Id",
+      "title": "通知の識別子",
       "type": "string"
     },
     "project": {
-      "title": "Project",
+      "title": "通知先プロジェクトの識別子",
       "type": "string"
     },
     "sender": {
-      "title": "Sender",
+      "title": "通知の送信者",
       "type": "string"
     },
     "title": {
-      "title": "Title",
+      "title": "通知の件名",
       "type": "string"
     },
     "unread": {
-      "title": "Unread",
+      "title": "この通知が未読か",
       "type": "boolean"
     }
   },
@@ -2264,20 +2519,90 @@
     "at",
     "unread"
   ],
-  "title": "Notice",
+  "title": "受信通知の明細",
   "type": "object"
 }
 ```
 
 </details>
 
-## OperationPolicy
+<a id="offer"></a>
 
-| 項目 | 指定 | 型・制約 |
-| --- | --- | --- |
-| operations | 必須 | 配列 / `{"type": "string"}` |
-| members | 必須 | 配列 / [Person](#person) |
-| permissions | 必須 | `{"additionalProperties": {"items": {"type": "string"}, "type": "array"}, "title": "Permissions", "type": "object"}` |
+## 環境別の利用条件・承認設定（Offer）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 申請者に表示する案内 | instructions | 任意 | 文字列、最大文字数 `4000`、既定値 `""` |
+| 利用規約の本文 | terms | 任意 | 文字列、最大文字数 `8000`、既定値 `""` |
+| 申請の承認経路 | route | 任意 | 文字列、既定値 `"provider"`、指定値 従来方式（`legacy`）、自動承認（`auto`）、提供者（`provider`）、部署（`department`）、部署承認後に提供者が承認（`department_provider`）、個別指定の承認経路（`custom`） |
+| 承認担当の順序 | steps | 任意 | 配列 / 文字列、正規表現 `"^(provider\|department\|unit/[a-z][a-z0-9-]{0,62})$"`、最大要素数 `12` |
+| 追加の申請項目 | fields | 任意 | 配列 / [利用申請の追加質問（ApplicationField）](#applicationfield)、最大要素数 `20` |
+
+<details><summary>JSON Schema</summary>
+
+```json
+{
+  "additionalProperties": false,
+  "properties": {
+    "fields": {
+      "items": {
+        "$ref": "#/components/schemas/ApplicationField"
+      },
+      "maxItems": 20,
+      "title": "追加の申請項目",
+      "type": "array"
+    },
+    "instructions": {
+      "default": "",
+      "maxLength": 4000,
+      "title": "申請者に表示する案内",
+      "type": "string"
+    },
+    "route": {
+      "default": "provider",
+      "enum": [
+        "legacy",
+        "auto",
+        "provider",
+        "department",
+        "department_provider",
+        "custom"
+      ],
+      "title": "申請の承認経路",
+      "type": "string"
+    },
+    "steps": {
+      "items": {
+        "pattern": "^(provider|department|unit/[a-z][a-z0-9-]{0,62})$",
+        "type": "string"
+      },
+      "maxItems": 12,
+      "title": "承認担当の順序",
+      "type": "array"
+    },
+    "terms": {
+      "default": "",
+      "maxLength": 8000,
+      "title": "利用規約の本文",
+      "type": "string"
+    }
+  },
+  "title": "環境別の利用条件・承認設定",
+  "type": "object"
+}
+```
+
+</details>
+
+<a id="operationpolicy"></a>
+
+## APIの利用者別操作権限（OperationPolicy）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 対象のAPI操作 | operations | 必須 | 配列 / 文字列 |
+| 対象の利用者一覧 | members | 必須 | 配列 / [利用者の識別情報（Person）](#person) |
+| 利用者ごとに許可されたAPI操作 | permissions | 必須 | オブジェクト（キーに対応する値は配列 / 文字列） |
 
 <details><summary>JSON Schema</summary>
 
@@ -2288,14 +2613,14 @@
       "items": {
         "$ref": "#/components/schemas/Person"
       },
-      "title": "Members",
+      "title": "対象の利用者一覧",
       "type": "array"
     },
     "operations": {
       "items": {
         "type": "string"
       },
-      "title": "Operations",
+      "title": "対象のAPI操作",
       "type": "array"
     },
     "permissions": {
@@ -2305,7 +2630,7 @@
         },
         "type": "array"
       },
-      "title": "Permissions",
+      "title": "利用者ごとに許可されたAPI操作",
       "type": "object"
     }
   },
@@ -2314,19 +2639,21 @@
     "members",
     "permissions"
   ],
-  "title": "OperationPolicy",
+  "title": "APIの利用者別操作権限",
   "type": "object"
 }
 ```
 
 </details>
 
-## Permission
+<a id="permission"></a>
 
-| 項目 | 指定 | 型・制約 |
-| --- | --- | --- |
-| subject | 必須 | `{"maxLength": 180, "minLength": 1, "title": "Subject", "type": "string"}` |
-| operations | 必須 | `{"anyOf": [{"items": {"type": "string"}, "type": "array"}, {"type": "null"}], "title": "Operations"}` |
+## 利用者に許可するAPI操作（Permission）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 対象利用者の識別子 | subject | 必須 | 文字列、最小文字数 `1`、最大文字数 `180` |
+| この利用者に許可するAPI操作 | operations | 必須 | 配列 / 文字列 または 空値 |
 
 <details><summary>JSON Schema</summary>
 
@@ -2346,12 +2673,12 @@
           "type": "null"
         }
       ],
-      "title": "Operations"
+      "title": "この利用者に許可するAPI操作"
     },
     "subject": {
       "maxLength": 180,
       "minLength": 1,
-      "title": "Subject",
+      "title": "対象利用者の識別子",
       "type": "string"
     }
   },
@@ -2359,19 +2686,21 @@
     "subject",
     "operations"
   ],
-  "title": "Permission",
+  "title": "利用者に許可するAPI操作",
   "type": "object"
 }
 ```
 
 </details>
 
-## Person
+<a id="person"></a>
 
-| 項目 | 指定 | 型・制約 |
-| --- | --- | --- |
-| subject | 必須 | `{"title": "Subject", "type": "string"}` |
-| username | 必須 | `{"title": "Username", "type": "string"}` |
+## 利用者の識別情報（Person）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 対象利用者の識別子 | subject | 必須 | 文字列 |
+| ログイン名 | username | 必須 | 文字列 |
 
 <details><summary>JSON Schema</summary>
 
@@ -2379,11 +2708,11 @@
 {
   "properties": {
     "subject": {
-      "title": "Subject",
+      "title": "対象利用者の識別子",
       "type": "string"
     },
     "username": {
-      "title": "Username",
+      "title": "ログイン名",
       "type": "string"
     }
   },
@@ -2391,23 +2720,25 @@
     "subject",
     "username"
   ],
-  "title": "Person",
+  "title": "利用者の識別情報",
   "type": "object"
 }
 ```
 
 </details>
 
-## Policy
+<a id="policy"></a>
 
-| 項目 | 指定 | 型・制約 |
-| --- | --- | --- |
-| visibility | 任意 | `{"default": "all", "enum": ["all", "restricted"], "title": "Visibility", "type": "string"}` |
-| projects | 任意 | 配列 / `{"type": "string"}` |
-| departments | 任意 | 配列 / `{"type": "string"}` |
-| auto_departments | 任意 | 配列 / `{"type": "string"}` |
-| auto_titles | 任意 | 配列 / `{"type": "string"}` |
-| delegates | 任意 | 配列 / `{"type": "string"}` |
+## APIの公開範囲と承認条件（Policy）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| APIの公開範囲 | visibility | 任意 | 文字列、既定値 `"all"`、指定値 全体公開（`all`）、限定公開（`restricted`） |
+| 閲覧を許可するプロジェクト | projects | 任意 | 配列 / 文字列 |
+| 閲覧を許可する部署 | departments | 任意 | 配列 / 文字列 |
+| 自動承認の対象部署 | auto_departments | 任意 | 配列 / 文字列 |
+| 自動承認の対象役職 | auto_titles | 任意 | 配列 / 文字列 |
+| 承認を委任する部署 | delegates | 任意 | 配列 / 文字列 |
 
 <details><summary>JSON Schema</summary>
 
@@ -2419,35 +2750,35 @@
       "items": {
         "type": "string"
       },
-      "title": "Auto Departments",
+      "title": "自動承認の対象部署",
       "type": "array"
     },
     "auto_titles": {
       "items": {
         "type": "string"
       },
-      "title": "Auto Titles",
+      "title": "自動承認の対象役職",
       "type": "array"
     },
     "delegates": {
       "items": {
         "type": "string"
       },
-      "title": "Delegates",
+      "title": "承認を委任する部署",
       "type": "array"
     },
     "departments": {
       "items": {
         "type": "string"
       },
-      "title": "Departments",
+      "title": "閲覧を許可する部署",
       "type": "array"
     },
     "projects": {
       "items": {
         "type": "string"
       },
-      "title": "Projects",
+      "title": "閲覧を許可するプロジェクト",
       "type": "array"
     },
     "visibility": {
@@ -2456,24 +2787,26 @@
         "all",
         "restricted"
       ],
-      "title": "Visibility",
+      "title": "APIの公開範囲",
       "type": "string"
     }
   },
-  "title": "Policy",
+  "title": "APIの公開範囲と承認条件",
   "type": "object"
 }
 ```
 
 </details>
 
-## PortalConfig
+<a id="portalconfig"></a>
 
-| 項目 | 指定 | 型・制約 |
-| --- | --- | --- |
-| demo | 必須 | `{"title": "Demo", "type": "boolean"}` |
-| domain | 必須 | `{"title": "Domain", "type": "string"}` |
-| client_id | 必須 | `{"title": "Client Id", "type": "string"}` |
+## ポータルのログイン設定（PortalConfig）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| デモ環境か | demo | 必須 | 真偽値 |
+| ログイン用ドメイン | domain | 必須 | 文字列 |
+| ポータルのログイン用クライアント識別子 | client_id | 必須 | 文字列 |
 
 <details><summary>JSON Schema</summary>
 
@@ -2481,15 +2814,15 @@
 {
   "properties": {
     "client_id": {
-      "title": "Client Id",
+      "title": "ポータルのログイン用クライアント識別子",
       "type": "string"
     },
     "demo": {
-      "title": "Demo",
+      "title": "デモ環境か",
       "type": "boolean"
     },
     "domain": {
-      "title": "Domain",
+      "title": "ログイン用ドメイン",
       "type": "string"
     }
   },
@@ -2498,28 +2831,30 @@
     "domain",
     "client_id"
   ],
-  "title": "PortalConfig",
+  "title": "ポータルのログイン設定",
   "type": "object"
 }
 ```
 
 </details>
 
-## Profile
+<a id="profile"></a>
 
-| 項目 | 指定 | 型・制約 |
-| --- | --- | --- |
-| known_projects | 必須 | 配列 / `{"type": "string"}` |
-| personal_project | 必須 | `{"title": "Personal Project", "type": "string"}` |
-| leads | 必須 | 配列 / `{"type": "string"}` |
-| departments | 必須 | 配列 / `{"type": "string"}` |
-| titles | 必須 | 配列 / `{"type": "string"}` |
-| admin | 必須 | `{"title": "Admin", "type": "boolean"}` |
-| subject | 必須 | `{"title": "Subject", "type": "string"}` |
-| projects | 必須 | 配列 / `{"type": "string"}` |
-| owners | 必須 | 配列 / `{"type": "string"}` |
-| auditor | 必須 | `{"title": "Auditor", "type": "boolean"}` |
-| targets | 必須 | `{"additionalProperties": {"$ref": "#/components/schemas/VisibleTarget"}, "title": "Targets", "type": "object"}` |
+## ログイン利用者の所属と権限（Profile）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 管理者が参照できるプロジェクト | known_projects | 必須 | 配列 / 文字列 |
+| 個人用プロジェクトの識別子 | personal_project | 必須 | 文字列 |
+| 管理権限を持つ組織 | leads | 必須 | 配列 / 文字列 |
+| 所属部署 | departments | 必須 | 配列 / 文字列 |
+| 役職一覧 | titles | 必須 | 配列 / 文字列 |
+| 全体管理者か | admin | 必須 | 真偽値 |
+| 対象利用者の識別子 | subject | 必須 | 文字列 |
+| 利用プロジェクト一覧 | projects | 必須 | 配列 / 文字列 |
+| 提供者として担当するプロジェクト | owners | 必須 | 配列 / 文字列 |
+| 監査担当者か | auditor | 必須 | 真偽値 |
+| 利用者が参照できる接続先 | targets | 必須 | オブジェクト（キーに対応する値は[利用者に表示できる接続先（VisibleTarget）](#visibletarget)） |
 
 <details><summary>JSON Schema</summary>
 
@@ -2527,68 +2862,68 @@
 {
   "properties": {
     "admin": {
-      "title": "Admin",
+      "title": "全体管理者か",
       "type": "boolean"
     },
     "auditor": {
-      "title": "Auditor",
+      "title": "監査担当者か",
       "type": "boolean"
     },
     "departments": {
       "items": {
         "type": "string"
       },
-      "title": "Departments",
+      "title": "所属部署",
       "type": "array"
     },
     "known_projects": {
       "items": {
         "type": "string"
       },
-      "title": "Known Projects",
+      "title": "管理者が参照できるプロジェクト",
       "type": "array"
     },
     "leads": {
       "items": {
         "type": "string"
       },
-      "title": "Leads",
+      "title": "管理権限を持つ組織",
       "type": "array"
     },
     "owners": {
       "items": {
         "type": "string"
       },
-      "title": "Owners",
+      "title": "提供者として担当するプロジェクト",
       "type": "array"
     },
     "personal_project": {
-      "title": "Personal Project",
+      "title": "個人用プロジェクトの識別子",
       "type": "string"
     },
     "projects": {
       "items": {
         "type": "string"
       },
-      "title": "Projects",
+      "title": "利用プロジェクト一覧",
       "type": "array"
     },
     "subject": {
-      "title": "Subject",
+      "title": "対象利用者の識別子",
       "type": "string"
     },
     "targets": {
       "additionalProperties": {
         "$ref": "#/components/schemas/VisibleTarget"
       },
-      "title": "Targets",
+      "title": "利用者が参照できる接続先",
       "type": "object"
     },
     "titles": {
       "items": {
         "type": "string"
       },
-      "title": "Titles",
+      "title": "役職一覧",
       "type": "array"
     }
   },
@@ -2605,18 +2940,118 @@
     "auditor",
     "targets"
   ],
-  "title": "Profile",
+  "title": "ログイン利用者の所属と権限",
   "type": "object"
 }
 ```
 
 </details>
 
-## Read
+<a id="publishedoffer"></a>
 
-| 項目 | 指定 | 型・制約 |
-| --- | --- | --- |
-| read | 必須 | `{"title": "Read", "type": "boolean"}` |
+## 公開中の環境別利用条件（PublishedOffer）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 申請者に表示する案内 | instructions | 任意 | 文字列 |
+| 利用規約の本文 | terms | 任意 | 文字列 |
+| 申請の承認経路 | route | 任意 | 文字列 |
+| 承認担当の順序 | steps | 任意 | 配列 / 文字列 |
+| 追加の申請項目 | fields | 任意 | 配列 / [商品に表示する申請項目（PublishedQuestion）](#publishedquestion) |
+| 申請条件の版番号 | version | 任意 | 文字列 |
+
+<details><summary>JSON Schema</summary>
+
+```json
+{
+  "properties": {
+    "fields": {
+      "items": {
+        "$ref": "#/components/schemas/PublishedQuestion"
+      },
+      "title": "追加の申請項目",
+      "type": "array"
+    },
+    "instructions": {
+      "title": "申請者に表示する案内",
+      "type": "string"
+    },
+    "route": {
+      "title": "申請の承認経路",
+      "type": "string"
+    },
+    "steps": {
+      "items": {
+        "type": "string"
+      },
+      "title": "承認担当の順序",
+      "type": "array"
+    },
+    "terms": {
+      "title": "利用規約の本文",
+      "type": "string"
+    },
+    "version": {
+      "title": "申請条件の版番号",
+      "type": "string"
+    }
+  },
+  "title": "公開中の環境別利用条件",
+  "type": "object"
+}
+```
+
+</details>
+
+<a id="publishedquestion"></a>
+
+## 商品に表示する申請項目（PublishedQuestion）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 申請画面の質問名 | label | 必須 | 文字列 |
+| 回答が必須か | required | 必須 | 真偽値 |
+| 申請で受理する回答の候補 | allowed_values | 任意 | 配列 / 文字列 |
+
+<details><summary>JSON Schema</summary>
+
+```json
+{
+  "properties": {
+    "allowed_values": {
+      "items": {
+        "type": "string"
+      },
+      "title": "申請で受理する回答の候補",
+      "type": "array"
+    },
+    "label": {
+      "title": "申請画面の質問名",
+      "type": "string"
+    },
+    "required": {
+      "title": "回答が必須か",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "label",
+    "required"
+  ],
+  "title": "商品に表示する申請項目",
+  "type": "object"
+}
+```
+
+</details>
+
+<a id="read"></a>
+
+## 通知の既読登録結果（Read）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 既読にしたか | read | 必須 | 真偽値 |
 
 <details><summary>JSON Schema</summary>
 
@@ -2624,30 +3059,34 @@
 {
   "properties": {
     "read": {
-      "title": "Read",
+      "title": "既読にしたか",
       "type": "boolean"
     }
   },
   "required": [
     "read"
   ],
-  "title": "Read",
+  "title": "通知の既読登録結果",
   "type": "object"
 }
 ```
 
 </details>
 
-## Register
+<a id="register"></a>
 
-| 項目 | 指定 | 型・制約 |
-| --- | --- | --- |
-| owner | 必須 | `{"maxLength": 63, "minLength": 1, "title": "Owner", "type": "string"}` |
-| name | 必須 | `{"maxLength": 120, "minLength": 1, "title": "Name", "type": "string"}` |
-| summary | 必須 | `{"maxLength": 1000, "minLength": 1, "title": "Summary", "type": "string"}` |
-| targets | 必須 | `{"additionalProperties": {"type": "string"}, "maxProperties": 2, "minProperties": 1, "propertyNames": {"enum": ["sandbox", "production"]}, "title": "Targets", "type": "object"}` |
-| base_path | 任意 | `{"default": "", "maxLength": 300, "pattern": "^(?:/[A-Za-z0-9_-]+)*$", "title": "Base Path", "type": "string"}` |
-| spec | 必須 | `{"additionalProperties": true, "title": "Spec", "type": "object"}` |
+## APIのカタログ登録内容（Register）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 提供プロジェクトの識別子 | owner | 必須 | 文字列、最小文字数 `1`、最大文字数 `63` |
+| API名 | name | 必須 | 文字列、最小文字数 `1`、最大文字数 `120` |
+| APIの用途・概要 | summary | 必須 | 文字列、最小文字数 `1`、最大文字数 `1000` |
+| 環境別の接続先 | targets | 必須 | オブジェクト（キーに対応する値は文字列）、最小項目数 `1`、最大項目数 `3` |
+| 接続先APIの基底パス | base_path | 任意 | 文字列、最大文字数 `300`、正規表現 `"^(?:/[A-Za-z0-9_-]+)*$"`、既定値 `""` |
+| 提供者が登録したOpenAPI仕様 | spec | 必須 | オブジェクト |
+| 提供環境ごとの利用条件 | offers | 任意 | オブジェクト（キーに対応する値は[環境別の利用条件・承認設定（Offer）](#offer)） または 空値 |
+| 公開版の変更説明 | release_note | 任意 | 文字列、最大文字数 `2000`、既定値 `""` |
 
 <details><summary>JSON Schema</summary>
 
@@ -2659,45 +3098,73 @@
       "default": "",
       "maxLength": 300,
       "pattern": "^(?:/[A-Za-z0-9_-]+)*$",
-      "title": "Base Path",
+      "title": "接続先APIの基底パス",
       "type": "string"
     },
     "name": {
       "maxLength": 120,
       "minLength": 1,
-      "title": "Name",
+      "title": "API名",
       "type": "string"
+    },
+    "offers": {
+      "anyOf": [
+        {
+          "additionalProperties": {
+            "$ref": "#/components/schemas/Offer"
+          },
+          "propertyNames": {
+            "enum": [
+              "sandbox",
+              "staging",
+              "production"
+            ]
+          },
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "提供環境ごとの利用条件"
     },
     "owner": {
       "maxLength": 63,
       "minLength": 1,
-      "title": "Owner",
+      "title": "提供プロジェクトの識別子",
+      "type": "string"
+    },
+    "release_note": {
+      "default": "",
+      "maxLength": 2000,
+      "title": "公開版の変更説明",
       "type": "string"
     },
     "spec": {
       "additionalProperties": true,
-      "title": "Spec",
+      "title": "提供者が登録したOpenAPI仕様",
       "type": "object"
     },
     "summary": {
       "maxLength": 1000,
       "minLength": 1,
-      "title": "Summary",
+      "title": "APIの用途・概要",
       "type": "string"
     },
     "targets": {
       "additionalProperties": {
         "type": "string"
       },
-      "maxProperties": 2,
+      "maxProperties": 3,
       "minProperties": 1,
       "propertyNames": {
         "enum": [
           "sandbox",
+          "staging",
           "production"
         ]
       },
-      "title": "Targets",
+      "title": "環境別の接続先",
       "type": "object"
     }
   },
@@ -2708,18 +3175,99 @@
     "targets",
     "spec"
   ],
-  "title": "Register",
+  "title": "APIのカタログ登録内容",
   "type": "object"
 }
 ```
 
 </details>
 
-## Removed
+<a id="releaseentry"></a>
 
-| 項目 | 指定 | 型・制約 |
-| --- | --- | --- |
-| removed | 必須 | `{"title": "Removed", "type": "boolean"}` |
+## API仕様の公開版（ReleaseEntry）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 商品内の公開版番号 | number | 必須 | 整数 |
+| 仕様を公開した日時 | published_at | 必須 | 文字列 |
+| 商品APIのバージョン | api_version | 必須 | 文字列 |
+| OpenAPI規格のバージョン | openapi | 必須 | 文字列 |
+| この公開版の変更説明 | note | 必須 | 文字列 |
+| 追加した操作・構成要素 | added | 必須 | 配列 / 文字列 |
+| 削除した操作・構成要素 | removed | 必須 | 配列 / 文字列 |
+| 変更した操作・構成要素 | changed | 必須 | 配列 / 文字列 |
+
+<details><summary>JSON Schema</summary>
+
+```json
+{
+  "properties": {
+    "added": {
+      "items": {
+        "type": "string"
+      },
+      "title": "追加した操作・構成要素",
+      "type": "array"
+    },
+    "api_version": {
+      "title": "商品APIのバージョン",
+      "type": "string"
+    },
+    "changed": {
+      "items": {
+        "type": "string"
+      },
+      "title": "変更した操作・構成要素",
+      "type": "array"
+    },
+    "note": {
+      "title": "この公開版の変更説明",
+      "type": "string"
+    },
+    "number": {
+      "title": "商品内の公開版番号",
+      "type": "integer"
+    },
+    "openapi": {
+      "title": "OpenAPI規格のバージョン",
+      "type": "string"
+    },
+    "published_at": {
+      "title": "仕様を公開した日時",
+      "type": "string"
+    },
+    "removed": {
+      "items": {
+        "type": "string"
+      },
+      "title": "削除した操作・構成要素",
+      "type": "array"
+    }
+  },
+  "required": [
+    "number",
+    "published_at",
+    "api_version",
+    "openapi",
+    "note",
+    "added",
+    "removed",
+    "changed"
+  ],
+  "title": "API仕様の公開版",
+  "type": "object"
+}
+```
+
+</details>
+
+<a id="removed"></a>
+
+## 所属の解除結果（Removed）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 所属を解除したか | removed | 必須 | 真偽値 |
 
 <details><summary>JSON Schema</summary>
 
@@ -2727,25 +3275,79 @@
 {
   "properties": {
     "removed": {
-      "title": "Removed",
+      "title": "所属を解除したか",
       "type": "boolean"
     }
   },
   "required": [
     "removed"
   ],
-  "title": "Removed",
+  "title": "所属の解除結果",
   "type": "object"
 }
 ```
 
 </details>
 
-## Revoked
+<a id="reviewstep"></a>
 
-| 項目 | 指定 | 型・制約 |
-| --- | --- | --- |
-| revoked | 必須 | `{"title": "Revoked", "type": "boolean"}` |
+## 承認段階ごとの審査記録（ReviewStep）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| この段階の審査日時 | at | 必須 | 文字列 |
+| この段階の承認担当 | stage | 必須 | 文字列 |
+| 審査を行った利用者 | actor | 必須 | 文字列 |
+| 審査の理由 | reason | 必須 | 文字列 |
+| 段階の審査結果（承認・却下） | action | 必須 | 文字列 |
+
+<details><summary>JSON Schema</summary>
+
+```json
+{
+  "properties": {
+    "action": {
+      "title": "段階の審査結果（承認・却下）",
+      "type": "string"
+    },
+    "actor": {
+      "title": "審査を行った利用者",
+      "type": "string"
+    },
+    "at": {
+      "title": "この段階の審査日時",
+      "type": "string"
+    },
+    "reason": {
+      "title": "審査の理由",
+      "type": "string"
+    },
+    "stage": {
+      "title": "この段階の承認担当",
+      "type": "string"
+    }
+  },
+  "required": [
+    "at",
+    "stage",
+    "actor",
+    "reason",
+    "action"
+  ],
+  "title": "承認段階ごとの審査記録",
+  "type": "object"
+}
+```
+
+</details>
+
+<a id="revoked"></a>
+
+## 認証情報の失効結果（Revoked）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 認証情報が失効済みか | revoked | 必須 | 真偽値 |
 
 <details><summary>JSON Schema</summary>
 
@@ -2753,35 +3355,39 @@
 {
   "properties": {
     "revoked": {
-      "title": "Revoked",
+      "title": "認証情報が失効済みか",
       "type": "boolean"
     }
   },
   "required": [
     "revoked"
   ],
-  "title": "Revoked",
+  "title": "認証情報の失効結果",
   "type": "object"
 }
 ```
 
 </details>
 
-## Right
+<a id="right"></a>
 
-| 項目 | 指定 | 型・制約 |
-| --- | --- | --- |
-| id | 必須 | `{"title": "Id", "type": "string"}` |
-| asset_id | 必須 | `{"title": "Asset Id", "type": "string"}` |
-| project | 必須 | `{"title": "Project", "type": "string"}` |
-| environment | 必須 | `{"enum": ["sandbox", "production"], "title": "Environment", "type": "string"}` |
-| reason | 必須 | `{"title": "Reason", "type": "string"}` |
-| subject | 任意 | `{"anyOf": [{"type": "string"}, {"type": "null"}], "title": "Subject"}` |
-| applicant | 任意 | `{"anyOf": [{"type": "string"}, {"type": "null"}], "title": "Applicant"}` |
-| asset_name | 任意 | `{"default": "", "title": "Asset Name", "type": "string"}` |
-| decision_reason | 任意 | `{"anyOf": [{"type": "string"}, {"type": "null"}], "title": "Decision Reason"}` |
-| status | 必須 | `{"enum": ["pending", "approved", "rejected", "revoked", "withdrawn"], "title": "Status", "type": "string"}` |
-| revision | 必須 | `{"title": "Revision", "type": "integer"}` |
+## API利用申請と審査状態（Right）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 利用申請・利用権の識別子 | id | 必須 | 文字列 |
+| カタログ掲載APIの識別子 | asset_id | 必須 | 文字列 |
+| 利用プロジェクトの識別子 | project | 必須 | 文字列 |
+| 提供環境 | environment | 必須 | 文字列、指定値 検証環境（`sandbox`）、準本番環境（`staging`）、本番環境（`production`） |
+| 利用申請の理由 | reason | 必須 | 文字列 |
+| 対象利用者の識別子 | subject | 任意 | 文字列 または 空値 |
+| 申請者の識別子 | applicant | 任意 | 文字列 または 空値 |
+| カタログ掲載APIの名称 | asset_name | 任意 | 文字列、既定値 `""` |
+| 審査・取消の理由 | decision_reason | 任意 | 文字列 または 空値 |
+| 申請時に保存した利用条件・回答・審査履歴 | application | 任意 | [申請時点の利用条件と審査記録（ApplicationEvidence）](#applicationevidence) |
+| 現在の承認担当 | stage | 任意 | 文字列 または 空値 |
+| 利用申請の審査状態 | status | 必須 | 文字列、指定値 審査待ち（`pending`）、承認済み（`approved`）、却下済み（`rejected`）、取消済み（`revoked`）、取り下げ済み（`withdrawn`） |
+| 更新時の競合検出に使う版番号 | revision | 必須 | 整数 |
 
 <details><summary>JSON Schema</summary>
 
@@ -2797,15 +3403,21 @@
           "type": "null"
         }
       ],
-      "title": "Applicant"
+      "title": "申請者の識別子"
+    },
+    "application": {
+      "$ref": "#/components/schemas/ApplicationEvidence",
+      "additionalProperties": true,
+      "title": "申請時に保存した利用条件・回答・審査履歴",
+      "type": "object"
     },
     "asset_id": {
-      "title": "Asset Id",
+      "title": "カタログ掲載APIの識別子",
       "type": "string"
     },
     "asset_name": {
       "default": "",
-      "title": "Asset Name",
+      "title": "カタログ掲載APIの名称",
       "type": "string"
     },
     "decision_reason": {
@@ -2817,31 +3429,43 @@
           "type": "null"
         }
       ],
-      "title": "Decision Reason"
+      "title": "審査・取消の理由"
     },
     "environment": {
       "enum": [
         "sandbox",
+        "staging",
         "production"
       ],
-      "title": "Environment",
+      "title": "提供環境",
       "type": "string"
     },
     "id": {
-      "title": "Id",
+      "title": "利用申請・利用権の識別子",
       "type": "string"
     },
     "project": {
-      "title": "Project",
+      "title": "利用プロジェクトの識別子",
       "type": "string"
     },
     "reason": {
-      "title": "Reason",
+      "title": "利用申請の理由",
       "type": "string"
     },
     "revision": {
-      "title": "Revision",
+      "title": "更新時の競合検出に使う版番号",
       "type": "integer"
+    },
+    "stage": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "現在の承認担当"
     },
     "status": {
       "enum": [
@@ -2851,7 +3475,7 @@
         "revoked",
         "withdrawn"
       ],
-      "title": "Status",
+      "title": "利用申請の審査状態",
       "type": "string"
     },
     "subject": {
@@ -2863,7 +3487,7 @@
           "type": "null"
         }
       ],
-      "title": "Subject"
+      "title": "対象利用者の識別子"
     }
   },
   "required": [
@@ -2875,24 +3499,26 @@
     "status",
     "revision"
   ],
-  "title": "Right",
+  "title": "API利用申請と審査状態",
   "type": "object"
 }
 ```
 
 </details>
 
-## Rule
+<a id="rule"></a>
 
-| 項目 | 指定 | 型・制約 |
-| --- | --- | --- |
-| asset_id | 必須 | `{"title": "Asset Id", "type": "string"}` |
-| project | 必須 | `{"title": "Project", "type": "string"}` |
-| environment | 必須 | `{"enum": ["sandbox", "production"], "title": "Environment", "type": "string"}` |
-| threshold | 必須 | `{"maximum": 100000000.0, "minimum": 1.0, "title": "Threshold", "type": "integer"}` |
-| minutes | 必須 | `{"enum": [1, 5, 15, 60, 1440], "title": "Minutes", "type": "integer"}` |
-| stop | 必須 | `{"title": "Stop", "type": "boolean"}` |
-| enabled | 任意 | `{"default": true, "title": "Enabled", "type": "boolean"}` |
+## 呼び出し件数の監視条件（Rule）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| カタログ掲載APIの識別子 | asset_id | 必須 | 文字列 |
+| 利用プロジェクトの識別子 | project | 必須 | 文字列 |
+| 提供環境 | environment | 必須 | 文字列、指定値 検証環境（`sandbox`）、準本番環境（`staging`）、本番環境（`production`） |
+| 通知・停止の判定に使う呼び出し件数 | threshold | 必須 | 整数、最小値 `1.0`、最大値 `100000000.0` |
+| 呼び出し件数の集計区間（分） | minutes | 必須 | 整数、指定値 `1`、`5`、`15`、`60`、`1440` |
+| 上限到達後の呼び出しを停止するか | stop | 必須 | 真偽値 |
+| 監視ルールが有効か | enabled | 任意 | 真偽値、既定値 `true` |
 
 <details><summary>JSON Schema</summary>
 
@@ -2901,20 +3527,21 @@
   "additionalProperties": false,
   "properties": {
     "asset_id": {
-      "title": "Asset Id",
+      "title": "カタログ掲載APIの識別子",
       "type": "string"
     },
     "enabled": {
       "default": true,
-      "title": "Enabled",
+      "title": "監視ルールが有効か",
       "type": "boolean"
     },
     "environment": {
       "enum": [
         "sandbox",
+        "staging",
         "production"
       ],
-      "title": "Environment",
+      "title": "提供環境",
       "type": "string"
     },
     "minutes": {
@@ -2925,21 +3552,21 @@
         60,
         1440
       ],
-      "title": "Minutes",
+      "title": "呼び出し件数の集計区間（分）",
       "type": "integer"
     },
     "project": {
-      "title": "Project",
+      "title": "利用プロジェクトの識別子",
       "type": "string"
     },
     "stop": {
-      "title": "Stop",
+      "title": "上限到達後の呼び出しを停止するか",
       "type": "boolean"
     },
     "threshold": {
       "maximum": 100000000.0,
       "minimum": 1.0,
-      "title": "Threshold",
+      "title": "通知・停止の判定に使う呼び出し件数",
       "type": "integer"
     }
   },
@@ -2951,26 +3578,28 @@
     "minutes",
     "stop"
   ],
-  "title": "Rule",
+  "title": "呼び出し件数の監視条件",
   "type": "object"
 }
 ```
 
 </details>
 
-## RuleResult
+<a id="ruleresult"></a>
 
-| 項目 | 指定 | 型・制約 |
-| --- | --- | --- |
-| asset_id | 必須 | `{"title": "Asset Id", "type": "string"}` |
-| project | 必須 | `{"title": "Project", "type": "string"}` |
-| environment | 必須 | `{"enum": ["sandbox", "production"], "title": "Environment", "type": "string"}` |
-| threshold | 必須 | `{"maximum": 100000000.0, "minimum": 1.0, "title": "Threshold", "type": "integer"}` |
-| minutes | 必須 | `{"enum": [1, 5, 15, 60, 1440], "title": "Minutes", "type": "integer"}` |
-| stop | 必須 | `{"title": "Stop", "type": "boolean"}` |
-| enabled | 任意 | `{"default": true, "title": "Enabled", "type": "boolean"}` |
-| name | 必須 | `{"title": "Name", "type": "string"}` |
-| calls | 必須 | `{"title": "Calls", "type": "integer"}` |
+## 呼び出し件数の監視設定と実績（RuleResult）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| カタログ掲載APIの識別子 | asset_id | 必須 | 文字列 |
+| 利用プロジェクトの識別子 | project | 必須 | 文字列 |
+| 提供環境 | environment | 必須 | 文字列、指定値 検証環境（`sandbox`）、準本番環境（`staging`）、本番環境（`production`） |
+| 通知・停止の判定に使う呼び出し件数 | threshold | 必須 | 整数、最小値 `1.0`、最大値 `100000000.0` |
+| 呼び出し件数の集計区間（分） | minutes | 必須 | 整数、指定値 `1`、`5`、`15`、`60`、`1440` |
+| 上限到達後の呼び出しを停止するか | stop | 必須 | 真偽値 |
+| 監視ルールが有効か | enabled | 任意 | 真偽値、既定値 `true` |
+| API名 | name | 必須 | 文字列 |
+| 呼び出し件数 | calls | 必須 | 整数 |
 
 <details><summary>JSON Schema</summary>
 
@@ -2979,24 +3608,25 @@
   "additionalProperties": false,
   "properties": {
     "asset_id": {
-      "title": "Asset Id",
+      "title": "カタログ掲載APIの識別子",
       "type": "string"
     },
     "calls": {
-      "title": "Calls",
+      "title": "呼び出し件数",
       "type": "integer"
     },
     "enabled": {
       "default": true,
-      "title": "Enabled",
+      "title": "監視ルールが有効か",
       "type": "boolean"
     },
     "environment": {
       "enum": [
         "sandbox",
+        "staging",
         "production"
       ],
-      "title": "Environment",
+      "title": "提供環境",
       "type": "string"
     },
     "minutes": {
@@ -3007,25 +3637,25 @@
         60,
         1440
       ],
-      "title": "Minutes",
+      "title": "呼び出し件数の集計区間（分）",
       "type": "integer"
     },
     "name": {
-      "title": "Name",
+      "title": "API名",
       "type": "string"
     },
     "project": {
-      "title": "Project",
+      "title": "利用プロジェクトの識別子",
       "type": "string"
     },
     "stop": {
-      "title": "Stop",
+      "title": "上限到達後の呼び出しを停止するか",
       "type": "boolean"
     },
     "threshold": {
       "maximum": 100000000.0,
       "minimum": 1.0,
-      "title": "Threshold",
+      "title": "通知・停止の判定に使う呼び出し件数",
       "type": "integer"
     }
   },
@@ -3039,18 +3669,20 @@
     "name",
     "calls"
   ],
-  "title": "RuleResult",
+  "title": "呼び出し件数の監視設定と実績",
   "type": "object"
 }
 ```
 
 </details>
 
-## State
+<a id="state"></a>
 
-| 項目 | 指定 | 型・制約 |
-| --- | --- | --- |
-| stopped | 必須 | `{"title": "Stopped", "type": "boolean"}` |
+## 組織の利用停止設定（State）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 組織の利用を停止中か | stopped | 必須 | 真偽値 |
 
 <details><summary>JSON Schema</summary>
 
@@ -3059,30 +3691,32 @@
   "additionalProperties": false,
   "properties": {
     "stopped": {
-      "title": "Stopped",
+      "title": "組織の利用を停止中か",
       "type": "boolean"
     }
   },
   "required": [
     "stopped"
   ],
-  "title": "State",
+  "title": "組織の利用停止設定",
   "type": "object"
 }
 ```
 
 </details>
 
-## Token
+<a id="token"></a>
 
-| 項目 | 指定 | 型・制約 |
-| --- | --- | --- |
-| access_token | 必須 | `{"title": "Access Token", "type": "string"}` |
-| token_type | 必須 | `{"const": "Bearer", "title": "Token Type", "type": "string"}` |
-| expires_in | 必須 | `{"title": "Expires In", "type": "integer"}` |
-| refresh_after | 必須 | `{"title": "Refresh After", "type": "integer"}` |
-| expires_at | 必須 | `{"title": "Expires At", "type": "integer"}` |
-| refresh_at | 必須 | `{"title": "Refresh At", "type": "integer"}` |
+## 短期アクセストークンと期限（Token）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| アクセストークン | access_token | 必須 | 文字列 |
+| トークンの種類 | token_type | 必須 | 文字列、指定値 ベアラートークン（`Bearer`） |
+| 有効期限までの秒数 | expires_in | 必須 | 整数 |
+| 更新可能になるまでの秒数 | refresh_after | 必須 | 整数 |
+| 有効期限（UNIX秒） | expires_at | 必須 | 整数 |
+| 更新可能になる時刻（UNIX秒） | refresh_at | 必須 | 整数 |
 
 <details><summary>JSON Schema</summary>
 
@@ -3090,28 +3724,28 @@
 {
   "properties": {
     "access_token": {
-      "title": "Access Token",
+      "title": "アクセストークン",
       "type": "string"
     },
     "expires_at": {
-      "title": "Expires At",
+      "title": "有効期限（UNIX秒）",
       "type": "integer"
     },
     "expires_in": {
-      "title": "Expires In",
+      "title": "有効期限までの秒数",
       "type": "integer"
     },
     "refresh_after": {
-      "title": "Refresh After",
+      "title": "更新可能になるまでの秒数",
       "type": "integer"
     },
     "refresh_at": {
-      "title": "Refresh At",
+      "title": "更新可能になる時刻（UNIX秒）",
       "type": "integer"
     },
     "token_type": {
       "const": "Bearer",
-      "title": "Token Type",
+      "title": "トークンの種類",
       "type": "string"
     }
   },
@@ -3123,22 +3757,24 @@
     "expires_at",
     "refresh_at"
   ],
-  "title": "Token",
+  "title": "短期アクセストークンと期限",
   "type": "object"
 }
 ```
 
 </details>
 
-## Unit
+<a id="unit"></a>
 
-| 項目 | 指定 | 型・制約 |
-| --- | --- | --- |
-| id | 必須 | `{"title": "Id", "type": "string"}` |
-| kind | 必須 | `{"enum": ["department", "project"], "title": "Kind", "type": "string"}` |
-| name | 必須 | `{"title": "Name", "type": "string"}` |
-| parent | 必須 | `{"title": "Parent", "type": "string"}` |
-| stopped | 必須 | `{"title": "Stopped", "type": "boolean"}` |
+## 部署・プロジェクトの登録情報（Unit）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 部署・プロジェクトの識別子 | id | 必須 | 文字列 |
+| 組織の種類（部署・プロジェクト） | kind | 必須 | 文字列、指定値 部署（`department`）、プロジェクト（`project`） |
+| 部署・プロジェクト名 | name | 必須 | 文字列 |
+| 親部署の識別子 | parent | 必須 | 文字列 |
+| 組織の利用を停止中か | stopped | 必須 | 真偽値 |
 
 <details><summary>JSON Schema</summary>
 
@@ -3146,7 +3782,7 @@
 {
   "properties": {
     "id": {
-      "title": "Id",
+      "title": "部署・プロジェクトの識別子",
       "type": "string"
     },
     "kind": {
@@ -3154,19 +3790,19 @@
         "department",
         "project"
       ],
-      "title": "Kind",
+      "title": "組織の種類（部署・プロジェクト）",
       "type": "string"
     },
     "name": {
-      "title": "Name",
+      "title": "部署・プロジェクト名",
       "type": "string"
     },
     "parent": {
-      "title": "Parent",
+      "title": "親部署の識別子",
       "type": "string"
     },
     "stopped": {
-      "title": "Stopped",
+      "title": "組織の利用を停止中か",
       "type": "boolean"
     }
   },
@@ -3177,20 +3813,22 @@
     "parent",
     "stopped"
   ],
-  "title": "Unit",
+  "title": "部署・プロジェクトの登録情報",
   "type": "object"
 }
 ```
 
 </details>
 
-## UnitData
+<a id="unitdata"></a>
 
-| 項目 | 指定 | 型・制約 |
-| --- | --- | --- |
-| kind | 必須 | `{"enum": ["project", "department"], "title": "Kind", "type": "string"}` |
-| name | 必須 | `{"maxLength": 120, "minLength": 1, "title": "Name", "type": "string"}` |
-| parent | 任意 | `{"default": "", "title": "Parent", "type": "string"}` |
+## 部署・プロジェクトの編集内容（UnitData）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 組織の種類（部署・プロジェクト） | kind | 必須 | 文字列、指定値 プロジェクト（`project`）、部署（`department`） |
+| 部署・プロジェクト名 | name | 必須 | 文字列、最小文字数 `1`、最大文字数 `120` |
+| 親部署の識別子 | parent | 任意 | 文字列、既定値 `""` |
 
 <details><summary>JSON Schema</summary>
 
@@ -3203,18 +3841,18 @@
         "project",
         "department"
       ],
-      "title": "Kind",
+      "title": "組織の種類（部署・プロジェクト）",
       "type": "string"
     },
     "name": {
       "maxLength": 120,
       "minLength": 1,
-      "title": "Name",
+      "title": "部署・プロジェクト名",
       "type": "string"
     },
     "parent": {
       "default": "",
-      "title": "Parent",
+      "title": "親部署の識別子",
       "type": "string"
     }
   },
@@ -3222,19 +3860,21 @@
     "kind",
     "name"
   ],
-  "title": "UnitData",
+  "title": "部署・プロジェクトの編集内容",
   "type": "object"
 }
 ```
 
 </details>
 
-## UnitLimit
+<a id="unitlimit"></a>
 
-| 項目 | 指定 | 型・制約 |
-| --- | --- | --- |
-| name | 必須 | `{"title": "Name", "type": "string"}` |
-| minutes | 必須 | `{"title": "Minutes", "type": "integer"}` |
+## 組織ごとのトークン有効期間上限（UnitLimit）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 有効期間上限を設定した組織名 | name | 必須 | 文字列 |
+| 組織の有効期間上限（分） | minutes | 必須 | 整数 |
 
 <details><summary>JSON Schema</summary>
 
@@ -3242,11 +3882,11 @@
 {
   "properties": {
     "minutes": {
-      "title": "Minutes",
+      "title": "組織の有効期間上限（分）",
       "type": "integer"
     },
     "name": {
-      "title": "Name",
+      "title": "有効期間上限を設定した組織名",
       "type": "string"
     }
   },
@@ -3254,18 +3894,20 @@
     "name",
     "minutes"
   ],
-  "title": "UnitLimit",
+  "title": "組織ごとのトークン有効期間上限",
   "type": "object"
 }
 ```
 
 </details>
 
-## Unread
+<a id="unread"></a>
 
-| 項目 | 指定 | 型・制約 |
-| --- | --- | --- |
-| unread | 必須 | `{"title": "Unread", "type": "integer"}` |
+## 未読通知の件数（Unread）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 未読通知件数 | unread | 必須 | 整数 |
 
 <details><summary>JSON Schema</summary>
 
@@ -3273,30 +3915,32 @@
 {
   "properties": {
     "unread": {
-      "title": "Unread",
+      "title": "未読通知件数",
       "type": "integer"
     }
   },
   "required": [
     "unread"
   ],
-  "title": "Unread",
+  "title": "未読通知の件数",
   "type": "object"
 }
 ```
 
 </details>
 
-## Usage
+<a id="usage"></a>
 
-| 項目 | 指定 | 型・制約 |
-| --- | --- | --- |
-| unit_id | 必須 | `{"title": "Unit Id", "type": "string"}` |
-| members | 必須 | 配列 / [Affiliation](#affiliation) |
-| calls | 必須 | `{"title": "Calls", "type": "integer"}` |
-| errors | 必須 | `{"title": "Errors", "type": "integer"}` |
-| by_project | 必須 | 配列 / [ByProject](#byproject) |
-| by_api | 必須 | 配列 / [ByAPI](#byapi) |
+## 組織のAPI利用実績（Usage）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 部署・プロジェクトの識別子 | unit_id | 必須 | 文字列 |
+| 対象組織に所属する利用者 | members | 必須 | 配列 / [利用者の所属情報（Affiliation）](#affiliation) |
+| 呼び出し件数 | calls | 必須 | 整数 |
+| エラー応答件数 | errors | 必須 | 整数 |
+| プロジェクト別の利用実績 | by_project | 必須 | 配列 / [プロジェクト別の呼び出し件数（ByProject）](#byproject) |
+| API別の利用実績 | by_api | 必須 | 配列 / [API別の呼び出し件数（ByAPI）](#byapi) |
 
 <details><summary>JSON Schema</summary>
 
@@ -3307,33 +3951,33 @@
       "items": {
         "$ref": "#/components/schemas/ByAPI"
       },
-      "title": "By Api",
+      "title": "API別の利用実績",
       "type": "array"
     },
     "by_project": {
       "items": {
         "$ref": "#/components/schemas/ByProject"
       },
-      "title": "By Project",
+      "title": "プロジェクト別の利用実績",
       "type": "array"
     },
     "calls": {
-      "title": "Calls",
+      "title": "呼び出し件数",
       "type": "integer"
     },
     "errors": {
-      "title": "Errors",
+      "title": "エラー応答件数",
       "type": "integer"
     },
     "members": {
       "items": {
         "$ref": "#/components/schemas/Affiliation"
       },
-      "title": "Members",
+      "title": "対象組織に所属する利用者",
       "type": "array"
     },
     "unit_id": {
-      "title": "Unit Id",
+      "title": "部署・プロジェクトの識別子",
       "type": "string"
     }
   },
@@ -3345,22 +3989,24 @@
     "by_project",
     "by_api"
   ],
-  "title": "Usage",
+  "title": "組織のAPI利用実績",
   "type": "object"
 }
 ```
 
 </details>
 
-## ValidationError
+<a id="validationerror"></a>
 
-| 項目 | 指定 | 型・制約 |
-| --- | --- | --- |
-| loc | 必須 | 配列 / `{"anyOf": [{"type": "string"}, {"type": "integer"}]}` |
-| msg | 必須 | `{"title": "Message", "type": "string"}` |
-| type | 必須 | `{"title": "Error Type", "type": "string"}` |
-| input | 任意 | `{"title": "Input"}` |
-| ctx | 任意 | `{"title": "Context", "type": "object"}` |
+## 入力エラーの項目別明細（ValidationError）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 入力エラーの発生箇所 | loc | 必須 | 配列 / 文字列 または 整数 |
+| 入力エラーの説明 | msg | 必須 | 文字列 |
+| 入力エラーの分類コード | type | 必須 | 文字列 |
+| エラーになった入力値 | input | 任意 | 任意の型 |
+| 入力エラーの補足情報 | ctx | 任意 | オブジェクト |
 
 <details><summary>JSON Schema</summary>
 
@@ -3368,11 +4014,11 @@
 {
   "properties": {
     "ctx": {
-      "title": "Context",
+      "title": "入力エラーの補足情報",
       "type": "object"
     },
     "input": {
-      "title": "Input"
+      "title": "エラーになった入力値"
     },
     "loc": {
       "items": {
@@ -3385,15 +4031,15 @@
           }
         ]
       },
-      "title": "Location",
+      "title": "入力エラーの発生箇所",
       "type": "array"
     },
     "msg": {
-      "title": "Message",
+      "title": "入力エラーの説明",
       "type": "string"
     },
     "type": {
-      "title": "Error Type",
+      "title": "入力エラーの分類コード",
       "type": "string"
     }
   },
@@ -3402,19 +4048,21 @@
     "msg",
     "type"
   ],
-  "title": "ValidationError",
+  "title": "入力エラーの項目別明細",
   "type": "object"
 }
 ```
 
 </details>
 
-## VisibleTarget
+<a id="visibletarget"></a>
 
-| 項目 | 指定 | 型・制約 |
-| --- | --- | --- |
-| owner | 必須 | `{"title": "Owner", "type": "string"}` |
-| environment | 必須 | `{"title": "Environment", "type": "string"}` |
+## 利用者に表示できる接続先（VisibleTarget）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 提供プロジェクトの識別子 | owner | 必須 | 文字列 |
+| 提供環境 | environment | 必須 | 文字列 |
 
 <details><summary>JSON Schema</summary>
 
@@ -3422,11 +4070,11 @@
 {
   "properties": {
     "environment": {
-      "title": "Environment",
+      "title": "提供環境",
       "type": "string"
     },
     "owner": {
-      "title": "Owner",
+      "title": "提供プロジェクトの識別子",
       "type": "string"
     }
   },
@@ -3434,24 +4082,26 @@
     "owner",
     "environment"
   ],
-  "title": "VisibleTarget",
+  "title": "利用者に表示できる接続先",
   "type": "object"
 }
 ```
 
 </details>
 
-## Workspace
+<a id="workspace"></a>
 
-| 項目 | 指定 | 型・制約 |
-| --- | --- | --- |
-| admin | 必須 | `{"title": "Admin", "type": "boolean"}` |
-| units | 必須 | 配列 / [Unit](#unit) |
-| leads | 必須 | 配列 / `{"type": "string"}` |
-| my_units | 必須 | 配列 / `{"type": "string"}` |
-| memberships | 必須 | 配列 / [Affiliation](#affiliation) |
-| users | 必須 | 配列 / [Person](#person) |
-| titles | 必須 | 配列 / `{"type": "string"}` |
+## 組織構成と利用者の所属一覧（Workspace）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 全体管理者か | admin | 必須 | 真偽値 |
+| 部署・プロジェクトの一覧 | units | 必須 | 配列 / [部署・プロジェクトの登録情報（Unit）](#unit) |
+| 管理権限を持つ組織 | leads | 必須 | 配列 / 文字列 |
+| 自分が所属する組織 | my_units | 必須 | 配列 / 文字列 |
+| 利用者と組織の所属関係 | memberships | 必須 | 配列 / [利用者の所属情報（Affiliation）](#affiliation) |
+| 参照できる利用者 | users | 必須 | 配列 / [利用者の識別情報（Person）](#person) |
+| 役職一覧 | titles | 必須 | 配列 / 文字列 |
 
 <details><summary>JSON Schema</summary>
 
@@ -3459,49 +4109,49 @@
 {
   "properties": {
     "admin": {
-      "title": "Admin",
+      "title": "全体管理者か",
       "type": "boolean"
     },
     "leads": {
       "items": {
         "type": "string"
       },
-      "title": "Leads",
+      "title": "管理権限を持つ組織",
       "type": "array"
     },
     "memberships": {
       "items": {
         "$ref": "#/components/schemas/Affiliation"
       },
-      "title": "Memberships",
+      "title": "利用者と組織の所属関係",
       "type": "array"
     },
     "my_units": {
       "items": {
         "type": "string"
       },
-      "title": "My Units",
+      "title": "自分が所属する組織",
       "type": "array"
     },
     "titles": {
       "items": {
         "type": "string"
       },
-      "title": "Titles",
+      "title": "役職一覧",
       "type": "array"
     },
     "units": {
       "items": {
         "$ref": "#/components/schemas/Unit"
       },
-      "title": "Units",
+      "title": "部署・プロジェクトの一覧",
       "type": "array"
     },
     "users": {
       "items": {
         "$ref": "#/components/schemas/Person"
       },
-      "title": "Users",
+      "title": "参照できる利用者",
       "type": "array"
     }
   },
@@ -3514,7 +4164,7 @@
     "users",
     "titles"
   ],
-  "title": "Workspace",
+  "title": "組織構成と利用者の所属一覧",
   "type": "object"
 }
 ```

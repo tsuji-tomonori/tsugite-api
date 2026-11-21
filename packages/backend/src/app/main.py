@@ -18,6 +18,7 @@ from app.apis.catalog.common import DB
 from app.apis.governance import router as governance
 from app.core.auth import demo_token
 from app.core.config import local_demo, settings
+from app.design_names import PortalAPI
 
 log = logging.getLogger("tsugite.access")
 log.setLevel(logging.INFO)
@@ -27,7 +28,7 @@ log.propagate = False
 
 
 def create_app() -> FastAPI:
-    app = FastAPI(
+    app = PortalAPI(
         title="継手API",
         version="0.1.0",
         docs_url=None,

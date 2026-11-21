@@ -1,6 +1,8 @@
 import json
 
 from app.apis.catalog.common import DB, User, listing, record
+from app.apis.catalog.offers import configured, describe
+from app.apis.catalog.releases import history
 from app.apis.schemas import Detail
 from app.core.credential_policy import individual
 from app.core.workspace import allowed_audience
@@ -33,6 +35,12 @@ def detail(key: str, actor: User, db: DB):
     return Detail(
         **listing(a).model_dump(),
         spec=json.loads(a.spec),
+        offers={
+            env: describe(rule, a.revision, a.owner in actor.owners)
+            for env, rule in configured(a).items()
+        },
+        release_note=a.release_note or "",
+        releases=history(db, a),
         allowed_operations=individual(db, key, actor.subject),
         base_path=a.base_path or "",
         bindings=json.loads(a.targets) if a.owner in actor.owners else {},

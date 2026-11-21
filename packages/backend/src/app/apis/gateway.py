@@ -10,6 +10,7 @@ from app.apis.schemas import Env
 from app.core.auth import Actor, check_member
 from app.core.config import targets
 from app.core.credential_policy import check_operation
+from app.core.openapi import path_items
 from app.core.workspace import allowed_audience, attribute, private_project, stopped
 from app.integrations.upstream import MAX_BODY, dispatch
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -24,7 +25,7 @@ def operation_template(spec: dict, method: str, path: str) -> str | None:
     if any(p in {".", ".."} or not re.fullmatch(r"[A-Za-z0-9_~.\-]*", p) for p in parts):
         return None
     # Prefer a literal OpenAPI path over a templated path.
-    patterns = spec["paths"]
+    patterns = dict(path_items(spec))
     if path in patterns:
         return path if method.lower() in patterns[path] else None
     for template, ops in patterns.items():

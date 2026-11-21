@@ -70,7 +70,7 @@ def catalog_journey(url, case, tokens=None, consumer_subject="consumer"):
             provider.get_by_label("API名", exact=True).fill("棚卸API")
             provider.get_by_label("用途・説明").fill("倉庫の在庫を照会する")
             provider.get_by_label("検証の接続先").select_option("sample-sandbox")
-            provider.get_by_label("本番の接続先").select_option("sample-production")
+            provider.get_by_label("本番の接続先", exact=True).select_option("sample-production")
             provider.get_by_label("OpenAPIファイル").set_input_files(
                 ROOT / "examples/stock.openapi.json"
             )
@@ -121,7 +121,7 @@ def catalog_journey(url, case, tokens=None, consumer_subject="consumer"):
             consumer.get_by_role("button", name="実行する").click()
             expect(consumer.get_by_text("HTTP 200", exact=False)).to_be_visible()
             if tokens:
-                expect(consumer.get_by_text("TS-01", exact=False)).to_be_visible()
+                expect(consumer.locator("pre").filter(has_text="HTTP 200")).to_contain_text("TS-01")
             capture(
                 consumer.get_by_text("HTTP 200", exact=False),
                 "06-invoked",

@@ -66,7 +66,11 @@ def badge(actor: User, db: DB):
     return {"unread": unread(db, actor)}
 
 
-@router.post("/notifications", status_code=201, responses={201: {"model": outputs.Identifier}})
+@router.post(
+    "/notifications",
+    status_code=201,
+    responses={201: {"model": outputs.Identifier, "description": "送信した通知の識別子（id）"}},
+)
 def send(data: Message, request: Request, actor: User, db: DB):
     if not actor.admin and not actor.owners:
         raise HTTPException(403)

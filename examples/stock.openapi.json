@@ -10,7 +10,99 @@
         "summary": "在庫一覧を取得",
         "responses": {
           "200": {
-            "description": "在庫一覧"
+            "description": "在庫一覧",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "商品在庫の検索結果",
+                  "type": "object",
+                  "required": [
+                    "items"
+                  ],
+                  "properties": {
+                    "items": {
+                      "title": "在庫明細の一覧",
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/StockItem"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/items/{sku}": {
+      "get": {
+        "summary": "商品コードで在庫を取得",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sku",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "商品コード"
+            },
+            "example": "TS-01",
+            "description": "照会する商品コード"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "該当商品の在庫",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StockItem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "商品が見つかりません",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "在庫照会エラー",
+                  "type": "object",
+                  "required": [
+                    "message"
+                  ],
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "title": "エラーの説明"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "StockItem": {
+        "title": "商品別の在庫",
+        "type": "object",
+        "required": [
+          "sku",
+          "stock"
+        ],
+        "properties": {
+          "sku": {
+            "type": "string",
+            "title": "商品コード"
+          },
+          "stock": {
+            "type": "integer",
+            "title": "在庫数"
           }
         }
       }

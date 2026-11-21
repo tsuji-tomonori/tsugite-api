@@ -27,7 +27,10 @@ class RuleResult(Rule):
     calls: int
 
 
-@router.put("/alerts", responses={200: {"model": outputs.Identifier}})
+@router.put(
+    "/alerts",
+    responses={200: {"model": outputs.Identifier, "description": "保存した監視ルールの識別子（id）"}},
+)
 def save_rule(data: Rule, request: Request, actor: User, db: DB):
     asset = record(db, data.asset_id)
     if not actor.admin and asset.owner not in actor.owners:

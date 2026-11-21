@@ -1,4 +1,6 @@
+import json
 from datetime import UTC, datetime
+from typing import Any
 from uuid import uuid4
 
 from sqlalchemy import DateTime, String, Text
@@ -26,6 +28,8 @@ class Asset(Base):
     summary: Mapped[str] = mapped_column(Text)
     base_path: Mapped[str | None] = mapped_column(String(300))
     spec: Mapped[str] = mapped_column(Text)
+    offers: Mapped[str | None] = mapped_column(Text)
+    release_note: Mapped[str | None] = mapped_column(Text)
     targets: Mapped[str] = mapped_column(Text)
     policy: Mapped[str | None] = mapped_column(Text)
     removed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
@@ -44,6 +48,13 @@ class Access(Base):
     applicant: Mapped[str | None] = mapped_column(String(180))
     subject: Mapped[str | None] = mapped_column(String(180))
     decision_note: Mapped[str | None] = mapped_column(Text)
+    submission: Mapped[str | None] = mapped_column(Text)
+    stage: Mapped[str | None] = mapped_column(String(80))
+
+    @property
+    def application(self) -> dict[str, Any]:
+        return json.loads(self.submission) if self.submission else {}
+
     reason: Mapped[str] = mapped_column(Text)
     status: Mapped[str] = mapped_column(String(16))
     revision: Mapped[int] = mapped_column(default=1)
@@ -180,3 +191,13 @@ class LogUnit(Base):
     __tablename__ = "invocation_units"
     request_id: Mapped[str] = mapped_column(String(64), primary_key=True)
     unit_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+
+
+class SpecRelease(Base):
+    __tablename__ = "spec_releases"
+    asset_id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    number: Mapped[int] = mapped_column(primary_key=True)
+    at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    digest: Mapped[str] = mapped_column(String(64))
+    manifest: Mapped[str] = mapped_column(Text)
+    summary: Mapped[str] = mapped_column(Text)

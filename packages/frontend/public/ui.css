@@ -217,3 +217,15 @@ textarea.form-control { min-height: 76px; resize: vertical; }
   .guide-search .field:first-child { grid-column: 1 / -1; }
 }
 .guide-results [hidden], .guide-grid [hidden], #guide-empty[hidden] { display: none; }
+.docs-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(11rem, 32%); gap: 1.25rem; align-items: start; }
+.docs-menu { position: sticky; top: 1rem; max-height: 75vh; overflow-y: auto; border-inline-start: 1px solid var(--line); padding-inline-start: 1rem; }
+.docs-menu button { display: block; text-align: start; background: transparent; color: var(--link); border: 0; padding: .55rem .25rem; overflow-wrap: anywhere; }
+.docs-menu button:hover { text-decoration: underline; }
+.doc-operation { scroll-margin-top: 1rem; }
+.offer-editor, .application-field { border-inline-start: 2px solid var(--line); margin-block: .75rem; padding-inline-start: 1rem; }
+.terms-text { white-space: pre-wrap; }
+@media (max-width: 780px) {
+  .docs-layout { display: flex; flex-direction: column; }
+  .docs-menu { order: -1; position: static; max-height: 12rem; width: 100%; }
+  .docs-content { width: 100%; min-width: 0; }
+}

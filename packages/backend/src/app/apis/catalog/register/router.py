@@ -2,8 +2,12 @@ import json
 
 from app.apis import outputs
 from app.apis.catalog.common import DB, User, allowed_spec, event, listing, record
-from app.apis.schemas import Listing, Register
+from app.apis.catalog.offers import configured
+from app.apis.catalog.releases import record_release
+from app.apis.schemas import Listing, Offer, Register
 from app.core.config import targets
+from app.core.workspace import units
+from app.integrations.spec_archive import archive_spec, canonical
 from fastapi import APIRouter, HTTPException, Request
 from openapi_spec_validator import validate
 from sqlalchemy import select
@@ -12,7 +16,19 @@ from tsugite_db.models import Access, Asset, new_id, now
 router = APIRouter()
 
 
-def validated_spec(data):
+def validated_spec(data, db):
+    if data.offers is not None:
+        tree = units(db)
+        for offer in data.offers.values():
+            if any(
+                step.startswith("unit/") and tree.get(step[5:], {}).get("kind") != "department"
+                for step in offer.steps
+            ):
+                raise HTTPException(422, "承認先の部署を確認してください")
+        if data.offers.keys() - data.targets.keys():
+            raise HTTPException(422, "利用条件には出品する環境を指定してください")
+        if len(canonical(data.model_dump()["offers"])) > 120000:
+            raise HTTPException(422, "環境ごとの申請条件は合計120KB以内で指定してください")
     bindings = targets()
     for env, key in data.targets.items():
         target = bindings.get(key)
@@ -34,7 +50,7 @@ def validated_spec(data):
 def register(data: Register, request: Request, actor: User, db: DB):
     if data.owner not in actor.owners:
         raise HTTPException(403, "提供プロジェクトの権限が必要です")
-    spec = validated_spec(data)
+    spec = validated_spec(data, db)
     row = Asset(
         id=new_id(),
         name=data.name,
@@ -43,8 +59,11 @@ def register(data: Register, request: Request, actor: User, db: DB):
         base_path=data.base_path,
         targets=json.dumps(data.targets),
         spec=spec,
+        offers=json.dumps(data.model_dump()["offers"] or {}, ensure_ascii=False),
+        release_note=data.release_note,
         published=False,
     )
+    archive_spec(row.id, data.spec)
     db.add(row)
     event(db, request, actor, row, "register", row.owner)
     db.commit()
@@ -58,15 +77,34 @@ def edit(key: str, revision: int, data: Register, request: Request, actor: User,
         raise HTTPException(403)
     if row.revision != revision:
         raise HTTPException(409, "別の変更が入りました")
-    spec = validated_spec(data)
+    spec = validated_spec(data, db)
     structural = (json.loads(row.spec), json.loads(row.targets), row.base_path or "") != (
         data.spec,
         data.targets,
         data.base_path,
     )
+    previous = configured(row)
+    offers = data.model_dump()["offers"]
+    if offers is None:
+        offers = {env: rule for env, rule in previous.items() if env in data.targets}
+    inherited = Offer.model_validate({"route": "legacy"}).model_dump()
+    changed = {
+        env
+        for env in previous.keys() | offers.keys()
+        if previous.get(env, inherited) != offers.get(env, inherited)
+    }
+    if row.published and (structural or data.release_note != (row.release_note or "")):
+        record_release(db, row)
     if structural:
+        archive_spec(row.id, data.spec)
         row.published = False
         close_rights(db, request, actor, row, "接続先または仕様が変更されました")
+    elif changed:
+        close_rights(db, request, actor, row, "この環境の利用条件が変更されました", changed)
+    if changed or data.release_note != (row.release_note or ""):
+        row.published = False
+    row.offers = json.dumps(offers, ensure_ascii=False)
+    row.release_note = data.release_note
     row.name, row.summary, row.spec, row.targets, row.base_path = (
         data.name,
         data.summary,
@@ -87,10 +125,13 @@ def edit(key: str, revision: int, data: Register, request: Request, actor: User,
     return listing(row)
 
 
-def close_rights(db, request, actor, row, reason):
+def close_rights(db, request, actor, row, reason, environments=None):
     for right in db.scalars(
         select(Access).where(Access.asset_id == row.id, Access.status.in_(("approved", "pending")))
     ):
+        if environments is not None and right.environment not in environments:
+            continue
+        right.stage = None
         action = "revoke" if right.status == "approved" else "reject"
         right.decision_note = reason
         right.status = "revoked" if action == "revoke" else "rejected"
