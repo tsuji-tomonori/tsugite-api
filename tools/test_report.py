@@ -17,6 +17,7 @@ from playwright.sync_api import sync_playwright
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "artifacts"
 CASE = {
+    "test_console_visual_modes": "ライト・ダークの配布値、文字コントラスト、端末への追随、強制カラーでのフォーカスを確認する",
     "test_large_catalog": "6業務・20拠点の公開120件を全件照合し、PC・スマートフォンの検索とページ送りを確認する",
     "test_upstream_unavailable": "承認済みのHTTPS接続先が停止したとき、502と監査・アクセスログを同じIDで追跡できる",
     "test_marketplace_contracts": "6種類を個別に登録・公開・承認して実行し、HTTPSの受信・業務応答・監査記録を照合する",
@@ -123,6 +124,7 @@ def inventory():
 
 
 GALLERIES = {
+    "test_console_visual_modes": ("AWSコンソールに合わせたライト・ダーク・強制カラー", 4),
     "test_large_catalog": ("公開120件のカタログ", 4),
     "test_cognito_browser": ("AWS Emulatorでの提供者・利用者の画面", 11),
     "test_user_flow": ("ローカルデモでの提供者・利用者の画面", 11),
@@ -240,7 +242,7 @@ def build():
                 evidence = f" · <a href='#{anchor}'>画面{len(shots)}枚</a>"
                 label = GALLERIES.get(name, (name, 0))[0]
                 galleries.append(
-                    f"<details id='{anchor}' {'open' if name == 'test_large_catalog' else ''}><summary>{label}（{len(shots)}枚）</summary><div class='grid'>{''.join(shots)}</div></details>"
+                    f"<details id='{anchor}' {'open' if name == 'test_console_visual_modes' else ''}><summary>{label}（{len(shots)}枚）</summary><div class='grid'>{''.join(shots)}</div></details>"
                 )
             style = "ok" if status == "成功" else "bad"
             rows.append(
@@ -259,6 +261,11 @@ def build():
     design = review_table(
         results,
         [
+            (
+                "AWSの表示仕様",
+                "ライト・ダークのリンク色、主要ボタン色、3種類の角丸を実画面で照合。配色変更後の入力保持、設定の保存、強制カラーでのフォーカスも確認する。",
+                ["test_console_visual_modes"],
+            ),
             (
                 "探しやすさ",
                 "拠点と業務をAPI名で識別し、名前から詳細に移動する。120件を12件ずつ表示し、キーワードと環境で3件に絞る。",
@@ -285,7 +292,7 @@ def build():
     <header><h1>継手API テスト結果</h1><p>{date} 開始 · 対象コミット <code>{escape(rev[:12])}</code></p>
     <p class="numbers">{summary}</p>{gaps}<nav><a href="#flow">業務フロー</a><a href="#review">デザインレビュー</a><a href="#observed">実行記録</a><a href="#screens">画面の記録</a><a href="#cases">全テストケース</a><a href="#cdk">CDKのタグ</a></nav></header>
     <section id="flow"><h2>公開から利用終了まで</h2>{review_table(results, JOURNEYS)}</section>
-    <section id="review"><h2>デザインレビュー</h2><p>Amazon DataZoneの提供者インベントリ、公開カタログ、プロジェクト単位の利用申請を設計の基準にしました。初回レビューで、先頭に同名の拠点違いが並んだため、出品例を「拠点｜業務名」に改め、API名から直接詳細を開けるようにしました。</p>{design}<p>実装画面と操作テストによるレビューです。実利用者によるユーザビリティ調査や同時アクセスの負荷測定は今回の対象外です。</p></section>
+    <section id="review"><h2>デザインレビュー</h2><p>Amazon DataZoneの提供者インベントリ、公開カタログ、プロジェクト単位の利用申請を設計の基準にしました。外観はAWS公開資料の更新後の画面とCloudscape Visual Refreshの配布値に合わせています。主要操作はオレンジ、リンクと補助操作は青です。<a href="https://assets.community.aws/a/reCap-Summary-2024.pdf#page=18">比較に使ったAWSの画面（18ページ）</a>。</p>{design}<p>実装画面と操作テストによるレビューです。実利用者によるユーザビリティ調査や同時アクセスの負荷測定は今回の対象外です。</p></section>
     <section id="observed"><h2>業務応答とログの照合記録</h2>{"".join(findings) or "実行記録なし"}</section>
     <section id="screens"><h2>画面の記録</h2>{"".join(reversed(galleries)) or "画面記録はありません。"}</section>
     <section id="cases"><h2>テストケースと実行結果</h2>{"".join(tables)}</section>

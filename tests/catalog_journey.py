@@ -28,6 +28,14 @@ def browser_evidence(case, mode, provider, consumer):
         raise
 
 
+def navigate(page, label):
+    toggle = page.get_by_role("button", name="ナビゲーション", exact=True)
+    expect(toggle).to_be_visible()
+    if toggle.get_attribute("aria-expanded") == "false":
+        toggle.click()
+    page.get_by_role("navigation", name="ポータル").get_by_role("button", name=label, exact=True).click()
+
+
 def catalog_journey(url, case, tokens=None, consumer_subject="consumer"):
     with sync_playwright() as playwright, ExitStack() as evidence:
         browser = playwright.chromium.launch(
@@ -57,7 +65,7 @@ def catalog_journey(url, case, tokens=None, consumer_subject="consumer"):
                     page.reload()
             else:
                 provider.get_by_role("button", name="提供チーム", exact=True).click()
-            provider.get_by_role("button", name="提供するAPI").click()
+            navigate(provider, "提供するAPI")
             provider.get_by_role("button", name="APIを登録").click()
             provider.get_by_label("API名", exact=True).fill("棚卸API")
             provider.get_by_label("用途・説明").fill("倉庫の在庫を照会する")
@@ -73,7 +81,7 @@ def catalog_journey(url, case, tokens=None, consumer_subject="consumer"):
         with when("利用チームが検索して申請し、提供チームが承認する"):
             if not tokens:
                 consumer.get_by_role("button", name="利用チーム", exact=True).click()
-            consumer.get_by_role("button", name="APIカタログ", exact=True).click()
+            navigate(consumer, "APIカタログ")
             consumer.get_by_label("キーワードで検索").fill("在庫一覧を取得")
             consumer.get_by_role("button", name="検索", exact=True).click()
             expect(consumer.get_by_role("link", name="棚卸API")).to_be_visible()
@@ -83,30 +91,30 @@ def catalog_journey(url, case, tokens=None, consumer_subject="consumer"):
             consumer.get_by_role("button", name="申請する").click()
             expect(consumer.get_by_text("finance · 検証 · 承認待ち")).to_be_visible()
             capture(consumer, "03-pending", "利用チームの申請が検証環境で承認待ちになった状態")
-            provider.get_by_role("button", name="届いた申請").click()
+            navigate(provider, "届いた申請")
             provider.get_by_label("判断・取下げの理由").fill("対象の倉庫を記載してください")
             provider.get_by_role("button", name="却下", exact=True).click()
             expect(provider.get_by_text("finance · 検証 · 却下")).to_be_visible()
             capture(provider, "04-rejected", "提供者が最初の申請を却下した結果")
-            consumer.get_by_role("button", name="自分の申請").click()
+            navigate(consumer, "自分の申請")
             expect(consumer.get_by_text("判断理由　対象の倉庫を記載してください")).to_be_visible()
             expect(consumer.get_by_role("button", name="APIを開く")).to_have_count(0)
             capture(consumer, "04b-reason", "利用者が却下理由を読み、再申請前に確認できる")
 
-            consumer.get_by_role("button", name="APIカタログ", exact=True).click()
+            navigate(consumer, "APIカタログ")
             consumer.get_by_role("link", name="棚卸API").click()
             consumer.get_by_label("利用プロジェクト").select_option("finance")
             consumer.locator("#environment").select_option("sandbox")
             consumer.get_by_label("利用目的").fill("岐阜倉庫の月末棚卸し")
             consumer.get_by_role("button", name="申請する").click()
             expect(consumer.get_by_text("finance · 検証 · 承認待ち")).to_be_visible()
-            provider.get_by_role("button", name="届いた申請").click()
+            navigate(provider, "届いた申請")
             provider.get_by_label("判断・取下げの理由").fill("用途を確認")
             provider.get_by_role("button", name="承認", exact=True).click()
             expect(provider.get_by_role("button", name="権限を取り消す")).to_be_visible()
             capture(provider, "05-approved", "利用目的を追記した再申請に権限が付与された状態")
         with then("利用チームはスマートフォン幅でAPIを呼べる"):
-            consumer.get_by_role("button", name="自分の申請").click()
+            navigate(consumer, "自分の申請")
             consumer.get_by_role("button", name="APIを開く").click()
             expect(consumer.get_by_role("button", name="実行する")).to_be_visible()
             consumer.reload()
@@ -135,7 +143,7 @@ def catalog_journey(url, case, tokens=None, consumer_subject="consumer"):
             assert contrast >= 4.5
             assert consumer.evaluate("document.documentElement.scrollWidth <= innerWidth")
         with when("掲載を取り下げると新規申請が止まり、承認済みの利用は続く"):
-            provider.get_by_role("button", name="提供するAPI").click()
+            navigate(provider, "提供するAPI")
             provider.get_by_role("link", name="棚卸API").click()
             provider.get_by_role("button", name="掲載を取り下げる").click()
             expect(provider.get_by_role("button", name="公開する")).to_be_visible()
@@ -146,15 +154,15 @@ def catalog_journey(url, case, tokens=None, consumer_subject="consumer"):
             capture(
                 consumer.get_by_role("alert"), "07-unlisted", "掲載取り下げ後の新規申請に対する拒否理由"
             )
-            consumer.get_by_role("button", name="APIカタログ", exact=True).click()
+            navigate(consumer, "APIカタログ")
             expect(consumer.get_by_text("該当するAPIはありません。")).to_be_visible()
-            consumer.get_by_role("button", name="自分の申請").click()
+            navigate(consumer, "自分の申請")
             consumer.get_by_role("button", name="APIを開く").click()
             expect(consumer.get_by_role("button", name="申請する")).to_have_count(0)
             consumer.get_by_role("button", name="実行する").click()
             expect(consumer.get_by_text("HTTP 200", exact=False)).to_be_visible()
         with when("提供者が権限を取り消す"):
-            provider.get_by_role("button", name="届いた申請").click()
+            navigate(provider, "届いた申請")
             provider.get_by_label("判断・取下げの理由").fill("棚卸し完了")
             provider.get_by_role("button", name="権限を取り消す").click()
             expect(provider.get_by_text("finance · 検証 · 取消済み")).to_be_visible()
@@ -170,7 +178,7 @@ def catalog_journey(url, case, tokens=None, consumer_subject="consumer"):
             expect(consumer.locator(".audit-row")).to_have_count(1)
             expect(consumer.locator(".audit-row")).to_contain_text("呼び出し拒否")
             capture(consumer, "08b-trace", "取消後の403からリクエストIDで特定した監査記録")
-            provider.get_by_role("button", name="監査履歴").click()
+            navigate(provider, "監査履歴")
             expect(provider.get_by_text(f"invoke.denied · {consumer_subject}")).to_be_visible()
             capture(provider, "09-audit", "利用者・操作・リクエストIDを表示した監査履歴")
             assert remote_requests == []
