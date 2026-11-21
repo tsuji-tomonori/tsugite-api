@@ -6,6 +6,7 @@ from urllib.parse import quote, urlencode
 
 import api_docs
 import client
+import operation_views
 import workspace_views
 from js import document, window
 from puepy import Application, Page, t
@@ -217,6 +218,7 @@ async def load():
         ctx["detail"] = await client.api("/apis/" + quote(page.split("/", 1)[1], safe=""))
         ctx["keys"] = await client.api("/keys")
         if ctx["detail"]["owner"] in ctx["me"]["owners"]:
+            ctx["op_policy"] = await client.api("/apis/" + ctx["detail"]["id"] + "/operation-policy")
             ctx["policy"], ctx["policy_directory"] = await asyncio.gather(
                 client.api("/apis/" + ctx["detail"]["id"] + "/policy"), client.api("/workspace")
             )
@@ -616,6 +618,7 @@ def detail_page():
         btn("内容を編集", go, "edit/" + a["id"])
         btn("APIを削除", delete_listing, a)
         policy_form(a)
+        operation_views.provider_view(a, ctx, field, btn, load)
     with t.div(classes="box"):
         t.h2("操作と仕様")
         for path, ops in a["spec"]["paths"].items():
