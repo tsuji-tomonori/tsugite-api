@@ -23,6 +23,15 @@ jobs:
       - run: uv run --locked python tools/audit_infra.py
       - run: uv run --locked pip-audit --disable-pip --no-deps -r build/runtime.txt --format json --output artifacts/dependency-audit.json
       - run: uv run --locked pytest -q --cov=app --cov-branch --junitxml=artifacts/junit.xml --given-md=artifacts/scenarios.md --given-html=artifacts/scenarios.html
+      - name: Install official AWS Emulator 1.0.555
+        run: |
+          package="$RUNNER_TEMP/aws-emulator.deb"
+          curl --fail --location --retry 3 https://downloads.aws.com/aws-emulator/packages/aws-emulator/LTS/aws-emulator_1.0.555-1_amd64.deb --output "$package"
+          echo "c55fa772a1ab6de1c094659e9fac84826df43a744a9aead5c43a5dd68aa7799b  $package" | sha256sum --check
+          dpkg-deb --extract "$package" "$RUNNER_TEMP/emulator"
+          echo "AWS_EMULATOR_BINARY=$RUNNER_TEMP/emulator/opt/aws-emulator/bin/aws-emulator" >> "$GITHUB_ENV"
+      - name: Run AWS Emulator E2E
+        run: uv run --locked python tools/emulator_e2e.py --junitxml=artifacts/aws-emulator.xml
       - uses: actions/upload-artifact@v4
         if: always()
         with:

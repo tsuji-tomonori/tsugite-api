@@ -1,50 +1,19 @@
 """Run against a fresh, migrated loopback demo database on every test."""
 
 import os
-import socket
-import subprocess
-import sys
-import time
-from pathlib import Path
-from urllib.request import urlopen
 
 import pytest
 from playwright.sync_api import expect, sync_playwright
 from pytest_given import given, scenario, then, when
 
-ROOT = Path(__file__).resolve().parents[2]
+from tests.portal_server import ROOT, serve_portal
 
 
 @pytest.fixture
 def demo_url(tmp_path):
     env = {**os.environ, "TSUGITE_DEMO": "1", "DATABASE_URL": "sqlite:///" + str(tmp_path / "e2e.db")}
-    subprocess.run(
-        [sys.executable, "-m", "alembic", "-c", "backend/alembic.ini", "upgrade", "head"],
-        cwd=ROOT,
-        env=env,
-        check=True,
-    )
-    with socket.socket() as sock:
-        sock.bind(("127.0.0.1", 0))
-        port = sock.getsockname()[1]
-    url = f"http://127.0.0.1:{port}"
-    proc = subprocess.Popen(
-        [sys.executable, "-m", "uvicorn", "app.main:app", "--port", str(port)], cwd=ROOT, env=env
-    )
-    try:
-        for _ in range(100):
-            try:
-                with urlopen(url + "/api/health", timeout=0.5) as r:
-                    if r.status == 200:
-                        break
-            except OSError:
-                time.sleep(0.1)
-        else:
-            raise RuntimeError("ポータルが起動しませんでした")
+    with serve_portal(env) as url:
         yield url
-    finally:
-        proc.terminate()
-        proc.wait(timeout=10)
 
 
 @scenario("提供者の公開から承認・取消までを画面で操作する", tags=["CAT", "AUTH", "AUDIT"])
@@ -74,7 +43,9 @@ def test_user_flow(demo_url):
             provider.get_by_label("用途・説明").fill("倉庫の在庫を照会する")
             provider.get_by_label("検証の接続先").select_option("sample-sandbox")
             provider.get_by_label("本番の接続先").select_option("sample-production")
-            provider.get_by_label("OpenAPIファイル").set_input_files(ROOT / "examples/stock.openapi.json")
+            provider.get_by_label("OpenAPIファイル").set_input_files(
+                ROOT / "examples/stock.openapi.json"
+            )
             provider.get_by_role("button", name="下書きを保存").click()
             provider.get_by_role("button", name="公開する").click()
             expect(provider.get_by_role("button", name="掲載を取り下げる")).to_be_visible()
