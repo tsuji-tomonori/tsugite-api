@@ -12,7 +12,9 @@ import httpx
 import jwt
 import pytest
 from cryptography.hazmat.primitives.asymmetric import rsa
+from pytest_given import scenario
 
+from tests.catalog_journey import catalog_journey
 from tests.portal_server import ROOT, serve_portal
 
 
@@ -92,13 +94,18 @@ def machine_tokens(folder):
             thread.join()
 
 
-@pytest.mark.parametrize("identity", ["cognito", "machine"])
-def test_approved_calls_reach_lambda(aws, resources, tmp_path, identity):
-    auth = cognito_users(aws) if identity == "cognito" else machine_tokens(tmp_path)
+@contextmanager
+def live_portal(aws, resources, tmp_path, identity):
+    auth = cognito_users(aws) if identity != "machine" else machine_tokens(tmp_path)
     with auth as (config, tokens):
         function = resources["TsugiteApi/Sample/Resource"]
         config["targets"] = {
-            env: {"kind": "lambda", "address": function, "owner": "supply", "environment": env}
+            "sample-" + env: {
+                "kind": "lambda",
+                "address": function,
+                "owner": "supply",
+                "environment": env,
+            }
             for env in ("sandbox", "production")
         }
         param = "/tsugite/" + identity
@@ -112,62 +119,83 @@ def test_approved_calls_reach_lambda(aws, resources, tmp_path, identity):
             "HUB_SETTINGS_PARAMETER": param,
             "DATABASE_URL": "sqlite:///" + str(tmp_path / "catalog.db"),
         }
-        with serve_portal(env) as url, httpx.Client(base_url=url + "/api/", trust_env=False) as api:
+        with serve_portal(env) as url:
+            yield url, tokens
 
-            def headers(who):
-                return {"Authorization": "Bearer " + tokens[who]}
 
-            owner, user = headers("owner"), headers("user")
-            invoker = headers("machine") if identity == "machine" else user
-            result = api.get("me", headers=user)
-            assert result.status_code == 200, result.text
-            user_id = result.json()["subject"]
-            assert result.json()["projects"] == ["finance"]
-            if identity == "machine":
-                assert api.get("me", headers=invoker).status_code == 403
-                assert api.get("me", headers=headers("no_scope")).status_code == 401
-            data = {
-                "name": "在庫",
-                "summary": "棚卸し",
-                "owner": "supply",
-                "targets": {"sandbox": "sandbox", "production": "production"},
-                "spec": json.loads((ROOT / "examples/stock.openapi.json").read_text()),
-            }
-            result = api.post("apis", headers=owner, json=data)
-            assert result.status_code == 201, result.text
-            key = result.json()["id"]
-            asset = "apis/" + key
-            result = api.put(asset + "/publication?published=true", headers=owner)
-            assert result.status_code == 200, result.text
-            form = {"project": "finance", "environment": "sandbox", "reason": "棚卸し"}
-            result = api.post(asset + "/requests", headers=user, json=form)
-            assert result.status_code == 201, result.text
-            right = result.json()
-            path = f"invoke/{key}/sandbox/finance/items"
-            assert api.get(path, headers=invoker).status_code == 403
-            decide = "requests/" + right["id"]
-            approval = {"action": "approve", "reason": "用途を確認", "revision": right["revision"]}
-            assert api.post(decide, headers=user, json=approval).status_code == 403
-            result = api.post(decide, headers=owner, json=approval)
-            assert result.status_code == 200, result.text
-            approved = result.json()
-            assert api.get(path.replace("/finance/", "/supply/"), headers=invoker).status_code == 403
-            assert api.get(path.replace("/sandbox/", "/production/"), headers=invoker).status_code == 403
-            call = api.get(path, headers=invoker)
-            assert call.status_code == 200, call.text
-            assert call.json() == {"items": [{"sku": "TS-01", "stock": 12}]}
-            audit = api.get(
-                "audit", headers=owner, params={"request_id": call.headers["x-request-id"]}
-            ).json()
-            assert {e["action"] for e in audit} == {"invoke.start", "invoke.end"}
-            for e in audit:
-                assert (e["actor"], e["asset_id"], e["environment"], e["project"]) == (
-                    "batch" if identity == "machine" else user_id,
-                    key,
-                    "sandbox",
-                    "finance",
-                )
-                assert datetime.fromisoformat(e["at"])
-            revoke = {"action": "revoke", "reason": "終了", "revision": approved["revision"]}
-            assert api.post(decide, headers=owner, json=revoke).status_code == 200
-            assert api.get(path, headers=invoker).status_code == 403
+@scenario(
+    "Cognitoで識別した2人が画面から申請し、承認済みの在庫照会Lambdaを呼ぶ", tags=["CAT", "AUTH", "AUDIT"]
+)
+def test_cognito_browser(aws, resources, tmp_path):
+    with live_portal(aws, resources, tmp_path, "cognito-browser") as (url, tokens):
+        response = httpx.get(
+            url + "/api/me", headers={"Authorization": "Bearer " + tokens["user"]}, trust_env=False
+        )
+        response.raise_for_status()
+        catalog_journey(url, tokens, response.json()["subject"])
+
+
+@pytest.mark.parametrize("identity", ["cognito", "machine"])
+def test_approved_calls_reach_lambda(aws, resources, tmp_path, identity):
+    with (
+        live_portal(aws, resources, tmp_path, identity) as (url, tokens),
+        httpx.Client(base_url=url + "/api/", trust_env=False) as api,
+    ):
+
+        def headers(who):
+            return {"Authorization": "Bearer " + tokens[who]}
+
+        owner, user = headers("owner"), headers("user")
+        invoker = headers("machine") if identity == "machine" else user
+        result = api.get("me", headers=user)
+        assert result.status_code == 200, result.text
+        user_id = result.json()["subject"]
+        assert result.json()["projects"] == ["finance"]
+        if identity == "machine":
+            assert api.get("me", headers=invoker).status_code == 403
+            assert api.get("me", headers=headers("no_scope")).status_code == 401
+        data = {
+            "name": "在庫",
+            "summary": "棚卸し",
+            "owner": "supply",
+            "targets": {"sandbox": "sample-sandbox", "production": "sample-production"},
+            "spec": json.loads((ROOT / "examples/stock.openapi.json").read_text()),
+        }
+        result = api.post("apis", headers=owner, json=data)
+        assert result.status_code == 201, result.text
+        key = result.json()["id"]
+        asset = "apis/" + key
+        result = api.put(asset + "/publication?published=true", headers=owner)
+        assert result.status_code == 200, result.text
+        form = {"project": "finance", "environment": "sandbox", "reason": "棚卸し"}
+        result = api.post(asset + "/requests", headers=user, json=form)
+        assert result.status_code == 201, result.text
+        right = result.json()
+        path = f"invoke/{key}/sandbox/finance/items"
+        assert api.get(path, headers=invoker).status_code == 403
+        decide = "requests/" + right["id"]
+        approval = {"action": "approve", "reason": "用途を確認", "revision": right["revision"]}
+        assert api.post(decide, headers=user, json=approval).status_code == 403
+        result = api.post(decide, headers=owner, json=approval)
+        assert result.status_code == 200, result.text
+        approved = result.json()
+        assert api.get(path.replace("/finance/", "/supply/"), headers=invoker).status_code == 403
+        assert api.get(path.replace("/sandbox/", "/production/"), headers=invoker).status_code == 403
+        call = api.get(path, headers=invoker)
+        assert call.status_code == 200, call.text
+        assert call.json() == {"items": [{"sku": "TS-01", "stock": 12}]}
+        audit = api.get(
+            "audit", headers=owner, params={"request_id": call.headers["x-request-id"]}
+        ).json()
+        assert {e["action"] for e in audit} == {"invoke.start", "invoke.end"}
+        for e in audit:
+            assert (e["actor"], e["asset_id"], e["environment"], e["project"]) == (
+                "batch" if identity == "machine" else user_id,
+                key,
+                "sandbox",
+                "finance",
+            )
+            assert datetime.fromisoformat(e["at"])
+        revoke = {"action": "revoke", "reason": "終了", "revision": approved["revision"]}
+        assert api.post(decide, headers=owner, json=revoke).status_code == 200
+        assert api.get(path, headers=invoker).status_code == 403

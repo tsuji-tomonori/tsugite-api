@@ -56,6 +56,7 @@ def main():
             else:
                 raise TimeoutError("AWS Emulator が起動しませんでした")
             env.update(
+                HOME=str(Path.home()),
                 AWS_ENDPOINT_URL=endpoint,
                 AWS_CONFIG_FILE=str(profile / "config"),
                 AWS_SHARED_CREDENTIALS_FILE=str(profile / "emulator_credentials"),
