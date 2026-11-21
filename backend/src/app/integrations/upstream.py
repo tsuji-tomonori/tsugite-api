@@ -1,5 +1,7 @@
 import base64
 import json
+import os
+import ssl
 from functools import lru_cache
 
 import boto3
@@ -25,13 +27,23 @@ def auth_headers(target: Target) -> dict[str, str]:
     return {"authorization": "Bearer " + secret}
 
 
+def https_client(timeout: float) -> httpx.Client:
+    ca = os.getenv("SSL_CERT_FILE")
+    return httpx.Client(
+        timeout=timeout,
+        follow_redirects=False,
+        trust_env=False,
+        verify=ssl.create_default_context(cafile=ca) if ca else True,
+    )
+
+
 def probe(target: Target) -> None:
     """Check connectivity before advertising a target. Never invoke its business operation."""
     try:
         if target.kind == "lambda":
             aws("lambda").invoke(FunctionName=target.address, InvocationType="DryRun")
         elif target.kind == "https":
-            with httpx.Client(timeout=4, follow_redirects=False, trust_env=False) as client:
+            with https_client(4) as client:
                 reply = client.head(target.address, headers=auth_headers(target))
                 if reply.status_code not in (404, 405):
                     reply.raise_for_status()
@@ -54,7 +66,7 @@ def dispatch(target: Target, method: str, path: str, query: str, body: bytes, he
     if target.kind == "https":
         headers = {**headers, **auth_headers(target)}
         url = target.address.rstrip("/") + path
-        with httpx.Client(timeout=12, follow_redirects=False, trust_env=False) as client:
+        with https_client(12) as client:
             with client.stream(method, url, params=query, headers=headers, content=body) as r:
                 data = bytearray()
                 for chunk in r.iter_bytes():

@@ -1,7 +1,7 @@
 import json
 import os
 import secrets
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 from datetime import datetime
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
@@ -14,6 +14,7 @@ import pytest
 from cryptography.hazmat.primitives.asymmetric import rsa
 from pytest_given import scenario
 
+from emulator_tests.https_stock import https_stock
 from tests.catalog_journey import catalog_journey
 from tests.portal_server import ROOT, serve_portal
 
@@ -95,20 +96,19 @@ def machine_tokens(folder):
 
 
 @contextmanager
-def live_portal(aws, resources, tmp_path, identity):
+def live_portal(aws, resources, tmp_path, identity, binding=None, ca=None):
     auth = cognito_users(aws) if identity != "machine" else machine_tokens(tmp_path)
     with auth as (config, tokens):
         function = resources["TsugiteApi/Sample/Resource"]
         config["targets"] = {
             "sample-" + env: {
-                "kind": "lambda",
-                "address": function,
+                **(binding or {"kind": "lambda", "address": function}),
                 "owner": "supply",
                 "environment": env,
             }
             for env in ("sandbox", "production")
         }
-        param = "/tsugite/" + identity
+        param = "/tsugite/" + identity + ("-https" if binding else "-lambda")
         aws.client("ssm").put_parameter(Name=param, Type="String", Value=json.dumps(config))
         aws.client("lambda").get_waiter("function_active_v2").wait(
             FunctionName=function, WaiterConfig={"Delay": 1, "MaxAttempts": 30}
@@ -116,6 +116,7 @@ def live_portal(aws, resources, tmp_path, identity):
         env = {
             **os.environ,
             "TSUGITE_DEMO": "0",
+            "SSL_CERT_FILE": str(ca or os.environ["AWS_CA_BUNDLE"]),
             "HUB_SETTINGS_PARAMETER": param,
             "DATABASE_URL": "sqlite:///" + str(tmp_path / "catalog.db"),
         }
@@ -135,10 +136,18 @@ def test_cognito_browser(aws, resources, tmp_path):
         catalog_journey(url, tokens, response.json()["subject"])
 
 
-@pytest.mark.parametrize("identity", ["cognito", "machine"])
-def test_approved_calls_reach_lambda(aws, resources, tmp_path, identity):
+@pytest.mark.parametrize(
+    ("identity", "upstream"), [("cognito", "lambda"), ("machine", "lambda"), ("cognito", "https")]
+)
+def test_approved_calls_reach_upstream(aws, resources, tmp_path, identity, upstream):
+    service = (
+        https_stock(aws, tmp_path, os.environ["AWS_CA_BUNDLE"])
+        if upstream == "https"
+        else nullcontext((None, None, None))
+    )
     with (
-        live_portal(aws, resources, tmp_path, identity) as (url, tokens),
+        service as (binding, ca, calls),
+        live_portal(aws, resources, tmp_path, identity, binding, ca) as (url, tokens),
         httpx.Client(base_url=url + "/api/", trust_env=False) as api,
     ):
 
@@ -161,6 +170,8 @@ def test_approved_calls_reach_lambda(aws, resources, tmp_path, identity):
             "targets": {"sandbox": "sample-sandbox", "production": "sample-production"},
             "spec": json.loads((ROOT / "examples/stock.openapi.json").read_text()),
         }
+        if binding:
+            data["base_path"] = "/v1"
         result = api.post("apis", headers=owner, json=data)
         assert result.status_code == 201, result.text
         key = result.json()["id"]
@@ -199,3 +210,6 @@ def test_approved_calls_reach_lambda(aws, resources, tmp_path, identity):
         revoke = {"action": "revoke", "reason": "終了", "revision": approved["revision"]}
         assert api.post(decide, headers=owner, json=revoke).status_code == 200
         assert api.get(path, headers=invoker).status_code == 403
+        if calls is not None:
+            assert ("HEAD", "/warehouse") in calls
+            assert [path for method, path in calls if method == "GET"] == ["/warehouse/v1/items"]
