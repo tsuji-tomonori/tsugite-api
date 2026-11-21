@@ -113,6 +113,20 @@ def catalog_journey(url, case, tokens=None, consumer_subject="consumer"):
                 "06-invoked",
                 "承認済みの呼び出しが返したHTTPステータスと応答本文",
             )
+            output = consumer.get_by_text("HTTP 200", exact=False)
+            contrast = output.evaluate(r"""element => {
+                const style = getComputedStyle(element);
+                function luminance(rgb) {
+                    const [r,g,b] = rgb.match(/\d+/g).slice(0,3).map(channel => {
+                        const v = Number(channel) / 255;
+                        return v <= 0.04045 ? v/12.92 : ((v+0.055)/1.055)**2.4;
+                    });
+                    return 0.2126*r + 0.7152*g + 0.0722*b;
+                }
+                const a = luminance(style.color), b = luminance(style.backgroundColor);
+                return (Math.max(a,b)+0.05)/(Math.min(a,b)+0.05);
+            }""")
+            assert contrast >= 4.5
             assert consumer.evaluate("document.documentElement.scrollWidth <= innerWidth")
         with when("掲載を取り下げると新規申請が止まり、承認済みの利用は続く"):
             provider.get_by_role("button", name="提供するAPI").click()
