@@ -22,15 +22,23 @@ task demo
 | `packages/frontend` | PuePy画面と単体テスト | `task test:frontend` |
 | `packages/backend` | FastAPIルーター、認証、業務処理とテスト | `task test:backend` |
 | `packages/database` | SQLAlchemyモデル、接続、Alembic移行とテスト | `task test:database` |
-| `packages/infra` | AWS CDKとテンプレートのテスト | `task build` → `task test:infra` |
+| `packages/infra` | AWS CDKとテンプレートのテスト | `task test:infra` |
 | `tests/e2e` | ブラウザー操作とAWS Emulatorを使う横断テスト | `task test:e2e`、`task test:aws` |
 | `tools` | ビルド、設計書生成、監査、テストレポート | `task test:tools` |
 
 親の `pyproject.toml` にPythonの対象範囲、共通のバージョン制約、検査設定を置きます。各メンバーの `pyproject.toml` に直接依存を書き、ルートの単一ロックファイルを共有します。依存の追加には `task deps:add -- --package tsugite-backend パッケージ名`、各種コマンドの一覧には `task --list` を使います。
 
+テストケースの条件と期待結果は、日本語1行のdocstringに記載します。パラメーター別の補足は `pytest.param` の `pytest.mark.case_detail` で記載します。アーキテクチャテストがE2Eを含むソースを検査し、実行レポートにも同じ説明を表示します。
+
+通常のテストが成功したら、ローカルで `task test:mutation` を実行します。代表的な変異を一時ディレクトリで試し、対象のテストが失敗するか確認します。対象層は `task test:mutation -- --layer frontend` のように指定できます。
+
+CDKのスナップショットは標準構成の論理ID、リソース型と出力を比較します。意図したインフラ変更で差分が出たら、合成したテンプレートで内容を確認して `packages/infra/tests/cloudformation_snapshot.json` を更新します。CDK Nagは既存指摘を `cdk_nag_baseline.json` で照合し、新規指摘をテスト失敗として報告します。詳細は `task audit` が出力する `artifacts/cdk-nag.csv` で確認できます。
+
 `task docs` は実行中のデータベースやAWS資格情報を使わず、[API別の実装設計書](docs/generated/README.md)、[SQL・AWS操作のCRUD一覧](docs/generated/crud.md)、[入出力スキーマ](docs/generated/schemas.md)、[テーブル・レコード・カラム定義](docs/generated/database.md)を更新します。設計を変えるときはルーターの引数・応答モデル・依存関数を修正します。CRUD表はAPIを行に、SQLテーブルとAWSサービスをそれぞれ別の表の列に並べます。各セルで操作の種類を、API詳細で条件分岐を含む操作の根拠となるソース行を確認できます。転送先の利用者定義APIの項目は、登録時のOpenAPIで決まります。
 
 API操作はルートデコレーター、引数・モデル・項目・列挙値はそれぞれの宣言の直前に `#: 和名` を書きます。DBモデルのクラスには同じ形式でテーブル名を書き、docstringの1段落目にレコード名、2段落目に1行が表す内容を書きます。AWS SDK呼び出しの直前には `#: サービスの和名 / 操作の和名` を書きます。`task docs` はPythonの構文木とコメントトークンをFastAPI・SQLAlchemyの定義と照合し、設計書とデモ環境のOpenAPIに和名を反映します。
+
+ログイン後のホームでは日本語で公開APIを探し、操作手順を確認し、運営に問い合わせできます。モデルの構成と配備方法は[チャットの設計](agent/README.md)を参照してください。
 
 CIはPRで設計書を生成して成果物に含めます。既定ブランチの検証が通ると、生成結果に差分がある場合だけ `docs/generated/` を自動コミットします。
 

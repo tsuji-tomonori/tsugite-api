@@ -9,6 +9,7 @@ from fastapi import HTTPException
 
 
 def test_lambda_adapter(monkeypatch):
+    """接続確認の後、呼び出し情報をLambdaへ渡して応答を返す"""
     calls = []
 
     def invoke(**kwargs):
@@ -35,6 +36,7 @@ def test_lambda_adapter(monkeypatch):
 
 
 def test_https_adapter(monkeypatch):
+    """クエリと認証情報を保持してHTTPSの接続先に転送する"""
     sent = []
 
     def upstream_handler(request):
@@ -67,6 +69,7 @@ def test_https_adapter(monkeypatch):
 
 
 def test_failed_probe_keeps_draft(portal, monkeypatch):
+    """接続確認に失敗したAPIは下書きのまま残る"""
     import importlib
 
     module = importlib.import_module("app.apis.catalog.publish.router")
