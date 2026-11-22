@@ -42,6 +42,7 @@ jobs:
   deploy:
     if: needs.verify-merge.outputs.merged == 'true'
     needs: verify-merge
+    environment: main
     runs-on: ubuntu-latest
     timeout-minutes: 60
     permissions:
@@ -69,8 +70,8 @@ jobs:
           AWS_REGION: ${{ vars.AWS_REGION }}
           AWS_DEPLOY_ROLE_ARN: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
         run: |
-          : "${AWS_REGION:?Set the AWS_REGION repository variable}"
-          : "${AWS_DEPLOY_ROLE_ARN:?Set AWS_DEPLOY_ROLE_ARN to the CloudFormation GitHubDeployRoleArn output}"
+          : "${AWS_REGION:?Set AWS_REGION in the GitHub Actions main environment}"
+          : "${AWS_DEPLOY_ROLE_ARN:?Set AWS_DEPLOY_ROLE_ARN in the GitHub Actions main environment to the CloudFormation GitHubDeployRoleArn output}"
 
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         if: steps.current.outputs.deploy == 'true'

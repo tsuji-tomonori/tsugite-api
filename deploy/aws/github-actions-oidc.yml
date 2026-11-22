@@ -27,7 +27,7 @@ Resources:
   GitHubDeployRole:
     Type: AWS::IAM::Role
     Properties:
-      Description: Allows GitHub Actions on tsugite-api main to assume CDK deployment roles.
+      Description: Allows the tsugite-api main branch and GitHub environment to assume CDK deployment roles.
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -41,7 +41,8 @@ Resources:
             Condition:
               StringEquals:
                 token.actions.githubusercontent.com:aud: sts.amazonaws.com
-                token.actions.githubusercontent.com:sub: repo:tsuji-tomonori@39981658/tsugite-api@1466432528:ref:refs/heads/main
+                token.actions.githubusercontent.com:sub: repo:tsuji-tomonori@39981658/tsugite-api@1466432528:environment:main
+                token.actions.githubusercontent.com:ref: refs/heads/main
       Policies:
         - PolicyName: AssumeCdkBootstrapRoles
           PolicyDocument:
@@ -60,5 +61,5 @@ Resources:
 
 Outputs:
   GitHubDeployRoleArn:
-    Description: Set this ARN as the AWS_DEPLOY_ROLE_ARN GitHub Actions repository variable.
+    Description: Set this ARN as AWS_DEPLOY_ROLE_ARN in the GitHub Actions main environment.
     Value: !GetAtt GitHubDeployRole.Arn

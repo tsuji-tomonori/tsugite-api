@@ -7,8 +7,8 @@ GitHub Actions の `Verify / test` は、main 宛ての PR の作成・更新・
 ## 初回設定
 
 1. 配備先の AWS アカウントとリージョンで CDK の `CDKToolkit` が利用できることを確認します。初回は AWS 管理者が既定の qualifier `hnb659fds` でブートストラップします。CloudFormation 実行ロールの権限は、ブートストラップ時に選んだ実行ポリシーで決まります。継手APIのリソースを作成・更新できる実行ポリシーを使用してください。
-2. 同じアカウント・リージョンで、[CloudFormation テンプレート](../aws/github-actions-oidc.yml) から IAM ロールを作成します。すでに AWS IAM に `token.actions.githubusercontent.com` が登録されている場合は、クライアントIDに `sts.amazonaws.com` があることを確認し、`CreateGitHubOidcProvider=false` を指定します。
-3. GitHub の **Settings → Secrets and variables → Actions → Variables** に、`AWS_REGION` と `AWS_DEPLOY_ROLE_ARN` を登録します。前者は CloudFormation を配備したリージョン、後者はスタックの出力 `GitHubDeployRoleArn` です。
+2. 同じアカウント・リージョンで、[CloudFormation テンプレート](aws/github-actions-oidc.yml) から IAM ロールを作成します。すでに AWS IAM に `token.actions.githubusercontent.com` が登録されている場合は、クライアントIDに `sts.amazonaws.com` があることを確認し、`CreateGitHubOidcProvider=false` を指定します。
+3. GitHub の **Settings → Environments** に `main` を作成します。**Deployment branches and tags** で **Selected branches and tags** を選び、種類 **Branch** の `main` を追加します。**Environment variables** に `AWS_REGION` と `AWS_DEPLOY_ROLE_ARN` を登録します。前者は CloudFormation を配備したリージョン、後者はスタックの出力 `GitHubDeployRoleArn` です。
 4. 対象 PR の `test` が成功したら main にマージします。**Actions → Deploy to AWS** でマージ判定と配備の結果を確認します。
 
 リポジトリのルートで実行する例です。リージョンと `create_provider` は配備先に合わせて指定します。
@@ -31,4 +31,8 @@ aws cloudformation describe-stacks \
   --output text
 ```
 
-GitHub の短期認証情報は、指定リポジトリの main を示す OIDC トークンだけに発行します。作成する IAM ロールは、同一アカウント・リージョンの CDK 配備ロールと S3 アセット公開ロールを引き受けます。OIDC プロバイダーはアカウント内の他のリポジトリでも共有するため、削除時は保持します。
+## 既存の OIDC スタックを更新する
+
+Environment を参照するワークフローをマージする前に、AWS の `tsugite-github-actions-oidc` スタックをこのテンプレートで更新します。CloudFormation の更新画面では既存の `CreateGitHubOidcProvider` の値を引き継ぎます。更新完了後に PR をマージします。
+
+GitHub Job に Environment を設定すると、OIDC トークンの `sub` は Environment 名を含みます。IAM はこの `sub` と `ref` の両方を照合し、継手API リポジトリの `main` ブランチから `main` Environment を使うジョブに短期認証情報を発行します。作成する IAM ロールは、同一アカウント・リージョンの CDK 配備ロールと S3 アセット公開ロールを引き受けます。OIDC プロバイダーはアカウント内の他のリポジトリでも共有するため、削除時は保持します。
