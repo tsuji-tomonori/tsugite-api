@@ -32,13 +32,33 @@ jobs:
           name: requirements
           path: artifacts/requirements/
           if-no-files-found: error
-      - name: 変更の影響範囲と再利用するテスト結果を判定
-        id: scope
+      - name: 差分と比較元カバレッジの有無を確認
+        id: baseline
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           BASE_BRANCH: ${{ github.base_ref }}
           GH_TOKEN: ${{ github.token }}
+        run: python3 -m tools.ci_scope --inspect-base "$BASE_SHA"
+      - uses: astral-sh/setup-uv@v6
+        if: steps.baseline.outputs.missing != '[]'
+      - uses: actions/setup-node@v4
+        if: contains(fromJSON(steps.baseline.outputs.missing), 'packages/infra/tests')
+        with:
+          node-version: "22"
+      - name: 保存されていない比較元のカバレッジを補完
+        if: steps.baseline.outputs.missing != '[]'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          MISSING_SUITES: ${{ steps.baseline.outputs.missing }}
+        run: python3 -m tools.ci_scope --measure-base "$BASE_SHA"
+      - name: PRで実行するテストと検証手順を決定
+        id: scope
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: python3 -m tools.ci_scope --base "$BASE_SHA"
+      - name: Markdown文書の表題を検証
+        if: steps.scope.outputs.documents == 'true'
+        run: python3 -m tests.architecture.test_documents
       - name: 変更ファイルの文字コードと改行を検査
         if: steps.scope.outputs.full != 'true'
         env:
@@ -95,19 +115,21 @@ jobs:
       - run: task audit
         if: steps.scope.outputs.audit == 'true'
       - name: 対象テストを実行し、全体カバレッジを集計
-        if: steps.scope.outputs.reuse_xml != 'true'
+        if: steps.scope.outputs.suites != '[]'
         run: uv run --locked --all-packages python -m tools.ci_scope --run-suites
       - run: task test:aws
         if: steps.scope.outputs.aws == 'true' && steps.scope.outputs.aws_portal_only != 'true'
       - run: task test:aws -- -k test_cognito_browser
         if: steps.scope.outputs.aws_portal_only == 'true'
       - name: Check line coverage against the ruleset
+        if: steps.scope.outputs.coverage == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           BASE_BRANCH: ${{ github.base_ref }}
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          BASE_SHA: ${{ steps.scope.outputs.coverage_base }}
         run: python3 tools/check_coverage.py artifacts/coverage.xml
       - name: Save coverage for future pull requests
+        if: steps.scope.outputs.coverage == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: line-coverage
@@ -116,7 +138,7 @@ jobs:
             artifacts/coverage-parts/
           if-no-files-found: error
       - name: Upload coverage to GitHub Code Quality
-        if: github.event.pull_request.head.repo.full_name == github.repository
+        if: steps.scope.outputs.coverage == 'true' && github.event.pull_request.head.repo.full_name == github.repository
         uses: actions/upload-code-coverage@2b21a77928be8d5168c2b9581a67f2adbebacc52 # v1
         with:
           file: artifacts/coverage.xml
