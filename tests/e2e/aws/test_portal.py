@@ -15,6 +15,7 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from pytest_given import scenario
 
 from tests.e2e.aws.https_stock import https_stock
+from tests.e2e.aws.stock_functions import STOCK_FUNCTIONS
 from tests.support.catalog_journey import catalog_journey
 from tests.support.portal_server import ROOT, serve_portal
 
@@ -113,20 +114,16 @@ def machine_tokens(folder):
 def live_portal(aws, resources, tmp_path, identity, binding=None, ca=None):
     auth = cognito_users(aws) if identity != "machine" else machine_tokens(tmp_path)
     with auth as (config, tokens):
-        function = resources["Sample9DACD4DE"]
         config["targets"] = {
             "sample-" + env: {
-                **(binding or {"kind": "lambda", "address": function}),
+                **(binding or {"kind": "lambda", "address": resources[logical_id]}),
                 "owner": "supply",
                 "environment": env,
             }
-            for env in ("sandbox", "staging", "production")
+            for env, logical_id in STOCK_FUNCTIONS.items()
         }
-        param = "/tsugite/" + identity + ("-https" if binding else "-lambda")
+        param = "/tsugite/" + tmp_path.name
         aws.client("ssm").put_parameter(Name=param, Type="String", Value=json.dumps(config))
-        aws.client("lambda").get_waiter("function_active_v2").wait(
-            FunctionName=function, WaiterConfig={"Delay": 1, "MaxAttempts": 30}
-        )
         env = {
             **os.environ,
             "TSUGITE_DEMO": "0",
@@ -155,14 +152,46 @@ def test_cognito_browser(aws, resources, tmp_path, request):
 
 
 @pytest.mark.parametrize(
-    ("identity", "upstream"),
+    ("identity", "upstream", "environment"),
     [
-        pytest.param("cognito", "lambda", marks=pytest.mark.case_detail("利用者がLambdaへ接続する")),
-        pytest.param("machine", "lambda", marks=pytest.mark.case_detail("システムがLambdaへ接続する")),
-        pytest.param("cognito", "https", marks=pytest.mark.case_detail("利用者がHTTPS先へ接続する")),
+        pytest.param(
+            "cognito",
+            "lambda",
+            "staging",
+            marks=pytest.mark.case_detail("検証環境の在庫を照会する"),
+        ),
+        pytest.param(
+            "cognito",
+            "lambda",
+            "production",
+            marks=pytest.mark.case_detail("本番環境の在庫を照会する"),
+        ),
+        pytest.param(
+            "cognito",
+            "lambda",
+            "sandbox",
+            id="cognito-lambda",
+            marks=pytest.mark.case_detail("利用者がLambdaへ接続する"),
+        ),
+        pytest.param(
+            "machine",
+            "lambda",
+            "sandbox",
+            id="machine-lambda",
+            marks=pytest.mark.case_detail("システムがLambdaへ接続する"),
+        ),
+        pytest.param(
+            "cognito",
+            "https",
+            "sandbox",
+            id="cognito-https",
+            marks=pytest.mark.case_detail("利用者がHTTPS先へ接続する"),
+        ),
     ],
 )
-def test_approved_calls_reach_upstream(aws, resources, tmp_path, identity, upstream, request):
+def test_approved_calls_reach_upstream(
+    aws, resources, tmp_path, identity, upstream, environment, request
+):
     """承認した呼び出しを接続先へ転送し、権限取消後は遮断する"""
     service = (
         https_stock(aws, tmp_path, os.environ["AWS_CA_BUNDLE"])
@@ -191,7 +220,7 @@ def test_approved_calls_reach_upstream(aws, resources, tmp_path, identity, upstr
             "name": "在庫",
             "summary": "棚卸し",
             "owner": "supply",
-            "targets": {"sandbox": "sample-sandbox", "production": "sample-production"},
+            "targets": {env: "sample-" + env for env in STOCK_FUNCTIONS},
             "spec": json.loads((ROOT / "examples/stock.openapi.json").read_text()),
         }
         if binding:
@@ -202,11 +231,11 @@ def test_approved_calls_reach_upstream(aws, resources, tmp_path, identity, upstr
         asset = "apis/" + key
         result = api.put(asset + "/publication?published=true", headers=owner)
         assert result.status_code == 200, result.text
-        form = {"project": "finance", "environment": "sandbox", "reason": "棚卸し"}
+        form = {"project": "finance", "environment": environment, "reason": "棚卸し"}
         result = api.post(asset + "/requests", headers=user, json=form)
         assert result.status_code == 201, result.text
         right = result.json()
-        path = f"invoke/{key}/sandbox/finance/items"
+        path = f"invoke/{key}/{environment}/finance/items"
         assert api.get(path, headers=invoker).status_code == 403
         decide = "requests/" + right["id"]
         rejection = {"action": "reject", "reason": "倉庫の指定が必要", "revision": right["revision"]}
@@ -226,7 +255,8 @@ def test_approved_calls_reach_upstream(aws, resources, tmp_path, identity, upstr
         assert result.status_code == 200, result.text
         approved = result.json()
         assert api.get(path.replace("/finance/", "/supply/"), headers=invoker).status_code == 403
-        assert api.get(path.replace("/sandbox/", "/production/"), headers=invoker).status_code == 403
+        other = "sandbox" if environment == "production" else "production"
+        assert api.get(f"invoke/{key}/{other}/finance/items", headers=invoker).status_code == 403
         call = api.get(path, headers=invoker)
         assert call.status_code == 200, call.text
         assert call.json() == {"items": [{"sku": "TS-01", "stock": 12}]}
@@ -235,7 +265,9 @@ def test_approved_calls_reach_upstream(aws, resources, tmp_path, identity, upstr
                 "sku": "TS-01",
                 "stock": 12,
             }
-            assert api.get(path + "/UNKNOWN", headers=invoker).status_code == 404
+            missing = api.get(path + "/UNKNOWN", headers=invoker)
+            assert missing.status_code == 404
+            assert missing.json() == {"message": "商品が見つかりません"}
         audit = api.get(
             "audit", headers=owner, params={"request_id": call.headers["x-request-id"]}
         ).json()
@@ -244,7 +276,7 @@ def test_approved_calls_reach_upstream(aws, resources, tmp_path, identity, upstr
             assert (e["actor"], e["asset_id"], e["environment"], e["project"]) == (
                 "batch" if identity == "machine" else user_id,
                 key,
-                "sandbox",
+                environment,
                 "finance",
             )
             assert datetime.fromisoformat(e["at"])

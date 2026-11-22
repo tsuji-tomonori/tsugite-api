@@ -49,6 +49,14 @@ MUTATIONS = (
         "tools/tests/test_infrastructure_docs.py::test_component_parameter_sheet",
     ),
     Mutation(
+        "stock-lambda",
+        "存在しない商品を成功として返す",
+        "packages/infra/src/infra_app/lambdas/stock/stock.py",
+        "status, result = 404",
+        "status, result = 200",
+        "packages/infra/tests/test_stock_lambda.py::test_stock_response[missing]",
+    ),
+    Mutation(
         "backend",
         "データ修正を要する障害を通常のサーバーエラーと記録する",
         "packages/backend/src/app/core/log_record.py",
@@ -228,17 +236,17 @@ MUTATIONS = (
         "coverage",
         "エージェントとモデルの未実行ファイルを分母から除外する",
         "pyproject.toml",
-        '    "agent",\n',
+        '    "packages/agent/src/agent",\n',
         "",
         "tools/tests/test_ci_scope.py::test_coverage_includes_all_runtime_layers_and_unexecuted_files",
     ),
     Mutation(
         "models",
         "取得したモデルのチェックサムを検証しない",
-        "agent/models/runtime.py",
+        "packages/agent/src/agent/models/runtime.py",
         'if "sha256" in item:',
         "if False:",
-        "packages/backend/tests/test_model_workers.py::test_model_download_verifies_digest_before_reuse",
+        "packages/agent/tests/test_model_workers.py::test_model_download_verifies_digest_before_reuse",
     ),
     Mutation(
         "backend",
@@ -305,12 +313,12 @@ MUTATIONS = (
         "tools/tests/test_requirements.py::test_undefined_term_in_condition_or_result_fails",
     ),
     Mutation(
-        "backend",
+        "agent",
         "生成クエリだけに一致する商品も候補に含める",
-        "agent/retrieval.py",
+        "packages/agent/src/agent/retrieval.py",
         " and (index == 0 or similarities[0] >= 0.39)",
         "",
-        "packages/backend/tests/test_agent_retrieval.py::test_rewritten_similarity_needs_support_from_original_question",
+        "packages/agent/tests/test_agent_retrieval.py::test_rewritten_similarity_needs_support_from_original_question",
     ),
     Mutation(
         "frontend",
@@ -449,7 +457,7 @@ MUTATIONS = (
 
 def copy_sources(workspace):
     ignore = shutil.ignore_patterns("dist", "cdk.out", ".venv", "__pycache__", "*.egg-info")
-    for folder in ("packages", "agent", "contracts", "tests", "tools"):
+    for folder in ("packages", "contracts", "tests", "tools"):
         shutil.copytree(ROOT / folder, workspace / folder, ignore=ignore)
     for file in ("conftest.py", "pyproject.toml"):
         shutil.copyfile(ROOT / file, workspace / file)

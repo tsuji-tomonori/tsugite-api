@@ -12,10 +12,7 @@ def test_runtime_dependencies_respect_layer_boundaries():
             continue
         covered.add(layer(source_module(relative)))
         errors.extend(dependency_violations(relative, path.read_bytes()))
-    expected = set(ALLOWED)
-    if not (ROOT / "agent").exists():
-        expected -= {"エージェント", "モデル"}
-    else:
-        check_model_artifacts(ROOT / "agent/models")
-    assert covered == expected, f"検査できていない層: {expected - covered}"
+    assert not (ROOT / "agent").exists(), "エージェントは packages/agent に配置してください"
+    check_model_artifacts(ROOT / "packages/agent/src/agent/models")
+    assert covered == set(ALLOWED), f"検査できていない層: {set(ALLOWED) - covered}"
     assert not errors, "\n".join(errors)
