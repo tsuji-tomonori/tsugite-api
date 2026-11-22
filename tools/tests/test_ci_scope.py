@@ -183,3 +183,18 @@ def test_cache_requires_same_coverage_policy(tmp_path):
     assert not ci.compatible_coverage(tmp_path)
     marker.write_text(ci.coverage_policy())
     assert ci.compatible_coverage(tmp_path)
+
+
+def test_baseline_retry_requires_only_browser_timeouts(tmp_path):
+    """比較元でブラウザーのタイムアウトだけが起きた場合に限り再計測する。"""
+    from tools.check_coverage import only_browser_timeouts
+
+    junit = tmp_path / "junit.xml"
+    for elements, retry in [
+        ("", False),
+        ("<failure>playwright._impl._errors.TimeoutError</failure>", True),
+        ("<failure>AssertionError</failure>", False),
+        ("<failure>playwright._impl._errors.TimeoutError</failure><error/>", False),
+    ]:
+        junit.write_text(f"<testsuite><testcase>{elements}</testcase></testsuite>")
+        assert only_browser_timeouts(junit) is retry

@@ -25,6 +25,22 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
+        "coverage",
+        "エージェントとモデルの未実行ファイルを分母から除外する",
+        "pyproject.toml",
+        '    "agent",\n',
+        "",
+        "tools/tests/test_ci_scope.py::test_coverage_includes_all_runtime_layers_and_unexecuted_files",
+    ),
+    Mutation(
+        "models",
+        "取得したモデルのチェックサムを検証しない",
+        "agent/models/runtime.py",
+        'if "sha256" in item:',
+        "if False:",
+        "packages/backend/tests/test_model_workers.py::test_model_download_verifies_digest_before_reuse",
+    ),
+    Mutation(
         "backend",
         "チャットの参照ロールに商品の更新権限を加える",
         "packages/backend/src/app/migrate.py",

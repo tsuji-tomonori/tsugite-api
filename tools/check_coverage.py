@@ -115,6 +115,16 @@ def merged_pr_coverage(repository, branch, sha):
     return None
 
 
+def only_browser_timeouts(junit):
+    report = ElementTree.parse(junit)
+    failures = list(report.iter("failure"))
+    return (
+        bool(failures)
+        and report.find(".//error") is None
+        and all("playwright._impl._errors.TimeoutError" in (entry.text or "") for entry in failures)
+    )
+
+
 def measure_base_coverage(sha):
     print(f"No coverage artifact matches {sha}; measuring the base in this PR run.", flush=True)
     env = os.environ.copy()
@@ -150,7 +160,14 @@ def measure_base_coverage(sha):
                 f"--cov-config={ROOT / 'pyproject.toml'}",
                 f"--cov-report=xml:{report}",
             ]
-            subprocess.run(command, cwd=path, check=True, env=env)
+            junit = path / "artifacts/baseline-tests.xml"
+            command.append(f"--junitxml={junit}")
+            result = subprocess.run(command, cwd=path, env=env)
+            if result.returncode == 1 and junit.is_file() and only_browser_timeouts(junit):
+                # pytest-cov は再実行の開始時に前回のデータを消去する。
+                print("Retrying the base measurement after a Playwright timeout", flush=True)
+                result = subprocess.run(command, cwd=path, env=env)
+            result.check_returncode()
             return line_coverage(path / report)
         finally:
             subprocess.run(["git", "worktree", "remove", "--force", str(path)], check=True, env=env)

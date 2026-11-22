@@ -72,3 +72,65 @@ def test_model_download_verifies_digest_before_reuse(monkeypatch, tmp_path):
     assert Path(model).read_bytes() == b"valid"
     assert worker.model_file("decision", "model.bin") == model
     assert s3.download_file.call_count == 2
+
+
+def test_generation_returns_grounded_result_from_warm_process(monkeypatch):
+    """起動済みの生成モデルを再利用し、提示した資料の範囲と決定的な生成条件を渡す。"""
+    import json
+
+    worker = load_worker("completion", monkeypatch, runtime=Mock())
+    monkeypatch.setenv("MODEL_ROLE", "generate")
+    process = Mock()
+    process.poll.return_value = None
+    monkeypatch.setattr(worker, "process", process)
+    request = Mock(side_effect=[{}, {"choices": [{"message": {"content": '{"source":0,"step":1}'}}]}])
+    monkeypatch.setattr(worker, "request", request)
+    event = {"question": "<検索>", "headings": ["手順"], "evidence": [["利用方法", ["開く", "選ぶ"]]]}
+    assert worker.handler(event, None) == {"source": 0, "step": 1}
+    assert request.call_args_list[0].args == ("/health",)
+    path, payload = request.call_args.args
+    assert path == "/v1/chat/completions"
+    assert payload["temperature"] == 0 and payload["seed"] == 7
+    assert json.loads(payload["messages"][1]["content"])["evidence"] == event["evidence"]
+    schema = payload["response_format"]["schema"]
+    assert schema["properties"]["source"]["enum"] == [0]
+    assert schema["additionalProperties"] is False
+
+
+def test_model_process_recovers_from_failed_health_check(monkeypatch):
+    """応答しない生成プロセスを停止し、同じモデルをCPUで再起動して準備完了を待つ。"""
+    worker = load_worker("completion", monkeypatch, runtime=Mock())
+    old, new = Mock(), Mock()
+    old.poll.return_value = new.poll.return_value = None
+    worker.process = old
+    start = Mock(return_value=new)
+    request = Mock(side_effect=[OSError("unavailable"), {}])
+    monkeypatch.setattr(worker.subprocess, "Popen", start)
+    monkeypatch.setattr(worker, "model_file", Mock(return_value="/tmp/model.gguf"))
+    monkeypatch.setattr(worker, "request", request)
+    worker.ready("generate")
+    old.kill.assert_called_once()
+    old.wait.assert_called_once()
+    arguments = start.call_args.args[0]
+    assert arguments[arguments.index("--model") + 1] == "/tmp/model.gguf"
+    assert arguments[arguments.index("--n-gpu-layers") + 1] == "0"
+    assert worker.process is new and request.call_count == 2
+
+
+def test_embedding_load_reuses_cpu_model_and_tokenizer(monkeypatch):
+    """埋め込みモデルと長さ制限付きトークナイザーを初回だけ読み込む。"""
+    ort, tokenizers, runtime = Mock(), Mock(), Mock()
+    runtime.model_file.side_effect = lambda role, name: f"/tmp/{role}/{name}"
+    worker = load_worker(
+        "decision", monkeypatch, numpy=Mock(), onnxruntime=ort, tokenizers=tokenizers, runtime=runtime
+    )
+    session, tokenizer = worker.load()
+    assert worker.load() == (session, tokenizer)
+    options = ort.SessionOptions.return_value
+    assert (options.inter_op_num_threads, options.intra_op_num_threads) == (1, 2)
+    ort.InferenceSession.assert_called_once_with(
+        "/tmp/decision/model.onnx", sess_options=options, providers=["CPUExecutionProvider"]
+    )
+    tokenizers.Tokenizer.from_file.assert_called_once_with("/tmp/decision/tokenizer.json")
+    tokenizer.enable_truncation.assert_called_once_with(max_length=192)
+    tokenizer.enable_padding.assert_called_once_with(pad_id=3, pad_token="[PAD]")
