@@ -42,6 +42,24 @@ MUTATIONS = (
     ),
     Mutation(
         "backend",
+        "設計項目の直前の和名コメントを読み飛ばす",
+        "packages/database/src/tsugite_db/source_docs.py",
+        "self.comments.get(node.lineno - 1",
+        "self.comments.get(node.lineno - 2",
+        "packages/backend/tests/architecture/test_design_sources.py::"
+        "test_schema_field_uses_only_the_comment_on_its_declaration",
+    ),
+    Mutation(
+        "backend",
+        "設計解析に別名で正規表現を取り込む",
+        "packages/backend/src/app/design_names.py",
+        "import inspect",
+        "import inspect\nimport re as parser",
+        "packages/backend/tests/architecture/test_design_sources.py::"
+        "test_design_analysis_uses_only_python_sources_and_syntax_trees",
+    ),
+    Mutation(
+        "backend",
         "JSON Pointerのスラッシュ展開を壊す",
         "packages/backend/src/app/core/openapi.py",
         'part.replace("~1", "/")',

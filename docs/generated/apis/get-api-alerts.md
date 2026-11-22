@@ -6,7 +6,7 @@ GET `/api/alerts`
 
 [API一覧](../README.md) · [CRUD一覧](../crud.md)
 
-共通 · `rules_api_alerts_get` · [rules:73](../../../packages/backend/src/app/apis/governance/alerts.py#L73)
+共通 · `rules_api_alerts_get` · [rules:86](../../../packages/backend/src/app/apis/governance/alerts.py#L86)
 
 ## 入力
 
@@ -32,7 +32,7 @@ GET `/api/alerts`
 | 利用プロジェクトの識別子 | [].project | 必須 | 文字列 |
 | 提供環境 | [].environment | 必須 | 文字列、指定値 検証環境（`sandbox`）、準本番環境（`staging`）、本番環境（`production`） |
 | 通知・停止の判定に使う呼び出し件数 | [].threshold | 必須 | 整数、最小値 `1.0`、最大値 `100000000.0` |
-| 呼び出し件数の集計区間（分） | [].minutes | 必須 | 整数、指定値 `1`、`5`、`15`、`60`、`1440` |
+| 呼び出し件数の集計区間（分） | [].minutes | 必須 | 整数、指定値 呼び出し件数の集計区間（分）（`1`）、呼び出し件数の集計区間（分）（`5`）、呼び出し件数の集計区間（分）（`15`）、呼び出し件数の集計区間（分）（`60`）、呼び出し件数の集計区間（分）（`1440`） |
 | 上限到達後の呼び出しを停止するか | [].stop | 必須 | 真偽値 |
 | 監視ルールが有効か | [].enabled | 任意 | 真偽値、既定値 `true` |
 | API名 | [].name | 必須 | 文字列 |
@@ -49,10 +49,10 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
 | [利用者の組織所属](../database.md#affiliations) | affiliations | R | 検索 | select | [populate:69](../../../packages/backend/src/app/core/workspace.py#L69) |
-| [API呼び出し件数の監視設定](../database.md#alert_rules) | alert_rules | R | テーブルを結合 | join | [rules:75](../../../packages/backend/src/app/apis/governance/alerts.py#L75) |
-| [API呼び出し件数の監視設定](../database.md#alert_rules) | alert_rules | R | 検索 | select | [rules:75](../../../packages/backend/src/app/apis/governance/alerts.py#L75) |
-| [APIカタログ](../database.md#assets) | assets | R | テーブルを結合 | join | [rules:75](../../../packages/backend/src/app/apis/governance/alerts.py#L75) |
-| [APIカタログ](../database.md#assets) | assets | R | 検索 | select | [rules:75](../../../packages/backend/src/app/apis/governance/alerts.py#L75) |
+| [API呼び出し件数の監視設定](../database.md#alert_rules) | alert_rules | R | テーブルを結合 | join | [rules:88](../../../packages/backend/src/app/apis/governance/alerts.py#L88) |
+| [API呼び出し件数の監視設定](../database.md#alert_rules) | alert_rules | R | 検索 | select | [rules:88](../../../packages/backend/src/app/apis/governance/alerts.py#L88) |
+| [APIカタログ](../database.md#assets) | assets | R | テーブルを結合 | join | [rules:88](../../../packages/backend/src/app/apis/governance/alerts.py#L88) |
+| [APIカタログ](../database.md#assets) | assets | R | 検索 | select | [rules:88](../../../packages/backend/src/app/apis/governance/alerts.py#L88) |
 | [組織階層](../database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
 | [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:121](../../../packages/backend/src/app/core/auth.py#L121) |
 | [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:56](../../../packages/backend/src/app/core/workspace.py#L56) |
@@ -61,7 +61,7 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:45](../../../packages/backend/src/app/core/config.py#L45) |
+| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:53](../../../packages/backend/src/app/core/config.py#L53) |
 
 <details><summary>解析した関数・依存</summary>
 

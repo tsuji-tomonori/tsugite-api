@@ -27,18 +27,31 @@ def collection(db, actor, inventory, q, environment=None):
     return rank_assets(eligible, q)
 
 
+#: カタログのAPIを検索する
 @router.get("/apis", response_model=list[Listing], operation_id="catalog")
-def catalog(actor: User, db: DB, q: str = Query("", max_length=120), inventory: bool = False):
+def catalog(
+    actor: User,
+    db: DB,
+    #: 検索キーワード
+    q: str = Query("", max_length=120),
+    #: 自分が提供するAPIを検索するか
+    inventory: bool = False,
+):
     return [listing(a) for a in collection(db, actor, inventory, q)]
 
 
+#: カタログのAPIをページ単位で取得する
 @router.get("/catalog-page", response_model=CatalogPage, operation_id="catalogPage")
 def catalog_page(
     actor: User,
     db: DB,
+    #: 検索キーワード
     q: str = Query("", max_length=120),
+    #: 自分が提供するAPIを検索するか
     inventory: bool = False,
+    #: 提供環境
     environment: Env | None = None,
+    #: ページ番号
     page: int = Query(1, ge=1, le=1000000),
 ):
     rows = collection(db, actor, inventory, q, environment)

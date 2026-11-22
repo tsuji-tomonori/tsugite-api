@@ -21,16 +21,32 @@ from tsugite_db.models import Asset, CredentialLease, PortalKey, new_id
 router = APIRouter()
 
 
+#: 認証情報の発行条件
 class Issue(KeyInput):
-    mode: Literal["bearer", "app", "system"]
+    #: 認証方式
+    mode: Literal[
+        #: 短期トークン方式
+        "bearer",
+        #: 利用者を伴うアプリ認証
+        "app",
+        #: システム間認証
+        "system",
+    ]
+    #: 希望するトークン有効期間（分）
     ttl_minutes: int = Field(60, ge=1, le=60)
+    #: 発行から更新可能になるまでの時間（分）
     refresh_minutes: int | None = Field(None, ge=1, le=60)
+    #: 対象のAPI操作
     operations: dict[str, list[str]] = Field(default_factory=dict)
+    #: 利用を許可する利用者
     users: list[str] = Field(default_factory=list)
 
 
+#: トークン交換の入力
 class Exchange(Input):
+    #: クライアント識別子
     client_id: str = Field(min_length=32, max_length=32)
+    #: クライアントシークレット
     client_secret: SecretStr
 
 
@@ -107,6 +123,7 @@ def mint(db, key, actor, session_channel):
     }
 
 
+#: 利用条件を指定して認証情報を発行する
 @router.post(
     "/credentials",
     status_code=201,
@@ -170,8 +187,16 @@ def issue(data: Issue, actor: User, db: DB, request: Request, response: Response
     return {**metadata(key), **extra}
 
 
+#: ポータルから短期アクセストークンを取得する
 @router.post("/credentials/{key_id}/token", responses={200: {"model": outputs.Token}})
-def portal_token(key_id: str, actor: User, db: DB, request: Request, response: Response):
+def portal_token(
+    #: 認証情報の識別子
+    key_id: str,
+    actor: User,
+    db: DB,
+    request: Request,
+    response: Response,
+):
     response.headers["Cache-Control"] = "no-store"
     key = db.get(PortalKey, key_id)
     if not key or not key.mode or key.revoked:
@@ -182,6 +207,7 @@ def portal_token(key_id: str, actor: User, db: DB, request: Request, response: R
     return result
 
 
+#: クライアント認証情報をアクセストークンに交換する
 @router.post(
     "/auth/token",
     responses={200: {"model": outputs.Token}},
@@ -218,8 +244,16 @@ def exchange(data: Exchange, db: DB, request: Request, response: Response):
     return result
 
 
+#: クライアントシークレットを再発行する
 @router.post("/credentials/{key_id}/rotate", responses={200: {"model": outputs.ClientCredential}})
-def rotate(key_id: str, actor: User, db: DB, request: Request, response: Response):
+def rotate(
+    #: 認証情報の識別子
+    key_id: str,
+    actor: User,
+    db: DB,
+    request: Request,
+    response: Response,
+):
     response.headers["Cache-Control"] = "no-store"
     key = db.get(PortalKey, key_id)
     if not key or key.revoked or key.mode not in ("system", "app"):
