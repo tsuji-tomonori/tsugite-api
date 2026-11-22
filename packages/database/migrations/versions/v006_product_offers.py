@@ -2,6 +2,7 @@
 
 import sqlalchemy as sa
 from alembic import op
+from tsugite_db.migration_columns import column_names
 
 revision = "006"
 down_revision = "005"
@@ -12,7 +13,7 @@ def upgrade():
         ("assets", (("offers", sa.Text()), ("release_note", sa.Text()))),
         ("access_rights", (("submission", sa.Text()), ("stage", sa.String(80)))),
     ):
-        existing = {col["name"] for col in sa.inspect(op.get_bind()).get_columns(table)}
+        existing = column_names(op.get_bind(), table)
         for name, kind in fields:
             if name not in existing:
                 op.add_column(table, sa.Column(name, kind))

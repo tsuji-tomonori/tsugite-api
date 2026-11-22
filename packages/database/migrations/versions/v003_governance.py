@@ -2,13 +2,14 @@
 
 import sqlalchemy as sa
 from alembic import op
+from tsugite_db.migration_columns import column_names
 
 revision = "003"
 down_revision = "002"
 
 
 def upgrade():
-    columns = {c["name"] for c in sa.inspect(op.get_bind()).get_columns("assets")}
+    columns = column_names(op.get_bind(), "assets")
     if "removed_at" not in columns:
         op.add_column("assets", sa.Column("removed_at", sa.DateTime(timezone=True), nullable=True))
     op.create_table(
