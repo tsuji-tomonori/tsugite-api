@@ -57,6 +57,22 @@ MUTATIONS = (
         "packages/backend/tests/test_openapi.py::test_skips_invalid_path_item_without_losing_valid_paths",
     ),
     Mutation(
+        "backend",
+        "Aurora DSQLの接続をシステムCA参照に戻す",
+        "packages/database/src/tsugite_db/session.py",
+        "sslrootcert=certifi.where(),",
+        'sslrootcert="system",',
+        "packages/database/tests/test_session.py::test_dsql_uses_a_bundled_ca_for_full_tls_verification",
+    ),
+    Mutation(
+        "backend",
+        "Aurora DSQLの接続でホスト名を検証しない",
+        "packages/database/src/tsugite_db/session.py",
+        'sslmode="verify-full",',
+        'sslmode="require",',
+        "packages/database/tests/test_session.py::test_dsql_uses_a_bundled_ca_for_full_tls_verification",
+    ),
+    Mutation(
         "frontend",
         "操作側のパラメーターをパス側の定義で上書きする",
         "packages/frontend/src/web_app/openapi_fields.py",
