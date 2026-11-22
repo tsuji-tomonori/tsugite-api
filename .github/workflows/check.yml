@@ -6,10 +6,19 @@ permissions:
   contents: read
 jobs:
   test:
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: read
+      code-quality: write
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
@@ -21,6 +30,28 @@ jobs:
       - run: task browser:install
       - run: task emulator:install
       - run: task ci
+      - name: Generate Cobertura coverage report
+        run: uv run --locked --all-packages coverage xml -o artifacts/coverage.xml
+      - name: Check line coverage against the ruleset
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BASE_BRANCH: ${{ github.base_ref }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: uv run --locked --all-packages python tools/check_coverage.py artifacts/coverage.xml
+      - name: Save coverage for future pull requests
+        uses: actions/upload-artifact@v4
+        with:
+          name: line-coverage
+          path: artifacts/coverage.xml
+          if-no-files-found: error
+      - name: Upload coverage to GitHub Code Quality
+        if: github.event.pull_request.head.repo.full_name == github.repository
+        uses: actions/upload-code-coverage@2b21a77928be8d5168c2b9581a67f2adbebacc52 # v1
+        with:
+          file: artifacts/coverage.xml
+          language: Python
+          label: code-coverage/pytest
+          fail-on-error: false
       - name: Build screenshot report
         if: always() && !cancelled()
         run: task report
