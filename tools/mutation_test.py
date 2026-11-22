@@ -50,6 +50,14 @@ MUTATIONS = (
     ),
     Mutation(
         "frontend",
+        "部署一覧の次ページにも先頭の部署を表示する",
+        "packages/frontend/src/web_app/workspace_views.py",
+        "start = (number - 1) * PAGE_SIZE",
+        "start = 0",
+        "packages/frontend/tests/test_workspace_screens.py::test_directory_pages_filter_before_paginating",
+    ),
+    Mutation(
+        "frontend",
         "画面を配布するときにサブディレクトリを省く",
         "tools/build_frontend.py",
         'source.rglob("*.py")',

@@ -72,7 +72,8 @@ def test_existing_routes_and_role_menus(portal_module):
         "keys",
         "mine",
         "notifications",
-        "workspace",
+        "departments",
+        "projects",
     ]
     assert [s.path for s in menus["ヘルプ"]] == ["guide"]
     assert [s.path for s in menus["ガバナンス"]] == ["metrics", "logs", "alerts", "audit"]

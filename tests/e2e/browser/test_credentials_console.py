@@ -6,7 +6,6 @@ import time
 
 import httpx
 from playwright.sync_api import expect, sync_playwright
-
 from tests.support.catalog import approved, headers
 from tests.support.catalog_journey import browser_evidence, navigate
 from tests.support.portal_server import serve_portal
@@ -37,10 +36,9 @@ def test_credentials_console(tmp_path, request):
         with browser_evidence(request.node, "credentials", page, page) as capture:
             page.goto(url)
             page.get_by_role("button", name="利用チーム", exact=True).click()
-            navigate(page, "組織・プロジェクト")
-            unit = page.locator("article").filter(
-                has=page.get_by_role("heading", name="finance", exact=True)
-            )
+            navigate(page, "プロジェクト")
+            page.get_by_role("link", name="finance", exact=True).click()
+            unit = page.locator(".box").filter(has=page.get_by_role("heading", name="利用設定"))
             unit.get_by_role("button", name="アクセストークンの上限を設定").click()
             unit.get_by_label("この範囲の上限（分）").fill("15")
             unit.get_by_role("button", name="有効期限の上限を保存").click()
