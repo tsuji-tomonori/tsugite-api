@@ -22,6 +22,7 @@ PARTS = ARTIFACTS / "coverage-parts"
 BROWSER = "tests/e2e/browser"
 TOOLS = "tools/tests"
 ARCHITECTURE = "tests/architecture"
+AGENT = "packages/agent/tests"
 BACKEND = "packages/backend/tests"
 DATABASE = "packages/database/tests"
 FRONTEND = "packages/frontend/tests"
@@ -32,15 +33,15 @@ FULL = {"full"}
 def affected(path, suites):
     for suite in suites:
         if path.startswith(suite + "/"):
-            return {suite}
+            return {suite, "types"} if suite == AGENT else {suite}
     if path.startswith("docs/generated/"):
         return {"design", TOOLS}
     if path.endswith(".md") and ("/" not in path or path.startswith(("docs/", "deploy/", ".agents/"))):
         return set()
     if path.startswith(("packages/backend/src/", "packages/database/")):
-        return {BACKEND, DATABASE, BROWSER, TOOLS, "types", "design", "aws"}
+        return {AGENT, BACKEND, DATABASE, BROWSER, TOOLS, "types", "design", "aws"}
     if path.endswith(("/web_app/guide_content.py", "/web_app/guide_search.py")):
-        return {FRONTEND, BROWSER, BACKEND}
+        return {AGENT, FRONTEND, BROWSER, BACKEND}
     if path == "tools/build_frontend.py":
         return {FRONTEND, BROWSER, TOOLS, "aws_portal"}
     if path == "packages/frontend/public/index.html" or path.endswith(
@@ -49,8 +50,8 @@ def affected(path, suites):
         return {FRONTEND, BROWSER, "aws_portal"}
     if path.startswith(("packages/frontend/src/", "packages/frontend/public/")):
         return {FRONTEND, BROWSER}
-    if path.startswith("agent/"):
-        return {BACKEND, BROWSER, INFRA, "audit", "aws"}
+    if path.startswith("packages/agent/src/"):
+        return {AGENT, BACKEND, BROWSER, INFRA, "types", "audit", "aws"}
     if path.startswith("packages/infra/"):
         return {INFRA, "aws", "audit"}
     if path.startswith("tools/design/"):
@@ -177,10 +178,9 @@ def write_coverage_report(destination):
     totals = {}
     for entry in ElementTree.parse(destination).iter("class"):
         path = Path(entry.attrib["filename"])
-        if path.parts[0] == "packages":
-            area = path.parts[1]
-        else:
-            area = "models" if path.parts[:2] == ("agent", "models") else path.parts[0]
+        area = path.parts[1] if path.parts[0] == "packages" else path.parts[0]
+        if path.is_relative_to("packages/agent/src/agent/models"):
+            area = "models"
         counts = totals.setdefault(area, [0, 0])
         lines = entry.findall("./lines/line")
         counts[0] += sum(int(line.attrib["hits"]) > 0 for line in lines)

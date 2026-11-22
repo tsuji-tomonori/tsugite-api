@@ -15,6 +15,7 @@ MODULES = {
     "tests": "テスト",
 }
 PACKAGE_MODULES = {
+    "agent": "agent",
     "backend": "app",
     "database": "tsugite_db",
     "frontend": "web_app",

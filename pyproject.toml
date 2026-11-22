@@ -8,6 +8,7 @@ dependencies = []
 members = ["packages/*", "tests/e2e", "tools"]
 
 [tool.uv.sources]
+tsugite-agent = { workspace = true }
 tsugite-backend = { workspace = true }
 tsugite-database = { workspace = true }
 tsugite-frontend = { workspace = true }
@@ -29,8 +30,8 @@ dev = ["pytest>=9", "pytest-given", "ruff", "pytest-cov", "pyright", "mypy", "py
 [tool.pytest.ini_options]
 junit_family = "xunit1"
 markers = ["case_detail(text): パラメーターごとの条件や期待結果を日本語で示す"]
-pythonpath = ["packages/backend/src", "packages/database/src", "packages/infra", "."]
-testpaths = ["tests/architecture", "packages/backend/tests", "packages/frontend/tests", "packages/infra/tests", "packages/database/tests", "tests/e2e/browser", "tools/tests"]
+pythonpath = ["packages/agent/src", "packages/backend/src", "packages/database/src", "packages/infra", "."]
+testpaths = ["packages/agent/tests", "tests/architecture", "packages/backend/tests", "packages/frontend/tests", "packages/infra/tests", "packages/database/tests", "tests/e2e/browser", "tools/tests"]
 
 [tool.coverage.run]
 branch = true
@@ -40,7 +41,7 @@ source = [
     "packages/database/src/tsugite_db",
     "packages/frontend/src/web_app",
     "packages/infra",
-    "agent",
+    "packages/agent/src/agent",
 ]
 omit = ["*/tests/*", "*/cdk.out/*", "*/__pycache__/*"]
 
@@ -56,8 +57,8 @@ extend-exclude = ["build", "cdk.out", "dist", "artifacts"]
 select = ["E4", "E7", "E9", "F", "I", "F631", "PT011", "PT012"]
 
 [tool.pyright]
-include = ["packages/backend/src/app","packages/database/src/tsugite_db"]
-extraPaths = ["packages/backend/src","packages/database/src"]
+include = ["packages/agent","packages/backend/src/app","packages/database/src/tsugite_db"]
+extraPaths = ["packages/agent/src","packages/agent/src/agent/models","packages/backend/src","packages/database/src"]
 pythonVersion = "3.14"
 strict = ["packages/database/src/tsugite_db/models.py", "packages/backend/src/app/apis/schemas.py"]
 

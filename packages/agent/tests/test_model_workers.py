@@ -9,13 +9,14 @@ from unittest.mock import Mock
 
 import pytest
 
-MODELS = Path(__file__).resolve().parents[3] / "agent/models"
+MODELS = Path(__file__).resolve().parents[3] / "packages/agent/src/agent/models"
 
 
 def load_worker(name, monkeypatch, **dependencies):
     for module, replacement in dependencies.items():
         monkeypatch.setitem(sys.modules, module, replacement)
     spec = importlib.util.spec_from_file_location(name, MODELS / f"{name}.py")
+    assert spec is not None and spec.loader is not None
     worker = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(worker)
     return worker

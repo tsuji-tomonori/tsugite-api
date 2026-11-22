@@ -3,15 +3,14 @@ from threading import Lock
 from typing import Literal
 from uuid import UUID
 
+from agent import jobs
+from agent.retrieval import NO_MATCH, ask, manual_sources
 from app.apis.catalog.catalog.router import visible_collection
 from app.apis.catalog.common import DB, User, listing
 from app.apis.schemas import Input, Listing
 from botocore.exceptions import BotoCoreError, ClientError
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
-
-from agent import jobs
-from agent.retrieval import NO_MATCH, ask, manual_sources
 
 router = APIRouter()
 _local: dict[str, dict] = {}
