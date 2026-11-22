@@ -29,7 +29,7 @@ MUTATIONS = (
         "パラメーターシートから配列の添字を落とす",
         "tools/design/infrastructure.py",
         'settings(f"{path}[{index}]", item)',
-        'settings(path, item)',
+        "settings(path, item)",
         "tools/tests/test_infrastructure_docs.py::test_component_parameter_sheet",
     ),
     Mutation(
