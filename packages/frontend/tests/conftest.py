@@ -12,6 +12,8 @@ def portal_module(monkeypatch):
     module_names = {
         "api_docs",
         "client",
+        "login_views",
+        "portal_auth",
         "guide_content",
         "guide_search",
         "guide_views",

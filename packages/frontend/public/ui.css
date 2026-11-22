@@ -170,7 +170,24 @@ textarea.form-control { min-height: 76px; resize: vertical; }
   border-radius: 4px; margin-bottom: 16px; padding: 10px 16px;
 }
 .notice.error { background: var(--cs-color-background-status-error); border-color: var(--cs-color-border-status-error); }
-.login, .loading { max-width: 600px; margin: 8vh auto; padding: 24px; }
+.loading { max-width: 600px; margin: 8vh auto; padding: 24px; }
+.login.box {
+  width: min(29rem, calc(100% - 2rem));
+  margin: clamp(2rem, 10vh, 6rem) auto;
+  padding: clamp(1.25rem, 4vw, 2.5rem);
+}
+.auth-intro { color: var(--secondary); margin: .5rem 0 1.75rem; }
+.auth-form .field { margin-bottom: 1.1rem; }
+.auth-form .form-control, .auth-form .btn { width: 100%; min-height: 44px; }
+.auth-form .btn { margin-top: .4rem; }
+.auth-link {
+  display: block; margin: .75rem auto 0; min-height: 44px; color: var(--link);
+  text-decoration: underline; text-underline-offset: .2em; background: transparent; border: 0;
+}
+.auth-key {
+  display: block; margin: .4rem 0 1rem; padding: .75rem; background: var(--page);
+  border: 1px solid var(--line); border-radius: 4px; overflow-wrap: anywhere; user-select: all;
+}
 .grant-status { margin-block: 12px; }
 
 @media (max-width: 780px) {
