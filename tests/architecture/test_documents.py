@@ -1,5 +1,3 @@
-import pytest
-
 from .project import ROOT, project_files
 
 
@@ -34,10 +32,6 @@ def test_markdown_documents_have_japanese_titles():
     assert not invalid, invalid
 
 
-@pytest.mark.skipif(
-    not ((ROOT / "docs/requirements/items").exists() or (ROOT / "tools/requirements.py").exists()),
-    reason="個別要件書未導入の構成",
-)
 def test_requirements_follow_the_project_vocabulary(tmp_path):
     """全要件のファイル名・要件文・四つの節・共通語彙を索引生成と同じ規則で検査する。"""
     from tools.requirements import ITEMS, generate

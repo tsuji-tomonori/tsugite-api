@@ -1,13 +1,14 @@
+import json
 from pathlib import Path
 
 import pytest
 
 from .case_text import is_japanese_case_text
 from .dependencies import dependency_violations
+from .model_artifacts import check_model_artifacts, manifest_errors
 from .project import project_files
 from .test_case_descriptions import case_functions
 from .test_documents import japanese_title
-from .test_models import manifest_errors
 
 
 def test_boundary_checker_rejects_cross_layer_imports():
@@ -89,3 +90,16 @@ def test_case_explanation_requires_one_japanese_sentence():
     assert is_japanese_case_text("下書きを公開すると商品を一覧で確認できる。")
     for invalid in ("Only English text", "下書きを公開すると\n商品を一覧で確認できる。", "確認する"):
         assert not is_japanese_case_text(invalid), invalid
+
+
+def test_model_distribution_requires_all_three_roles(tmp_path):
+    """三つの役割がそろった配布物は通過し、一つでも定義が欠けると失敗する。"""
+    item = {"name": "model.gguf", "revision": "abcd123", "sha256": "a" * 64}
+    manifest = dict.fromkeys(("decision", "tool", "generate"), [item])
+    path = tmp_path / "manifest.json"
+    path.write_text(json.dumps(manifest), encoding="utf-8")
+    check_model_artifacts(tmp_path)
+    del manifest["decision"]
+    path.write_text(json.dumps(manifest), encoding="utf-8")
+    with pytest.raises(AssertionError, match="decision"):
+        check_model_artifacts(tmp_path)

@@ -13,6 +13,7 @@ tasks:
       - uv python install 3.14
       - uv sync --locked --all-packages
       - git config --local core.hooksPath .githooks
+      - git config --local commit.template .gitmessage.txt
   deps:add:
     desc: ワークスペースのパッケージに依存を追加
     cmds: ['uv add {{.CLI_ARGS}}']
@@ -117,6 +118,9 @@ tasks:
   test:mutation:
     desc: 代表的な変更を一時コピーに加え、単体テストが検知するか確認
     cmds: ['{{.RUN}} python tools/mutation_test.py {{.CLI_ARGS}}']
+  test:hooks:
+    desc: 一時リポジトリでコミットとプッシュのフックを検証
+    cmds: ['bash tools/test_git_hooks.sh']
   test:tools:
     desc: 設計書生成・共通ツールのテスト
     cmds: ['{{.RUN}} pytest -q tools/tests {{.CLI_ARGS}}']
@@ -139,6 +143,7 @@ tasks:
   ci:
     desc: CIの検証を順に実行
     cmds:
+      - task: test:hooks
       - task: lint
       - task: types
       - task: synth

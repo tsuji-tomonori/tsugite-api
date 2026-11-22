@@ -26,6 +26,14 @@ class Mutation:
 MUTATIONS = (
     Mutation(
         "architecture",
+        "判定モデルが欠けた配布物を許可する",
+        "tests/architecture/model_artifacts.py",
+        '{"decision", "tool", "generate"} - manifest.keys()',
+        '{"tool", "generate"} - manifest.keys()',
+        "tests/architecture/test_rule_checks.py::test_model_distribution_requires_all_three_roles",
+    ),
+    Mutation(
+        "architecture",
         "英語だけのテスト説明を許可する",
         "tests/architecture/case_text.py",
         " and bool(KANA.search(text))",
@@ -83,7 +91,7 @@ MUTATIONS = (
     Mutation(
         "architecture",
         "長さだけで重みのハッシュを受け付ける",
-        "tests/architecture/test_models.py",
+        "tests/architecture/model_artifacts.py",
         ' or any(ch not in "0123456789abcdef" for ch in digest)',
         "",
         "tests/architecture/test_rule_checks.py::test_model_checker_rejects_unpinned_weight",
@@ -103,6 +111,22 @@ MUTATIONS = (
         'if imported.split(".")[0] in REGEX:',
         "if False:",
         "tests/architecture/test_design_sources.py::test_analysis_policy_follows_renamed_helpers_and_relative_imports",
+    ),
+    Mutation(
+        "tools",
+        "既存要件の編集だけでfeatブランチを許可する",
+        "tools/requirements.py",
+        '"--diff-filter=A"',
+        '"--diff-filter=AM"',
+        "tools/tests/test_requirements.py::test_feature_requires_added_requirement",
+    ),
+    Mutation(
+        "tools",
+        "未定義の用語を要件の見出しで許可する",
+        "tools/requirements.py",
+        "if unknown:",
+        "if False:",
+        "tools/tests/test_requirements.py::test_undefined_term_in_condition_or_result_fails",
     ),
     Mutation(
         "backend",

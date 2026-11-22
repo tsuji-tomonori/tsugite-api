@@ -1,4 +1,5 @@
 from .dependencies import ALLOWED, dependency_violations, layer, source_module
+from .model_artifacts import check_model_artifacts
 from .project import ROOT, project_files
 
 
@@ -14,5 +15,7 @@ def test_runtime_dependencies_respect_layer_boundaries():
     expected = set(ALLOWED)
     if not (ROOT / "agent").exists():
         expected -= {"エージェント", "モデル"}
+    else:
+        check_model_artifacts(ROOT / "agent/models")
     assert covered == expected, f"検査できていない層: {expected - covered}"
     assert not errors, "\n".join(errors)

@@ -1,9 +1,5 @@
 import json
 
-import pytest
-
-from .project import ROOT
-
 
 def manifest_errors(manifest):
     errors = []
@@ -22,12 +18,9 @@ def manifest_errors(manifest):
     return errors
 
 
-@pytest.mark.skipif(
-    not ((ROOT / "agent").exists()),
-    reason="エージェント未導入の構成",
-)
-def test_models_have_pinned_artifacts():
-    """判定・検索語生成・回答生成の各モデルは取得元の版と重みのハッシュを固定する。"""
-    manifest = json.loads((ROOT / "agent/models/manifest.json").read_text(encoding="utf-8"))
-    assert {"decision", "tool", "generate"} <= manifest.keys()
+def check_model_artifacts(directory):
+    """モデルを含む配布物には三つの役割と版・ハッシュが必要。"""
+    manifest = json.loads((directory / "manifest.json").read_text(encoding="utf-8"))
+    missing = {"decision", "tool", "generate"} - manifest.keys()
+    assert not missing, f"不足しているモデルの役割: {sorted(missing)}"
     assert not (errors := manifest_errors(manifest)), errors
