@@ -93,6 +93,25 @@ def test_design_analysis_uses_only_python_sources_and_syntax_trees():
     assert not (violations := policy_violations(ENTRY_POINTS, SOURCE_ROOTS)), violations
 
 
+def test_project_tools_do_not_parse_source_files_with_regex():
+    """コードやスタイルシートを読む開発ツールで正規表現による解析を検出する。"""
+    invalid = []
+    for path in (ROOT / "tools").rglob("*.py"):
+        if "tests" in path.relative_to(ROOT).parts:
+            continue
+        tree = ast.parse(path.read_bytes(), filename=str(path))
+        imports = set(local_imports(tree, ".".join(path.relative_to(ROOT).with_suffix("").parts), path))
+        reads_code = any(
+            isinstance(n, ast.Constant)
+            and isinstance(n.value, str)
+            and n.value.endswith((".py", ".pyi", ".js", ".ts", ".css", ".sql"))
+            for n in ast.walk(tree)
+        )
+        if (reads_code or imports & {"ast", "tokenize", "tinycss2", "sqlglot"}) and imports & REGEX:
+            invalid.append(path.relative_to(ROOT))
+    assert not invalid, invalid
+
+
 def test_design_source_directories_contain_no_sidecar_data():
     """API・ORM・設計書生成のソースに追加された外部マッピングファイルを検出する。"""
     unexpected = []
