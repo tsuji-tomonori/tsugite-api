@@ -11,6 +11,19 @@ uv run python tools/manage.py demo
 
 `http://127.0.0.1:8000` で「提供チーム」を選び、API名と用途を入力します。検証の接続先に `sample-sandbox` を選び、用意されたOpenAPIを使って公開できます。別のタブで「利用チーム」を選ぶと、申請、承認後の呼び出し、取消後の拒否を試せます。
 
+## コミット前の設定
+
+クローンごとに最初の1回、リポジトリのルートで実行します。
+
+```sh
+git config --local core.hooksPath .githooks
+git config --local commit.template .gitmessage.txt
+```
+
+`git commit` の編集画面にテンプレートが表示されます。件名は [Conventional Commits](https://www.conventionalcommits.org/ja/v1.0.0/) の形式で書きます。たとえば `git commit -m "fix(api): 利用申請のエラー表示を修正"` とします。件名の形式が違う場合は、ローカルの `commit-msg` フックがコミットを中止します。
+
+マージコミットを作る場合は `git merge -m "chore: 機能ブランチを統合" <ブランチ名>` のように件名を指定します。変更を取り消す場合は `git revert --no-commit <コミット>` の後、`git commit -m "revert: 利用申請の変更を取り消す"` のようにコミットします。
+
 ## ポータルで操作手順を調べる
 
 ログイン後、画面上部または左メニューの［使い方ガイド］を開きます。「読み取りだけ許可したい」のように入力すると、手順本文のキーワードと操作目的の言い換えを組み合わせて候補を表示します。役割を選ぶと該当する手順に絞れます。各手順にはデモの画面画像、操作後の確認方法、操作画面への入口があります。
