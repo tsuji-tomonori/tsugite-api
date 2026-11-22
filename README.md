@@ -36,7 +36,7 @@ CDKのスナップショットは標準構成の論理ID、リソース型と出
 
 `task docs` は実行中のデータベースやAWS資格情報を使わず、[API別の実装設計書](docs/generated/README.md)、[SQL・AWS操作のCRUD一覧](docs/generated/crud.md)、[入出力スキーマ](docs/generated/schemas.md)、[テーブル・レコード・カラム定義](docs/generated/database.md)を更新します。設計を変えるときはルーターの引数・応答モデル・依存関数を修正します。CRUD表はAPIを行に、SQLテーブルとAWSサービスをそれぞれ別の表の列に並べます。各セルで操作の種類を、API詳細で条件分岐を含む操作の根拠となるソース行を確認できます。転送先の利用者定義APIの項目は、登録時のOpenAPIで決まります。
 
-APIと項目の和名は [API用語集](packages/backend/src/app/api_names.toml)、テーブル・レコード・カラムの和名と1行の意味は [DB用語集](packages/database/src/tsugite_db/names.toml) で管理します。API用語集はデモ環境で配信するOpenAPI（`/api/openapi.json`）にも反映されます。新しいAPI・項目・テーブル・カラムを追加するときは和名も登録してください。CIの設計書生成で登録漏れを検出します。
+API操作はルートデコレーター、引数・モデル・項目・列挙値はそれぞれの宣言の直前に `#: 和名` を書きます。DBモデルのクラスには同じ形式でテーブル名を書き、docstringの1段落目にレコード名、2段落目に1行が表す内容を書きます。AWS SDK呼び出しの直前には `#: サービスの和名 / 操作の和名` を書きます。`task docs` はPythonの構文木とコメントトークンをFastAPI・SQLAlchemyの定義と照合し、設計書とデモ環境のOpenAPIに和名を反映します。
 
 CIはPRで設計書を生成して成果物に含めます。既定ブランチの検証が通ると、生成結果に差分がある場合だけ `docs/generated/` を自動コミットします。
 
@@ -92,11 +92,11 @@ task emulator:install
 task test:aws
 ```
 
-ブラウザーでは、OpenAPIファイルの登録、仕様の検索、申請、却下、再申請、承認、掲載の取り下げ、権限取消と監査履歴を確認します。AWS側ではテスト専用のエミュレーターを起動し、CDKテンプレートから対象リソースを構築します。Cognitoのトークンを持つ提供者と利用者が別々のブラウザー画面を操作し、承認された利用者に在庫照会Lambdaの商品コードが表示されるところまで検証します。HTTPSの接続先にはSecrets Managerから取得したトークンが届き、権限取消後はリクエストが届かないことも確かめます。終了時に環境を破棄します。
-
-配備テストは、合成したテンプレートから DB 移行 Lambda をエミュレーターに作成し、本番と同じ配布物を起動します。SQL 側では、一時 PostgreSQL（`pg_config`、`initdb`、`pg_ctl` が必要）に Aurora DSQL 方言で接続し、新規作成と再実行を検証します。実 AWS の DSQL 接続、IAM 認証、CloudFormation カスタムリソースのコールバックは本番デプロイで確認します。[AWS Emulatorのインストール方法](https://docs.aws.amazon.com/emulator/latest/userguide/getting-started-linux.html)
+ブラウザーでは、OpenAPIファイルの登録、仕様の検索、申請、却下、再申請、承認、掲載の取り下げ、権限取消と監査履歴を確認します。AWS側ではテスト専用のエミュレーターを起動し、CDKテンプレートから対象リソースを構築します。Cognitoのトークンを持つ提供者と利用者が別々のブラウザー画面を操作し、承認された利用者に在庫照会Lambdaの商品コードが表示されるところまで検証します。HTTPSの接続先にはSecrets Managerから取得したトークンが届き、権限取消後はリクエストが届かないことも確かめます。終了時に環境を破棄します。[AWS Emulatorのインストール方法](https://docs.aws.amazon.com/emulator/latest/userguide/getting-started-linux.html)
 
 この版では、CloudFormationが `AWS::DSQL::Cluster` を受け付けません。DSQLはSDKでクラスターが稼働するところまで、業務データの読み書きはSQLiteで検証します。利用者にはエミュレーターのCognitoがパスワード認証で発行したトークンを使います。システム連携にはテスト用の署名鍵を使い、権限の承認前、別プロジェクト・別環境、取消後の呼び出しが拒否されることを確認します。Cognitoのホスト型ログイン、MFA、OAuthのトークン発行、CloudFront経由の全経路はこのE2Eの対象外です。
+
+配備テストは、合成したテンプレートから DB 移行 Lambda をエミュレーターに作成し、本番と同じ配布物を起動します。SQL 側では、一時 PostgreSQL（`pg_config`、`initdb`、`pg_ctl` が必要）に Aurora DSQL 方言で接続し、新規作成と再実行を検証します。実 AWS の DSQL 接続、IAM 認証、CloudFormation カスタムリソースのコールバックは本番デプロイで確認します。
 
 
 ## CDKの構成と検証レポート

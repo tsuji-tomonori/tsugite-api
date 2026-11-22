@@ -6,7 +6,7 @@ GET `/api/apis/{key}/policy`
 
 [API一覧](../README.md) · [CRUD一覧](../crud.md)
 
-共通 · `read_api_apis__key__policy_get` · [read:23](../../../packages/backend/src/app/apis/governance/policies.py#L23)
+共通 · `read_api_apis__key__policy_get` · [read:36](../../../packages/backend/src/app/apis/governance/policies.py#L36)
 
 ## 入力
 
@@ -69,7 +69,7 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:45](../../../packages/backend/src/app/core/config.py#L45) |
+| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:53](../../../packages/backend/src/app/core/config.py#L53) |
 
 <details><summary>解析した関数・依存</summary>
 

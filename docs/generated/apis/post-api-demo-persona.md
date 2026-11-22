@@ -6,7 +6,7 @@ POST `/api/demo/{persona}`
 
 [API一覧](../README.md) · [CRUD一覧](../crud.md)
 
-デモ限定 · `local_login_api_demo__persona__post` · [local_login:95](../../../packages/backend/src/app/main.py#L95)
+デモ限定 · `local_login_api_demo__persona__post` · [local_login:97](../../../packages/backend/src/app/main.py#L97)
 
 ## 入力
 

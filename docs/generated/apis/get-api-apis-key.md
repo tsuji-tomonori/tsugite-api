@@ -6,7 +6,7 @@ GET `/api/apis/{key}`
 
 [API一覧](../README.md) · [CRUD一覧](../crud.md)
 
-共通 · `detail` · [detail:17](../../../packages/backend/src/app/apis/catalog/detail/router.py#L17)
+共通 · `detail` · [detail:18](../../../packages/backend/src/app/apis/catalog/detail/router.py#L18)
 
 ## 入力
 
@@ -84,7 +84,7 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| [API利用申請・利用権](../database.md#access_rights) | access_rights | R | 検索 | select | [detail:20](../../../packages/backend/src/app/apis/catalog/detail/router.py#L20) |
+| [API利用申請・利用権](../database.md#access_rights) | access_rights | R | 検索 | select | [detail:26](../../../packages/backend/src/app/apis/catalog/detail/router.py#L26) |
 | [利用者の組織所属](../database.md#affiliations) | affiliations | R | 検索 | select | [populate:69](../../../packages/backend/src/app/core/workspace.py#L69) |
 | [APIカタログ](../database.md#assets) | assets | R | 主キーで取得 | db.get | [record:31](../../../packages/backend/src/app/apis/catalog/common.py#L31) |
 | [認証情報の利用制限](../database.md#credential_rules) | credential_rules | R | 主キーで取得 | db.get | [individual:28](../../../packages/backend/src/app/core/credential_policy.py#L28) |
@@ -97,7 +97,7 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:45](../../../packages/backend/src/app/core/config.py#L45) |
+| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:53](../../../packages/backend/src/app/core/config.py#L53) |
 
 <details><summary>解析した関数・依存</summary>
 

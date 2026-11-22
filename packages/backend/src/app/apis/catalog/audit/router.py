@@ -10,15 +10,22 @@ from tsugite_db.models import AccessLog, Event, LogUnit
 router = APIRouter()
 
 
+#: 監査履歴を検索する
 @router.get("/audit", response_model=list[Audit], operation_id="audit")
 def audit(
     actor: User,
     db: DB,
+    #: 対象APIの識別子
     asset_id: str = "",
+    #: リクエスト識別子
     request_id: str = "",
+    #: 検索する監査操作
     action: str = "",
+    #: 監査履歴の検索終了日時
     until: datetime | None = None,
+    #: 先頭から読み飛ばす件数
     offset: int = Query(0, ge=0),
+    #: 取得件数の上限
     limit: int = Query(100, ge=1, le=500),
 ):
     stmt = select(Event)

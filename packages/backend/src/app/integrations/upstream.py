@@ -23,6 +23,7 @@ def aws(service):
 def auth_headers(target: Target) -> dict[str, str]:
     if not target.secret_arn:
         return {}
+    #: 秘密情報の保管（Secrets Manager） / 秘密情報の値を取得
     secret = aws("secretsmanager").get_secret_value(SecretId=target.secret_arn)["SecretString"]
     return {"authorization": "Bearer " + secret}
 
@@ -41,6 +42,7 @@ def probe(target: Target) -> None:
     """Check connectivity before advertising a target. Never invoke its business operation."""
     try:
         if target.kind == "lambda":
+            #: 接続先関数の実行（Lambda） / 接続先関数を実行する権限を確認
             aws("lambda").invoke(FunctionName=target.address, InvocationType="DryRun")
         elif target.kind == "https":
             with https_client(4) as client:
@@ -89,6 +91,7 @@ def dispatch(target: Target, method: str, path: str, query: str, body: bytes, he
         "body": base64.b64encode(body).decode(),
         "isBase64Encoded": True,
     }
+    #: 接続先関数の実行（Lambda） / 接続先関数を呼び出す
     result = aws("lambda").invoke(FunctionName=target.address, Payload=json.dumps(event).encode())
     if result.get("FunctionError"):
         raise HTTPException(502, "接続先でエラーが発生しました")

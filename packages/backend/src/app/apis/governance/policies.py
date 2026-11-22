@@ -10,25 +10,53 @@ from pydantic import Field
 router = APIRouter()
 
 
+#: APIの公開範囲と承認条件
 class Policy(Input):
-    visibility: Literal["all", "restricted"] = "all"
+    #: APIの公開範囲
+    visibility: Literal[
+        #: 全体公開
+        "all",
+        #: 限定公開
+        "restricted",
+    ] = "all"
+    #: 閲覧を許可するプロジェクト
     projects: list[str] = Field(default_factory=list)
+    #: 閲覧を許可する部署
     departments: list[str] = Field(default_factory=list)
+    #: 自動承認の対象部署
     auto_departments: list[str] = Field(default_factory=list)
+    #: 自動承認の対象役職
     auto_titles: list[str] = Field(default_factory=list)
+    #: 承認を委任する部署
     delegates: list[str] = Field(default_factory=list)
 
 
+#: APIの公開範囲と申請の承認条件を確認する
 @router.get("/apis/{key}/policy", responses={200: {"model": Policy}})
-def read(key: str, actor: User, db: DB):
+def read(
+    #: カタログ掲載APIの識別子
+    key: str,
+    actor: User,
+    db: DB,
+):
     asset = record(db, key)
     if asset.owner not in actor.owners:
         raise HTTPException(403)
     return Policy(**policy(asset))
 
 
+#: APIの公開範囲と申請の承認条件を設定する
 @router.put("/apis/{key}/policy", responses={200: {"model": Policy}})
-def configure(key: str, data: Policy, revision: int, request: Request, actor: User, db: DB):
+def configure(
+    #: カタログ掲載APIの識別子
+    key: str,
+    data: Policy,
+    #: 変更前の版番号
+    revision: int,
+    request: Request,
+    actor: User,
+    db: DB,
+):
     asset = record(db, key)
     if asset.owner not in actor.owners:
         raise HTTPException(403)

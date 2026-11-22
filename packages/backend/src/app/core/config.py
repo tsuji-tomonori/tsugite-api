@@ -12,7 +12,14 @@ def local_demo() -> bool:
 
 class Target(BaseModel):
     owner: str = Field(pattern=r"^[a-z][a-z0-9-]{0,62}$")
-    environment: Literal["sandbox", "staging", "production"]
+    environment: Literal[
+        #: 検証環境
+        "sandbox",
+        #: 準本番環境
+        "staging",
+        #: 本番環境
+        "production",
+    ]
     kind: Literal["lambda", "https", "demo"]
     address: str
     secret_arn: str = ""
@@ -42,6 +49,7 @@ def settings() -> dict:
     if name := os.getenv("HUB_SETTINGS_PARAMETER"):
         import boto3
 
+        #: 設定パラメータの保管（Systems Manager） / 設定パラメータを取得
         value = boto3.client("ssm").get_parameter(Name=name)["Parameter"]["Value"]
         return json.loads(value)
     if os.getenv("HUB_SETTINGS_FILE"):

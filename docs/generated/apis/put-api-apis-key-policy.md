@@ -6,7 +6,7 @@ PUT `/api/apis/{key}/policy`
 
 [API一覧](../README.md) · [CRUD一覧](../crud.md)
 
-共通 · `configure_api_apis__key__policy_put` · [configure:31](../../../packages/backend/src/app/apis/governance/policies.py#L31)
+共通 · `configure_api_apis__key__policy_put` · [configure:50](../../../packages/backend/src/app/apis/governance/policies.py#L50)
 
 ## 入力
 
@@ -77,7 +77,7 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 | --- | --- | --- | --- | --- | --- |
 | [利用者の組織所属](../database.md#affiliations) | affiliations | R | 検索 | select | [populate:69](../../../packages/backend/src/app/core/workspace.py#L69) |
 | [APIカタログ](../database.md#assets) | assets | R | 主キーで取得 | db.get | [record:31](../../../packages/backend/src/app/apis/catalog/common.py#L31) |
-| [APIカタログ](../database.md#assets) | assets | U | 公開範囲と承認条件（JSON）を設定 | policy に代入 | [configure:47](../../../packages/backend/src/app/apis/governance/policies.py#L47) |
+| [APIカタログ](../database.md#assets) | assets | U | 公開範囲と承認条件（JSON）を設定 | policy に代入 | [configure:75](../../../packages/backend/src/app/apis/governance/policies.py#L75) |
 | [監査履歴](../database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [event:16](../../../packages/backend/src/app/apis/catalog/common.py#L16) |
 | [組織階層](../database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
 | [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:121](../../../packages/backend/src/app/core/auth.py#L121) |
@@ -87,7 +87,7 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:45](../../../packages/backend/src/app/core/config.py#L45) |
+| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:53](../../../packages/backend/src/app/core/config.py#L53) |
 
 <details><summary>解析した関数・依存</summary>
 

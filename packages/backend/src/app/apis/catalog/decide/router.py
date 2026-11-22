@@ -9,20 +9,26 @@ from tsugite_db.models import Access, now
 router = APIRouter()
 
 
+#: 個人の利用申請を承認・却下・取り下げ・取消する
 @router.post(
     "/requests/{key}/{project}/{environment}/{principal}",
     response_model=Right,
     operation_id="decidePersonal",
 )
+#: プロジェクトの利用申請を承認・却下・取り下げ・取消する
 @router.post("/requests/{key}/{project}/{environment}", response_model=Right, operation_id="decide")
 def decide(
+    #: 申請対象APIの識別子
     key: str,
+    #: 利用プロジェクトの識別子
     project: str,
+    #: 提供環境
     environment: str,
     data: Decision,
     request: Request,
     actor: User,
     db: DB,
+    #: 個人申請の対象利用者識別子
     principal: str = "",
 ):
     asset = record(db, key)
