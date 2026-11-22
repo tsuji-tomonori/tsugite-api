@@ -76,6 +76,16 @@ jobs:
         if: steps.scope.outputs.aws == 'true'
       - run: task synth
         if: steps.scope.outputs.synth == 'true'
+      - name: 同じロックから再ビルドしたLambda LayerのSHA-256を照合
+        if: steps.scope.outputs.synth == 'true'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          if ! git diff --quiet "$BASE_SHA...HEAD" -- uv.lock tools/build_backend.py; then
+            sha256sum build/runtime-layer.zip > "$RUNNER_TEMP/runtime-layer.sha256"
+            uv run --locked --all-packages python tools/build_backend.py
+            sha256sum --check "$RUNNER_TEMP/runtime-layer.sha256"
+          fi
       - run: uv run --locked --all-packages python tools/build_frontend.py
         if: steps.scope.outputs.frontend_build == 'true'
       - run: task contracts docs
