@@ -8,6 +8,7 @@ from tests.support.catalog import FORM, SPEC, headers
 
 @scenario("公開から取消まで、環境ごとの利用権限と監査を追跡する", tags=["CAT", "AUTH", "AUDIT"])
 def test_lifecycle(portal):
+    """承認した環境だけで呼び出せ、取消後の拒否を監査できる"""
     api = portal
     with given("提供・利用・監査の3人がログインする"):
         p = headers(api, "provider")
@@ -85,6 +86,7 @@ def test_lifecycle(portal):
 
 @scenario("却下と申請取り下げの後に再申請できる", tags=["AUTH"])
 def test_reapply(portal):
+    """却下後に再申請でき、古い判断の再適用を拒否する"""
     with given("公開済みのAPIがある"):
         p = headers(portal, "provider")
         u = headers(portal, "consumer")
@@ -119,6 +121,7 @@ def test_reapply(portal):
 
 
 def test_registration_validation(portal):
+    """外部参照、環境違いの接続先、不正な仕様の登録を拒否する"""
     owner = headers(portal, "provider")
     spec = deepcopy(SPEC)
     spec["paths"]["/items"]["get"] = {"$ref": "https://example.invalid/operation"}
@@ -135,6 +138,7 @@ def test_registration_validation(portal):
 
 
 def test_route_contract():
+    """OpenAPIの固定パスを優先し、許可された操作だけを通す"""
     spec = {"paths": {"/notes/{id}": {"get": {}}, "/notes/admin": {"post": {}}}}
     assert operation_template(spec, "GET", "/notes/123") == "/notes/{id}"
     assert allowed_path(spec, "GET", "/notes/123")
@@ -143,6 +147,7 @@ def test_route_contract():
 
 
 def test_demo_disabled_on_lambda(monkeypatch):
+    """Lambdaではデモ用ログインを無効にする"""
     from app.core.config import local_demo
     from app.main import create_app
 
@@ -155,6 +160,7 @@ def test_demo_disabled_on_lambda(monkeypatch):
 
 
 def test_withdrawal_and_audit_visibility(portal, monkeypatch):
+    """未申請・取下げ後の権限を拒否し、他プロジェクトに監査記録を開示しない"""
     from app.core.auth import DEMO_GROUPS
 
     monkeypatch.setitem(DEMO_GROUPS, "other", ["use-procurement"])

@@ -10,6 +10,7 @@ from tests.support.portal_server import serve_portal
 
 
 def test_publish_and_apply_from_product_page(tmp_path):
+    """商品を公開し、利用者が商品詳細から利用申請できる"""
     env = {**os.environ, "TSUGITE_DEMO": "1", "DATABASE_URL": "sqlite:///" + str(tmp_path / "portal.db")}
     with serve_portal(env) as url, sync_playwright() as pw:
         browser = pw.chromium.launch(executable_path=os.getenv("CHROMIUM_PATH") or None)

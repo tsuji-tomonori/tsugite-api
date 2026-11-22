@@ -8,6 +8,7 @@ from tests.support.portal_server import serve_portal
 
 
 def test_usage_guide(tmp_path):
+    """役割と検索語で使い方を絞り込み、手順から対象画面を開ける"""
     env = {**os.environ, "TSUGITE_DEMO": "1", "DATABASE_URL": "sqlite:///" + str(tmp_path / "guide.db")}
     with serve_portal(env) as url, sync_playwright() as pw:
         browser = pw.chromium.launch(executable_path=os.getenv("CHROMIUM_PATH") or None)

@@ -7,6 +7,7 @@ from tools import test_report
 
 
 def test_report_image_viewer(tmp_path, monkeypatch):
+    """実行レポートの画像をオフラインで拡大し、キーボード・タッチ・印刷でも確認できる"""
     monkeypatch.setattr(test_report, "OUT", tmp_path)
     shots = tmp_path / "screenshots"
     shots.mkdir()
