@@ -2,39 +2,42 @@
 name = "tsugite-api"
 version = "0.1.0"
 requires-python = ">=3.14,<3.15"
-dependencies = ["tsugite-backend", "tsugite-frontend", "tsugite-infra"]
+dependencies = []
 
 [tool.uv.workspace]
-members = ["backend","frontend","infra"]
+members = ["packages/*", "tests/e2e", "tools"]
 
 [tool.uv.sources]
 tsugite-backend = { workspace = true }
+tsugite-database = { workspace = true }
 tsugite-frontend = { workspace = true }
 tsugite-infra = { workspace = true }
 
+[tool.uv]
+constraint-dependencies = ["pydantic>=2,<3", "sqlalchemy>=2,<3", "aws-cdk-lib>=2.220,<3"]
+
 [dependency-groups]
-dev = ["pytest>=9","pytest-given","ruff","playwright","pytest-cov","pyright","mypy","pytestarch","pip-audit"]
+dev = ["pytest>=9", "pytest-given", "ruff", "pytest-cov", "pyright", "mypy", "pytestarch", "pip-audit"]
 
 [tool.pytest.ini_options]
-pythonpath = ["backend/src","infra","."]
-testpaths = ["tests","backend/tests","infra/tests"]
+pythonpath = ["packages/backend/src", "packages/database/src", "packages/infra", "."]
+testpaths = ["packages/backend/tests", "packages/frontend/tests", "packages/infra/tests", "packages/database/tests", "tests/e2e/browser", "tools/tests"]
 
 [tool.ruff]
 target-version = "py314"
 line-length = 105
-
 extend-exclude = ["build", "cdk.out", "dist", "artifacts"]
 
 [tool.ruff.lint]
 select = ["E4", "E7", "E9", "F", "I", "F631", "PT011", "PT012"]
 
 [tool.pyright]
-include = ["backend/src/app"]
-extraPaths = ["backend/src"]
+include = ["packages/backend/src/app","packages/database/src/tsugite_db"]
+extraPaths = ["packages/backend/src","packages/database/src"]
 pythonVersion = "3.14"
-strict = ["backend/src/app/db/models.py", "backend/src/app/apis/schemas.py"]
+strict = ["packages/database/src/tsugite_db/models.py", "packages/backend/src/app/apis/schemas.py"]
 
 [tool.mypy]
 strict = true
 plugins = ["pydantic.mypy"]
-files = ["backend/src/app/db/models.py", "backend/src/app/apis/schemas.py"]
+files = ["packages/database/src/tsugite_db/models.py", "packages/backend/src/app/apis/schemas.py"]

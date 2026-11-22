@@ -207,7 +207,7 @@ def result(case):
 
 
 def inventory():
-    file = ROOT / "infra/cdk.out/TsugiteApi.template.json"
+    file = ROOT / "packages/infra/cdk.out/TsugiteApi.template.json"
     if not file.exists():
         return "<p>合成テンプレートを取得できませんでした。</p>"
     resources = json.loads(file.read_text())["Resources"]

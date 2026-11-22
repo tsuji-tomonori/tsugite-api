@@ -11,9 +11,9 @@ from urllib.parse import quote
 from xml.etree import ElementTree
 
 BASELINE_ARTIFACT = "line-coverage"
-# Verify run 44918756792 measured 1,932 of 2,234 lines on this bootstrap commit.
-BOOTSTRAP_SHA = "8086921fee910e881e0a328e1c9dbe6c493b0c3e"
-BOOTSTRAP_COVERAGE = Fraction(1932 * 100, 2234)
+# Verify run 44974628339 measured 2,070 of 2,372 lines on the tree merged by PR #1.
+BOOTSTRAP_SHA = "cfc39b7bcae2fb54e8b2eb7239a151a8be52286e"
+BOOTSTRAP_COVERAGE = Fraction(2070 * 100, 2372)
 
 
 def github_json(endpoint, *query_args):
@@ -35,42 +35,88 @@ def line_coverage(path):
     return Fraction(covered * 100, total)
 
 
+def merged_pr_coverage(repository, branch, sha):
+    pulls = github_json(f"repos/{repository}/commits/{sha}/pulls")
+    base_tree = github_json(f"repos/{repository}/git/commits/{sha}")["tree"]["sha"]
+    for pull in pulls:
+        if not (
+            pull["merged_at"]
+            and pull["merge_commit_sha"] == sha
+            and pull["base"]["ref"] == branch
+            and pull["base"]["repo"]["full_name"] == repository
+        ):
+            continue
+
+        head = pull["head"]["sha"]
+        if github_json(f"repos/{repository}/git/commits/{head}")["tree"]["sha"] != base_tree:
+            continue
+
+        result = github_json(
+            f"repos/{repository}/actions/workflows/check.yml/runs",
+            "-f",
+            f"head_sha={head}",
+            "-f",
+            "event=pull_request",
+            "-f",
+            "status=success",
+        )
+        for run in result["workflow_runs"]:
+            run_id = run["id"]
+            artifacts = github_json(
+                f"repos/{repository}/actions/runs/{run_id}/artifacts",
+                "-f",
+                f"name={BASELINE_ARTIFACT}",
+            )["artifacts"]
+            if not any(not artifact["expired"] for artifact in artifacts):
+                continue
+
+            pull_number = pull["number"]
+            print(f"Using coverage from merged pull request #{pull_number}, run {run_id}")
+            with TemporaryDirectory() as folder:
+                subprocess.run(
+                    [
+                        "gh",
+                        "run",
+                        "download",
+                        str(run_id),
+                        "--name",
+                        BASELINE_ARTIFACT,
+                        "--dir",
+                        folder,
+                        "--repo",
+                        repository,
+                    ],
+                    check=True,
+                )
+                return line_coverage(Path(folder) / "coverage.xml")
+    return None
+
+
+def measure_base_coverage(sha):
+    print(f"No coverage artifact matches {sha}; measuring the base in this PR run.", flush=True)
+    env = os.environ.copy()
+    for name in ("GH_TOKEN", "VIRTUAL_ENV", "UV_PROJECT_ENVIRONMENT"):
+        env.pop(name, None)
+
+    with TemporaryDirectory() as folder:
+        path = Path(folder) / "base"
+        subprocess.run(["git", "worktree", "add", "--detach", str(path), sha], check=True, env=env)
+        try:
+            subprocess.run(["task", "setup", "ci"], cwd=path, check=True, env=env)
+            report = Path("artifacts/coverage.xml")
+            command = ["uv", "run", "--locked", "--all-packages", "coverage", "xml", "-o", str(report)]
+            subprocess.run(command, cwd=path, check=True, env=env)
+            return line_coverage(path / report)
+        finally:
+            subprocess.run(["git", "worktree", "remove", "--force", str(path)], check=True, env=env)
+
+
 def baseline_coverage(repository, branch, sha):
     if sha == BOOTSTRAP_SHA:
         return BOOTSTRAP_COVERAGE
 
-    result = github_json(
-        f"repos/{repository}/actions/workflows/check.yml/runs",
-        "-f",
-        f"branch={branch}",
-        "-f",
-        f"head_sha={sha}",
-        "-f",
-        "status=success",
-        "-f",
-        "per_page=1",
-    )
-    if not result["workflow_runs"]:
-        raise ValueError(f"Waiting for a successful coverage baseline for {branch} at {sha}")
-
-    run_id = result["workflow_runs"][0]["id"]
-    with TemporaryDirectory() as folder:
-        subprocess.run(
-            [
-                "gh",
-                "run",
-                "download",
-                str(run_id),
-                "--name",
-                BASELINE_ARTIFACT,
-                "--dir",
-                folder,
-                "--repo",
-                repository,
-            ],
-            check=True,
-        )
-        return line_coverage(Path(folder) / "coverage.xml")
+    coverage = merged_pr_coverage(repository, branch, sha)
+    return measure_base_coverage(sha) if coverage is None else coverage
 
 
 def main(report_path):

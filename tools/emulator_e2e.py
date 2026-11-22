@@ -66,7 +66,7 @@ def main():
                 AWS_DEFAULT_REGION="us-east-1",
             )
             return subprocess.call(
-                [sys.executable, "-m", "pytest", "-q", "emulator_tests", *sys.argv[1:]], env=env
+                [sys.executable, "-m", "pytest", "-q", "tests/e2e/aws", *sys.argv[1:]], env=env
             )
         finally:
             process.terminate()

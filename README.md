@@ -5,11 +5,34 @@
 ## 手元で試す
 
 ```sh
-uv sync --locked
-uv run python tools/manage.py demo
+# uvをインストール済みの端末で最初に1回
+uv tool install go-task-bin==3.54.0
+task setup
+task demo
 ```
 
 `http://127.0.0.1:8000` で「提供チーム」を選び、API名と用途を入力します。検証の接続先に `sample-sandbox` を選び、用意されたOpenAPIを使って公開できます。別のタブで「利用チーム」を選ぶと、申請、承認後の呼び出し、取消後の拒否を試せます。
+
+## 開発構成と実装設計書
+
+各cloneの最初に `task setup` を実行してください。Python 3.14とワークスペース全体の依存関係を `uv.lock` から同期し、Gitのpre-commitフックを有効にします。フックはステージ済みのテキストを対象にUTF-8（BOMなし）、LF、ファイル末尾の改行1つを確認し、main・masterへの直接コミットを止めます。CIでもテキスト規約を検証します。
+
+| 配置 | 内容 | 実行例 |
+| --- | --- | --- |
+| `packages/frontend` | PuePy画面と単体テスト | `task test:frontend` |
+| `packages/backend` | FastAPIルーター、認証、業務処理とテスト | `task test:backend` |
+| `packages/database` | SQLAlchemyモデル、接続、Alembic移行とテスト | `task test:database` |
+| `packages/infra` | AWS CDKとテンプレートのテスト | `task build` → `task test:infra` |
+| `tests/e2e` | ブラウザー操作とAWS Emulatorを使う横断テスト | `task test:e2e`、`task test:aws` |
+| `tools` | ビルド、設計書生成、監査、テストレポート | `task test:tools` |
+
+親の `pyproject.toml` にPythonの対象範囲、共通のバージョン制約、検査設定を置きます。各メンバーの `pyproject.toml` に直接依存を書き、ルートの単一ロックファイルを共有します。依存の追加には `task deps:add -- --package tsugite-backend パッケージ名`、各種コマンドの一覧には `task --list` を使います。
+
+`task docs` は実行中のデータベースやAWS資格情報を使わず、[API別の実装設計書](docs/generated/README.md)、[SQL・AWS操作のCRUD一覧](docs/generated/crud.md)、[入出力スキーマ](docs/generated/schemas.md)、[テーブル・レコード・カラム定義](docs/generated/database.md)を更新します。設計を変えるときはルーターの引数・応答モデル・依存関数を修正します。CRUD表はAPIを行に、SQLテーブルとAWSサービスをそれぞれ別の表の列に並べます。各セルで操作の種類を、API詳細で条件分岐を含む操作の根拠となるソース行を確認できます。転送先の利用者定義APIの項目は、登録時のOpenAPIで決まります。
+
+APIと項目の和名は [API用語集](packages/backend/src/app/api_names.toml)、テーブル・レコード・カラムの和名と1行の意味は [DB用語集](packages/database/src/tsugite_db/names.toml) で管理します。API用語集はデモ環境で配信するOpenAPI（`/api/openapi.json`）にも反映されます。新しいAPI・項目・テーブル・カラムを追加するときは和名も登録してください。CIの設計書生成で登録漏れを検出します。
+
+CIはPRで設計書を生成して成果物に含めます。既定ブランチの検証が通ると、生成結果に差分がある場合だけ `docs/generated/` を自動コミットします。
 
 ## ポータルで操作手順を調べる
 
@@ -41,23 +64,26 @@ uv run python tools/manage.py demo
 
 ## AWSで使う
 
+main へのマージを起点に自動配備するには、[GitHub Actions の初回設定](deploy/README.md)を行います。
+
 Python CDKでCloudFront、非公開S3、API Gateway、Lambda、Cognito、Aurora DSQLを構築します。フロントはPuePyとPyScript、APIはFastAPI、DB変更はAlembicです。Pythonのブラウザ実行環境とCSSも同じ配信元に配置します。
 
-CDKをブートストラップ済みのAWS環境で `uv run python tools/manage.py synth` が構成を合成し、`uv run python tools/manage.py deploy` が配備とDB移行を行います。初回は在庫照会Lambdaが検証用の接続先になります。提供者をCognitoの `own-supply`、利用者を `use-finance`、全体監査担当者を `audit` グループに追加してください。
+CDKをブートストラップ済みのAWS環境で `task synth` が構成を合成し、`task deploy` が配備とDB移行を行います。初回は在庫照会Lambdaが検証用の接続先になります。提供者をCognitoの `own-supply`、利用者を `use-finance`、全体監査担当者を `audit` グループに追加してください。
 
-独自の接続先は [設定例](examples/bindings.json) を編集し、`deploy --bindings ファイル名` で指定します。Lambdaは `kind` に `lambda`、`address` に関数ARNを指定します。HTTPSは必要に応じて `secret_arn` に接続用BearerトークンのSecrets Manager ARNを指定し、提供元でも呼び出しを制限します。委任された接続先の配下なら、提供チームが画面でベースパスと [OpenAPI](examples/stock.openapi.json) を登録できます。
+独自の接続先は [設定例](examples/bindings.json) を編集し、`task deploy -- --bindings ファイル名` で指定します。Lambdaは `kind` に `lambda`、`address` に関数ARNを指定します。HTTPSは必要に応じて `secret_arn` に接続用BearerトークンのSecrets Manager ARNを指定し、提供元でも呼び出しを制限します。委任された接続先の配下なら、提供チームが画面でベースパスと [OpenAPI](examples/stock.openapi.json) を登録できます。
 
 システム間連携には、対象プロジェクトのCognitoアプリクライアントで `client_credentials` と `hub/invoke` スコープを使います。承認後、API詳細に表示されるURLへアクセストークンを付けて呼び出します。
 
 ## E2Eテスト
 
-`uv run python tools/manage.py synth` でテストに使う配布物とCDKテンプレートを作ります。ブラウザーとAWSの検証は次の手順で再現できます。
+`task synth` でテストに使う配布物とCDKテンプレートを作ります。ブラウザーとAWSの検証は次の手順で再現できます。
 
 ```sh
-uv run playwright install chromium --only-shell
-uv run pytest -q
-# AWS Emulator 1.0.555 をインストールして実行
-uv run python tools/emulator_e2e.py
+task browser:install
+task test
+# Linux x86_64でAWS Emulator 1.0.555を導入して実行
+task emulator:install
+task test:aws
 ```
 
 ブラウザーでは、OpenAPIファイルの登録、仕様の検索、申請、却下、再申請、承認、掲載の取り下げ、権限取消と監査履歴を確認します。AWS側ではテスト専用のエミュレーターを起動し、CDKテンプレートから対象リソースを構築します。Cognitoのトークンを持つ提供者と利用者が別々のブラウザー画面を操作し、承認された利用者に在庫照会Lambdaの商品コードが表示されるところまで検証します。HTTPSの接続先にはSecrets Managerから取得したトークンが届き、権限取消後はリクエストが届かないことも確かめます。終了時に環境を破棄します。[AWS Emulatorのインストール方法](https://docs.aws.amazon.com/emulator/latest/userguide/getting-started-linux.html)
@@ -69,6 +95,6 @@ uv run python tools/emulator_e2e.py
 
 データベース・移行、API実行、ゲートウェイ、画面配信、認証、接続先設定を個別のコンストラクトで管理します。スタックとタグ対応リソースには `Application=TsugiteAPI`、`ManagedBy=AWS-CDK`、所属を示す `Component` を設定します。CloudFormationでタグを指定できない型には、同じ情報をテンプレートの `Metadata.Tsugite` に記録します。
 
-GitHub Actions の **Verify** から成果物 **contracts-and-test-results** 内の `test-report.html` または `test-report.pdf` を開くと、ケースごとの期待結果、成否、実行時間、実際の画面とタグ一覧を確認できます。手元では通常のテストに `--junitxml=artifacts/junit.xml`、エミュレーターのテストに `--junitxml=artifacts/aws-emulator.xml` を付けて実行し、`uv run python tools/test_report.py --pdf` で同じレポートを作れます。
+GitHub Actions の **Verify** から成果物 **contracts-and-test-results** 内の `test-report.html` または `test-report.pdf` を開くと、ケースごとの期待結果、成否、実行時間、実際の画面とタグ一覧を確認できます。手元では通常のテストに `--junitxml=artifacts/junit.xml`、エミュレーターのテストに `--junitxml=artifacts/aws-emulator.xml` を付けて実行し、`task report` で同じレポートを作れます。
 
-[ポータルの画面仕様と業務フロー](docs/design/portal.md)。デモ起動中に別の端末で `uv run python tools/seed_marketplace.py --editions 20` を実行すると、在庫・配送・為替・店舗・発注・営業日の6種類を20拠点分、計120件公開できます。同じ名前の出品は再利用します。デモでの実行結果は接続情報の折り返しです。業務ごとの応答はHTTPS接続のE2Eで確認します。
+[ポータルの画面仕様と業務フロー](docs/design/portal.md)。デモ起動中に別の端末で `task seed -- --editions 20` を実行すると、在庫・配送・為替・店舗・発注・営業日の6種類を20拠点分、計120件公開できます。同じ名前の出品は再利用します。デモでの実行結果は接続情報の折り返しです。業務ごとの応答はHTTPS接続のE2Eで確認します。
