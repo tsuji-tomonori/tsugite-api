@@ -10,9 +10,11 @@ from pathlib import Path
 import sqlglot
 from sqlglot import exp
 from tsugite_db.models import Base
+from tsugite_db.source_docs import read_source
 
 ROOT = Path(__file__).resolve().parents[2]
 FUNCTION = (ast.FunctionDef, ast.AsyncFunctionDef)
+SQL_PARSE_ERRORS = (ValueError, sqlglot.errors.SqlglotError)
 
 
 def name(node):
@@ -59,7 +61,7 @@ def raw_sql(sql):
         ctes = {cte.alias for cte in stmt.find_all(exp.CTE)}
         for table in stmt.find_all(exp.Table):
             if table is target or table.name not in ctes:
-                yield (table.sql().split(" AS ")[0], op if table is target else "R")
+                yield (".".join(part.sql() for part in table.parts), op if table is target else "R")
 
 
 def aws_action(operation):
@@ -90,7 +92,7 @@ class SourceIndex:
         for root in roots or [ROOT / "packages/backend/src", ROOT / "packages/database/src"]:
             for path in sorted(root.rglob("*.py")):
                 module = ".".join(path.relative_to(root).with_suffix("").parts).removesuffix(".__init__")
-                tree = ast.parse(path.read_text(encoding="utf-8"))
+                tree = read_source(path).tree
                 package = module if path.stem == "__init__" else module.rpartition(".")[0]
                 self.index(module, tree, path, {}, package)
 
@@ -316,7 +318,7 @@ class SourceIndex:
                         raise ValueError()
                     for table, op in raw_sql(literal(arg)):
                         add("SQL", table, op, part, literal(arg))
-                except ValueError, sqlglot.errors.SqlglotError:
+                except SQL_PARSE_ERRORS:
                     facts.unresolved.add((func, part.lineno, "SQL文または対象表"))
             if isinstance(part.func, ast.Attribute):
                 for svc in service(part.func.value):

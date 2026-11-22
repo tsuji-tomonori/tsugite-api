@@ -21,13 +21,25 @@ from tsugite_db.models import Access, Asset, CredentialRule
 
 router = APIRouter()
 
+LimitTarget = Literal[
+    #: 組織
+    "units",
+    #: API
+    "apis",
+]
 
+
+#: 有効期間上限の設定値
 class Lifetime(Input):
+    #: トークンの有効期間上限（分）
     max_minutes: int | None = Field(default=None, ge=1, le=60)
 
 
+#: 利用者に許可するAPI操作
 class Permission(Input):
+    #: 対象利用者の識別子
     subject: str = Field(min_length=1, max_length=180)
+    #: この利用者に許可するAPI操作
     operations: list[str] | None
 
 
@@ -62,8 +74,14 @@ def subscribers(db, asset):
     return members_for(db, {g.project for g in grants}, [g.subject for g in grants if g.subject])
 
 
+#: APIの利用者別操作権限を確認する
 @router.get("/apis/{key}/operation-policy", responses={200: {"model": outputs.OperationPolicy}})
-def get_operations(key: str, db: DB, actor: User):
+def get_operations(
+    #: カタログ掲載APIの識別子
+    key: str,
+    db: DB,
+    actor: User,
+):
     asset = owner(db, key, actor)
     prefix = "person/" + key + "/"
     configured = {
@@ -82,8 +100,16 @@ def get_operations(key: str, db: DB, actor: User):
     }
 
 
+#: APIの利用者別操作権限を設定する
 @router.put("/apis/{key}/operation-policy", responses={200: {"model": Permission}})
-def set_operations(key: str, data: Permission, request: Request, db: DB, actor: User):
+def set_operations(
+    #: カタログ掲載APIの識別子
+    key: str,
+    data: Permission,
+    request: Request,
+    db: DB,
+    actor: User,
+):
     asset = owner(db, key, actor)
     if data.operations is not None and not set(data.operations) <= set(operations(asset)):
         raise HTTPException(422, "仕様に含まれる操作を指定してください")
@@ -124,15 +150,31 @@ def bound_resource(db, kind, key, actor):
     return "unit/" + key, cap
 
 
+#: API・組織単位のトークン有効期間上限を確認する
 @router.get("/credential-limits/{kind}/{key}", responses={200: {"model": outputs.Limit}})
-def get_limit(kind: Literal["units", "apis"], key: str, db: DB, actor: User):
+def get_limit(
+    #: 上限の設定対象（API・組織）
+    kind: LimitTarget,
+    #: 上限を設定するAPIまたは組織の識別子
+    key: str,
+    db: DB,
+    actor: User,
+):
     identity, cap = bound_resource(db, kind, key, actor)
     return {"inherited_minutes": cap, "max_minutes": minutes(db, identity)}
 
 
+#: API・組織単位のトークン有効期間上限を設定する
 @router.put("/credential-limits/{kind}/{key}", responses={200: {"model": outputs.Limit}})
 def set_limit(
-    kind: Literal["units", "apis"], key: str, data: Lifetime, request: Request, db: DB, actor: User
+    #: 上限の設定対象（API・組織）
+    kind: LimitTarget,
+    #: 上限を設定するAPIまたは組織の識別子
+    key: str,
+    data: Lifetime,
+    request: Request,
+    db: DB,
+    actor: User,
 ):
     identity, cap = bound_resource(db, kind, key, actor)
     if data.max_minutes is not None and data.max_minutes > cap:
@@ -147,8 +189,14 @@ def set_limit(
     return {"inherited_minutes": cap, "max_minutes": data.max_minutes}
 
 
+#: 認証情報の発行時に選べる対象と上限を取得する
 @router.get("/credentials/options", responses={200: {"model": outputs.CredentialOptions}})
-def options(project: str, actor: User, db: DB):
+def options(
+    #: 利用プロジェクトの識別子
+    project: str,
+    actor: User,
+    db: DB,
+):
     if project not in actor.projects and project != private_project(actor.subject):
         raise HTTPException(403)
     assets = []

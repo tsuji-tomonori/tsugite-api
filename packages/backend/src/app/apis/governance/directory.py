@@ -16,20 +16,36 @@ from tsugite_db.models import AccessLog, Affiliation, Asset, DirectoryTree, Even
 router = APIRouter()
 
 
+#: 部署・プロジェクトの編集内容
 class UnitData(Input):
-    kind: Literal["project", "department"]
+    #: 組織の種類（部署・プロジェクト）
+    kind: Literal[
+        #: プロジェクト
+        "project",
+        #: 部署
+        "department",
+    ]
+    #: 部署・プロジェクト名
     name: str = Field(min_length=1, max_length=120)
+    #: 親部署の識別子
     parent: str = ""
 
 
+#: 組織への所属設定
 class Membership(Input):
+    #: 対象利用者の識別子
     subject: str = Field(min_length=1, max_length=180)
+    #: 部署・プロジェクトの識別子
     unit_id: str
+    #: 所属先の管理者か
     leader: bool = False
+    #: 役職名
     title: str = Field("", max_length=120)
 
 
+#: 組織の利用停止設定
 class State(Input):
+    #: 組織の利用を停止中か
     stopped: bool
 
 
@@ -89,6 +105,7 @@ def manages(actor, tree, key):
     return key in tree and (actor.admin or bool(actor.leads & ancestry(tree, [key])))
 
 
+#: 組織の構成と利用者の所属を確認する
 @router.get("/workspace", responses={200: {"model": outputs.Workspace}})
 def workspace(actor: User, db: DB):
     tree = units(db)
@@ -116,8 +133,16 @@ def save_tree(db, tree):
     db.commit()
 
 
+#: 部署・プロジェクトを登録または更新する
 @router.put("/workspace/units/{key}", responses={200: {"model": outputs.Unit}})
-def unit(key: str, data: UnitData, request: Request, actor: User, db: DB):
+def unit(
+    #: 部署・プロジェクトの識別子
+    key: str,
+    data: UnitData,
+    request: Request,
+    actor: User,
+    db: DB,
+):
     import re
 
     administrator(actor)
@@ -136,6 +161,7 @@ def unit(key: str, data: UnitData, request: Request, actor: User, db: DB):
     return tree[key]
 
 
+#: 利用者の所属・役職・管理権限を設定する
 @router.put("/workspace/memberships", responses={200: {"model": Membership}})
 def assign(data: Membership, request: Request, actor: User, db: DB):
     administrator(actor)
@@ -154,8 +180,17 @@ def assign(data: Membership, request: Request, actor: User, db: DB):
     return data
 
 
+#: 利用者の所属を解除する
 @router.delete("/workspace/memberships", responses={200: {"model": outputs.Removed}})
-def unassign(subject: str, unit_id: str, request: Request, actor: User, db: DB):
+def unassign(
+    #: 対象利用者の識別子
+    subject: str,
+    #: 所属先の部署・プロジェクト識別子
+    unit_id: str,
+    request: Request,
+    actor: User,
+    db: DB,
+):
     administrator(actor)
     if unit_id not in units(db):
         raise HTTPException(404)
@@ -169,8 +204,16 @@ def unassign(subject: str, unit_id: str, request: Request, actor: User, db: DB):
     return {"removed": True}
 
 
+#: 部署・プロジェクトの利用を停止または再開する
 @router.put("/workspace/units/{key}/state", responses={200: {"model": outputs.Unit}})
-def change_state(key: str, data: State, request: Request, actor: User, db: DB):
+def change_state(
+    #: 部署・プロジェクトの識別子
+    key: str,
+    data: State,
+    request: Request,
+    actor: User,
+    db: DB,
+):
     tree = units(db)
     if not manages(actor, tree, key):
         raise HTTPException(403)
@@ -196,6 +239,7 @@ def federated_members(db, tree, key, known):
             cursor = {}
             while True:
                 try:
+                    #: 利用者・グループの管理（Cognitoユーザープール） / グループの利用者を一覧
                     page = client.list_users_in_group(
                         UserPoolId=pool, GroupName=prefix + project, **cursor
                     )
@@ -232,8 +276,14 @@ def unit_condition(tree, key):
     )
 
 
+#: 部署・プロジェクトの所属者とAPI利用実績を取得する
 @router.get("/workspace/units/{key}/usage", responses={200: {"model": outputs.Usage}})
-def usage(key: str, actor: User, db: DB):
+def usage(
+    #: 部署・プロジェクトの識別子
+    key: str,
+    actor: User,
+    db: DB,
+):
     tree = units(db)
     if not manages(actor, tree, key):
         raise HTTPException(403)

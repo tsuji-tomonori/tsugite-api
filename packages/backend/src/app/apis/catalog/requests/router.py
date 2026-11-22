@@ -8,8 +8,16 @@ from tsugite_db.models import Access, Asset, Event
 router = APIRouter()
 
 
+#: APIの利用申請を一覧する
 @router.get("/requests", response_model=list[Right], operation_id="requests")
-def requests(actor: User, db: DB, incoming: bool = False, asset_id: str = ""):
+def requests(
+    actor: User,
+    db: DB,
+    #: 受け取った利用申請を表示するか
+    incoming: bool = False,
+    #: 対象APIの識別子
+    asset_id: str = "",
+):
     last_decision = (
         select(Event.detail)
         .where(

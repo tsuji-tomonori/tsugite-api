@@ -7,6 +7,7 @@ from fastapi import APIRouter
 router = APIRouter()
 
 
+#: ログイン中の利用者の所属と権限を確認する
 @router.get("/me", operation_id="me", responses={200: {"model": outputs.Profile}})
 def me(actor: User, db: DB):
     return {

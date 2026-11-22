@@ -30,7 +30,7 @@ task demo
 
 `task docs` は実行中のデータベースやAWS資格情報を使わず、[API別の実装設計書](docs/generated/README.md)、[SQL・AWS操作のCRUD一覧](docs/generated/crud.md)、[入出力スキーマ](docs/generated/schemas.md)、[テーブル・レコード・カラム定義](docs/generated/database.md)を更新します。設計を変えるときはルーターの引数・応答モデル・依存関数を修正します。CRUD表はAPIを行に、SQLテーブルとAWSサービスをそれぞれ別の表の列に並べます。各セルで操作の種類を、API詳細で条件分岐を含む操作の根拠となるソース行を確認できます。転送先の利用者定義APIの項目は、登録時のOpenAPIで決まります。
 
-APIと項目の和名は [API用語集](packages/backend/src/app/api_names.toml)、テーブル・レコード・カラムの和名と1行の意味は [DB用語集](packages/database/src/tsugite_db/names.toml) で管理します。API用語集はデモ環境で配信するOpenAPI（`/api/openapi.json`）にも反映されます。新しいAPI・項目・テーブル・カラムを追加するときは和名も登録してください。CIの設計書生成で登録漏れを検出します。
+API操作はルートデコレーター、引数・モデル・項目・列挙値はそれぞれの宣言の直前に `#: 和名` を書きます。DBモデルのクラスには同じ形式でテーブル名を書き、docstringの1段落目にレコード名、2段落目に1行が表す内容を書きます。AWS SDK呼び出しの直前には `#: サービスの和名 / 操作の和名` を書きます。`task docs` はPythonの構文木とコメントトークンをFastAPI・SQLAlchemyの定義と照合し、設計書とデモ環境のOpenAPIに和名を反映します。
 
 CIはPRで設計書を生成して成果物に含めます。既定ブランチの検証が通ると、生成結果に差分がある場合だけ `docs/generated/` を自動コミットします。
 
