@@ -25,6 +25,12 @@ def main():
             name, help="AWS CDKの" + ("合成" if name == "synth" else "配備とDB移行")
         )
         cmd.add_argument("--bindings", type=Path, help="プロジェクトと接続先を指定するJSONファイル")
+        if name == "deploy":
+            cmd.add_argument(
+                "--require-approval",
+                choices=("never", "any-change", "broadening"),
+                help="CDKがデプロイ時に対話で承認を求める条件",
+            )
     args = parser.parse_args()
     os.chdir(ROOT)
     if args.command == "demo":
@@ -75,9 +81,11 @@ def main():
         frontend()
         backend()
         if args.command != "build":
-            context = ["-c", "bindings=" + str(args.bindings.resolve())] if args.bindings else []
+            cdk_args = ["-c", "bindings=" + str(args.bindings.resolve())] if args.bindings else []
+            if args.command == "deploy" and args.require_approval:
+                cdk_args.extend(["--require-approval", args.require_approval])
             subprocess.run(
-                ["npx", "--yes", "--package", "aws-cdk@2.1149.0", "cdk", args.command, *context],
+                ["npx", "--yes", "--package", "aws-cdk@2.1149.0", "cdk", args.command, *cdk_args],
                 cwd=ROOT / "packages/infra",
                 check=True,
             )

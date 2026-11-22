@@ -64,6 +64,8 @@ CIはPRで設計書を生成して成果物に含めます。既定ブランチ�
 
 ## AWSで使う
 
+main へのマージを起点に自動配備するには、[GitHub Actions の初回設定](deploy/README.md)を行います。
+
 Python CDKでCloudFront、非公開S3、API Gateway、Lambda、Cognito、Aurora DSQLを構築します。フロントはPuePyとPyScript、APIはFastAPI、DB変更はAlembicです。Pythonのブラウザ実行環境とCSSも同じ配信元に配置します。
 
 CDKをブートストラップ済みのAWS環境で `task synth` が構成を合成し、`task deploy` が配備とDB移行を行います。初回は在庫照会Lambdaが検証用の接続先になります。提供者をCognitoの `own-supply`、利用者を `use-finance`、全体監査担当者を `audit` グループに追加してください。
