@@ -93,6 +93,7 @@ def home(ctx, render):
     def suggestion(question):
         def submit_suggestion(event):
             asyncio.ensure_future(ask(question))
+
         return submit_suggestion
 
     def contact(event):
@@ -109,15 +110,21 @@ def home(ctx, render):
         state["sending"] = True
         refresh(render, "home")
         try:
-            record = await client.api("/inquiries", "POST", {"inquiry_id": state["inquiry_id"], "question": question})
+            record = await client.api(
+                "/inquiries", "POST", {"inquiry_id": state["inquiry_id"], "question": question}
+            )
         except Exception as exc:
             state["inquiry_error"] = str(exc)
         else:
             state.update(contact=False, draft="", contact_text="", inquiry_id=None, inquiry_error="")
             turns.append(
-                {"question": question, "reply": {
-                    "kind": "receipt", "answer": "問い合わせを受け付けました。受付番号 " + record["inquiry_id"],
-                }}
+                {
+                    "question": question,
+                    "reply": {
+                        "kind": "receipt",
+                        "answer": "問い合わせを受け付けました。受付番号 " + record["inquiry_id"],
+                    },
+                }
             )
             del turns[:-12]
         finally:
@@ -137,7 +144,12 @@ def home(ctx, render):
                 t.p("利用目的からAPIを探したり、使い方ガイドの手順を確認したりできます。")
                 with t.div(classes="chat-actions"):
                     for question in SUGGESTIONS:
-                        t.button(question, type="button", classes="btn btn-outline-secondary", on_click=suggestion(question))
+                        t.button(
+                            question,
+                            type="button",
+                            classes="btn btn-outline-secondary",
+                            on_click=suggestion(question),
+                        )
         with t.div(id="chat-history", classes="chat-history", role="log", aria_label="会話"):
             for turn in turns:
                 with t.article(classes="chat-turn"):
@@ -154,15 +166,25 @@ def home(ctx, render):
             with t.label(classes="field"):
                 t.span("質問")
                 t.input(
-                    id="chat-question", type="text", required=True, minlength=2, maxlength=400,
-                    disabled=state["busy"], classes="form-control", placeholder="利用目的や操作名を入力",
-                    value=state.get("question_text", ""), on_input=remember_question,
+                    id="chat-question",
+                    type="text",
+                    required=True,
+                    minlength=2,
+                    maxlength=400,
+                    disabled=state["busy"],
+                    classes="form-control",
+                    placeholder="利用目的や操作名を入力",
+                    value=state.get("question_text", ""),
+                    on_input=remember_question,
                 )
             t.button("送信", type="submit", disabled=state["busy"], classes="btn btn-primary")
         with t.div(classes="chat-actions"):
             t.button(
-                "運営に問い合わせる", type="button", classes="btn btn-outline-secondary",
-                on_click=contact, aria_expanded="true" if state["contact"] else "false",
+                "運営に問い合わせる",
+                type="button",
+                classes="btn btn-outline-secondary",
+                on_click=contact,
+                aria_expanded="true" if state["contact"] else "false",
             )
             t.a("自分の問い合わせ", href="#/inquiries")
         if state["contact"]:
@@ -173,12 +195,19 @@ def home(ctx, render):
                 with t.label(classes="field"):
                     t.span("問い合わせ内容")
                     t.textarea(
-                        state.get("contact_text", ""), id="inquiry-question", classes="form-control",
-                        minlength=2, maxlength=2000, required=True, disabled=state.get("sending", False),
+                        state.get("contact_text", ""),
+                        id="inquiry-question",
+                        classes="form-control",
+                        minlength=2,
+                        maxlength=2000,
+                        required=True,
+                        disabled=state.get("sending", False),
                         on_input=remember_inquiry,
                     )
                 t.button(
-                    "問い合わせを送信", type="submit", classes="btn btn-primary",
+                    "問い合わせを送信",
+                    type="submit",
+                    classes="btn btn-primary",
                     disabled=state.get("sending", False),
                 )
 

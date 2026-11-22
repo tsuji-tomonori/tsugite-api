@@ -23,7 +23,13 @@ class PortalChat(Construct):
             removal_policy=RemovalPolicy.DESTROY,
         )
         NagSuppressions.add_resource_suppressions(
-            jobs, [{"id": "AwsSolutions-DDB3", "reason": "Temporary chat results expire; recovery is unnecessary."}]
+            jobs,
+            [
+                {
+                    "id": "AwsSolutions-DDB3",
+                    "reason": "Temporary chat results expire; recovery is unnecessary.",
+                }
+            ],
         )
         bucket = f"cdk-hnb659fds-assets-{Aws.ACCOUNT_ID}-{Aws.REGION}"
         artifacts = json.loads((ROOT / "agent/models/manifest.json").read_text(encoding="utf-8"))
@@ -41,7 +47,9 @@ class PortalChat(Construct):
             role=role,
             log_group=group,
             environment={
-                "CHAT_TABLE": jobs.table_name, "DSQL_HOST": cluster.attr_endpoint, "DSQL_USER": "tsugite_chat",
+                "CHAT_TABLE": jobs.table_name,
+                "DSQL_HOST": cluster.attr_endpoint,
+                "DSQL_USER": "tsugite_chat",
             },
             memory_size=768,
             timeout=Duration.seconds(145),
@@ -50,9 +58,15 @@ class PortalChat(Construct):
             max_event_age=Duration.minutes(2),
         )
         self.allow_logs(group, role)
-        for model, memory, timeout in (("decision", 3072, 35), ("tool", 4096, 65), ("generate", 4096, 65)):
+        for model, memory, timeout in (
+            ("decision", 3072, 35),
+            ("tool", 4096, 65),
+            ("generate", 4096, 65),
+        ):
             name = model.title()
-            inference_role = iam.Role(self, name + "Role", assumed_by=iam.ServicePrincipal("lambda.amazonaws.com"))
+            inference_role = iam.Role(
+                self, name + "Role", assumed_by=iam.ServicePrincipal("lambda.amazonaws.com")
+            )
             group = self.log_group(name)
             self.allow_logs(group, inference_role)
             inference = fn.Function(
@@ -60,8 +74,14 @@ class PortalChat(Construct):
                 name,
                 runtime=fn.Runtime.PYTHON_3_14,
                 handler="decision.handler" if model == "decision" else "completion.handler",
-                code=fn.Code.from_asset(str(ROOT / "build" / ("chat-decision" if model == "decision" else "chat-llm"))),
-                environment={"MODEL_BUCKET": bucket, "MODEL_ROLE": model, "TOKENIZERS_PARALLELISM": "false"},
+                code=fn.Code.from_asset(
+                    str(ROOT / "build" / ("chat-decision" if model == "decision" else "chat-llm"))
+                ),
+                environment={
+                    "MODEL_BUCKET": bucket,
+                    "MODEL_ROLE": model,
+                    "TOKENIZERS_PARALLELISM": "false",
+                },
                 log_group=group,
                 role=inference_role,
                 memory_size=memory,
@@ -71,10 +91,12 @@ class PortalChat(Construct):
             )
             NagSuppressions.add_resource_suppressions(
                 inference,
-                [{
-                    "id": "AwsSolutions-L1",
-                    "reason": "Native inference packages target the stable Python 3.14 Lambda runtime.",
-                }],
+                [
+                    {
+                        "id": "AwsSolutions-L1",
+                        "reason": "Native inference packages target the stable Python 3.14 Lambda runtime.",
+                    }
+                ],
             )
             inference.add_to_role_policy(
                 iam.PolicyStatement(
@@ -87,14 +109,18 @@ class PortalChat(Construct):
                 )
             )
             role.add_to_policy(
-                iam.PolicyStatement(actions=["lambda:InvokeFunction"], resources=[inference.function_arn])
+                iam.PolicyStatement(
+                    actions=["lambda:InvokeFunction"], resources=[inference.function_arn]
+                )
             )
             worker.add_environment("CHAT_" + model.upper(), inference.function_name)
         for principal, actions in (
             (api, ["dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:UpdateItem"]),
             (worker, ["dynamodb:GetItem", "dynamodb:UpdateItem"]),
         ):
-            principal.add_to_role_policy(iam.PolicyStatement(actions=actions, resources=[jobs.table_arn]))
+            principal.add_to_role_policy(
+                iam.PolicyStatement(actions=actions, resources=[jobs.table_arn])
+            )
         api.add_to_role_policy(
             iam.PolicyStatement(actions=["lambda:InvokeFunction"], resources=[worker.function_arn])
         )

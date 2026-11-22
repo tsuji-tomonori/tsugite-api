@@ -39,7 +39,9 @@ HEADINGS = {
     "manual": ("使い方ガイドの該当手順です。", "参照したガイドに沿って手順を案内します。"),
 }
 OUTSIDE = "公開APIの検索と継手APIの使い方に回答できます。運営への問い合わせも受け付けています。"
-NO_MATCH = "質問に対応する公開APIや手順が見つかりませんでした。操作名や利用目的を変えて検索してください。"
+NO_MATCH = (
+    "質問に対応する公開APIや手順が見つかりませんでした。操作名や利用目的を変えて検索してください。"
+)
 
 
 def dot(left, right):
@@ -60,8 +62,7 @@ def routes(question, models):
     outside = scores.get("outside", -1)
     ordered = sorted(explicit, key=lambda key: (-scores.get(key, -1), key))
     plausible = [
-        key for key in ordered
-        if explicit[key] or scores.get(key, -1) >= max(0.43, outside + 0.055)
+        key for key in ordered if explicit[key] or scores.get(key, -1) >= max(0.43, outside + 0.055)
     ]
     if outside >= 0.50 and outside >= max(scores.get(key, -1) for key in explicit) + 0.10:
         return []
@@ -123,8 +124,7 @@ def recommended(question, query, assets, models, use_manual, actor):
         raw = [g.id for g in search_guides(question) if g.id in sources]
         edited = [g.id for g in search_guides(query) if g.id in sources] if query != question else raw
         documents = [
-            (g.id, " ".join((g.title, *g.intents, g.prerequisite, *g.steps)))
-            for g in sources.values()
+            (g.id, " ".join((g.title, *g.intents, g.prerequisite, *g.steps))) for g in sources.values()
         ]
     else:
         raw = [asset.id for asset in rank_assets(assets, question)]
@@ -152,7 +152,9 @@ def ask(question, products, actor, models):
     allowed = routes(question, models)
     if allowed is None:
         # Local demos and model outages still accept matches with verifiable sources.
-        allowed = ["manual"] if MANUAL.search(question) else ["catalog"] if CATALOG.search(question) else []
+        allowed = (
+            ["manual"] if MANUAL.search(question) else ["catalog"] if CATALOG.search(question) else []
+        )
     if not allowed:
         return {"kind": "outside", "answer": OUTSIDE}
     plan = models("tool", {"question": question, "allowed": allowed})

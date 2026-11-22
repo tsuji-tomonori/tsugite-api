@@ -32,17 +32,36 @@ def build():
     llm = BUILD / "chat-llm"
     subprocess.run(
         [
-            "uv", "pip", "install", "--python-version", "3.14", "--python-platform",
-            "x86_64-manylinux_2_34", "--only-binary", ":all:", "--target", str(decision),
-            "onnxruntime==1.32.0", "numpy==2.4.0", "tokenizers==0.22.2",
+            "uv",
+            "pip",
+            "install",
+            "--python-version",
+            "3.14",
+            "--python-platform",
+            "x86_64-manylinux_2_34",
+            "--only-binary",
+            ":all:",
+            "--target",
+            str(decision),
+            "onnxruntime==1.32.0",
+            "numpy==2.4.0",
+            "tokenizers==0.22.2",
         ],
         check=True,
     )
     source = BUILD / ("llama.cpp-" + LLAMA_RELEASE)
     if not source.exists():
         subprocess.run(
-            ["git", "clone", "--depth", "1", "--branch", LLAMA_RELEASE,
-             "https://github.com/ggml-org/llama.cpp.git", str(source)],
+            [
+                "git",
+                "clone",
+                "--depth",
+                "1",
+                "--branch",
+                LLAMA_RELEASE,
+                "https://github.com/ggml-org/llama.cpp.git",
+                str(source),
+            ],
             check=True,
         )
     head = subprocess.check_output(["git", "-C", str(source), "rev-parse", "HEAD"], text=True).strip()
@@ -51,15 +70,28 @@ def build():
     out = BUILD / "llama-native"
     subprocess.run(
         [
-            "cmake", "-S", str(source), "-B", str(out), "-DCMAKE_BUILD_TYPE=Release",
-            "-DCMAKE_EXE_LINKER_FLAGS=-static", "-DBUILD_SHARED_LIBS=OFF",
-            "-DGGML_NATIVE=OFF", "-DGGML_OPENMP=OFF", "-DGGML_LLAMAFILE=OFF",
-            "-DLLAMA_OPENSSL=OFF", "-DLLAMA_BUILD_TESTS=OFF", "-DLLAMA_BUILD_SERVER=ON",
-            "-DLLAMA_BUILD_UI=OFF", "-DLLAMA_USE_PREBUILT_UI=OFF",
+            "cmake",
+            "-S",
+            str(source),
+            "-B",
+            str(out),
+            "-DCMAKE_BUILD_TYPE=Release",
+            "-DCMAKE_EXE_LINKER_FLAGS=-static",
+            "-DBUILD_SHARED_LIBS=OFF",
+            "-DGGML_NATIVE=OFF",
+            "-DGGML_OPENMP=OFF",
+            "-DGGML_LLAMAFILE=OFF",
+            "-DLLAMA_OPENSSL=OFF",
+            "-DLLAMA_BUILD_TESTS=OFF",
+            "-DLLAMA_BUILD_SERVER=ON",
+            "-DLLAMA_BUILD_UI=OFF",
+            "-DLLAMA_USE_PREBUILT_UI=OFF",
         ],
         check=True,
     )
-    subprocess.run(["cmake", "--build", str(out), "--target", "llama-server", "--parallel", "2"], check=True)
+    subprocess.run(
+        ["cmake", "--build", str(out), "--target", "llama-server", "--parallel", "2"], check=True
+    )
     shutil.copy2(out / "bin/llama-server", llm)
     shutil.copy2(source / "LICENSE", llm / "llama.cpp-LICENSE")
     subprocess.run([str(llm / "llama-server"), "--version"], check=True)
@@ -84,8 +116,11 @@ def publish():
         RoleSessionName="tsugite-chat-models",
     )["Credentials"]
     s3 = boto3.client(
-        "s3", region_name=region, aws_access_key_id=credentials["AccessKeyId"],
-        aws_secret_access_key=credentials["SecretAccessKey"], aws_session_token=credentials["SessionToken"],
+        "s3",
+        region_name=region,
+        aws_access_key_id=credentials["AccessKeyId"],
+        aws_secret_access_key=credentials["SecretAccessKey"],
+        aws_session_token=credentials["SessionToken"],
     )
     bucket = f"cdk-hnb659fds-assets-{account}-{region}"
     artifacts = json.loads((MODELS / "manifest.json").read_text(encoding="utf-8"))
@@ -106,8 +141,16 @@ def publish():
             base = f"https://huggingface.co/{item['repo']}/resolve/{item['revision']}/"
             try:
                 subprocess.run(
-                    ["curl", "--fail", "--location", "--retry", "3", "--output", str(temporary),
-                     base + item["file"]],
+                    [
+                        "curl",
+                        "--fail",
+                        "--location",
+                        "--retry",
+                        "3",
+                        "--output",
+                        str(temporary),
+                        base + item["file"],
+                    ],
                     check=True,
                 )
                 if "sha256" in item:

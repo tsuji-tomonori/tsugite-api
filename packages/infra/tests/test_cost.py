@@ -51,5 +51,8 @@ def test_chat_uses_separate_on_demand_python_functions(tmp_path):
     )
     template.has_resource_properties(
         "AWS::DynamoDB::Table",
-        {"BillingMode": "PAY_PER_REQUEST", "TimeToLiveSpecification": {"AttributeName": "expires", "Enabled": True}},
+        {
+            "BillingMode": "PAY_PER_REQUEST",
+            "TimeToLiveSpecification": {"AttributeName": "expires", "Enabled": True},
+        },
     )

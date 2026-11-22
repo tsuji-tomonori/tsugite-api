@@ -31,12 +31,22 @@ def test_chat_product_and_guide_are_linked(portal_module):
         chat.show_result,
         {
             "answer": "関連する情報を見つけました",
-            "products": [{"id": "stock/2026", "name": "在庫照会", "summary": "棚卸", "environments": ["production"]}],
-            "guides": [{"id": "keys", "title": "キー発行", "steps": ["キーを選びます"], "result": "発行済み"}],
+            "products": [
+                {
+                    "id": "stock/2026",
+                    "name": "在庫照会",
+                    "summary": "棚卸",
+                    "environments": ["production"],
+                }
+            ],
+            "guides": [
+                {"id": "keys", "title": "キー発行", "steps": ["キーを選びます"], "result": "発行済み"}
+            ],
         },
     )
     assert [link.getAttribute("href") for link in dom.getElementsByTagName("a")] == [
-        "#/api/stock%2F2026", "#/guide/keys"
+        "#/api/stock%2F2026",
+        "#/guide/keys",
     ]
     assert dom.getElementsByTagName("li")[0].firstChild.data == "キーを選びます"
 

@@ -5,9 +5,8 @@ from functools import cache
 
 import numpy as np
 import onnxruntime as ort
-from tokenizers import Tokenizer
-
 from runtime import model_file
+from tokenizers import Tokenizer
 
 
 @cache

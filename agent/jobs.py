@@ -67,7 +67,8 @@ def submit(question, actor, job_id):
     table().put_item(Item={"pk": key, "deadline": now + JOB_SECONDS, "expires": now + JOB_TTL})
     try:
         lambda_client().invoke(
-            FunctionName=os.environ["CHAT_WORKER"], InvocationType="Event",
+            FunctionName=os.environ["CHAT_WORKER"],
+            InvocationType="Event",
             Payload=json.dumps({"key": key, "question": question, "actor": data}).encode(),
         )
     except Exception:

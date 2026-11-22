@@ -28,13 +28,17 @@ def test_cloudformation_structure_matches_snapshot(catalog_stack):
     template = Template.from_stack(catalog_stack).to_json()
     actual = {
         "Resources": {
-            key: resource["Type"] for key, resource in template["Resources"].items()
+            key: resource["Type"]
+            for key, resource in template["Resources"].items()
             if resource["Metadata"]["Tsugite"]["Component"] != "Chat"
         },
-        "ChatResources": dict(Counter(
-            resource["Type"] for resource in template["Resources"].values()
-            if resource["Metadata"]["Tsugite"]["Component"] == "Chat"
-        )),
+        "ChatResources": dict(
+            Counter(
+                resource["Type"]
+                for resource in template["Resources"].values()
+                if resource["Metadata"]["Tsugite"]["Component"] == "Chat"
+            )
+        ),
         "Outputs": template["Outputs"],
     }
     expected = json.loads((HERE / "cloudformation_snapshot.json").read_text(encoding="utf-8"))

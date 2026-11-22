@@ -27,10 +27,12 @@ class UpstreamBindings(Construct):
                 )
                 NagSuppressions.add_resource_suppressions(
                     sample,
-                    [{
-                        "id": "AwsSolutions-L1",
-                        "reason": "The sample uses the stable Python 3.14 runtime for AWS Emulator compatibility.",
-                    }],
+                    [
+                        {
+                            "id": "AwsSolutions-L1",
+                            "reason": "The sample uses the stable Python 3.14 runtime for AWS Emulator compatibility.",
+                        }
+                    ],
                 )
                 targets["stock-" + environment] = {
                     "owner": "supply",

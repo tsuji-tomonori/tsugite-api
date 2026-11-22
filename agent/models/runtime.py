@@ -25,7 +25,9 @@ def model_file(role, name):
     if not path.exists():
         temp = path.with_suffix(".download")
         try:
-            boto3.client("s3").download_file(os.environ["MODEL_BUCKET"], object_key(role, item), str(temp))
+            boto3.client("s3").download_file(
+                os.environ["MODEL_BUCKET"], object_key(role, item), str(temp)
+            )
             if "sha256" in item:
                 with temp.open("rb") as stream:
                     if hashlib.file_digest(stream, "sha256").hexdigest() != item["sha256"]:

@@ -34,9 +34,19 @@ def build():
     )
     subprocess.run(
         [
-            "uv", "pip", "compile", str(versions), "--python-version", "3.15",
-            "--python-platform", "x86_64-manylinux_2_34", "--only-binary", ":all:",
-            "--generate-hashes", "--output-file", str(requirements),
+            "uv",
+            "pip",
+            "compile",
+            str(versions),
+            "--python-version",
+            "3.15",
+            "--python-platform",
+            "x86_64-manylinux_2_34",
+            "--only-binary",
+            ":all:",
+            "--generate-hashes",
+            "--output-file",
+            str(requirements),
         ],
         check=True,
     )
