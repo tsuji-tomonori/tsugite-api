@@ -7,9 +7,6 @@ from screen_registry import resolve
 
 
 async def go(page, *, query=None):
-    if page != "workspace":
-        for name in ("workspace_usage", "membership_draft", "unit_draft", "directory_candidates"):
-            ctx.pop(name, None)
     if query is not None or (page in ("catalog", "inventory") and page != route()):
         ctx.update(page=1, query=query or "", env="")
     if window.matchMedia("(max-width: 780px)").matches:

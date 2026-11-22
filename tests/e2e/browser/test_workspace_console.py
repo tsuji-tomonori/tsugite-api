@@ -43,7 +43,6 @@ def test_workspace_key_console(tmp_path: Path, request: pytest.FixtureRequest) -
             admin.goto(url)
             admin.get_by_role("button", name="管理者", exact=True).click()
             expect(admin.get_by_role("heading", name="どのAPIをお探しですか？")).to_be_visible()
-            menu(admin, re.compile("組織|部署"))
             for name, identifier, parent, kind in (
                 ("事業本部", "business", "", "department"),
                 ("経理部", "accounts", "business", "department"),
@@ -51,18 +50,38 @@ def test_workspace_key_console(tmp_path: Path, request: pytest.FixtureRequest) -
                 ("会計分析", "accounting-data", "closing", "project"),
                 ("監査室", "audit-office", "", "department"),
             ):
-                open_form(admin, "部署・プロジェクトの登録と編集")
+                label = "部署" if kind == "department" else "プロジェクト"
+                menu(admin, label)
+                admin.get_by_role("link", name=label + "を作成").click()
                 admin.get_by_label("名称", exact=True).fill(name)
                 admin.get_by_label("識別子", exact=True).fill(identifier)
-                admin.get_by_label("種類", exact=True).select_option(kind)
                 admin.get_by_label("親部署").select_option(parent)
-                admin.get_by_role("button", name="組織設定を保存").click()
+                admin.get_by_role("button", name="保存", exact=True).click()
                 expect(admin.get_by_role("heading", name=re.compile(name + "$"))).to_be_visible()
 
+            admin.get_by_role("link", name="部署を編集").click()
+            expect(admin.get_by_role("heading", name="部署の編集")).to_be_visible()
+            admin.set_viewport_size({"width": 390, "height": 844})
+            save = admin.get_by_role("button", name="保存", exact=True)
+            expect(save).to_have_css("min-height", "48px")
+            expect(save).to_have_css("padding-left", "24px")
+            expect(save.locator("..")).to_have_css("gap", "16px")
+            assert admin.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
+            capture(admin, "edit-mobile", "スマートフォン幅で対象の部署と保存・キャンセルの間隔を確認")
+            admin.set_viewport_size({"width": 1440, "height": 960})
+            admin.get_by_label("名称", exact=True).fill("内部監査室")
+            admin.get_by_role("button", name="保存", exact=True).click()
+            expect(admin.get_by_role("heading", name="内部監査室")).to_be_visible()
             for unit, title in (("business", "本部長"), ("audit-office", "兼務"), ("finance", "課長")):
-                open_form(admin, "所属・役職・リーダーを設定")
-                admin.get_by_label("ユーザー", exact=True).select_option("consumer")
-                admin.get_by_label("所属先").select_option(unit)
+                menu(admin, "プロジェクト" if unit == "finance" else "部署")
+                admin.locator(f'a[href$="/detail/{unit}"]').click()
+                if unit == "finance":
+                    admin.locator(".compact-row").filter(has_text="consumer").get_by_role(
+                        "link", name="所属を編集"
+                    ).click()
+                else:
+                    admin.get_by_role("link", name="メンバーを追加").click()
+                    admin.get_by_label("ユーザー", exact=True).select_option("consumer")
                 admin.get_by_label("役職", exact=True).fill(title)
                 admin.get_by_label("管理権限").select_option("yes")
                 with admin.expect_response(
@@ -70,12 +89,14 @@ def test_workspace_key_console(tmp_path: Path, request: pytest.FixtureRequest) -
                 ) as saved:
                     admin.get_by_role("button", name="所属を保存").click()
                 assert saved.value.ok
-                membership = admin.locator(".compact-row span").filter(
-                    has_text=f"consumer · {unit} · {title}"
+                membership = (
+                    admin.locator(".compact-row").filter(has_text="consumer").filter(has_text=title)
                 )
-                expect(membership).to_have_count(1)
+                expect(membership.get_by_text("リーダー")).to_be_visible()
                 expect(admin.get_by_text("所属と役職を保存しました")).to_be_visible()
 
+            menu(admin, "プロジェクト")
+            admin.get_by_role("link", name="会計分析", exact=True).click()
             tree_end = admin.get_by_role("heading", name="事業本部 / 経理部 / 決算チーム / 会計分析")
             tree_end.scroll_into_view_if_needed()
             capture(admin, "hierarchy", "事業本部・経理部・決算チームの下に新規プロジェクトを配置")
@@ -112,28 +133,50 @@ def test_workspace_key_console(tmp_path: Path, request: pytest.FixtureRequest) -
             call_headers = {**user, "X-Tsugite-Key-Id": owned["id"]}
             assert api.get(path, headers=call_headers).status_code == 200
 
-            menu(leader, re.compile("組織|部署"))
-            root = leader.locator("article").filter(
-                has=leader.get_by_role("heading", name="事業本部", exact=True)
+            menu(leader, "部署")
+            leader.get_by_role("link", name="事業本部", exact=True).click()
+            leader.get_by_role("link", name="モニタリング").click()
+            expect(leader.get_by_role("heading", name="部署のモニタリング")).to_be_visible()
+            expect(leader.get_by_role("meter").first).to_have_attribute("value", "1")
+            capture(leader, "usage", "本部リーダーがプロジェクト別・API別の利用件数を確認")
+            leader.get_by_role("link", name="詳細に戻る").click()
+            leader.get_by_role("button", name="利用を停止").click()
+            expect(leader.get_by_role("button", name="利用を再開")).to_be_visible()
+            menu(leader, "部署")
+            child = leader.get_by_role("row").filter(
+                has=leader.get_by_role("link", name="経理部", exact=True)
             )
-            root.get_by_role("button", name="メンバーと利用状況").click()
-            expect(root.get_by_role("heading", name="利用状況")).to_be_visible()
-            expect(root.get_by_text(re.compile("呼び出し 1 件"))).to_be_visible()
-            capture(leader, "usage", "本部リーダーが所属メンバーとAPI別の利用件数を確認")
-            root.get_by_role("button", name="利用を停止").click()
-            expect(root.get_by_role("button", name="利用を再開")).to_be_visible()
-            capture(leader, "stopped", "担当部署の利用を停止した状態")
-            child = leader.locator("article").filter(
-                has=leader.get_by_role("heading", name="事業本部 / 経理部", exact=True)
-            )
-            expect(child.get_by_text(re.compile("事業本部の設定により利用停止中"))).to_be_visible()
+            expect(child.get_by_text("事業本部の設定により利用停止中")).to_be_visible()
+            capture(leader, "stopped", "上位部署の利用停止が配下の経理部に反映された状態")
             assert api.get(path, headers=call_headers).status_code in (403, 423)
-            root.get_by_role("button", name="利用を再開").click()
-            expect(root.get_by_role("button", name="利用を停止")).to_be_visible()
+            leader.get_by_role("link", name="事業本部", exact=True).click()
+            leader.get_by_role("button", name="利用を再開").click()
+            expect(leader.get_by_role("button", name="利用を停止")).to_be_visible()
             assert api.get(path, headers=call_headers).status_code == 200
             menu(leader, re.compile("APIキー"))
             row = leader.locator("article").filter(has=leader.get_by_role("heading", name="在庫試験用"))
             row.get_by_role("button", name="キーを失効").click()
             expect(row.get_by_text(re.compile("失効済み"))).to_be_visible()
             assert api.get(path, headers=call_headers).status_code in (401, 403)
+
+            for i in range(11):
+                api.put(
+                    f"/api/workspace/units/page-check-{i}",
+                    headers=headers(api, "admin"),
+                    json={"kind": "department", "name": f"一覧確認{i:02}"},
+                ).raise_for_status()
+            menu(admin, "部署")
+            directory = admin.get_by_role("table", name="部署一覧")
+            names = directory.locator("tbody th a")
+            expect(names).to_have_count(10)
+            first_page = names.all_text_contents()
+            capture(admin, "directory", "部署一覧に10件とページ移動を表示")
+            admin.get_by_role("link", name="次へ", exact=True).click()
+            expect(admin).to_have_url(re.compile(r"#/departments/page/2$"))
+            expect(admin.get_by_role("link", name="前へ")).to_be_visible()
+            second_page = names.all_text_contents()
+            assert second_page and set(first_page).isdisjoint(second_page)
+            admin.go_back()
+            expect(names).to_have_count(10)
+            assert names.all_text_contents() == first_page
         browser.close()

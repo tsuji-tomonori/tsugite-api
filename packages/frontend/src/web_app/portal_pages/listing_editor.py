@@ -136,8 +136,9 @@ def inventory_form(asset=None):
             t.p(
                 "仕様や接続先を変えると全環境の利用権と申請を終了します。利用条件のみの変更では、変更した環境で再申請が必要です。"
             )
-        btn("変更を保存" if asset else "下書きを保存", register)
-        btn("保存して公開", register, True, primary=True)
+        with t.div(classes="btn-grouping"):
+            btn("変更を保存" if asset else "下書きを保存", register)
+            btn("保存して公開", register, True, primary=True)
 
 
 async def load_directory(_page):

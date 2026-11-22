@@ -74,7 +74,7 @@ MUTATIONS = (
     ),
     Mutation(
         "frontend",
-        "ログ取得の失敗時に未定義のクライアント例外を参照する",
+        "ログ取得の失敗を記録済みと扱い、画面側の障害ログを失う",
         "packages/frontend/src/web_app/portal_pages/logs.py",
         'raise ValueError("ログを取得できませんでした")',
         'raise client.ResponseError("ログを取得できませんでした")',
@@ -103,6 +103,14 @@ MUTATIONS = (
         'module in {"app", "portal_shell"}',
         'module == "app"',
         "tests/architecture/test_frontend_screens.py::test_shared_layout_delegates_route_dispatch",
+    ),
+    Mutation(
+        "frontend",
+        "部署一覧の次ページにも先頭の部署を表示する",
+        "packages/frontend/src/web_app/workspace_views.py",
+        "start = (number - 1) * PAGE_SIZE",
+        "start = 0",
+        "packages/frontend/tests/test_workspace_screens.py::test_directory_pages_filter_before_paginating",
     ),
     Mutation(
         "frontend",
