@@ -25,6 +25,22 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
+        "ci",
+        "ファイル移動時に移動元の変更を見落とす",
+        "tools/ci_scope.py",
+        '"--no-renames"',
+        '"--find-renames"',
+        "tools/tests/test_ci_scope.py::test_git_diff_includes_deleted_and_both_renamed_paths",
+    ),
+    Mutation(
+        "ci",
+        "以前の実行行を含むテスト層の再計測を省く",
+        "tools/ci_scope.py",
+        '("coverage_source" in flags and part.stat().st_size)',
+        "False",
+        "tools/tests/test_ci_scope.py::test_measured_source_invalidates_suites_that_executed_it",
+    ),
+    Mutation(
         "backend",
         "JSON Pointerのスラッシュ展開を壊す",
         "packages/backend/src/app/core/openapi.py",
