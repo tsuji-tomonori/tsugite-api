@@ -17,6 +17,21 @@ FUNCTION = (ast.FunctionDef, ast.AsyncFunctionDef)
 SQL_PARSE_ERRORS = (ValueError, sqlglot.errors.SqlglotError)
 
 
+@cache
+def sql_descriptions():
+    source = read_source(Path(__file__))
+    analyzer = next(
+        n for n in source.tree.body if isinstance(n, ast.ClassDef) and n.name == "SourceIndex"
+    )
+    inspect_method = next(
+        n for n in analyzer.body if isinstance(n, ast.FunctionDef) and n.name == "inspect"
+    )
+    return {
+        key.removeprefix("sqlalchemy."): label
+        for key, label in source.literal_labels(inspect_method).items()
+    }
+
+
 def name(node):
     if isinstance(node, ast.Name):
         return node.id
@@ -272,12 +287,16 @@ class SourceIndex:
                 )
                 facts.edges.add((candidate, passed))
             arg = part.args[0] if part.args else None
+            #: 指定されたカラムの値を更新
             if full == "setattr" and not is_transient(arg):
                 for table in entities(arg):
                     add("SQL", table, "U", part, ast.unparse(part.func) + " による属性更新")
             if isinstance(part.func, ast.Attribute) and part.func.attr in {
+                #: 検索元のテーブルを指定
                 "select_from",
+                #: テーブルを結合
                 "join",
+                #: テーブルを外部結合
                 "outerjoin",
             }:
                 for expr in part.args:
@@ -291,11 +310,26 @@ class SourceIndex:
                 if isinstance(code, int):
                     facts.status.add(code)
             if full in {
+                #: 検索
                 "sqlalchemy.select",
+                #: レコードを追加
                 "sqlalchemy.insert",
+                #: 更新
                 "sqlalchemy.update",
+                #: レコードを削除
                 "sqlalchemy.delete",
-            } or name(part.func) in {"db.get", "db.add", "db.delete", "db.add_all", "session.get"}:
+            } or name(part.func) in {
+                #: 主キーで取得
+                "db.get",
+                #: レコードを追加
+                "db.add",
+                #: レコードを削除
+                "db.delete",
+                #: 複数レコードを追加
+                "db.add_all",
+                #: 主キーで取得
+                "session.get",
+            }:
                 op = {"insert": "C", "add": "C", "add_all": "C", "delete": "D", "update": "U"}.get(
                     full.split(".")[-1], "R"
                 )

@@ -56,11 +56,19 @@ def policy_violations(entries, roots):
         ):
             if any(isinstance(n, (ast.Assign, ast.AnnAssign)) for n in tree.body):
                 errors.append(f"{module}: 定数だけの外部モジュール")
+        aliases = {
+            a.asname or a.name: a.name
+            for statement in ast.walk(tree)
+            if isinstance(statement, ast.ImportFrom)
+            for a in statement.names
+        }
         for node in ast.walk(tree):
             if not isinstance(node, ast.Call):
                 continue
             callee = node.func
             name = callee.attr if isinstance(callee, ast.Attribute) else getattr(callee, "id", "")
+            if isinstance(callee, ast.Name):
+                name = aliases.get(name, name)
             if name in {"__import__", "import_module"}:
                 errors.append(f"{module}:{node.lineno}: 動的インポート")
             if name not in READERS:
@@ -131,3 +139,40 @@ def test_non_python_source_cannot_supply_business_names(tmp_path):
     path.write_text("class Replacement: pass\n")
     with pytest.raises(ValueError, match="Pythonソース"):
         read_source(path)
+
+
+def test_business_names_cover_every_operation_field_and_database_column():
+    """全API項目とDBカラムに業務用の和名がある"""
+    import pytest
+    from app.design_names import localize
+    from tsugite_db.design_names import design_tables, table_names
+
+    from tools.design.generate import catalog
+
+    def japanese(text):
+        return any("ぁ" <= char <= "ヿ" or "一" <= char <= "龯" for char in text)
+
+    schema, routes = catalog(True)
+    for _, operation in routes.values():
+        assert japanese(operation["summary"])
+        for param in operation.get("parameters", []):
+            assert japanese(param["x-ja-name"]), param["name"]
+        for response in operation["responses"].values():
+            for key, header in response.get("headers", {}).items():
+                assert japanese(header["x-ja-name"]), key
+
+    for key, record in schema["components"]["schemas"].items():
+        assert japanese(record["title"]), key
+        for field, definition in record.get("properties", {}).items():
+            assert japanese(definition["title"]), (key, field)
+
+    names = table_names()
+    assert set(names) == {t.name for t, _ in design_tables()}
+    for table, _ in design_tables():
+        entry = names[table.name]
+        for key in ("table", "record", "grain"):
+            assert japanese(entry[key]), (table.name, key)
+        assert set(entry["columns"]) == set(table.columns.keys())
+        assert all(japanese(name) for name in entry["columns"].values())
+    with pytest.raises(ValueError, match="GET /api/new"):
+        localize({"paths": {"/api/new": {"get": {}}}}, strict=True)

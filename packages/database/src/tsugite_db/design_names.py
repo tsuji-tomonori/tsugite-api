@@ -45,10 +45,14 @@ def table_entry(source, node, columns):
 def table_names():
     import inspect
 
+    from sqlalchemy import Table
+
     from .models import Base
 
     entries = {}
     for mapper in Base.registry.mappers:
+        if not isinstance(mapper.local_table, Table):
+            continue
         cls = mapper.class_
         source = read_source(Path(inspect.getfile(cls)))
         node = next(

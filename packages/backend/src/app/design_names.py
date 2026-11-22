@@ -29,7 +29,7 @@ def declarations():
             ):
                 values = node.slice.elts if isinstance(node.slice, ast.Tuple) else [node.slice]
                 if all(isinstance(v, ast.Constant) and source.label(v) for v in values):
-                    key = tuple(v.value for v in values)
+                    key = tuple(v.value for v in values if isinstance(v, ast.Constant))
                     labels = tuple(source.label(v) for v in values)
                     if enums.setdefault(key, labels) != labels:
                         raise ValueError(f"同じ列挙型の説明が一致しません: {path} {key}")
@@ -81,7 +81,10 @@ def parameter_labels(dependency):
 
 
 def operation_labels(route, method):
-    source, fn = function_source(route.endpoint)
+    parsed = function_source(route.endpoint)
+    if parsed is None:
+        return "", {}
+    source, fn = parsed
     labels = parameter_labels(route.dependant)
     for dec in fn.decorator_list:
         if not isinstance(dec, ast.Call) or not isinstance(dec.func, ast.Attribute) or not dec.args:
@@ -92,14 +95,7 @@ def operation_labels(route, method):
         if dec.func.attr not in {method.lower(), "api_route"} or not route.path.endswith(path.value):
             continue
         # OpenAPI extras can declare HTTP headers independently of the handler signature.
-        for item in ast.walk(dec):
-            if (
-                isinstance(item, ast.Constant)
-                and isinstance(item.value, str)
-                and item.lineno != dec.lineno
-            ):
-                if title := source.label(item):
-                    labels[item.value] = title
+        labels.update(source.literal_labels(dec))
         return source.label(dec).replace("{method}", method), labels
     return "", labels
 
@@ -128,7 +124,7 @@ def localize(schema, routes=(), *, strict=False):
         (route.path_format, method.lower()): route
         for route in iter_route_contexts(routes)
         if isinstance(route.original_route, APIRoute)
-        for method in route.methods
+        for method in (route.methods or ())
     }
     for path, item in schema["paths"].items():
         for method, op in item.items():
