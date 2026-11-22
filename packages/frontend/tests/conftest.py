@@ -11,6 +11,7 @@ def portal_module(monkeypatch):
     """PyScriptのブラウザー境界だけを代替し、画面モジュールを読み込む。"""
     module_names = {
         "api_docs",
+        "chat_views",
         "client",
         "login_views",
         "portal_auth",

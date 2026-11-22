@@ -15,7 +15,7 @@ class CatalogDatabase(Construct):
         self.cluster = dsql.CfnCluster(self, "Default", deletion_protection_enabled=True)
         self.cluster.apply_removal_policy(RemovalPolicy.RETAIN)
 
-    def install_schema(self, role, code, dependencies):
+    def install_schema(self, role, code, dependencies, chat_role):
         migration = catalog_function(
             self,
             "Migration",
@@ -38,5 +38,9 @@ class CatalogDatabase(Construct):
             self,
             "Schema",
             service_token=provider.service_token,
-            properties={"Revision": digest.hexdigest(), "RuntimeRoleArn": role.role_arn},
+            properties={
+                "Revision": digest.hexdigest(),
+                "RuntimeRoleArn": role.role_arn,
+                "ChatRoleArn": chat_role.role_arn,
+            },
         )

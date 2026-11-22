@@ -10,7 +10,12 @@ import tomllib
 from pathlib import Path
 from xml.etree import ElementTree
 
-from tools.check_coverage import download_merged_coverage
+from tools.check_coverage import (
+    POLICY_FILE,
+    compatible_coverage,
+    coverage_policy,
+    download_merged_coverage,
+)
 
 ARTIFACTS = Path("artifacts")
 PARTS = ARTIFACTS / "coverage-parts"
@@ -33,7 +38,7 @@ def affected(path, suites):
     if path.endswith(".md") and ("/" not in path or path.startswith(("docs/", "deploy/", ".agents/"))):
         return set()
     if path.startswith(("packages/backend/src/", "packages/database/")):
-        return {BACKEND, DATABASE, BROWSER, TOOLS, "types", "design", "aws", "coverage_source"}
+        return {BACKEND, DATABASE, BROWSER, TOOLS, "types", "design", "aws"}
     if path.endswith(("/web_app/guide_content.py", "/web_app/guide_search.py")):
         return {FRONTEND, BROWSER, BACKEND}
     if path == "tools/build_frontend.py":
@@ -44,6 +49,8 @@ def affected(path, suites):
         return {FRONTEND, BROWSER, "aws_portal"}
     if path.startswith(("packages/frontend/src/", "packages/frontend/public/")):
         return {FRONTEND, BROWSER}
+    if path.startswith("agent/"):
+        return {BACKEND, BROWSER, INFRA, "audit", "aws"}
     if path.startswith("packages/infra/"):
         return {INFRA, "aws", "audit"}
     if path.startswith("tools/design/"):
@@ -74,6 +81,15 @@ def part_name(suite):
 
 def select(paths, suites, cached):
     flags = set().union(*(affected(path, suites) for path in paths))
+    with Path(__file__).resolve().parents[1].joinpath("pyproject.toml").open("rb") as file:
+        roots = tomllib.load(file)["tool"]["coverage"]["run"]["source"]
+    measured_changes = {
+        path
+        for path in paths
+        if path.endswith(".py")
+        and "/tests/" not in path
+        and any(path.startswith(root + "/") for root in roots)
+    }
     full = "full" in flags or any(path.endswith("/pyproject.toml") for path in paths)
     if full:
         flags.update({"types", "design", "aws", "audit", "hooks"})
@@ -85,7 +101,12 @@ def select(paths, suites, cached):
     if not reuse_xml:
         for suite in suites:
             part = cached / "coverage-parts" / part_name(suite)
-            if not part.is_file() or ("coverage_source" in flags and part.stat().st_size):
+            index = part.with_suffix(".json")
+            if not part.is_file() or (
+                measured_changes
+                and part.stat().st_size
+                and (not index.is_file() or measured_changes.intersection(json.loads(index.read_text())))
+            ):
                 selected.add(suite)
     aws = "aws" in flags or "aws_portal" in flags
     synth = aws or "audit" in flags
@@ -122,12 +143,18 @@ def plan(base):
         download_merged_coverage(
             os.environ["GITHUB_REPOSITORY"], os.environ["BASE_BRANCH"], merge_base, cached
         )
+    if not compatible_coverage(cached):
+        cached = cached / "no-compatible-baseline"
     result = select(paths, suites, cached)
     PARTS.mkdir(parents=True, exist_ok=True)
+    (ARTIFACTS / POLICY_FILE).write_text(coverage_policy() + "\n")
     for suite in suites:
         source = cached / "coverage-parts" / part_name(suite)
         if suite not in result["suites"] and source.is_file():
             shutil.copyfile(source, PARTS / source.name)
+            index = source.with_suffix(".json")
+            if index.is_file():
+                shutil.copyfile(index, PARTS / index.name)
     if result["reuse_xml"]:
         shutil.copyfile(cached / "coverage.xml", ARTIFACTS / "coverage.xml")
     result["setup"] = merge_base != base or any(
@@ -138,6 +165,29 @@ def plan(base):
     with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
         for key, value in result.items():
             print(f"{key}={json.dumps(value)}", file=output)
+
+
+def write_coverage_report(destination):
+    from coverage import Coverage
+
+    # 全スイートの計測済みデータを、同名の app.py も識別できるリポジトリ相対パスで出力する。
+    coverage = Coverage(source=[str(Path.cwd())])
+    coverage.load()
+    coverage.xml_report(outfile=str(destination))
+    totals = {}
+    for entry in ElementTree.parse(destination).iter("class"):
+        path = Path(entry.attrib["filename"])
+        if path.parts[0] == "packages":
+            area = path.parts[1]
+        else:
+            area = "models" if path.parts[:2] == ("agent", "models") else path.parts[0]
+        counts = totals.setdefault(area, [0, 0])
+        lines = entry.findall("./lines/line")
+        counts[0] += sum(int(line.attrib["hits"]) > 0 for line in lines)
+        counts[1] += len(lines)
+    for area, (covered, total) in sorted(totals.items()):
+        if total:
+            print(f"{area}: {covered}/{total} lines ({100 * covered / total:.2f}%)")
 
 
 def run_suites():
@@ -155,9 +205,8 @@ def run_suites():
             "pytest",
             "-q",
             suite,
-            "--cov=app",
-            "--cov=tsugite_db",
-            "--cov-branch",
+            "--cov",
+            "--cov-config=pyproject.toml",
             f"--junitxml={junit}",
             f"--given-md={prefix}.md",
             f"--given-html={prefix}.html",
@@ -169,14 +218,14 @@ def run_suites():
         result.check_returncode()
         data = CoverageData(basename=str(part))
         data.read()
-        if not any(data.lines(name) for name in data.measured_files()):
-            # No executed lines from app or tsugite_db. Preserve that fact across PRs.
+        executed = sorted(Path(name).as_posix() for name in data.measured_files() if data.lines(name))
+        part.with_suffix(".json").write_text(json.dumps(executed) + "\n")
+        if not executed:
             part.write_bytes(b"")
     parts = [PARTS / part_name(suite) for suite in configured_suites()]
     measured = [str(part) for part in parts if part.stat().st_size]
     subprocess.run([sys.executable, "-m", "coverage", "combine", "--keep", *measured], check=True)
-    report = str(ARTIFACTS / "coverage.xml")
-    subprocess.run([sys.executable, "-m", "coverage", "xml", "-o", report], check=True)
+    write_coverage_report(ARTIFACTS / "coverage.xml")
 
 
 if __name__ == "__main__":

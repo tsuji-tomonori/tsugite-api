@@ -1,9 +1,19 @@
 from unittest.mock import MagicMock
 
+import pytest
 from app import migrate
 
 
-def test_grants_public_tables_without_altering_the_schema(monkeypatch):
+@pytest.mark.parametrize(
+    "chat",
+    [
+        pytest.param(
+            False, id="runtime", marks=pytest.mark.case_detail("既存の実行ロールだけを設定する")
+        ),
+        pytest.param(True, id="chat", marks=pytest.mark.case_detail("チャット用の読取ロールも設定する")),
+    ],
+)
+def test_grants_public_tables_without_altering_the_schema(monkeypatch, chat):
     """移行時は public のスキーマ権限を変更せず、実行ロールに対象テーブルの権限を付与する"""
     engine = MagicMock()
     upgrade = MagicMock()
@@ -15,6 +25,9 @@ def test_grants_public_tables_without_altering_the_schema(monkeypatch):
 
     arn = "arn:aws:iam::123456789012:role/tsugite-runtime"
     event = {"RequestType": "Create", "ResourceProperties": {"RuntimeRoleArn": arn}}
+    chat_arn = "arn:aws:iam::123456789012:role/tsugite-chat"
+    if chat:
+        event["ResourceProperties"]["ChatRoleArn"] = chat_arn
     result = migrate.handler(event, None)
 
     assert result == {"PhysicalResourceId": "tsugite-catalog-schema"}
@@ -25,3 +38,6 @@ def test_grants_public_tables_without_altering_the_schema(monkeypatch):
     assert all("ON SCHEMA public" not in statement for statement in statements)
     assert any(s.startswith("GRANT SELECT, INSERT, UPDATE ON assets,") for s in statements)
     assert any(s.startswith("GRANT SELECT, INSERT ON spec_releases, audit_events,") for s in statements)
+    chat_grants = [s for s in statements if s.startswith("GRANT ") and s.endswith(" TO tsugite_chat")]
+    assert chat_grants == (["GRANT SELECT ON assets TO tsugite_chat"] if chat else [])
+    assert (f"AWS IAM GRANT tsugite_chat TO '{chat_arn}'" in statements) == chat
