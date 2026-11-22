@@ -5,7 +5,6 @@ import client
 from js import document, window
 from puepy import Application, t
 
-
 app = Application()
 
 
