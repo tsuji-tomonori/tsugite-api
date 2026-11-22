@@ -232,6 +232,7 @@
 | 呼び出したAPI操作 | operation | TEXT | — | 不可 |
 | HTTPステータスコード | status | INTEGER | — | 不可 |
 | 応答時間（ミリ秒） | duration_ms | INTEGER | — | 不可 |
+| 呼び出し時のログ重要度・発生画面・運用作業 | diagnostics | TEXT | — | 可 |
 
 <a id="invocation_units"></a>
 

@@ -1,6 +1,8 @@
 import os
+from pathlib import Path
 
 import httpx
+import pytest
 from playwright.sync_api import expect, sync_playwright
 
 from tests.support.catalog import FORM, headers
@@ -8,7 +10,7 @@ from tests.support.catalog_journey import browser_evidence, navigate
 from tests.support.portal_server import serve_portal
 
 
-def test_provider_policy_console(tmp_path, request):
+def test_provider_policy_console(tmp_path: Path, request: pytest.FixtureRequest) -> None:
     """提供者が公開・自動承認・委任の条件を保存し、部署リーダーが個人申請を画面から却下する"""
     env = {**os.environ, "TSUGITE_DEMO": "1", "DATABASE_URL": "sqlite:///" + str(tmp_path / "policy.db")}
     with (
@@ -87,4 +89,17 @@ def test_provider_policy_console(tmp_path, request):
             leader.get_by_role("button", name="却下", exact=True).click()
             expect(leader.get_by_text("申請状態を更新しました")).to_be_visible()
             assert api.get(f"/api/invoke/{asset}/sandbox/finance/items", headers=user).status_code == 403
+            api.put(
+                "/api/workspace/memberships",
+                headers=admin,
+                json={"subject": "consumer", "unit_id": dept, "leader": False, "title": "部長"},
+            ).raise_for_status()
+            auto = api.post("/api/apis/" + asset + "/requests", headers=user, json=request_data)
+            assert auto.raise_for_status().json()["status"] == "approved"
+            consumer = browser.new_page()
+            consumer.goto(url)
+            consumer.get_by_role("button", name="利用チーム", exact=True).click()
+            navigate(consumer, "自分の申請")
+            expect(consumer.get_by_text("finance · 検証 · 利用中", exact=False)).to_be_visible()
+            capture(consumer, "auto-approved", "役職の条件に一致して承認された利用申請")
         browser.close()

@@ -1,30 +1,17 @@
-import json
-import logging
 import os
-import secrets
-from datetime import UTC, datetime
 from pathlib import Path
-from uuid import uuid4
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from mangum import Mangum
-from sqlalchemy.exc import IntegrityError, OperationalError
-from sqlalchemy.orm.exc import StaleDataError
 
 from app.apis import catalog, chat, gateway, inquiries, outputs
 from app.apis.catalog.common import DB
 from app.apis.governance import router as governance
 from app.core.auth import demo_token
 from app.core.config import local_demo, settings
+from app.core.request_logs import install_request_logs
 from app.design_names import PortalAPI
-
-log = logging.getLogger("tsugite.access")
-log.setLevel(logging.INFO)
-if not log.handlers:
-    log.addHandler(logging.StreamHandler())
-log.propagate = False
 
 
 def create_app() -> FastAPI:
@@ -36,45 +23,7 @@ def create_app() -> FastAPI:
         openapi_url="/api/openapi.json" if local_demo() else None,
     )
 
-    @app.middleware("http")
-    async def request_context(request: Request, call_next):
-        request.state.request_id = (
-            request.scope.get("aws.event", {}).get("requestContext", {}).get("requestId") or uuid4().hex
-        )
-        if os.getenv("AWS_LAMBDA_FUNCTION_NAME"):
-            secret = os.environ["ORIGIN_SECRET"]
-            if not secrets.compare_digest(request.headers.get("x-tsugite-origin", ""), secret):
-                return JSONResponse({"detail": "入口を確認してください"}, 403)
-        result = await call_next(request)
-        result.headers["X-Request-ID"] = request.state.request_id
-        if request.url.path.startswith("/api/"):
-            result.headers["Cache-Control"] = "no-store"
-        if request.url.path.startswith("/api/"):
-            log.info(
-                json.dumps(
-                    {
-                        "event": "http.access",
-                        "at": datetime.now(UTC).isoformat(),
-                        "operation": getattr(request.state, "operation", None),
-                        "request_id": request.state.request_id,
-                        "method": request.method,
-                        "route": getattr(request.scope.get("route"), "path", ""),
-                        "status": result.status_code,
-                    }
-                )
-            )
-        return result
-
-    @app.exception_handler(StaleDataError)
-    @app.exception_handler(IntegrityError)
-    async def conflict(request, exc):
-        return JSONResponse({"detail": "同時に更新されました。状態を再確認してください"}, 409)
-
-    @app.exception_handler(OperationalError)
-    async def db_error(request, exc):
-        code = getattr(exc.orig, "sqlstate", "")
-        status = 409 if code in {"40001", "OC000", "OC001"} else 503
-        return JSONResponse({"detail": "状態を再確認してから再実行してください"}, status)
+    install_request_logs(app)
 
     #: サービスの稼働状態を確認する
     @app.get("/api/health", responses={200: {"model": outputs.Health}})

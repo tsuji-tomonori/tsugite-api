@@ -10,6 +10,7 @@ def test_failed_log_download_reports_error(portal_module, monkeypatch):
     logs = portal_module("portal_pages.logs")
     monkeypatch.setattr(logs.window, "Array", Mock(), raising=False)
     monkeypatch.setattr(logs.client, "store", Mock(getItem=Mock(return_value="test-token")))
+    monkeypatch.setattr(logs.window, "location", SimpleNamespace(hash="#/logs"), raising=False)
     fetch = AsyncMock(return_value=SimpleNamespace(ok=False))
     monkeypatch.setattr(logs, "pyfetch", fetch)
     save = Mock()

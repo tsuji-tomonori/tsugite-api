@@ -2,20 +2,22 @@
 
 import os
 import re
+from pathlib import Path
 
 import httpx
-from playwright.sync_api import expect, sync_playwright
+import pytest
+from playwright.sync_api import Page, expect, sync_playwright
 
 from tests.support.catalog import approved, headers
 from tests.support.catalog_journey import browser_evidence
 from tests.support.portal_server import serve_portal
 
 
-def menu(page, label):
+def menu(page: Page, label: str | re.Pattern[str]) -> None:
     page.get_by_role("navigation", name="ポータル").get_by_role("button", name=label).click()
 
 
-def open_form(page, summary):
+def open_form(page: Page, summary: str) -> None:
     label = page.locator("summary").filter(has_text=re.compile("^" + re.escape(summary) + "$"))
     # A retained PuePy details element can remain open after a successful submit.
     host = label.locator("..")
@@ -23,7 +25,7 @@ def open_form(page, summary):
         label.click()
 
 
-def test_workspace_key_console(tmp_path, request):
+def test_workspace_key_console(tmp_path: Path, request: pytest.FixtureRequest) -> None:
     """管理者が組織階層と兼務を設定し、リーダーがキー・利用状況・停止と再開を操作する"""
     env = {**os.environ, "TSUGITE_DEMO": "1", "DATABASE_URL": "sqlite:///" + str(tmp_path / "org.db")}
     with (
@@ -120,6 +122,7 @@ def test_workspace_key_console(tmp_path, request):
             capture(leader, "usage", "本部リーダーが所属メンバーとAPI別の利用件数を確認")
             root.get_by_role("button", name="利用を停止").click()
             expect(root.get_by_role("button", name="利用を再開")).to_be_visible()
+            capture(leader, "stopped", "担当部署の利用を停止した状態")
             child = leader.locator("article").filter(
                 has=leader.get_by_role("heading", name="事業本部 / 経理部", exact=True)
             )

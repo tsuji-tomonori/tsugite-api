@@ -1,6 +1,5 @@
 """HTTP API request authorizer. The backend rechecks the grant before dispatch."""
 
-import json
 import os
 import secrets
 
@@ -12,10 +11,33 @@ from tsugite_db.session import engine
 from app.apis.gateway import authorize, operation_template
 from app.apis.governance.keys import invocation_actor
 from app.core.credential_policy import check_operation
+from app.core.diagnostics import OperationalRepair, asset_object, emit, invocation_details
+from app.core.log_record import INVOKE_ROUTE
 from app.core.workspace import attribute, private_project
 
 
 def handler(event, context):
+    ctx = event.get("requestContext", {})
+    fields = {
+        "source": "authorizer",
+        "method": ctx.get("http", {}).get("method", "GET"),
+        "route": INVOKE_ROUTE,
+        "request_id": ctx.get("requestId") or getattr(context, "aws_request_id", None),
+        "screen": event.get("headers", {}).get("x-tsugite-screen"),
+    }
+    try:
+        result = authorize_event(event, fields)
+    except Exception as exc:
+        fields.update(failed=True, reason=type(exc).__name__)
+        emit("invoke.authorization", **fields)
+        raise
+    if not result["isAuthorized"]:
+        fields.setdefault("reason", "authorization_denied")
+        emit("invoke.authorization", status=403, **fields)
+    return result
+
+
+def authorize_event(event, fields):
     headers = event.get("headers", {})
     if not secrets.compare_digest(headers.get("x-tsugite-origin", ""), os.environ["ORIGIN_SECRET"]):
         return {"isAuthorized": False}
@@ -26,22 +48,31 @@ def handler(event, context):
     if len(parts) < 6 or parts[1:3] != ["api", "invoke"]:
         return {"isAuthorized": False}
     key, environment, project = parts[3:6]
+    fields["asset_id"] = key
     with Session(engine()) as db:
         try:
             actor = invocation_actor(db, token, headers)
-        except HTTPException:
+            fields["actor_id"] = actor.subject
+        except HTTPException as exc:
+            if exc.status_code >= 500:
+                fields.update(failed=True, reason="authentication_service_error")
             return {"isAuthorized": False}
         try:
             asset = authorize(db, key, project, environment, actor)
             method = event["requestContext"].get("http", {}).get("method", "GET").upper()
             pattern = (
-                operation_template(json.loads(asset.spec), method, "/" + parts[6])
+                operation_template(asset_object(asset, "spec"), method, "/" + parts[6])
                 if len(parts) > 6
                 else None
             )
+            fields["operation"] = pattern
             if pattern:
                 check_operation(db, asset, actor, method + " " + pattern, project)
         except HTTPException as exc:
+            if isinstance(exc, OperationalRepair):
+                fields.update(exc.fields)
+            elif exc.status_code >= 500:
+                fields.update(failed=True, reason="authorization_service_error")
             asset = db.get(Asset, key)
             if asset:
                 db.add(
@@ -72,7 +103,15 @@ def handler(event, context):
                         project=project if project in actor.projects else "",
                         environment=environment[:16],
                         method=event["requestContext"].get("http", {}).get("method", ""),
-                        operation="",
+                        operation=fields.get("operation") or "",
+                        diagnostics=invocation_details(
+                            "authorizer",
+                            fields["screen"],
+                            403,
+                            reason=fields.get("reason", "authorization_denied"),
+                            action=fields.get("action"),
+                            failed=fields.get("failed", False),
+                        ),
                         status=403,
                         duration_ms=0,
                     )

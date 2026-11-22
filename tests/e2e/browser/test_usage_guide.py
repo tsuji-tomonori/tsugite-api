@@ -1,13 +1,16 @@
 """Exercise local hybrid search, role filters, article navigation and image delivery."""
 
 import os
+from pathlib import Path
 
+import pytest
 from playwright.sync_api import expect, sync_playwright
 
 from tests.support.portal_server import serve_portal
+from tests.support.screenshots import capture_image
 
 
-def test_usage_guide(tmp_path):
+def test_usage_guide(tmp_path: Path, request: pytest.FixtureRequest) -> None:
     """役割と検索語で使い方を絞り込み、手順から対象画面を開ける"""
     env = {**os.environ, "TSUGITE_DEMO": "1", "DATABASE_URL": "sqlite:///" + str(tmp_path / "guide.db")}
     with serve_portal(env) as url, sync_playwright() as pw:
@@ -32,6 +35,7 @@ def test_usage_guide(tmp_path):
             expect(image).to_be_visible()
             assert image.evaluate("(el) => el.decode().then(() => el.naturalWidth > 0)")
             assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
+            capture_image(request.node, "guide", page, article, role + "が検索して開いた手順")
             page.go_back()
             expect(user_input).to_have_value(query)
             user_input.fill("unmatchedXYZ")
@@ -42,7 +46,9 @@ def test_usage_guide(tmp_path):
             expect(cards).to_have_count(20)
             if role == "利用者":
                 for link in cards.all():
-                    slug = link.get_attribute("href").rsplit("/", 1)[-1]
+                    href = link.get_attribute("href")
+                    assert href is not None
+                    slug = href.rsplit("/", 1)[-1]
                     response = page.request.get(f"{url}/guide-images/{slug}.webp")
                     assert response.ok and response.headers["content-type"] == "image/webp"
                 page.locator('[href="#/guide/member"]').click()

@@ -15,7 +15,7 @@ async def inquiry_page(incoming, offset):
 async def reply_inquiry(key):
     answer = value("reply-" + key)
     if len(answer) < 2:
-        raise ValueError("回答を入力してください")
+        raise client.InputError("回答を入力してください")
     await client.api("/inquiries/" + key + "/reply", "PUT", {"answer": answer})
     await load()
 

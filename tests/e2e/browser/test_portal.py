@@ -1,28 +1,32 @@
 """Run against a fresh, migrated loopback demo database on every test."""
 
 import os
+from collections.abc import Iterator
+from pathlib import Path
 
 import pytest
+from playwright.sync_api import Locator, Route
 from pytest_given import scenario
 
 from tests.support.catalog_journey import catalog_journey
 from tests.support.portal_server import serve_portal
+from tests.support.screenshots import capture_image
 
 
 @pytest.fixture
-def demo_url(tmp_path):
+def demo_url(tmp_path: Path) -> Iterator[str]:
     env = {**os.environ, "TSUGITE_DEMO": "1", "DATABASE_URL": "sqlite:///" + str(tmp_path / "e2e.db")}
     with serve_portal(env) as url:
         yield url
 
 
 @scenario("提供者の公開から承認・取消までを画面で操作する", tags=["CAT", "AUTH", "AUDIT"])
-def test_user_flow(demo_url, request):
+def test_user_flow(demo_url: str, request: pytest.FixtureRequest) -> None:
     """デモの提供者と利用者が公開・申請・承認・実行・権限取消を画面で完了できる"""
     catalog_journey(demo_url, request.node)
 
 
-def test_home_chat_and_inquiry(demo_url):
+def test_home_chat_and_inquiry(demo_url: str, request: pytest.FixtureRequest) -> None:
     """ホームで商品と手順を調べ、運営への問い合わせを明示的に送信できる。"""
     import httpx
     from playwright.sync_api import expect, sync_playwright
@@ -40,6 +44,7 @@ def test_home_chat_and_inquiry(demo_url):
         page.get_by_role("button", name="在庫を確認できるAPIを探して").click()
         history = page.get_by_role("log", name="会話")
         expect(history.locator('a[href^="#/api/"]').first).to_be_visible()
+        capture_image(request.node, "chat", page, "recommendation", "日本語の質問への商品候補")
         page.get_by_label("質問", exact=True).fill("APIキーを発行する手順を教えて")
         page.get_by_role("button", name="送信", exact=True).click()
         expect(history.get_by_role("link", name="ガイドで確認").first).to_be_visible()
@@ -49,11 +54,12 @@ def test_home_chat_and_inquiry(demo_url):
         expect(history.get_by_text("問い合わせを受け付けました。受付番号", exact=False)).to_be_visible()
         page.get_by_role("link", name="自分の問い合わせ", exact=True).click()
         expect(page.get_by_text("回答待ち", exact=True)).to_be_visible()
+        capture_image(request.node, "chat", page, "inquiry", "受付後に確認した自分の問い合わせ")
         assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
         browser.close()
 
 
-def test_large_catalog(demo_url, request):
+def test_large_catalog(demo_url: str, request: pytest.FixtureRequest) -> None:
     """6業務・20拠点の公開120件を全件照合し、PC・スマートフォンの検索とページ送りを確認する"""
     import httpx
     from playwright.sync_api import expect, sync_playwright
@@ -66,7 +72,7 @@ def test_large_catalog(demo_url, request):
         provider = {"Authorization": "Bearer " + api.post("demo/provider").json()["access_token"]}
         consumer = {"Authorization": "Bearer " + api.post("demo/consumer").json()["access_token"]}
         draft = api.post("apis", headers=provider, json=offer(CATALOG[0], 21)).raise_for_status().json()
-        observed = []
+        observed: list[str] = []
         for page in range(1, 11):
             result = (
                 api.get("catalog-page", params={"page": page}, headers=consumer)
@@ -124,7 +130,7 @@ def test_large_catalog(demo_url, request):
     )
 
 
-def test_console_visual_modes(demo_url, request):
+def test_console_visual_modes(demo_url: str, request: pytest.FixtureRequest) -> None:
     """11月の外観変更を反映した明暗テーマの文字コントラストとキーボード操作を確認する"""
     import httpx
     from playwright.sync_api import expect, sync_playwright
@@ -135,8 +141,8 @@ def test_console_visual_modes(demo_url, request):
     with httpx.Client(base_url=demo_url + "/api/", trust_env=False) as api:
         seed(api, 1)
 
-    def contrast(locator):
-        return locator.evaluate("""element => {
+    def contrast(locator: Locator) -> float:
+        ratio: float = locator.evaluate("""element => {
             const style = getComputedStyle(element);
             let parent = element;
             while (getComputedStyle(parent).backgroundColor === 'rgba(0, 0, 0, 0)') {
@@ -148,6 +154,7 @@ def test_console_visual_modes(demo_url, request):
             const a = luminance(style.color), b = luminance(getComputedStyle(parent).backgroundColor);
             return (Math.max(a,b)+.05)/(Math.min(a,b)+.05);
         }""")
+        return ratio
 
     with sync_playwright() as pw:
         browser = pw.chromium.launch(executable_path=os.getenv("CHROMIUM_PATH") or None)
@@ -226,7 +233,7 @@ def test_console_visual_modes(demo_url, request):
         browser.close()
 
 
-def test_governance_console(demo_url, request):
+def test_governance_console(demo_url: str, request: pytest.FixtureRequest) -> None:
     """3役で利用状況、ユーザー管理、通知、ログ保存、掲載終了を確認する"""
     import json
     import re
@@ -325,15 +332,17 @@ def test_governance_console(demo_url, request):
             provider.get_by_label("API名", exact=True).fill("棚卸・在庫照会")
             provider.get_by_role("button", name="変更を保存").click()
             expect(provider.get_by_role("heading", name="棚卸・在庫照会")).to_be_visible()
+            capture(provider, "renamed", "名称を変更した商品")
             provider.get_by_role("button", name="掲載を取り下げる").click()
             expect(provider.get_by_role("button", name="公開する")).to_be_visible()
             provider.get_by_role("button", name="APIを削除").click()
             expect(provider.get_by_text("APIを削除しました")).to_be_visible()
+            capture(provider, "deleted", "削除操作の結果")
             assert api.get(path, headers=consumer).status_code == 404
         browser.close()
 
 
-def test_portal_login_on_mobile(demo_url):
+def test_portal_login_on_mobile(demo_url: str, request: pytest.FixtureRequest) -> None:
     """スマートフォンでログインし、確認コードを入力して元のカタログへ戻れる。"""
     from playwright.sync_api import expect, sync_playwright
 
@@ -353,7 +362,7 @@ def test_portal_login_on_mobile(demo_url):
         )
         operations = []
 
-        def identity(route):
+        def identity(route: Route) -> None:
             operation = route.request.headers["x-amz-target"].split(".")[-1]
             operations.append(operation)
             if operation == "InitiateAuth":
@@ -369,6 +378,7 @@ def test_portal_login_on_mobile(demo_url):
         page.get_by_label("確認コード").fill("012345")
         page.get_by_role("button", name="確認してログイン").click()
         expect(page.get_by_role("heading", name="APIカタログ", exact=True)).to_be_visible()
+        capture_image(request.node, "login", page, "signed-in", "認証後に戻ったカタログ")
         assert operations == ["InitiateAuth", "RespondToAuthChallenge"]
         page.get_by_role("button", name="ログアウト").click()
         expect(page.get_by_role("heading", name="継手APIにログイン")).to_be_visible()

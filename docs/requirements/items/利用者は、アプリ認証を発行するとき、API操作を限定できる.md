@@ -12,6 +12,11 @@
 
 発行者がアプリごとに利用者・API・操作を選ぶ。実行できるのは申請、利用者別の許可、認証情報の範囲に共通する操作に限る。
 
+### 受入テスト
+
+- 受入テスト `tests/e2e/browser/test_operation_console.py::test_person_operation_console` / `delegate.png`
+- 受入テスト `tests/e2e/aws/test_credential_tokens.py::test_client_tokens_reach_https`
+
 ## 却下した方針
 
 アプリの設定で発行者本人の利用権を広げる方法は採用しない。
