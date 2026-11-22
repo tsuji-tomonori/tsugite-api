@@ -25,12 +25,20 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
-        "bootstrap",
-        "招待したユーザーと異なる識別子でも管理者にする",
-        "tools/bootstrap_admin.py",
-        'if not any(attr == {"Name": "sub", "Value": subject} for attr in user["UserAttributes"]):',
-        "if False:",
-        "tools/tests/test_bootstrap_admin.py::test_replaced_user_cannot_be_promoted",
+        "ci",
+        "ファイル移動時に移動元の変更を見落とす",
+        "tools/ci_scope.py",
+        '"--no-renames"',
+        '"--find-renames"',
+        "tools/tests/test_ci_scope.py::test_git_diff_includes_deleted_and_both_renamed_paths",
+    ),
+    Mutation(
+        "ci",
+        "以前の実行行を含むテスト層の再計測を省く",
+        "tools/ci_scope.py",
+        '("coverage_source" in flags and part.stat().st_size)',
+        "False",
+        "tools/tests/test_ci_scope.py::test_measured_source_invalidates_suites_that_executed_it",
     ),
     Mutation(
         "tools",
@@ -156,6 +164,14 @@ MUTATIONS = (
         'CfnOutput(self, "ChangedPortalUrl",',
         "packages/infra/tests/test_cdk_regression.py::test_cloudformation_structure_matches_snapshot",
     ),
+    Mutation(
+        "bootstrap",
+        "招待したユーザーと異なる識別子でも管理者にする",
+        "tools/bootstrap_admin.py",
+        'if not any(attr == {"Name": "sub", "Value": subject} for attr in user["UserAttributes"]):',
+        "if False:",
+        "tools/tests/test_bootstrap_admin.py::test_replaced_user_cannot_be_promoted",
+    ),
 )
 
 
@@ -188,7 +204,7 @@ def run_test(workspace, target):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--layer", choices=("backend", "frontend", "infra", "tools"), action="append")
+    parser.add_argument("--layer", choices=sorted({entry.layer for entry in MUTATIONS}), action="append")
     args = parser.parse_args()
     selected = [entry for entry in MUTATIONS if not args.layer or entry.layer in args.layer]
     failed = []

@@ -4,6 +4,9 @@ on:
     branches: [main]
 permissions:
   contents: read
+concurrency:
+  group: verify-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 jobs:
   test:
     permissions:
@@ -29,30 +32,76 @@ jobs:
           name: requirements
           path: artifacts/requirements/
           if-no-files-found: error
+      - name: 変更の影響範囲と再利用するテスト結果を判定
+        id: scope
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          BASE_BRANCH: ${{ github.base_ref }}
+          GH_TOKEN: ${{ github.token }}
+        run: python3 -m tools.ci_scope --base "$BASE_SHA"
+      - name: 変更ファイルの文字コードと改行を検査
+        if: steps.scope.outputs.full != 'true'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: python3 tools/check_text.py --base "$BASE_SHA"
       - uses: actions/setup-node@v4
+        if: steps.scope.outputs.synth == 'true' || steps.scope.outputs.types == 'true' || contains(fromJSON(steps.scope.outputs.suites), 'packages/infra/tests')
         with:
           node-version: "22"
       - uses: astral-sh/setup-uv@v6
+        if: steps.scope.outputs.setup == 'true'
         with:
           enable-cache: true
       - run: uv tool install go-task-bin==3.54.0
+        if: steps.scope.outputs.setup == 'true'
       - run: task setup
+        if: steps.scope.outputs.setup == 'true'
+      - run: task lint
+        if: steps.scope.outputs.full == 'true'
+      - name: 変更したPythonファイルの書式と静的検査
+        if: steps.scope.outputs.lint == 'true' && steps.scope.outputs.full != 'true'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          git diff --name-only -z --diff-filter=ACMRT "$BASE_SHA...HEAD" -- '*.py' '*.pyi' > "$RUNNER_TEMP/lint-paths"
+          xargs -0 -r -a "$RUNNER_TEMP/lint-paths" uv run --locked ruff format --check --force-exclude --
+          xargs -0 -r -a "$RUNNER_TEMP/lint-paths" uv run --locked ruff check --force-exclude --
+      - run: task types
+        if: steps.scope.outputs.types == 'true'
+      - run: task test:hooks
+        if: steps.scope.outputs.hooks == 'true'
       - run: task browser:install
+        if: steps.scope.outputs.chromium == 'true'
       - run: task emulator:install
-      - run: task ci
-      - name: Generate Cobertura coverage report
-        run: uv run --locked --all-packages coverage xml -o artifacts/coverage.xml
+        if: steps.scope.outputs.aws == 'true'
+      - run: task synth
+        if: steps.scope.outputs.synth == 'true'
+      - run: uv run --locked --all-packages python tools/build_frontend.py
+        if: steps.scope.outputs.frontend_build == 'true'
+      - run: task contracts docs
+        if: steps.scope.outputs.design == 'true'
+      - run: task audit
+        if: steps.scope.outputs.audit == 'true'
+      - name: 対象テストを実行し、全体カバレッジを集計
+        if: steps.scope.outputs.reuse_xml != 'true'
+        run: uv run --locked --all-packages python -m tools.ci_scope --run-suites
+      - run: task test:aws
+        if: steps.scope.outputs.aws == 'true' && steps.scope.outputs.aws_portal_only != 'true'
+      - run: task test:aws -- -k test_cognito_browser
+        if: steps.scope.outputs.aws_portal_only == 'true'
       - name: Check line coverage against the ruleset
         env:
           GH_TOKEN: ${{ github.token }}
           BASE_BRANCH: ${{ github.base_ref }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: uv run --locked --all-packages python tools/check_coverage.py artifacts/coverage.xml
+        run: python3 tools/check_coverage.py artifacts/coverage.xml
       - name: Save coverage for future pull requests
         uses: actions/upload-artifact@v4
         with:
           name: line-coverage
-          path: artifacts/coverage.xml
+          path: |
+            artifacts/coverage.xml
+            artifacts/coverage-parts/
           if-no-files-found: error
       - name: Upload coverage to GitHub Code Quality
         if: github.event.pull_request.head.repo.full_name == github.repository
@@ -63,7 +112,7 @@ jobs:
           label: code-coverage/pytest
           fail-on-error: false
       - name: Build screenshot report
-        if: always() && !cancelled()
+        if: ${{ !cancelled() && steps.scope.outputs.report == 'true' && hashFiles('artifacts/junit.xml') != '' }}
         run: task report
       - uses: actions/upload-artifact@v4
         if: always()
@@ -71,5 +120,6 @@ jobs:
           name: contracts-and-test-results
           path: |
             artifacts/
+            !artifacts/coverage-parts/
             packages/infra/cdk.out/*.template.json
-            docs/generated/
+            ${{ steps.scope.outputs.design == 'true' && 'docs/generated/' || '' }}

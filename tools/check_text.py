@@ -27,12 +27,17 @@ def violations(data):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--staged", action="store_true")
-    staged = parser.parse_args().staged
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--staged", action="store_true")
+    mode.add_argument("--base", help="Check files changed since the PR merge base")
+    args = parser.parse_args()
+    staged = args.staged
     if staged and git("branch", "--show-current").strip() in {b"main", b"master"}:
         sys.exit("作業ブランチを作成してからコミットしてください。")
     if staged:
         names = git("diff", "--cached", "--name-only", "--diff-filter=ACMR", "-z")
+    elif args.base:
+        names = git("diff", "--name-only", "--diff-filter=ACMRT", "-z", f"{args.base}...HEAD", "--")
     else:
         names = git("ls-files", "-z")
     attrs = git("check-attr", "--cached", "-z", "--stdin", "text", data=names).split(b"\0")
