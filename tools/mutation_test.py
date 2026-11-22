@@ -42,6 +42,22 @@ MUTATIONS = (
     ),
     Mutation(
         "frontend",
+        "未取得のメトリクスを描画時に直接参照する",
+        "packages/frontend/src/web_app/app.py",
+        'data = ctx.get("home_metrics")',
+        'data = ctx["home_metrics"]',
+        "packages/frontend/tests/test_dashboard.py::test_dashboard_recovers_from_metrics_failure",
+    ),
+    Mutation(
+        "backend",
+        "集計の次ページを取得せずに打ち切る",
+        "packages/backend/src/app/apis/governance/observability.py",
+        "if len(rows) < page_size:",
+        "if len(rows) <= page_size:",
+        "packages/backend/tests/test_governance.py::test_admin_metrics_across_pages",
+    ),
+    Mutation(
+        "frontend",
         "認証アプリの検証後に古いセッションを再利用する",
         "packages/frontend/src/web_app/portal_auth.py",
         'self.session = verified["Session"]',
