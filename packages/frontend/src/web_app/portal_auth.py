@@ -2,6 +2,7 @@
 
 import json
 
+import client
 from pyodide.http import pyfetch
 
 
@@ -19,6 +20,7 @@ class LoginError(ValueError):
             "TooManyRequestsException": "しばらく待ってから、もう一度お試しください。",
             "InvalidParameterException": "手続きを続けられません。登録情報を管理者に確認してください。",
         }
+        self.user_error = code in messages
         super().__init__(
             messages.get(code, "認証を完了できませんでした。ログインからやり直してください。")
         )
@@ -98,7 +100,7 @@ class PortalLogin:
                 if exc.code != "PasswordResetRequiredException":
                     raise
                 self.reset("forgot")
-                raise ValueError(
+                raise client.InputError(
                     "パスワードの再設定が必要です。確認コードを受け取ってください。"
                 ) from None
         elif self.step == "new_password":

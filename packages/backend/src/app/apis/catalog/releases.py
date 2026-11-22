@@ -1,6 +1,7 @@
 import hashlib
 import json
 
+from app.core.diagnostics import asset_object
 from app.core.openapi import path_items
 from app.integrations.spec_archive import archive_spec, canonical
 from sqlalchemy import select
@@ -26,7 +27,7 @@ def entries(spec):
 
 
 def record_release(db, asset):
-    spec = json.loads(asset.spec)
+    spec = asset_object(asset, "spec")
     digest = archive_spec(asset.id, spec)
     previous = db.scalar(
         select(SpecRelease)

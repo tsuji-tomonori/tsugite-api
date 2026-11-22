@@ -5,7 +5,7 @@ from activity_filters import filters_view, load_dimensions, time_params
 from audit_navigation import trace_lookup
 from js import window
 from portal_download import save_blob
-from portal_navigation import load
+from portal_navigation import go, load
 from portal_ui import btn, ctx, field, value
 from puepy import t
 from pyodide.http import pyfetch
@@ -18,7 +18,10 @@ async def download_logs():
     while True:
         res = await pyfetch(
             client.prefix + "/access-logs/download?" + urlencode(params),
-            headers={"Authorization": "Bearer " + str(client.store.getItem("access"))},
+            headers={
+                **client.screen_headers(),
+                "Authorization": "Bearer " + str(client.store.getItem("access")),
+            },
         )
         if not res.ok:
             raise ValueError("ログを取得できませんでした")
@@ -60,6 +63,8 @@ def logs_view():
             if row.get("key_id"):
                 t.small("キーID　" + row["key_id"], classes="mono")
             btn("対応する業務監査", trace_lookup, row["request_id"])
+            if ctx["me"]["admin"]:
+                btn("対象APIを開く", go, "api/" + row["asset_id"])
     if ctx.get("log_offset", 0):
         btn("前の50件", log_page, ctx["log_offset"] - 50)
     if len(rows) == 50:

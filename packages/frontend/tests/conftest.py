@@ -12,6 +12,7 @@ def portal_module(monkeypatch):
     source = Path(__file__).resolve().parents[1] / "src/web_app"
     previously_loaded = set(sys.modules)
     monkeypatch.syspath_prepend(str(source))
+    monkeypatch.syspath_prepend(str(source.parents[2] / "backend/src/app/core"))
     js = ModuleType("js")
     js.document = None
     js.window = SimpleNamespace(sessionStorage={})

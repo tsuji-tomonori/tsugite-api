@@ -9,8 +9,25 @@ from alembic.config import Config
 from sqlalchemy import text
 from tsugite_db.session import engine
 
+from app.core.diagnostics import emit
+
 
 def handler(event, context):
+    try:
+        return migrate(event)
+    except Exception as exc:
+        emit(
+            "schema.migration_failed",
+            source="migration",
+            failed=True,
+            operation=event.get("RequestType"),
+            request_id=event.get("RequestId") or getattr(context, "aws_request_id", None),
+            reason=type(exc).__name__,
+        )
+        raise
+
+
+def migrate(event):
     result = {"PhysicalResourceId": "tsugite-catalog-schema"}
     if event["RequestType"] == "Delete":
         return result

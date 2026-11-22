@@ -57,7 +57,7 @@ def workspace_view(ctx, field, btn, reload):
     async def save_unit():
         identifier = _value("org-unit-id")
         if not identifier:
-            raise ValueError("識別子を入力してください")
+            raise client.InputError("識別子を入力してください")
         await client.api(
             "/workspace/units/" + quote(identifier, safe=""),
             "PUT",

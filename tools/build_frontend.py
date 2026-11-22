@@ -140,6 +140,8 @@ def build():
         if file.name.upper() == "LICENSE":
             shutil.copy(wheel.locate_file(file), DIST / "vendor/puepy/LICENSE")
     files.update(copy_app_modules(source, DIST))
+    shutil.copy(ROOT / "packages/backend/src/app/core/log_record.py", DIST / "log_record.py")
+    files["/log_record.py"] = "./log_record.py"
     (DIST / "pyscript.json").write_text(
         json.dumps({"interpreter": "/vendor/pyodide/pyodide.mjs", "files": files})
     )

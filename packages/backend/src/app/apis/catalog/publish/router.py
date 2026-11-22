@@ -1,13 +1,33 @@
-import json
-
 from app.apis.catalog.common import DB, User, event, listing, record
 from app.apis.catalog.releases import record_release
 from app.apis.schemas import Listing
 from app.core.config import targets
+from app.core.diagnostics import asset_object
 from app.integrations.upstream import probe
 from fastapi import APIRouter, HTTPException, Request
 
 router = APIRouter()
+
+
+#: 管理者が対象APIの呼び出しを全環境で停止または再開する
+@router.put("/apis/{key}/suspension", response_model=Listing, operation_id="set_suspension")
+def set_suspension(
+    #: 対象APIの識別子
+    key: str,
+    #: 全環境の呼び出しを停止するか
+    suspended: bool,
+    request: Request,
+    actor: User,
+    db: DB,
+):
+    if not actor.admin:
+        raise HTTPException(403)
+    asset = record(db, key)
+    if bool(asset.suspended) != suspended:
+        asset.suspended = suspended
+        event(db, request, actor, asset, "invoke.suspend" if suspended else "invoke.resume")
+        db.commit()
+    return listing(asset)
 
 
 #: APIの公開・掲載取り下げを切り替える
@@ -30,10 +50,10 @@ def publish(
             if any(
                 name not in bindings
                 or (bindings[name].owner, bindings[name].environment) != (a.owner, env)
-                for env, name in json.loads(a.targets).items()
+                for env, name in asset_object(a, "targets").items()
             ):
                 raise HTTPException(409, "接続設定を確認してください")
-            for name in set(json.loads(a.targets).values()):
+            for name in set(asset_object(a, "targets").values()):
                 probe(bindings[name])
             record_release(db, a)
         a.published = published

@@ -25,12 +25,44 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
+        "evidence",
+        "実行結果のない要件を合格にする",
+        "tools/requirement_evidence.py",
+        'statuses.append("未実行")',
+        'statuses.append("成功")',
+        "tools/tests/test_requirement_evidence.py::test_unexecuted_requirement_fails",
+    ),
+    Mutation(
+        "evidence",
+        "スキップを成功にする",
+        "tools/requirement_evidence.py",
+        '("skipped", "スキップ")',
+        '("skipped", "成功")',
+        "tools/tests/test_requirement_evidence.py::test_skipped_requirement_fails",
+    ),
+    Mutation(
         "infra-docs",
         "パラメーターシートから配列の添字を落とす",
         "tools/design/infrastructure.py",
         'settings(f"{path}[{index}]", item)',
         "settings(path, item)",
         "tools/tests/test_infrastructure_docs.py::test_component_parameter_sheet",
+    ),
+    Mutation(
+        "backend",
+        "データ修正を要する障害を通常のサーバーエラーと記録する",
+        "packages/backend/src/app/core/log_record.py",
+        'level = "CRITICAL"',
+        'level = "ERROR"',
+        "packages/backend/tests/test_request_logs.py::test_http_log",
+    ),
+    Mutation(
+        "frontend",
+        "画面内の入力不備をサーバー障害として記録する",
+        "packages/frontend/src/web_app/client.py",
+        "failed=not user_error",
+        "failed=True",
+        "packages/frontend/tests/test_screen_logs.py::test_screen_error_context",
     ),
     Mutation(
         "frontend",
@@ -434,6 +466,14 @@ def run_test(workspace, target):
     return result, cases
 
 
+def detected(returncode: int, cases: list[ElementTree.Element]) -> bool:
+    return (
+        returncode == 1
+        and any(case.find("failure") is not None for case in cases)
+        and not any(case.find("error") is not None for case in cases)
+    )
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--layer", choices=sorted({entry.layer for entry in MUTATIONS}), action="append")
@@ -463,9 +503,7 @@ def main():
                 result, cases = run_test(workspace, mutation.test)
             finally:
                 path.write_text(source, encoding="utf-8")
-            errors = any(case.find("error") is not None for case in cases)
-            failures = any(case.find("failure") is not None for case in cases)
-            if result.returncode == 1 and failures and not errors:
+            if detected(result.returncode, cases):
                 print(f"検出: {mutation.layer} / {mutation.name}", flush=True)
             else:
                 print(result.stdout + result.stderr, file=sys.stderr)

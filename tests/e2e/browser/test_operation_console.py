@@ -1,7 +1,9 @@
 import json
 import os
+from pathlib import Path
 
 import httpx
+import pytest
 from playwright.sync_api import expect, sync_playwright
 
 from tests.e2e.browser.test_api_docs import delivery_service, delivery_spec
@@ -10,7 +12,7 @@ from tests.support.catalog_journey import browser_evidence, navigate
 from tests.support.portal_server import serve_portal
 
 
-def test_person_operation_console(tmp_path, request):
+def test_person_operation_console(tmp_path: Path, request: pytest.FixtureRequest) -> None:
     """提供者が利用者の操作を選び、送料1,400円のHTTPS応答と権限変更直後の転送停止を照合する"""
     spec = delivery_spec()
     path = "/parcels/{parcel}/estimate"
@@ -97,7 +99,7 @@ def test_person_operation_console(tmp_path, request):
                     has=owner.locator("summary").filter(has_text="利用者ごとの操作権限")
                 )
 
-                def open_policy():
+                def open_policy() -> None:
                     if panel.get_attribute("open") is None:
                         panel.locator("summary").first.click()
 

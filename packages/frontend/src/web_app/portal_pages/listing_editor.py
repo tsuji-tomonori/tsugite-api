@@ -42,20 +42,20 @@ SAMPLE = {
 async def register(publish_now=False):
     chosen = [value(k) for k in product_views.ENV if value(k)]
     if not chosen:
-        raise ValueError("接続先を一つ以上選んでください")
+        raise client.InputError("接続先を一つ以上選んでください")
     bindings = ctx["me"]["targets"]
     spec_text = value("spec")
     files = document.getElementById("spec-file").files
     if files.length:
         file = files.item(0)
         if file.size > 500000:
-            raise ValueError("500KB以内のファイルを選んでください")
+            raise client.InputError("500KB以内のファイルを選んでください")
         spec_text = str(await file.text())
     try:
         spec = json.loads(spec_text)
         info = spec["info"]
     except (ValueError, TypeError, KeyError) as exc:
-        raise ValueError("OpenAPI 3.0 / 3.1 のJSONファイルを指定してください") from exc
+        raise client.InputError("OpenAPI 3.0 / 3.1 のJSONファイルを指定してください") from exc
     data = {
         "release_note": value("release-note"),
         "offers": {

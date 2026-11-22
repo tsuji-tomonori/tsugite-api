@@ -12,6 +12,11 @@
 
 プロジェクトごとに複数発行できる。対象は承認済みAPI全体または指定APIとし、本人の利用権は本人限定キーで使う。従来キーの有効期間も最長60分とする。
 
+### 受入テスト
+
+- 受入テスト `tests/e2e/browser/test_workspace_console.py::test_workspace_key_console` / `keys.png`
+- 受入テスト `tests/e2e/aws/test_scoped_keys.py::test_scoped_keys_reach_https`
+
 ## 却下した方針
 
 本人への承認を共有キーでプロジェクト全体に広げる方法は採用しない。

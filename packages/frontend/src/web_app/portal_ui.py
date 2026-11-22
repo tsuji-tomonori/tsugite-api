@@ -5,8 +5,14 @@ import client
 from js import document, window
 from puepy import Application, t
 
-app = Application()
 
+class PortalApplication(Application):
+    def handle_error(self, exception):
+        client.report(exception, "render")
+        return super().handle_error(exception)
+
+
+app = PortalApplication()
 
 ctx = {
     "config": None,
@@ -41,6 +47,7 @@ ctx = {
 
 
 INITIAL_STATE = deepcopy(ctx)
+client.viewer = lambda: (ctx.get("me") or {}).get("subject")
 
 
 def value(name):
@@ -67,14 +74,20 @@ async def run(fn, *args):
     if ctx["busy"]:
         return
     ctx.update(busy=True, message="", error=False)
+    root = document.getElementById("app")
+    root.inert = True
+    root.setAttribute("aria-busy", "true")
     try:
         await fn(*args)
     except Exception as exc:
+        client.report(exc, fn.__name__)
         ctx.update(message=str(exc), error=True)
         if not client.store.getItem("access"):
             ctx["me"] = None
     finally:
         ctx["busy"] = False
+        root.inert = False
+        root.removeAttribute("aria-busy")
         render()
 
 
