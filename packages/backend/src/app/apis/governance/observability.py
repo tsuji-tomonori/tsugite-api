@@ -47,11 +47,17 @@ def visible(stmt, actor, db=None, unit=""):
 
 
 def interval(
+    #: 集計開始日時
     start: datetime | None = None,
+    #: 集計終了日時
     end: datetime | None = None,
+    #: 対象APIの識別子
     asset_id: str = "",
+    #: 利用プロジェクトの識別子
     project: str = "",
+    #: 提供環境
     environment: str = "",
+    #: 検索するHTTPステータスコード
     status: int = Query(0, ge=0, le=599),
 ):
     end = end or datetime.now(UTC)
@@ -82,13 +88,17 @@ def log_data(row):
     return result
 
 
+#: API呼び出し履歴を検索する
 @router.get("/access-logs", responses={200: {"model": list[outputs.AccessLog]}})
 def access_logs(
     actor: User,
     db: DB,
     period: Range,
+    #: 先頭から読み飛ばす件数
     offset: int = Query(0, ge=0),
+    #: リクエスト識別子
     request_id: str = "",
+    #: 集計対象の部署・プロジェクト識別子
     unit: str = "",
 ):
     stmt = visible(period[2], actor, db, unit)
@@ -102,6 +112,7 @@ def access_logs(
     ]
 
 
+#: API呼び出し履歴をファイルに出力する
 @router.get(
     "/access-logs/download",
     response_class=Response,
@@ -110,16 +121,28 @@ def access_logs(
             "description": "アクセスログ（1行1件のJSON）",
             "content": {"application/x-ndjson": {"schema": {"type": "string"}}},
             "headers": {
+                #: ダウンロード時の保存方法・ファイル名
                 "Content-Disposition": {
                     "schema": {"type": "string"},
                     "description": "保存用のファイル名",
                 },
+                #: 次のページの開始位置
                 "X-Next-Cursor": {"schema": {"type": "string"}, "description": "次ページがある場合のみ"},
             },
         }
     },
 )
-def download(actor: User, db: DB, period: Range, request_id: str = "", cursor: str = "", unit: str = ""):
+def download(
+    actor: User,
+    db: DB,
+    period: Range,
+    #: リクエスト識別子
+    request_id: str = "",
+    #: 次のページの開始位置
+    cursor: str = "",
+    #: 集計対象の部署・プロジェクト識別子
+    unit: str = "",
+):
     stmt = visible(period[2], actor, db, unit)
     if request_id:
         stmt = stmt.where(AccessLog.request_id == request_id)
@@ -142,12 +165,15 @@ def download(actor: User, db: DB, period: Range, request_id: str = "", cursor: s
     )
 
 
+#: 時間帯別の呼び出し件数と応答時間を集計する
 @router.get("/metrics", responses={200: {"model": outputs.Metrics}})
 def metrics(
     actor: User,
     db: DB,
     period: Range,
+    #: 集計間隔（分）
     minutes: Literal["1", "5", "15", "60", "1440"] = "60",
+    #: 集計対象の部署・プロジェクト識別子
     unit: str = "",
 ):
     start, end, stmt = period
@@ -186,6 +212,7 @@ def metrics(
     return {"start": start, "end": end, "minutes": int(minutes), "points": buckets}
 
 
+#: ダッシュボードの件数を集計する
 @router.get("/dashboard", responses={200: {"model": outputs.Dashboard}})
 def dashboard(actor: User, db: DB):
     assets = select(func.count(Asset.id)).where(Asset.removed_at.is_(None))
@@ -227,6 +254,7 @@ def dashboard(actor: User, db: DB):
     }
 
 
+#: 監視対象に指定できるAPIの利用先を一覧する
 @router.get("/management-targets", responses={200: {"model": list[outputs.ManagementTarget]}})
 def management_targets(actor: User, db: DB):
     stmt = (
@@ -248,8 +276,14 @@ def management_targets(actor: User, db: DB):
     ]
 
 
+#: 利用統計を絞り込めるAPIとプロジェクトを一覧する
 @router.get("/metric-dimensions", responses={200: {"model": list[outputs.Dimension]}})
-def dimensions(actor: User, db: DB, unit: str = ""):
+def dimensions(
+    actor: User,
+    db: DB,
+    #: 集計対象の部署・プロジェクト識別子
+    unit: str = "",
+):
     stmt = visible(
         select(AccessLog.asset_id, Asset.name, AccessLog.project).join(
             Asset, Asset.id == AccessLog.asset_id

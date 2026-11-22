@@ -36,7 +36,9 @@ def affected(path, suites):
         return {BACKEND, DATABASE, BROWSER, TOOLS, "types", "design", "aws", "coverage_source"}
     if path.endswith(("/web_app/guide_content.py", "/web_app/guide_search.py")):
         return {FRONTEND, BROWSER, BACKEND}
-    if path in {"tools/build_frontend.py", "packages/frontend/public/index.html"} or path.endswith(
+    if path == "tools/build_frontend.py":
+        return {FRONTEND, BROWSER, TOOLS, "aws_portal"}
+    if path == "packages/frontend/public/index.html" or path.endswith(
         ("/web_app/client.py", "/web_app/app.py", "/web_app/product_views.py", "/web_app/api_docs.py")
     ):
         return {FRONTEND, BROWSER, "aws_portal"}
@@ -72,6 +74,11 @@ def part_name(suite):
 
 def select(paths, suites, cached):
     flags = set().union(*(affected(path, suites) for path in paths))
+    if Path(BACKEND, "architecture/test_design_sources.py").is_file() and any(
+        path.startswith("tools/") and not path.startswith("tools/tests/") and path.endswith(".py")
+        for path in paths
+    ):
+        flags.add(BACKEND)
     full = "full" in flags or any(path.endswith("/pyproject.toml") for path in paths)
     if full:
         flags.update({"types", "design", "aws", "audit", "hooks"})

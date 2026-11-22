@@ -6,7 +6,7 @@ POST `/api/requests/{key}/{project}/{environment}/{principal}`
 
 [API一覧](../README.md) · [CRUD一覧](../crud.md)
 
-共通 · `decidePersonal` · [decide:18](../../../packages/backend/src/app/apis/catalog/decide/router.py#L18)
+共通 · `decidePersonal` · [decide:20](../../../packages/backend/src/app/apis/catalog/decide/router.py#L20)
 
 ## 入力
 
@@ -95,13 +95,13 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| [API利用申請・利用権](../database.md#access_rights) | access_rights | R | 主キーで取得 | db.get | [decide:29](../../../packages/backend/src/app/apis/catalog/decide/router.py#L29) |
-| [API利用申請・利用権](../database.md#access_rights) | access_rights | U | 現在の承認担当を設定 | stage に代入 | [decide:57](../../../packages/backend/src/app/apis/catalog/decide/router.py#L57) |
-| [API利用申請・利用権](../database.md#access_rights) | access_rights | U | 現在の承認担当を設定 | stage に代入 | [decide:61](../../../packages/backend/src/app/apis/catalog/decide/router.py#L61) |
-| [API利用申請・利用権](../database.md#access_rights) | access_rights | U | 申請時の回答・利用条件・審査履歴（JSON）を設定 | submission に代入 | [decide:62](../../../packages/backend/src/app/apis/catalog/decide/router.py#L62) |
-| [API利用申請・利用権](../database.md#access_rights) | access_rights | U | 現在の承認担当を設定 | stage に代入 | [decide:64](../../../packages/backend/src/app/apis/catalog/decide/router.py#L64) |
-| [API利用申請・利用権](../database.md#access_rights) | access_rights | U | 利用申請の審査状態を設定 | status に代入 | [decide:65](../../../packages/backend/src/app/apis/catalog/decide/router.py#L65) |
-| [API利用申請・利用権](../database.md#access_rights) | access_rights | U | 審査・取消の理由を設定 | decision_note に代入 | [decide:66](../../../packages/backend/src/app/apis/catalog/decide/router.py#L66) |
+| [API利用申請・利用権](../database.md#access_rights) | access_rights | R | 主キーで取得 | db.get | [decide:35](../../../packages/backend/src/app/apis/catalog/decide/router.py#L35) |
+| [API利用申請・利用権](../database.md#access_rights) | access_rights | U | 現在の承認担当を設定 | stage に代入 | [decide:63](../../../packages/backend/src/app/apis/catalog/decide/router.py#L63) |
+| [API利用申請・利用権](../database.md#access_rights) | access_rights | U | 現在の承認担当を設定 | stage に代入 | [decide:67](../../../packages/backend/src/app/apis/catalog/decide/router.py#L67) |
+| [API利用申請・利用権](../database.md#access_rights) | access_rights | U | 申請時の回答・利用条件・審査履歴（JSON）を設定 | submission に代入 | [decide:68](../../../packages/backend/src/app/apis/catalog/decide/router.py#L68) |
+| [API利用申請・利用権](../database.md#access_rights) | access_rights | U | 現在の承認担当を設定 | stage に代入 | [decide:70](../../../packages/backend/src/app/apis/catalog/decide/router.py#L70) |
+| [API利用申請・利用権](../database.md#access_rights) | access_rights | U | 利用申請の審査状態を設定 | status に代入 | [decide:71](../../../packages/backend/src/app/apis/catalog/decide/router.py#L71) |
+| [API利用申請・利用権](../database.md#access_rights) | access_rights | U | 審査・取消の理由を設定 | decision_note に代入 | [decide:72](../../../packages/backend/src/app/apis/catalog/decide/router.py#L72) |
 | [利用者の組織所属](../database.md#affiliations) | affiliations | R | 検索 | select | [delegated:134](../../../packages/backend/src/app/core/workspace.py#L134) |
 | [利用者の組織所属](../database.md#affiliations) | affiliations | R | 検索 | select | [populate:69](../../../packages/backend/src/app/core/workspace.py#L69) |
 | [APIカタログ](../database.md#assets) | assets | R | 主キーで取得 | db.get | [record:31](../../../packages/backend/src/app/apis/catalog/common.py#L31) |
@@ -114,7 +114,7 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:45](../../../packages/backend/src/app/core/config.py#L45) |
+| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:53](../../../packages/backend/src/app/core/config.py#L53) |
 
 <details><summary>解析した関数・依存</summary>
 

@@ -10,8 +10,17 @@ from fastapi import APIRouter, HTTPException, Request
 router = APIRouter()
 
 
+#: APIの公開・掲載取り下げを切り替える
 @router.put("/apis/{key}/publication", response_model=Listing, operation_id="publish")
-def publish(key: str, published: bool, request: Request, actor: User, db: DB):
+def publish(
+    #: カタログ掲載APIの識別子
+    key: str,
+    #: カタログで公開するか
+    published: bool,
+    request: Request,
+    actor: User,
+    db: DB,
+):
     a = record(db, key)
     if a.owner not in actor.owners:
         raise HTTPException(403)

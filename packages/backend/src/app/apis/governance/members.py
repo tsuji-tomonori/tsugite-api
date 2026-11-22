@@ -23,10 +23,19 @@ def projects(db=None):
     return sorted(configured_projects())
 
 
+#: ポータル利用者の招待内容
 class Invitation(Input):
+    #: 招待先メールアドレス
     email: str = Field(pattern=r"^[^\s@/]+@[^\s@/]+\.[^\s@/]+$", max_length=150)
+    #: 招待先プロジェクトの識別子
     project: str
-    role: Literal["consumer", "provider"]
+    #: 利用者の役割
+    role: Literal[
+        #: 利用者
+        "consumer",
+        #: 提供者
+        "provider",
+    ]
 
 
 def administrator(actor):
@@ -53,8 +62,16 @@ def pool():
     return settings()["pool_id"]
 
 
+#: ポータルの利用者を一覧する
 @router.get("/members", responses={200: {"model": outputs.MemberPage}})
-def list_members(actor: User, db: DB, cursor: str = "", limit: int = Query(40, ge=1, le=60)):
+def list_members(
+    actor: User,
+    db: DB,
+    #: 次のページの開始位置
+    cursor: str = "",
+    #: 取得件数の上限
+    limit: int = Query(40, ge=1, le=60),
+):
     administrator(actor)
     if local_demo():
         rows = [
@@ -68,6 +85,7 @@ def list_members(actor: User, db: DB, cursor: str = "", limit: int = Query(40, g
         )
         return {"items": rows, "next": "", "projects": projects(db)}
     idp = boto3.client("cognito-idp")
+    #: 利用者・グループの管理（Cognitoユーザープール） / 利用者の一覧を取得
     page = idp.list_users(
         UserPoolId=pool(), Limit=limit, **({"PaginationToken": cursor} if cursor else {})
     )
@@ -88,6 +106,7 @@ def list_members(actor: User, db: DB, cursor: str = "", limit: int = Query(40, g
     return {"items": rows, "next": page.get("PaginationToken", ""), "projects": projects(db)}
 
 
+#: ポータルに利用者を招待する
 @router.post("/members", status_code=201, responses={201: {"model": outputs.Person}})
 def invite(data: Invitation, request: Request, actor: User, db: DB):
     administrator(actor)
@@ -100,6 +119,7 @@ def invite(data: Invitation, request: Request, actor: User, db: DB):
     if not local_demo():
         idp = boto3.client("cognito-idp")
         try:
+            #: 利用者・グループの管理（Cognitoユーザープール） / 利用者を作成
             user = idp.admin_create_user(
                 UserPoolId=pool(),
                 Username=username,
@@ -111,12 +131,14 @@ def invite(data: Invitation, request: Request, actor: User, db: DB):
         try:
             subject = next(a["Value"] for a in user["Attributes"] if a["Name"] == "sub")
             if data.project in projects():
+                #: 利用者・グループの管理（Cognitoユーザープール） / 利用者をグループに追加
                 idp.admin_add_user_to_group(
                     UserPoolId=pool(),
                     Username=username,
                     GroupName=("own-" if data.role == "provider" else "use-") + data.project,
                 )
         except Exception:
+            #: 利用者・グループの管理（Cognitoユーザープール） / 利用者を削除
             idp.admin_delete_user(UserPoolId=pool(), Username=username)
             raise
     db.add(Member(subject=subject, username=username, project=data.project, role=data.role))
@@ -126,13 +148,23 @@ def invite(data: Invitation, request: Request, actor: User, db: DB):
     except SQLAlchemyError:
         db.rollback()
         if not local_demo() and not db.get(Member, subject):
+            #: 利用者・グループの管理（Cognitoユーザープール） / 利用者を削除
             boto3.client("cognito-idp").admin_delete_user(UserPoolId=pool(), Username=username)
         raise
     return {"subject": subject, "username": username}
 
 
+#: ポータルの利用者を削除する
 @router.delete("/members/{subject}", responses={200: {"model": outputs.Deleted}})
-def remove_member(subject: str, username: str, request: Request, actor: User, db: DB):
+def remove_member(
+    #: 対象利用者の識別子
+    subject: str,
+    #: 削除する利用者のログイン名
+    username: str,
+    request: Request,
+    actor: User,
+    db: DB,
+):
     administrator(actor)
     if subject == actor.subject:
         raise HTTPException(409, "自分自身は削除できません")
@@ -145,6 +177,7 @@ def remove_member(subject: str, username: str, request: Request, actor: User, db
             raise HTTPException(404)
     else:
         try:
+            #: 利用者・グループの管理（Cognitoユーザープール） / 利用者の登録情報を取得
             user = idp.admin_get_user(UserPoolId=pool(), Username=username)
         except idp.exceptions.UserNotFoundException:
             if row and row.deleted:
@@ -161,6 +194,7 @@ def remove_member(subject: str, username: str, request: Request, actor: User, db
         db.commit()
     if idp is not None:
         try:
+            #: 利用者・グループの管理（Cognitoユーザープール） / 利用者を削除
             idp.admin_delete_user(UserPoolId=pool(), Username=username)
         except ClientError as exc:
             if exc.response["Error"]["Code"] != "UserNotFoundException":

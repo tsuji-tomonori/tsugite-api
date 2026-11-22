@@ -44,6 +44,17 @@ def test_css_and_authentication_have_different_consumers(tmp_path):
     assert auth["aws_portal_only"] and auth["aws"] and auth["synth"]
 
 
+def test_frontend_builder_runs_stylesheet_and_design_policy_tests(tmp_path, monkeypatch):
+    """画面のビルド処理を変えるとCSS解析とコード解析の規則も検査する。"""
+    cached_report(tmp_path)
+    monkeypatch.chdir(tmp_path)
+    policy = Path(ci.BACKEND, "architecture/test_design_sources.py")
+    policy.parent.mkdir(parents=True)
+    policy.touch()
+    plan = ci.select(["tools/build_frontend.py"], SUITES, tmp_path)
+    assert {ci.BACKEND, ci.FRONTEND, ci.BROWSER, ci.TOOLS} == set(plan["suites"])
+
+
 def test_infra_and_aws_require_browser_and_assets(tmp_path):
     """インフラの実装変更ではCDK・監査・AWSの画面連携に必要な環境を用意する。"""
     cached_report(tmp_path)

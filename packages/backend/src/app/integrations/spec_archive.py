@@ -19,6 +19,7 @@ def archive_spec(asset_id, spec):
     bucket = os.getenv("SPEC_BUCKET")
     if bucket:
         try:
+            #: API仕様文書の保管（Amazon S3） / API仕様文書を保存
             boto3.client("s3").put_object(
                 Bucket=bucket,
                 Key=f"specs/{asset_id}/{digest}.json",

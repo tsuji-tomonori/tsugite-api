@@ -46,6 +46,7 @@ def validated_spec(data, db):
     return spec
 
 
+#: APIをカタログに登録する
 @router.post("/apis", response_model=Listing, status_code=201, operation_id="register")
 def register(data: Register, request: Request, actor: User, db: DB):
     if data.owner not in actor.owners:
@@ -70,8 +71,18 @@ def register(data: Register, request: Request, actor: User, db: DB):
     return listing(row)
 
 
+#: APIの登録内容を更新する
 @router.put("/apis/{key}", response_model=Listing)
-def edit(key: str, revision: int, data: Register, request: Request, actor: User, db: DB):
+def edit(
+    #: カタログ掲載APIの識別子
+    key: str,
+    #: 変更前の版番号
+    revision: int,
+    data: Register,
+    request: Request,
+    actor: User,
+    db: DB,
+):
     row = record(db, key)
     if row.owner not in actor.owners or data.owner != row.owner:
         raise HTTPException(403)
@@ -138,8 +149,17 @@ def close_rights(db, request, actor, row, reason, environments=None):
         event(db, request, actor, row, action, right.project, right.environment, reason)
 
 
+#: APIをカタログから削除する（論理削除）
 @router.delete("/apis/{key}", responses={200: {"model": outputs.Deleted}})
-def delete(key: str, revision: int, request: Request, actor: User, db: DB):
+def delete(
+    #: カタログ掲載APIの識別子
+    key: str,
+    #: 変更前の版番号
+    revision: int,
+    request: Request,
+    actor: User,
+    db: DB,
+):
     row = record(db, key)
     if row.owner not in actor.owners:
         raise HTTPException(403)

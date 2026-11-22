@@ -6,7 +6,7 @@ POST `/api/credentials/{key_id}/token`
 
 [API一覧](../README.md) · [CRUD一覧](../crud.md)
 
-共通 · `portal_token_api_credentials__key_id__token_post` · [portal_token:174](../../../packages/backend/src/app/apis/governance/credentials.py#L174)
+共通 · `portal_token_api_credentials__key_id__token_post` · [portal_token:192](../../../packages/backend/src/app/apis/governance/credentials.py#L192)
 
 ## 入力
 
@@ -61,15 +61,15 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 | --- | --- | --- | --- | --- | --- |
 | [API利用申請・利用権](../database.md#access_rights) | access_rights | R | 検索 | select | [approved_assets:49](../../../packages/backend/src/app/core/credential_policy.py#L49) |
 | [利用者の組織所属](../database.md#affiliations) | affiliations | R | 検索 | select | [populate:69](../../../packages/backend/src/app/core/workspace.py#L69) |
-| [API認証情報](../database.md#api_keys) | api_keys | R | 主キーで取得 | db.get | [portal_token:176](../../../packages/backend/src/app/apis/governance/credentials.py#L176) |
-| [監査履歴](../database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [audit:37](../../../packages/backend/src/app/apis/governance/directory.py#L37) |
-| [短期トークンの発行状態](../database.md#credential_leases) | credential_leases | C | レコードを追加 | db.add | [mint:80](../../../packages/backend/src/app/apis/governance/credentials.py#L80) |
-| [短期トークンの発行状態](../database.md#credential_leases) | credential_leases | R | 主キーで取得 | db.get | [mint:68](../../../packages/backend/src/app/apis/governance/credentials.py#L68) |
-| [短期トークンの発行状態](../database.md#credential_leases) | credential_leases | U | トークン有効期限（UNIX秒）を設定 | expires に代入 | [mint:81](../../../packages/backend/src/app/apis/governance/credentials.py#L81) |
-| [短期トークンの発行状態](../database.md#credential_leases) | credential_leases | U | 発行時の認証情報の版番号を設定 | generation に代入 | [mint:81](../../../packages/backend/src/app/apis/governance/credentials.py#L81) |
-| [短期トークンの発行状態](../database.md#credential_leases) | credential_leases | U | トークン発行時刻（UNIX秒）を設定 | issued に代入 | [mint:81](../../../packages/backend/src/app/apis/governance/credentials.py#L81) |
-| [短期トークンの発行状態](../database.md#credential_leases) | credential_leases | U | 発行したトークンを区別する一意値を設定 | nonce に代入 | [mint:81](../../../packages/backend/src/app/apis/governance/credentials.py#L81) |
-| [短期トークンの発行状態](../database.md#credential_leases) | credential_leases | U | トークンを更新できる時刻（UNIX秒）を設定 | refresh_at に代入 | [mint:81](../../../packages/backend/src/app/apis/governance/credentials.py#L81) |
+| [API認証情報](../database.md#api_keys) | api_keys | R | 主キーで取得 | db.get | [portal_token:201](../../../packages/backend/src/app/apis/governance/credentials.py#L201) |
+| [監査履歴](../database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [audit:53](../../../packages/backend/src/app/apis/governance/directory.py#L53) |
+| [短期トークンの発行状態](../database.md#credential_leases) | credential_leases | C | レコードを追加 | db.add | [mint:96](../../../packages/backend/src/app/apis/governance/credentials.py#L96) |
+| [短期トークンの発行状態](../database.md#credential_leases) | credential_leases | R | 主キーで取得 | db.get | [mint:84](../../../packages/backend/src/app/apis/governance/credentials.py#L84) |
+| [短期トークンの発行状態](../database.md#credential_leases) | credential_leases | U | トークン有効期限（UNIX秒）を設定 | expires に代入 | [mint:97](../../../packages/backend/src/app/apis/governance/credentials.py#L97) |
+| [短期トークンの発行状態](../database.md#credential_leases) | credential_leases | U | 発行時の認証情報の版番号を設定 | generation に代入 | [mint:97](../../../packages/backend/src/app/apis/governance/credentials.py#L97) |
+| [短期トークンの発行状態](../database.md#credential_leases) | credential_leases | U | トークン発行時刻（UNIX秒）を設定 | issued に代入 | [mint:97](../../../packages/backend/src/app/apis/governance/credentials.py#L97) |
+| [短期トークンの発行状態](../database.md#credential_leases) | credential_leases | U | 発行したトークンを区別する一意値を設定 | nonce に代入 | [mint:97](../../../packages/backend/src/app/apis/governance/credentials.py#L97) |
+| [短期トークンの発行状態](../database.md#credential_leases) | credential_leases | U | トークンを更新できる時刻（UNIX秒）を設定 | refresh_at に代入 | [mint:97](../../../packages/backend/src/app/apis/governance/credentials.py#L97) |
 | [認証情報の利用制限](../database.md#credential_rules) | credential_rules | R | 主キーで取得 | db.get | [minutes:33](../../../packages/backend/src/app/core/credential_policy.py#L33) |
 | [組織階層](../database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
 | [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:121](../../../packages/backend/src/app/core/auth.py#L121) |
@@ -79,7 +79,7 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:45](../../../packages/backend/src/app/core/config.py#L45) |
+| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:53](../../../packages/backend/src/app/core/config.py#L53) |
 
 <details><summary>解析した関数・依存</summary>
 

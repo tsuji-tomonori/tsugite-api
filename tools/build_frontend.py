@@ -1,7 +1,6 @@
 """Build a self-hosted PuePy distribution. Downloads are pinned by digest."""
 
 import json
-import re
 import shutil
 import subprocess
 import tarfile
@@ -10,6 +9,8 @@ from hashlib import sha256
 from importlib.metadata import distribution
 from importlib.util import find_spec
 from pathlib import Path
+
+from tinycss2 import parse_component_value_list
 
 ROOT = Path(__file__).resolve().parents[1]
 DIST = ROOT / "packages/frontend/dist"
@@ -34,9 +35,27 @@ BUNDLES = {
 }
 
 
+def cloudscape_tokens(css):
+    """Read var() references, including references inside nested functions and fallbacks."""
+    names = set()
+    pending = parse_component_value_list(css, skip_comments=True)
+    while pending:
+        token = pending.pop()
+        if token.type == "function":
+            args = token.arguments
+            if token.lower_name == "var":
+                first = next((arg for arg in args if arg.type != "whitespace"), None)
+                if first and first.type == "ident" and first.value.startswith("--cs-"):
+                    names.add(first.value.removeprefix("--cs-"))
+            pending.extend(args)
+        elif token.type in {"() block", "[] block", "{} block"}:
+            pending.extend(token.content)
+    return sorted(names)
+
+
 def write_theme(definitions):
     """Resolve only the official tokens that the Python portal's stylesheet consumes."""
-    names = sorted(set(re.findall(r"var\(--cs-([a-z0-9-]+)\)", (DIST / "ui.css").read_text())))
+    names = cloudscape_tokens((DIST / "ui.css").read_text(encoding="utf-8"))
     tables = {"light": [], "dark": []}
     for name in names:
         value = definitions["tokens"][name]["$value"]
