@@ -107,6 +107,15 @@ MUTATIONS = (
         "packages/database/tests/test_session.py::test_dsql_uses_a_bundled_ca_for_full_tls_verification",
     ),
     Mutation(
+        "backend",
+        "Aurora DSQLのマイグレーションで方言のカラム取得に戻す",
+        "packages/database/src/tsugite_db/migration_columns.py",
+        'connection.dialect.name != "auroradsql"',
+        'connection.dialect.name == "auroradsql"',
+        "packages/database/tests/test_migration_columns.py::"
+        "test_dsql_column_names_use_the_system_catalog",
+    ),
+    Mutation(
         "frontend",
         "操作側のパラメーターをパス側の定義で上書きする",
         "packages/frontend/src/web_app/openapi_fields.py",
