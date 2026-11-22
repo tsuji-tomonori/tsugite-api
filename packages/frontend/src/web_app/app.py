@@ -161,6 +161,9 @@ async def run(fn, *args):
     if ctx["busy"]:
         return
     ctx.update(busy=True, message="", error=False)
+    root = document.getElementById("app")
+    root.inert = True
+    root.setAttribute("aria-busy", "true")
     try:
         await fn(*args)
     except Exception as exc:
@@ -170,6 +173,8 @@ async def run(fn, *args):
             ctx["me"] = None
     finally:
         ctx["busy"] = False
+        root.inert = False
+        root.removeAttribute("aria-busy")
         render()
 
 

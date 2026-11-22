@@ -107,8 +107,9 @@ def list_members(
     return {"items": rows, "next": page.get("PaginationToken", ""), "projects": projects(db)}
 
 
-def undo_invitation(idp, username):
+def undo_invitation(username):
     try:
+        idp = boto3.client("cognito-idp")
         #: 利用者・グループの管理（Cognitoユーザープール） / 招待に失敗した利用者を削除
         idp.admin_delete_user(UserPoolId=pool(), Username=username)
     except (BotoCoreError, ClientError) as exc:
@@ -154,7 +155,7 @@ def invite(data: Invitation, request: Request, actor: User, db: DB):
                 )
         except Exception:
             #: 利用者・グループの管理（Cognitoユーザープール） / 利用者を削除
-            undo_invitation(idp, username)
+            undo_invitation(username)
             raise
     request.state.target_subject_id = subject
     db.add(Member(subject=subject, username=username, project=data.project, role=data.role))
@@ -165,7 +166,7 @@ def invite(data: Invitation, request: Request, actor: User, db: DB):
         db.rollback()
         if not local_demo() and not db.get(Member, subject):
             #: 利用者・グループの管理（Cognitoユーザープール） / 利用者を削除
-            undo_invitation(boto3.client("cognito-idp"), username)
+            undo_invitation(username)
         raise
     return {"subject": subject, "username": username}
 

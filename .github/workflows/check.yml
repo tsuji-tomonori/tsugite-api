@@ -1,7 +1,7 @@
 name: Verify
 on:
   pull_request:
-    branches: [main, verify/portal-chat-lambda]
+    branches: [main]
 permissions:
   contents: read
 concurrency:
