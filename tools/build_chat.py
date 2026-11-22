@@ -6,6 +6,7 @@ import os
 import shutil
 import subprocess
 from pathlib import Path
+from zipfile import ZipFile
 
 ROOT = Path(__file__).resolve().parents[1]
 MODELS = ROOT / "agent/models"
@@ -30,25 +31,6 @@ def build():
     stage()
     decision = BUILD / "chat-decision"
     llm = BUILD / "chat-llm"
-    subprocess.run(
-        [
-            "uv",
-            "pip",
-            "install",
-            "--python-version",
-            "3.14",
-            "--python-platform",
-            "x86_64-manylinux_2_34",
-            "--only-binary",
-            ":all:",
-            "--target",
-            str(decision),
-            "onnxruntime==1.32.0",
-            "numpy==2.4.0",
-            "tokenizers==0.22.2",
-        ],
-        check=True,
-    )
     source = BUILD / ("llama.cpp-" + LLAMA_RELEASE)
     if not source.exists():
         subprocess.run(
@@ -95,9 +77,12 @@ def build():
     shutil.copy2(out / "bin/llama-server", llm)
     shutil.copy2(source / "LICENSE", llm / "llama.cpp-LICENSE")
     subprocess.run([str(llm / "llama-server"), "--version"], check=True)
-    for target in (decision, llm):
-        if sum(path.stat().st_size for path in target.rglob("*") if path.is_file()) > 250 * 1024**2:
-            raise ValueError(f"{target.name} exceeds the Lambda uncompressed package limit")
+    for target, layer in ((decision, "decision-model-layer.zip"), (llm, "model-sdk-layer.zip")):
+        code_bytes = sum(path.stat().st_size for path in target.rglob("*") if path.is_file())
+        with ZipFile(BUILD / layer) as archive:
+            dependency_bytes = sum(entry.file_size for entry in archive.infolist())
+        if code_bytes + dependency_bytes > 250 * 1024**2:
+            raise ValueError(f"{target.name} and {layer} exceed the Lambda uncompressed package limit")
 
 
 def publish():

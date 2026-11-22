@@ -70,50 +70,40 @@ def sync_layer(requirements, archive, python_version="3.14"):
         os.replace(output, archive)
 
 
+def build_layers():
+    """Export each Lambda's runtime dependencies directly from the shared uv.lock."""
+    build_dir = ROOT / "build"
+    build_dir.mkdir(exist_ok=True)
+    for name, python_version, selection in (
+        ("runtime", "3.15", ["--package", "tsugite-backend", "--no-dev"]),
+        ("decision-model", "3.14", ["--only-group", "decision-model"]),
+        ("model-sdk", "3.14", ["--only-group", "model-sdk"]),
+    ):
+        requirements = build_dir / f"{name}.txt"
+        subprocess.run(
+            [
+                "uv",
+                "export",
+                "--locked",
+                *selection,
+                "--no-emit-workspace",
+                "--no-header",
+                "-o",
+                str(requirements),
+            ],
+            cwd=ROOT,
+            stdout=subprocess.DEVNULL,
+            check=True,
+        )
+        sync_layer(requirements, build_dir / f"{name}-layer.zip", python_version)
+
+
 def build():
+    build_layers()
     dest = ROOT / "build/lambda"
     if dest.exists():
         shutil.rmtree(dest)
     dest.mkdir(parents=True)
-    requirements = ROOT / "build/runtime.txt"
-    versions = requirements.with_name("runtime-versions.txt")
-    subprocess.run(
-        [
-            "uv",
-            "export",
-            "--locked",
-            "--package",
-            "tsugite-backend",
-            "--no-dev",
-            "--no-emit-workspace",
-            "--no-header",
-            "--no-hashes",
-            "-o",
-            str(versions),
-        ],
-        cwd=ROOT,
-        stdout=subprocess.DEVNULL,
-        check=True,
-    )
-    subprocess.run(
-        [
-            "uv",
-            "pip",
-            "compile",
-            str(versions),
-            "--python-version",
-            "3.15",
-            "--python-platform",
-            "x86_64-manylinux_2_34",
-            "--only-binary",
-            ":all:",
-            "--generate-hashes",
-            "--output-file",
-            str(requirements),
-        ],
-        check=True,
-    )
-    sync_layer(requirements, ROOT / "build/runtime-layer.zip", python_version="3.15")
     shutil.copytree(
         ROOT / "packages/backend/src/app", dest / "app", ignore=shutil.ignore_patterns("__pycache__")
     )

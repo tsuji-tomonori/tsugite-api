@@ -19,6 +19,8 @@
 
 モデルごとに Python 3.14 の ZIP 版 Lambda Event Function を用意します。埋め込みは ONNX Runtime、生成はローカルで起動する CPU 版 llama.cpp を使用します。生成の温度とシードを固定し、JSON スキーマで出力を制限します。API とチャット処理はそれぞれ Python 3.15 の ZIP として動作します。
 
+チャット処理は API・認可・DB 移行と同じ Python 3.15 用の依存 Layer を参照します。判定モデルは Python 3.14 用の `decision-model` Layer（ONNX Runtime、NumPy、Tokenizers、AWS SDK）、検索語生成と回答生成は `model-sdk` Layer（AWS SDK）を参照します。これらの外部パッケージの版と wheel のハッシュはルートの `uv.lock` に記録します。モデルの重みは S3 から読み込み、固定コミットからビルドした `llama-server` は生成用の関数 ZIP に含めます。
+
 GitHub にはソース、取得元、版、チェックサムを置きます。配備時には既定の CDK ブートストラップ用 S3 の `tsugite-chat-models/` にモデル重みをアップロードします。既存の同一版を再利用します。モデルの Lambda は最初の呼び出し時に担当モデルを `/tmp` に取得し、ウォーム実行時にモデルと埋め込みを再利用します。3モデルは Apache-2.0 で、再配布時にはライセンスや通知を添える条件があります。
 
 ローカルのデモでは既存の語句・概念検索と登録済みの手順でチャットを試せます。量子化モデルの精度、コールドスタート時間、スループットの計測には AWS 上のモデル Lambda を使用します。

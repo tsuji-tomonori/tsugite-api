@@ -59,6 +59,19 @@ class PortalChat(Construct):
             max_event_age=Duration.minutes(2),
         )
         self.allow_logs(group, role)
+        model_layers = {
+            name: fn.LayerVersion(
+                self,
+                construct_id,
+                code=fn.Code.from_asset(str(ROOT / "build" / f"{name}-layer.zip")),
+                compatible_runtimes=[fn.Runtime.PYTHON_3_14],
+                compatible_architectures=[fn.Architecture.X86_64],
+            )
+            for name, construct_id in (
+                ("decision-model", "DecisionDependencies"),
+                ("model-sdk", "SdkDependencies"),
+            )
+        }
         for model, memory, timeout in (
             ("decision", 3072, 35),
             ("tool", 4096, 65),
@@ -78,6 +91,7 @@ class PortalChat(Construct):
                 code=fn.Code.from_asset(
                     str(ROOT / "build" / ("chat-decision" if model == "decision" else "chat-llm"))
                 ),
+                layers=[model_layers["decision-model" if model == "decision" else "model-sdk"]],
                 environment={
                     "MODEL_BUCKET": bucket,
                     "MODEL_ROLE": model,

@@ -1,7 +1,7 @@
 [project]
 name = "tsugite-api"
 version = "0.1.0"
-requires-python = ">=3.14,<3.15"
+requires-python = ">=3.14,<3.16"
 dependencies = []
 
 [tool.uv.workspace]
@@ -17,6 +17,13 @@ tsugite-infra = { workspace = true }
 constraint-dependencies = ["pydantic>=2,<3", "sqlalchemy>=2,<3", "aws-cdk-lib>=2.220,<3"]
 
 [dependency-groups]
+model-sdk = ["boto3"]
+decision-model = [
+    { include-group = "model-sdk" },
+    "onnxruntime==1.32.0; python_version == '3.14'",
+    "numpy==2.4.0; python_version == '3.14'",
+    "tokenizers==0.22.2; python_version == '3.14'",
+]
 dev = ["pytest>=9", "pytest-given", "ruff", "pytest-cov", "pyright", "mypy", "pytestarch", "pip-audit"]
 
 [tool.pytest.ini_options]

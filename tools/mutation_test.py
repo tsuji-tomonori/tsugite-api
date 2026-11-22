@@ -25,6 +25,14 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
+        "model-layer",
+        "判定モデルの依存群をSDKだけに置き換える",
+        "tools/build_backend.py",
+        '["--only-group", "decision-model"]',
+        '["--only-group", "model-sdk"]',
+        "tools/tests/test_lambda_layer.py::test_each_lambda_layer_exports_its_locked_dependencies",
+    ),
+    Mutation(
         "lambda-layer",
         "Layerに依存を配置するディレクトリを誤る",
         "tools/build_backend.py",

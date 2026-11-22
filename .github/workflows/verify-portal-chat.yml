@@ -5,34 +5,6 @@ on:
 permissions:
   contents: read
 jobs:
-  lock-lambda:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-      - uses: astral-sh/setup-uv@v6
-      - name: 3.14 と 3.15 の Lambda 向け uv.lock を生成
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          paths = [Path("pyproject.toml"), *Path("packages").glob("*/pyproject.toml"), Path("tests/e2e/pyproject.toml"), Path("tools/pyproject.toml")]
-          for path in paths:
-              value = path.read_text().replace('requires-python = ">=3.14,<3.15"', 'requires-python = ">=3.14,<3.16"')
-              if path == paths[0]:
-                  value = value.replace("[dependency-groups]\n", "[dependency-groups]\n" + "model-sdk = [\"boto3\"]\ndecision-model = [\n    { include-group = \"model-sdk\" },\n    \"onnxruntime==1.32.0; python_version == '3.14'\",\n    \"numpy==2.4.0; python_version == '3.14'\",\n    \"tokenizers==0.22.2; python_version == '3.14'\",\n]\n")
-              path.write_text(value)
-          PY
-          uv lock --python 3.14
-          sha256sum uv.lock
-          python - <<'PY'
-          import base64, pathlib, textwrap, zlib
-          data = pathlib.Path("uv.lock").read_bytes()
-          for line in textwrap.wrap(base64.b64encode(zlib.compress(data, 9)).decode(), 240):
-              print("UVLOCK " + line)
-          PY
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 45
