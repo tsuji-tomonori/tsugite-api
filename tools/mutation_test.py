@@ -25,6 +25,14 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
+        "stock-lambda",
+        "存在しない商品を成功として返す",
+        "packages/infra/src/infra_app/lambdas/stock/stock.py",
+        "status, result = 404",
+        "status, result = 200",
+        "packages/infra/tests/test_stock_lambda.py::test_stock_response[missing]",
+    ),
+    Mutation(
         "model-layer",
         "判定モデルの依存群をSDKだけに置き換える",
         "tools/build_backend.py",
