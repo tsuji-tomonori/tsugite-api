@@ -19,12 +19,14 @@ BROWSER_FIXTURE = Path("tests/e2e/browser/conftest.py")
 BROWSER_TRACE = Path("tests/support/pyodide_trace.py")
 
 
-def coverage_policy():
+def coverage_policy(browser_fixture=None):
     with (ROOT / "pyproject.toml").open("rb") as file:
         config = tomllib.load(file)["tool"]["coverage"]
     digest = hashlib.sha256(json.dumps(config, sort_keys=True).encode())
-    for path in (BROWSER_FIXTURE, BROWSER_TRACE):
-        digest.update((ROOT / path).read_text(encoding="utf-8").encode())
+    if browser_fixture is None:
+        browser_fixture = (ROOT / BROWSER_FIXTURE).read_text(encoding="utf-8")
+    digest.update(browser_fixture.encode())
+    digest.update((ROOT / BROWSER_TRACE).read_text(encoding="utf-8").encode())
     return digest.hexdigest()
 
 
@@ -108,9 +110,36 @@ def download_merged_coverage(repository, branch, sha, folder):
     return False
 
 
+def compatible_baseline(folder, sha):
+    if compatible_coverage(folder):
+        return True
+    # 階層付き画面を導入する前の成果物。計測器の差が列挙方法だけで、比較元に
+    # 下位階層のPythonがない場合に限り、両方式が記録するパスと行遷移は一致する。
+    marker = Path(folder) / POLICY_FILE
+    if not marker.is_file():
+        return False
+    recursive = (
+        'path.relative_to(FRONTEND).as_posix(): path.as_posix() for path in FRONTEND.rglob("*.py")'
+    )
+    flat = 'path.name: path.as_posix() for path in FRONTEND.glob("*.py")'
+    fixture = (ROOT / BROWSER_FIXTURE).read_text(encoding="utf-8")
+    if fixture.count(recursive) != 1 or marker.read_text().strip() != coverage_policy(
+        fixture.replace(recursive, flat)
+    ):
+        return False
+    root = "packages/frontend/src/web_app/"
+    paths = subprocess.check_output(
+        ["git", "ls-tree", "-r", "-z", "--name-only", sha, "--", root], cwd=ROOT
+    ).split(b"\\0")
+    files = [path.removeprefix(root.encode()) for path in paths if path.endswith(b".py")]
+    return bool(files) and all(b"/" not in path for path in files)
+
+
 def merged_pr_coverage(repository, branch, sha):
     with TemporaryDirectory() as folder:
-        if download_merged_coverage(repository, branch, sha, folder) and compatible_coverage(folder):
+        if download_merged_coverage(repository, branch, sha, folder) and compatible_baseline(
+            folder, sha
+        ):
             return line_coverage(Path(folder) / "coverage.xml")
     return None
 

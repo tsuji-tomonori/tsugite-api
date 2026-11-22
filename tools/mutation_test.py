@@ -25,6 +25,14 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
+        "infra-docs",
+        "パラメーターシートから配列の添字を落とす",
+        "tools/design/infrastructure.py",
+        'settings(f"{path}[{index}]", item)',
+        "settings(path, item)",
+        "tools/tests/test_infrastructure_docs.py::test_component_parameter_sheet",
+    ),
+    Mutation(
         "frontend",
         "ログ取得の失敗時に未定義のクライアント例外を参照する",
         "packages/frontend/src/web_app/portal_pages/logs.py",
