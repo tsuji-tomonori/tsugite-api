@@ -1,12 +1,24 @@
-"""Example upstream for the operations in examples/stock.openapi.json."""
+"""在庫サンプルの一覧照会・商品別照会を処理するLambda。"""
 
 import json
+from typing import TypedDict
 
 
-def handler(event, context):
-    item = {"sku": "TS-01", "stock": 12}
+class StockEvent(TypedDict, total=False):
+    rawPath: str
+
+
+class StockResponse(TypedDict):
+    statusCode: int
+    headers: dict[str, str]
+    body: str
+
+
+def handler(event: StockEvent, context: object) -> StockResponse:
+    item: dict[str, object] = {"sku": "TS-01", "stock": 12}
     path = event.get("rawPath", "")
     status = 200
+    result: dict[str, object]
     if "/items/" in path:
         if path.rsplit("/", 1)[-1] == item["sku"]:
             result = item
