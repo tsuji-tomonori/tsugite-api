@@ -127,6 +127,7 @@ tasks:
   test:aws:
     desc: AWS EmulatorでのE2E（synthの後に実行）
     cmds:
+      - uv python install 3.15
       - |
         export AWS_EMULATOR_BINARY="${AWS_EMULATOR_BINARY:-${RUNNER_TEMP:-${TMPDIR:-/tmp}}/tsugite-aws-emulator/opt/aws-emulator/bin/aws-emulator}"
         {{.RUN}} python tools/emulator_e2e.py --junitxml=artifacts/aws-emulator.xml {{.CLI_ARGS}}
