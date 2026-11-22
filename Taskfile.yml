@@ -133,7 +133,7 @@ tasks:
   test:
     desc: 全パッケージとブラウザーのテスト結果を保存
     cmds:
-      - '{{.RUN}} pytest -q --cov=app --cov=tsugite_db --cov-branch --junitxml=artifacts/junit.xml --given-md=artifacts/scenarios.md --given-html=artifacts/scenarios.html {{.CLI_ARGS}}'
+      - '{{.RUN}} pytest -q --cov --cov-config=pyproject.toml --junitxml=artifacts/junit.xml --given-md=artifacts/scenarios.md --given-html=artifacts/scenarios.html {{.CLI_ARGS}}'
   report:
     desc: HTML・PDFテストレポートを作成
     cmds: ['{{.RUN}} python tools/test_report.py --pdf']

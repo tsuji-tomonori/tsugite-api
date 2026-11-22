@@ -25,6 +25,21 @@ markers = ["case_detail(text): パラメーターごとの条件や期待結果�
 pythonpath = ["packages/backend/src", "packages/database/src", "packages/infra", "."]
 testpaths = ["packages/backend/tests", "packages/frontend/tests", "packages/infra/tests", "packages/database/tests", "tests/e2e/browser", "tools/tests"]
 
+[tool.coverage.run]
+branch = true
+relative_files = true
+source = [
+    "packages/backend/src/app",
+    "packages/database/src/tsugite_db",
+    "packages/frontend/src/web_app",
+    "packages/infra",
+    "agent",
+]
+omit = ["*/tests/*", "*/cdk.out/*", "*/__pycache__/*"]
+
+[tool.coverage.report]
+include_namespace_packages = true
+
 [tool.ruff]
 target-version = "py314"
 line-length = 105

@@ -44,7 +44,7 @@ MUTATIONS = (
         "ci",
         "以前の実行行を含むテスト層の再計測を省く",
         "tools/ci_scope.py",
-        '("coverage_source" in flags and part.stat().st_size)',
+        "measured_changes\n                and part.stat().st_size",
         "False",
         "tools/tests/test_ci_scope.py::test_measured_source_invalidates_suites_that_executed_it",
     ),

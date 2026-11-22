@@ -117,3 +117,51 @@ def test_git_diff_includes_deleted_and_both_renamed_paths(tmp_path, monkeypatch)
     git("add", "-A")
     git("-c", "user.name=CI", "-c", "user.email=ci@example.invalid", "commit", "-qm", "head")
     assert set(ci.changed_paths("HEAD^")) == {str(old), str(new), str(removed)}
+
+
+def test_coverage_includes_all_runtime_layers_and_unexecuted_files(tmp_path):
+    """全領域の実行行と未実行行を区別し、未読込のモデルとインフラの入口も分母に含める。"""
+    import json
+    import os
+    import sys
+
+    sources = [
+        "packages/backend/src/app/api.py",
+        "packages/database/src/tsugite_db/session.py",
+        "packages/frontend/src/web_app/screen.py",
+        "packages/infra/src/infra_app/stack.py",
+        "packages/infra/app.py",
+        "agent/worker.py",
+        "agent/models/nested/inference.py",
+    ]
+    for name in [*sources, "packages/infra/tests/test_stack.py", "packages/infra/cdk.out/asset/copy.py"]:
+        file = tmp_path / name
+        file.parent.mkdir(parents=True, exist_ok=True)
+        file.write_text("def run():\n    return 123\n")
+    config = Path(ci.__file__).resolve().parents[1] / "pyproject.toml"
+    command = [sys.executable, "-m", "coverage"]
+    env = {**os.environ, "COVERAGE_FILE": str(tmp_path / ".coverage")}
+    subprocess.run(
+        [*command, "run", f"--rcfile={config}", sources[2]], cwd=tmp_path, env=env, check=True
+    )
+    subprocess.run([*command, "json", f"--rcfile={config}"], cwd=tmp_path, env=env, check=True)
+    files = json.loads((tmp_path / "coverage.json").read_text())["files"]
+    files = {Path(name).as_posix(): data for name, data in files.items()}
+    assert set(files) == set(sources)
+    assert files[sources[2]]["executed_lines"] == [1]
+    assert files[sources[2]]["missing_lines"] == [2]
+    assert all(files[name]["missing_lines"] == [1, 2] for name in sources if name != sources[2])
+
+
+def test_changed_screen_invalidates_only_suites_that_executed_it(tmp_path):
+    """画面変更時はその画面を実行した別の層を再計測し、無関係な層の結果を再利用する。"""
+    import json
+
+    cached_report(tmp_path)
+    screen = "packages/frontend/src/web_app/guide_views.py"
+    for suite, files in [(ci.DATABASE, [screen]), (ci.INFRA, ["packages/infra/app.py"])]:
+        part = tmp_path / "coverage-parts" / ci.part_name(suite)
+        part.write_bytes(b"measured")
+        part.with_suffix(".json").write_text(json.dumps(files))
+    plan = ci.select([screen], SUITES, tmp_path)
+    assert set(plan["suites"]) == {ci.FRONTEND, ci.DATABASE, ci.BROWSER}

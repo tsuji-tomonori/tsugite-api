@@ -33,7 +33,7 @@ def affected(path, suites):
     if path.endswith(".md") and ("/" not in path or path.startswith(("docs/", "deploy/", ".agents/"))):
         return set()
     if path.startswith(("packages/backend/src/", "packages/database/")):
-        return {BACKEND, DATABASE, BROWSER, TOOLS, "types", "design", "aws", "coverage_source"}
+        return {BACKEND, DATABASE, BROWSER, TOOLS, "types", "design", "aws"}
     if path.endswith(("/web_app/guide_content.py", "/web_app/guide_search.py")):
         return {FRONTEND, BROWSER, BACKEND}
     if path == "tools/build_frontend.py":
@@ -44,6 +44,8 @@ def affected(path, suites):
         return {FRONTEND, BROWSER, "aws_portal"}
     if path.startswith(("packages/frontend/src/", "packages/frontend/public/")):
         return {FRONTEND, BROWSER}
+    if path.startswith("agent/"):
+        return {BACKEND, BROWSER, INFRA, "audit", "aws"}
     if path.startswith("packages/infra/"):
         return {INFRA, "aws", "audit"}
     if path.startswith("tools/design/"):
@@ -74,6 +76,15 @@ def part_name(suite):
 
 def select(paths, suites, cached):
     flags = set().union(*(affected(path, suites) for path in paths))
+    with Path(__file__).resolve().parents[1].joinpath("pyproject.toml").open("rb") as file:
+        roots = tomllib.load(file)["tool"]["coverage"]["run"]["source"]
+    measured_changes = {
+        path
+        for path in paths
+        if path.endswith(".py")
+        and "/tests/" not in path
+        and any(path.startswith(root + "/") for root in roots)
+    }
     if Path(BACKEND, "architecture/test_design_sources.py").is_file() and any(
         path.startswith("tools/") and not path.startswith("tools/tests/") and path.endswith(".py")
         for path in paths
@@ -90,7 +101,12 @@ def select(paths, suites, cached):
     if not reuse_xml:
         for suite in suites:
             part = cached / "coverage-parts" / part_name(suite)
-            if not part.is_file() or ("coverage_source" in flags and part.stat().st_size):
+            index = part.with_suffix(".json")
+            if not part.is_file() or (
+                measured_changes
+                and part.stat().st_size
+                and (not index.is_file() or measured_changes.intersection(json.loads(index.read_text())))
+            ):
                 selected.add(suite)
     aws = "aws" in flags or "aws_portal" in flags
     synth = aws or "audit" in flags
@@ -133,6 +149,9 @@ def plan(base):
         source = cached / "coverage-parts" / part_name(suite)
         if suite not in result["suites"] and source.is_file():
             shutil.copyfile(source, PARTS / source.name)
+            index = source.with_suffix(".json")
+            if index.is_file():
+                shutil.copyfile(index, PARTS / index.name)
     if result["reuse_xml"]:
         shutil.copyfile(cached / "coverage.xml", ARTIFACTS / "coverage.xml")
     result["setup"] = merge_base != base or any(
@@ -160,9 +179,8 @@ def run_suites():
             "pytest",
             "-q",
             suite,
-            "--cov=app",
-            "--cov=tsugite_db",
-            "--cov-branch",
+            "--cov",
+            "--cov-config=pyproject.toml",
             f"--junitxml={junit}",
             f"--given-md={prefix}.md",
             f"--given-html={prefix}.html",
@@ -174,8 +192,9 @@ def run_suites():
         result.check_returncode()
         data = CoverageData(basename=str(part))
         data.read()
-        if not any(data.lines(name) for name in data.measured_files()):
-            # No executed lines from app or tsugite_db. Preserve that fact across PRs.
+        executed = sorted(name for name in data.measured_files() if data.lines(name))
+        part.with_suffix(".json").write_text(json.dumps(executed) + "\n")
+        if not executed:
             part.write_bytes(b"")
     parts = [PARTS / part_name(suite) for suite in configured_suites()]
     measured = [str(part) for part in parts if part.stat().st_size]
