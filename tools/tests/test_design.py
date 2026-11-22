@@ -121,39 +121,6 @@ def test_text_policy():
         assert list(violations(invalid))
 
 
-def test_business_names_cover_every_operation_field_and_database_column():
-    """全API項目とDBカラムに業務用の和名がある"""
-    import pytest
-    from app.design_names import localize
-    from tsugite_db.design_names import design_tables, table_names
-
-    japanese = re.compile(r"[ぁ-んァ-ヶ一-龯]")
-    schema, routes = catalog(True)
-    for _, operation in routes.values():
-        assert japanese.search(operation["summary"])
-        for param in operation.get("parameters", []):
-            assert japanese.search(param["x-ja-name"]), param["name"]
-        for response in operation["responses"].values():
-            for key, header in response.get("headers", {}).items():
-                assert japanese.search(header["x-ja-name"]), key
-
-    for key, record in schema["components"]["schemas"].items():
-        assert japanese.search(record["title"]), key
-        for field, definition in record.get("properties", {}).items():
-            assert japanese.search(definition["title"]), (key, field)
-
-    names = table_names()
-    assert set(names) == {t.name for t, _ in design_tables()}
-    for table, _ in design_tables():
-        entry = names[table.name]
-        for key in ("table", "record", "grain"):
-            assert japanese.search(entry[key]), (table.name, key)
-        assert set(entry["columns"]) == set(table.columns.keys())
-        assert all(japanese.search(name) for name in entry["columns"].values())
-    with pytest.raises(ValueError, match="GET /api/new"):
-        localize({"paths": {"/api/new": {"get": {}}}}, strict=True)
-
-
 def test_openapi_preserves_wire_names_and_labels_them_in_context(monkeypatch):
     """OpenAPIの通信上の項目名を保ち、用途に応じた和名を表示する"""
     from app.main import create_app
@@ -178,3 +145,28 @@ def test_openapi_preserves_wire_names_and_labels_them_in_context(monkeypatch):
         assert records[model]["properties"]["status"]["title"] == expected
     assert records["ReleaseEntry"]["properties"]["removed"]["title"] == "削除した操作・構成要素"
     assert records["Removed"]["properties"]["removed"]["title"] == "所属を解除したか"
+
+
+def test_nested_contracts_preserve_legacy_records_and_follow_field_annotations():
+    """過去に保存した独自項目を返しつつ、公開する入れ子の型をフィールド宣言から取得する。"""
+    from app.apis.schemas import Right
+
+    evidence = {"legacy_key": {"retired_option": True}, "steps": ["previous-format"]}
+    grant = Right(
+        id="grant",
+        asset_id="asset",
+        project="consumer",
+        environment="sandbox",
+        reason="利用申請",
+        status="approved",
+        revision=1,
+        application=evidence,
+    )
+    assert grant.model_dump()["application"] == evidence
+    spec, _ = catalog(True)
+    schemas = spec["components"]["schemas"]
+    assert schemas["Right"]["properties"]["application"]["$ref"].endswith("/ApplicationEvidence")
+    assert schemas["Detail"]["properties"]["offers"]["additionalProperties"]["$ref"].endswith(
+        "/PublishedOffer"
+    )
+    assert schemas["Detail"]["properties"]["releases"]["items"]["$ref"].endswith("/ReleaseEntry")

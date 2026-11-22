@@ -6,7 +6,7 @@ PUT `/api/apis/{key}/publication`
 
 [API一覧](../README.md) · [CRUD一覧](../crud.md)
 
-共通 · `publish` · [publish:14](../../../packages/backend/src/app/apis/catalog/publish/router.py#L14)
+共通 · `publish` · [publish:15](../../../packages/backend/src/app/apis/catalog/publish/router.py#L15)
 
 ## 入力
 
@@ -63,7 +63,7 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 | --- | --- | --- | --- | --- | --- |
 | [利用者の組織所属](../database.md#affiliations) | affiliations | R | 検索 | select | [populate:69](../../../packages/backend/src/app/core/workspace.py#L69) |
 | [APIカタログ](../database.md#assets) | assets | R | 主キーで取得 | db.get | [record:31](../../../packages/backend/src/app/apis/catalog/common.py#L31) |
-| [APIカタログ](../database.md#assets) | assets | U | カタログで公開中かを設定 | published に代入 | [publish:30](../../../packages/backend/src/app/apis/catalog/publish/router.py#L30) |
+| [APIカタログ](../database.md#assets) | assets | U | カタログで公開中かを設定 | published に代入 | [publish:39](../../../packages/backend/src/app/apis/catalog/publish/router.py#L39) |
 | [監査履歴](../database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [event:16](../../../packages/backend/src/app/apis/catalog/common.py#L16) |
 | [組織階層](../database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
 | [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:121](../../../packages/backend/src/app/core/auth.py#L121) |
@@ -75,10 +75,10 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| 接続先関数の実行（Lambda） | lambda | 実行 | 接続先関数を実行する権限を確認 | invoke (DryRun) | [probe:44](../../../packages/backend/src/app/integrations/upstream.py#L44) |
-| API仕様文書の保管（Amazon S3） | s3 | C | API仕様文書を保存 | put_object | [archive_spec:22](../../../packages/backend/src/app/integrations/spec_archive.py#L22) |
-| 秘密情報の保管（Secrets Manager） | secretsmanager | R | 秘密情報の値を取得 | get_secret_value | [auth_headers:26](../../../packages/backend/src/app/integrations/upstream.py#L26) |
-| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:45](../../../packages/backend/src/app/core/config.py#L45) |
+| 接続先関数の実行（Lambda） | lambda | 実行 | 接続先関数を実行する権限を確認 | invoke (DryRun) | [probe:46](../../../packages/backend/src/app/integrations/upstream.py#L46) |
+| API仕様文書の保管（Amazon S3） | s3 | C | API仕様文書を保存 | put_object | [archive_spec:23](../../../packages/backend/src/app/integrations/spec_archive.py#L23) |
+| 秘密情報の保管（Secrets Manager） | secretsmanager | R | 秘密情報の値を取得 | get_secret_value | [auth_headers:27](../../../packages/backend/src/app/integrations/upstream.py#L27) |
+| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:53](../../../packages/backend/src/app/core/config.py#L53) |
 
 <details><summary>解析した関数・依存</summary>
 

@@ -10,9 +10,26 @@ from pathlib import Path
 import sqlglot
 from sqlglot import exp
 from tsugite_db.models import Base
+from tsugite_db.source_docs import read_source
 
 ROOT = Path(__file__).resolve().parents[2]
 FUNCTION = (ast.FunctionDef, ast.AsyncFunctionDef)
+SQL_PARSE_ERRORS = (ValueError, sqlglot.errors.SqlglotError)
+
+
+@cache
+def sql_descriptions():
+    source = read_source(Path(__file__))
+    analyzer = next(
+        n for n in source.tree.body if isinstance(n, ast.ClassDef) and n.name == "SourceIndex"
+    )
+    inspect_method = next(
+        n for n in analyzer.body if isinstance(n, ast.FunctionDef) and n.name == "inspect"
+    )
+    return {
+        key.removeprefix("sqlalchemy."): label
+        for key, label in source.literal_labels(inspect_method).items()
+    }
 
 
 def name(node):
@@ -59,7 +76,7 @@ def raw_sql(sql):
         ctes = {cte.alias for cte in stmt.find_all(exp.CTE)}
         for table in stmt.find_all(exp.Table):
             if table is target or table.name not in ctes:
-                yield (table.sql().split(" AS ")[0], op if table is target else "R")
+                yield (".".join(part.sql() for part in table.parts), op if table is target else "R")
 
 
 def aws_action(operation):
@@ -90,7 +107,7 @@ class SourceIndex:
         for root in roots or [ROOT / "packages/backend/src", ROOT / "packages/database/src"]:
             for path in sorted(root.rglob("*.py")):
                 module = ".".join(path.relative_to(root).with_suffix("").parts).removesuffix(".__init__")
-                tree = ast.parse(path.read_text(encoding="utf-8"))
+                tree = read_source(path).tree
                 package = module if path.stem == "__init__" else module.rpartition(".")[0]
                 self.index(module, tree, path, {}, package)
 
@@ -270,12 +287,16 @@ class SourceIndex:
                 )
                 facts.edges.add((candidate, passed))
             arg = part.args[0] if part.args else None
+            #: 指定されたカラムの値を更新
             if full == "setattr" and not is_transient(arg):
                 for table in entities(arg):
                     add("SQL", table, "U", part, ast.unparse(part.func) + " による属性更新")
             if isinstance(part.func, ast.Attribute) and part.func.attr in {
+                #: 検索元のテーブルを指定
                 "select_from",
+                #: テーブルを結合
                 "join",
+                #: テーブルを外部結合
                 "outerjoin",
             }:
                 for expr in part.args:
@@ -289,11 +310,26 @@ class SourceIndex:
                 if isinstance(code, int):
                     facts.status.add(code)
             if full in {
+                #: 検索
                 "sqlalchemy.select",
+                #: レコードを追加
                 "sqlalchemy.insert",
+                #: 更新
                 "sqlalchemy.update",
+                #: レコードを削除
                 "sqlalchemy.delete",
-            } or name(part.func) in {"db.get", "db.add", "db.delete", "db.add_all", "session.get"}:
+            } or name(part.func) in {
+                #: 主キーで取得
+                "db.get",
+                #: レコードを追加
+                "db.add",
+                #: レコードを削除
+                "db.delete",
+                #: 複数レコードを追加
+                "db.add_all",
+                #: 主キーで取得
+                "session.get",
+            }:
                 op = {"insert": "C", "add": "C", "add_all": "C", "delete": "D", "update": "U"}.get(
                     full.split(".")[-1], "R"
                 )
@@ -316,7 +352,7 @@ class SourceIndex:
                         raise ValueError()
                     for table, op in raw_sql(literal(arg)):
                         add("SQL", table, op, part, literal(arg))
-                except ValueError, sqlglot.errors.SqlglotError:
+                except SQL_PARSE_ERRORS:
                     facts.unresolved.add((func, part.lineno, "SQL文または対象表"))
             if isinstance(part.func, ast.Attribute):
                 for svc in service(part.func.value):

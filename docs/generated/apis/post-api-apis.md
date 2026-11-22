@@ -6,7 +6,7 @@ POST `/api/apis`
 
 [API一覧](../README.md) · [CRUD一覧](../crud.md)
 
-共通 · `register` · [register:50](../../../packages/backend/src/app/apis/catalog/register/router.py#L50)
+共通 · `register` · [register:51](../../../packages/backend/src/app/apis/catalog/register/router.py#L51)
 
 ## 入力
 
@@ -84,7 +84,7 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
 | [利用者の組織所属](../database.md#affiliations) | affiliations | R | 検索 | select | [populate:69](../../../packages/backend/src/app/core/workspace.py#L69) |
-| [APIカタログ](../database.md#assets) | assets | C | レコードを追加 | db.add | [register:67](../../../packages/backend/src/app/apis/catalog/register/router.py#L67) |
+| [APIカタログ](../database.md#assets) | assets | C | レコードを追加 | db.add | [register:68](../../../packages/backend/src/app/apis/catalog/register/router.py#L68) |
 | [監査履歴](../database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [event:16](../../../packages/backend/src/app/apis/catalog/common.py#L16) |
 | [組織階層](../database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
 | [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:121](../../../packages/backend/src/app/core/auth.py#L121) |
@@ -94,8 +94,8 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| API仕様文書の保管（Amazon S3） | s3 | C | API仕様文書を保存 | put_object | [archive_spec:22](../../../packages/backend/src/app/integrations/spec_archive.py#L22) |
-| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:45](../../../packages/backend/src/app/core/config.py#L45) |
+| API仕様文書の保管（Amazon S3） | s3 | C | API仕様文書を保存 | put_object | [archive_spec:23](../../../packages/backend/src/app/integrations/spec_archive.py#L23) |
+| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:53](../../../packages/backend/src/app/core/config.py#L53) |
 
 <details><summary>解析した関数・依存</summary>
 

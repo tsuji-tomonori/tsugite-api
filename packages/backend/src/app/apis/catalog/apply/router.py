@@ -11,8 +11,16 @@ from tsugite_db.models import Access, Asset
 router = APIRouter()
 
 
+#: 特定の環境でのAPI利用を申請する
 @router.post("/apis/{key}/requests", status_code=201, response_model=Right, operation_id="apply")
-def apply(key: str, data: Apply, request: Request, actor: User, db: DB):
+def apply(
+    #: カタログ掲載APIの識別子
+    key: str,
+    data: Apply,
+    request: Request,
+    actor: User,
+    db: DB,
+):
     if data.project not in actor.projects and not (
         data.personal and data.project == private_project(actor.subject)
     ):
