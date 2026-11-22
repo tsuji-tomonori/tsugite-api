@@ -6,7 +6,7 @@ GET `/api/access-logs/download`
 
 [API一覧](../README.md) · [CRUD一覧](../crud.md)
 
-共通 · `download_api_access_logs_download_get` · [download:122](../../../packages/backend/src/app/apis/governance/observability.py#L122)
+共通 · `download_api_access_logs_download_get` · [download:135](../../../packages/backend/src/app/apis/governance/observability.py#L135)
 
 ## 入力
 
@@ -60,8 +60,8 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 | --- | --- | --- | --- | --- | --- |
 | [利用者の組織所属](../database.md#affiliations) | affiliations | R | 検索 | select | [populate:69](../../../packages/backend/src/app/core/workspace.py#L69) |
 | [組織階層](../database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
-| [API呼び出し履歴](../database.md#invocation_logs) | invocation_logs | R | 検索 | select | [interval:62](../../../packages/backend/src/app/apis/governance/observability.py#L62) |
-| [API呼び出しと組織の対応](../database.md#invocation_units) | invocation_units | R | 検索 | select | [unit_condition:231](../../../packages/backend/src/app/apis/governance/directory.py#L231) |
+| [API呼び出し履歴](../database.md#invocation_logs) | invocation_logs | R | 検索 | select | [interval:68](../../../packages/backend/src/app/apis/governance/observability.py#L68) |
+| [API呼び出しと組織の対応](../database.md#invocation_units) | invocation_units | R | 検索 | select | [unit_condition:275](../../../packages/backend/src/app/apis/governance/directory.py#L275) |
 | [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:121](../../../packages/backend/src/app/core/auth.py#L121) |
 | [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:56](../../../packages/backend/src/app/core/workspace.py#L56) |
 
@@ -69,7 +69,7 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:45](../../../packages/backend/src/app/core/config.py#L45) |
+| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:53](../../../packages/backend/src/app/core/config.py#L53) |
 
 <details><summary>解析した関数・依存</summary>
 

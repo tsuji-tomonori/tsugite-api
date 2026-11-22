@@ -6,7 +6,7 @@ PATCH `/api/invoke/{key}/{environment}/{project}/{tail}`
 
 [API一覧](../README.md) · [CRUD一覧](../crud.md)
 
-転送用（公開スキーマ外） · `invoke_api_invoke__key___environment___project___tail__patch` · [invoke:93](../../../packages/backend/src/app/apis/gateway.py#L93)
+転送用（公開スキーマ外） · `invoke_api_invoke__key___environment___project___tail__patch` · [invoke:97](../../../packages/backend/src/app/apis/gateway.py#L97)
 
 転送先に登録されたOpenAPIの操作に従います。短期アクセストークン（tst_）、共有キー、またはCognitoアクセストークンをBearerで渡します。短期トークンには追加のキーヘッダーを併用できません。本人限定キーを使う場合は本人のトークンとX-API-Key、ポータルで選択したキーを使う場合は本人のトークンとX-Tsugite-Key-Idを渡します。
 
@@ -59,10 +59,10 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 | [API利用申請・利用権](../database.md#access_rights) | access_rights | R | 主キーで取得 | db.get | [authorize:47](../../../packages/backend/src/app/apis/gateway.py#L47) |
 | [API利用申請・利用権](../database.md#access_rights) | access_rights | R | 主キーで取得 | db.get | [authorize:55](../../../packages/backend/src/app/apis/gateway.py#L55) |
 | [利用者の組織所属](../database.md#affiliations) | affiliations | R | 検索 | select | [populate:69](../../../packages/backend/src/app/core/workspace.py#L69) |
-| [API呼び出し件数の監視設定](../database.md#alert_rules) | alert_rules | R | 主キーで取得 | db.get | [admit:93](../../../packages/backend/src/app/apis/governance/alerts.py#L93) |
-| [API呼び出し件数の監視設定](../database.md#alert_rules) | alert_rules | U | 更新 | update | [admit:99](../../../packages/backend/src/app/apis/governance/alerts.py#L99) |
+| [API呼び出し件数の監視設定](../database.md#alert_rules) | alert_rules | R | 主キーで取得 | db.get | [admit:106](../../../packages/backend/src/app/apis/governance/alerts.py#L106) |
+| [API呼び出し件数の監視設定](../database.md#alert_rules) | alert_rules | U | 更新 | update | [admit:112](../../../packages/backend/src/app/apis/governance/alerts.py#L112) |
 | [API認証情報](../database.md#api_keys) | api_keys | R | 主キーで取得 | db.get | [authorize:49](../../../packages/backend/src/app/apis/gateway.py#L49) |
-| [API認証情報](../database.md#api_keys) | api_keys | R | 主キーで取得 | db.get | [invocation_actor:159](../../../packages/backend/src/app/apis/governance/keys.py#L159) |
+| [API認証情報](../database.md#api_keys) | api_keys | R | 主キーで取得 | db.get | [invocation_actor:179](../../../packages/backend/src/app/apis/governance/keys.py#L179) |
 | [API認証情報](../database.md#api_keys) | api_keys | R | 主キーで取得 | db.get | [resolve:81](../../../packages/backend/src/app/core/access_token.py#L81) |
 | [API認証情報](../database.md#api_keys) | api_keys | R | 主キーで取得 | db.get | [check_operation:66](../../../packages/backend/src/app/core/credential_policy.py#L66) |
 | [APIカタログ](../database.md#assets) | assets | R | 主キーで取得 | db.get | [record:31](../../../packages/backend/src/app/apis/catalog/common.py#L31) |
@@ -71,9 +71,9 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 | [認証情報の利用制限](../database.md#credential_rules) | credential_rules | R | 主キーで取得 | db.get | [individual:28](../../../packages/backend/src/app/core/credential_policy.py#L28) |
 | [認証情報の利用制限](../database.md#credential_rules) | credential_rules | R | 主キーで取得 | db.get | [minutes:33](../../../packages/backend/src/app/core/credential_policy.py#L33) |
 | [組織階層](../database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
-| [API呼び出し履歴](../database.md#invocation_logs) | invocation_logs | C | レコードを追加 | db.add | [log_result:110](../../../packages/backend/src/app/apis/gateway.py#L110) |
+| [API呼び出し履歴](../database.md#invocation_logs) | invocation_logs | C | レコードを追加 | db.add | [log_result:118](../../../packages/backend/src/app/apis/gateway.py#L118) |
 | [API呼び出しと組織の対応](../database.md#invocation_units) | invocation_units | C | レコードを追加 | db.add | [attribute:122](../../../packages/backend/src/app/core/workspace.py#L122) |
-| [通知](../database.md#notices) | notices | C | レコードを追加 | db.add | [admit:123](../../../packages/backend/src/app/apis/governance/alerts.py#L123) |
+| [通知](../database.md#notices) | notices | C | レコードを追加 | db.add | [admit:136](../../../packages/backend/src/app/apis/governance/alerts.py#L136) |
 | [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:121](../../../packages/backend/src/app/core/auth.py#L121) |
 | [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:56](../../../packages/backend/src/app/core/workspace.py#L56) |
 
@@ -81,9 +81,9 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| 接続先関数の実行（Lambda） | lambda | 実行 | 接続先関数を呼び出す | invoke | [dispatch:92](../../../packages/backend/src/app/integrations/upstream.py#L92) |
-| 秘密情報の保管（Secrets Manager） | secretsmanager | R | 秘密情報の値を取得 | get_secret_value | [auth_headers:26](../../../packages/backend/src/app/integrations/upstream.py#L26) |
-| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:45](../../../packages/backend/src/app/core/config.py#L45) |
+| 接続先関数の実行（Lambda） | lambda | 実行 | 接続先関数を呼び出す | invoke | [dispatch:95](../../../packages/backend/src/app/integrations/upstream.py#L95) |
+| 秘密情報の保管（Secrets Manager） | secretsmanager | R | 秘密情報の値を取得 | get_secret_value | [auth_headers:27](../../../packages/backend/src/app/integrations/upstream.py#L27) |
+| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:53](../../../packages/backend/src/app/core/config.py#L53) |
 
 <details><summary>解析した関数・依存</summary>
 

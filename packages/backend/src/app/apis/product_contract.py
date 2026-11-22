@@ -1,8 +1,9 @@
 """OpenAPI shapes for product details serialized as flexible JSON, including older grants."""
 
-from typing import NotRequired, TypedDict
+from dataclasses import dataclass
+from typing import Any, NotRequired, TypedDict, is_typeddict
 
-from pydantic import TypeAdapter
+from pydantic import BaseModel, TypeAdapter
 
 
 #: 商品に表示する申請項目
@@ -87,17 +88,36 @@ class ApplicationEvidence(TypedDict, total=False):
     answers: dict[str, str]
 
 
+@dataclass(frozen=True)
+class PublishedShape:
+    """Shape advertised for flexible JSON whose older stored records must still round-trip."""
+
+    annotation: Any
+
+
 def describe_product_fields(schemas):
-    for model, key, adapter in (
-        ("Detail", "offers", TypeAdapter(dict[str, PublishedOffer])),
-        ("Detail", "releases", TypeAdapter(list[ReleaseEntry])),
-        ("Right", "application", TypeAdapter(ApplicationEvidence)),
-    ):
-        if model in schemas:
-            shape = adapter.json_schema(ref_template="#/components/schemas/{model}")
-            schemas.update(shape.pop("$defs", {}))
-            # A standalone TypedDict is inlined by Pydantic.
-            if shape.get("title") == "ApplicationEvidence":
-                schemas["ApplicationEvidence"] = shape
-                shape = {"$ref": "#/components/schemas/ApplicationEvidence"}
-            schemas[model]["properties"][key].update(shape)
+    pending = [BaseModel]
+    seen = set()
+    while pending:
+        model = pending.pop()
+        if model in seen:
+            continue
+        seen.add(model)
+        pending.extend(model.__subclasses__())
+        if not model.__module__.startswith("app.") or model.__name__ not in schemas:
+            continue
+        properties = schemas[model.__name__].get("properties", {})
+        for name, field in model.model_fields.items():
+            key = field.serialization_alias or field.alias or name
+            for marker in field.metadata:
+                if not isinstance(marker, PublishedShape) or key not in properties:
+                    continue
+                shape = TypeAdapter(marker.annotation).json_schema(
+                    ref_template="#/components/schemas/{model}"
+                )
+                schemas.update(shape.pop("$defs", {}))
+                if is_typeddict(marker.annotation):
+                    title = marker.annotation.__name__
+                    schemas[title] = shape
+                    shape = {"$ref": f"#/components/schemas/{title}"}
+                properties[key].update(shape)

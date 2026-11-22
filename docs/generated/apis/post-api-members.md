@@ -6,7 +6,7 @@ POST `/api/members`
 
 [API一覧](../README.md) · [CRUD一覧](../crud.md)
 
-共通 · `invite_api_members_post` · [invite:92](../../../packages/backend/src/app/apis/governance/members.py#L92)
+共通 · `invite_api_members_post` · [invite:111](../../../packages/backend/src/app/apis/governance/members.py#L111)
 
 ## 入力
 
@@ -66,11 +66,11 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
 | [利用者の組織所属](../database.md#affiliations) | affiliations | R | 検索 | select | [populate:69](../../../packages/backend/src/app/core/workspace.py#L69) |
-| [監査履歴](../database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [member_event:38](../../../packages/backend/src/app/apis/governance/members.py#L38) |
+| [監査履歴](../database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [member_event:47](../../../packages/backend/src/app/apis/governance/members.py#L47) |
 | [組織階層](../database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
-| [ポータル利用者](../database.md#portal_members) | portal_members | C | レコードを追加 | db.add | [invite:122](../../../packages/backend/src/app/apis/governance/members.py#L122) |
-| [ポータル利用者](../database.md#portal_members) | portal_members | R | 検索 | select | [invite:97](../../../packages/backend/src/app/apis/governance/members.py#L97) |
-| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [invite:128](../../../packages/backend/src/app/apis/governance/members.py#L128) |
+| [ポータル利用者](../database.md#portal_members) | portal_members | C | レコードを追加 | db.add | [invite:144](../../../packages/backend/src/app/apis/governance/members.py#L144) |
+| [ポータル利用者](../database.md#portal_members) | portal_members | R | 検索 | select | [invite:116](../../../packages/backend/src/app/apis/governance/members.py#L116) |
+| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [invite:150](../../../packages/backend/src/app/apis/governance/members.py#L150) |
 | [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:121](../../../packages/backend/src/app/core/auth.py#L121) |
 | [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:56](../../../packages/backend/src/app/core/workspace.py#L56) |
 
@@ -78,11 +78,11 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| 利用者・グループの管理（Cognitoユーザープール） | cognito-idp | C | 利用者を作成 | admin_create_user | [invite:103](../../../packages/backend/src/app/apis/governance/members.py#L103) |
-| 利用者・グループの管理（Cognitoユーザープール） | cognito-idp | C | 利用者をグループに追加 | admin_add_user_to_group | [invite:114](../../../packages/backend/src/app/apis/governance/members.py#L114) |
-| 利用者・グループの管理（Cognitoユーザープール） | cognito-idp | D | 利用者を削除 | admin_delete_user | [invite:120](../../../packages/backend/src/app/apis/governance/members.py#L120) |
-| 利用者・グループの管理（Cognitoユーザープール） | cognito-idp | D | 利用者を削除 | admin_delete_user | [invite:129](../../../packages/backend/src/app/apis/governance/members.py#L129) |
-| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:45](../../../packages/backend/src/app/core/config.py#L45) |
+| 利用者・グループの管理（Cognitoユーザープール） | cognito-idp | C | 利用者を作成 | admin_create_user | [invite:123](../../../packages/backend/src/app/apis/governance/members.py#L123) |
+| 利用者・グループの管理（Cognitoユーザープール） | cognito-idp | C | 利用者をグループに追加 | admin_add_user_to_group | [invite:135](../../../packages/backend/src/app/apis/governance/members.py#L135) |
+| 利用者・グループの管理（Cognitoユーザープール） | cognito-idp | D | 利用者を削除 | admin_delete_user | [invite:142](../../../packages/backend/src/app/apis/governance/members.py#L142) |
+| 利用者・グループの管理（Cognitoユーザープール） | cognito-idp | D | 利用者を削除 | admin_delete_user | [invite:152](../../../packages/backend/src/app/apis/governance/members.py#L152) |
+| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:53](../../../packages/backend/src/app/core/config.py#L53) |
 
 <details><summary>解析した関数・依存</summary>
 

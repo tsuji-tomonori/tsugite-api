@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Annotated, Any, Literal, Self
 
+from app.apis.product_contract import ApplicationEvidence, PublishedOffer, PublishedShape, ReleaseEntry
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 Env = Literal[
@@ -122,9 +123,13 @@ class CatalogPage(BaseModel):
 #: カタログ掲載APIの詳細
 class Detail(Listing):
     #: 提供環境ごとの利用条件
-    offers: dict[str, Any] = Field(default_factory=dict)
+    offers: Annotated[dict[str, Any], PublishedShape(dict[str, PublishedOffer])] = Field(
+        default_factory=dict
+    )
     #: API仕様の公開履歴
-    releases: list[dict[str, Any]] = Field(default_factory=list[dict[str, Any]])
+    releases: Annotated[list[dict[str, Any]], PublishedShape(list[ReleaseEntry])] = Field(
+        default_factory=list[dict[str, Any]]
+    )
     #: 公開版の変更説明
     release_note: str = ""
     #: 許可されたAPI操作
@@ -196,7 +201,9 @@ class Right(BaseModel):
     #: 審査・取消の理由
     decision_reason: str | None = None
     #: 申請時に保存した利用条件・回答・審査履歴
-    application: dict[str, Any] = Field(default_factory=dict)
+    application: Annotated[dict[str, Any], PublishedShape(ApplicationEvidence)] = Field(
+        default_factory=dict
+    )
     #: 現在の承認担当
     stage: str | None = None
     #: 利用申請の審査状態
