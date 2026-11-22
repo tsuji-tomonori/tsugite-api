@@ -5,6 +5,7 @@ import re
 
 import httpx
 from playwright.sync_api import expect, sync_playwright
+
 from tests.support.catalog import approved, headers
 from tests.support.catalog_journey import browser_evidence
 from tests.support.portal_server import serve_portal
@@ -58,6 +59,14 @@ def test_workspace_key_console(tmp_path, request):
 
             admin.get_by_role("link", name="部署を編集").click()
             expect(admin.get_by_role("heading", name="部署の編集")).to_be_visible()
+            admin.set_viewport_size({"width": 390, "height": 844})
+            save = admin.get_by_role("button", name="保存", exact=True)
+            expect(save).to_have_css("min-height", "48px")
+            expect(save).to_have_css("padding-left", "24px")
+            expect(save.locator("..")).to_have_css("gap", "16px")
+            assert admin.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
+            capture(admin, "edit-mobile", "スマートフォン幅で対象の部署と保存・キャンセルの間隔を確認")
+            admin.set_viewport_size({"width": 1440, "height": 960})
             admin.get_by_label("名称", exact=True).fill("内部監査室")
             admin.get_by_role("button", name="保存", exact=True).click()
             expect(admin.get_by_role("heading", name="内部監査室")).to_be_visible()
@@ -146,4 +155,25 @@ def test_workspace_key_console(tmp_path, request):
             row.get_by_role("button", name="キーを失効").click()
             expect(row.get_by_text(re.compile("失効済み"))).to_be_visible()
             assert api.get(path, headers=call_headers).status_code in (401, 403)
+
+            for i in range(11):
+                api.put(
+                    f"/api/workspace/units/page-check-{i}",
+                    headers=headers(api, "admin"),
+                    json={"kind": "department", "name": f"一覧確認{i:02}"},
+                ).raise_for_status()
+            menu(admin, "部署")
+            directory = admin.get_by_role("table", name="部署一覧")
+            names = directory.locator("tbody th a")
+            expect(names).to_have_count(10)
+            first_page = names.all_text_contents()
+            capture(admin, "directory", "部署一覧に10件とページ移動を表示")
+            admin.get_by_role("link", name="次へ", exact=True).click()
+            expect(admin).to_have_url(re.compile(r"#/departments/page/2$"))
+            expect(admin.get_by_role("link", name="前へ")).to_be_visible()
+            second_page = names.all_text_contents()
+            assert second_page and set(first_page).isdisjoint(second_page)
+            admin.go_back()
+            expect(names).to_have_count(10)
+            assert names.all_text_contents() == first_page
         browser.close()

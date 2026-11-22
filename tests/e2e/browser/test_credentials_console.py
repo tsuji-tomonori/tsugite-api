@@ -6,6 +6,7 @@ import time
 
 import httpx
 from playwright.sync_api import expect, sync_playwright
+
 from tests.support.catalog import approved, headers
 from tests.support.catalog_journey import browser_evidence, navigate
 from tests.support.portal_server import serve_portal
