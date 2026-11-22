@@ -122,6 +122,8 @@ class CatalogPage(BaseModel):
 
 #: カタログ掲載APIの詳細
 class Detail(Listing):
+    #: 管理者が全環境の呼び出しを停止しているか
+    suspended: bool = False
     #: 提供環境ごとの利用条件
     offers: Annotated[dict[str, Any], PublishedShape(dict[str, PublishedOffer])] = Field(
         default_factory=dict

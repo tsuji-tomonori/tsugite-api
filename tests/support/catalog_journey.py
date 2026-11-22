@@ -1,23 +1,21 @@
 import os
+from collections.abc import Callable, Iterator
 from contextlib import ExitStack, contextmanager, suppress
 
-from playwright.sync_api import expect, sync_playwright
+import pytest
+from playwright.sync_api import Locator, Page, expect, sync_playwright
 from pytest_given import given, then, when
 
 from tests.support.portal_server import ROOT
+from tests.support.screenshots import capture_image
 
 
 @contextmanager
-def browser_evidence(case, mode, provider, consumer):
-    folder = ROOT / "artifacts" / "screenshots" / mode
-    folder.mkdir(parents=True, exist_ok=True)
-
-    def capture(view, name, caption):
-        path = folder / (name + ".png")
-        view.screenshot(path=path, animations="disabled")
-        case.user_properties.append(
-            ("screenshot", str(path.relative_to(ROOT / "artifacts")) + "|" + caption)
-        )
+def browser_evidence(
+    case: pytest.Item, mode: str, provider: Page, consumer: Page
+) -> Iterator[Callable[[Page | Locator, str, str], None]]:
+    def capture(view: Page | Locator, name: str, caption: str) -> None:
+        capture_image(case, mode, view, name, caption)
 
     try:
         yield capture
@@ -28,7 +26,7 @@ def browser_evidence(case, mode, provider, consumer):
         raise
 
 
-def navigate(page, label):
+def navigate(page: Page, label: str) -> None:
     toggle = page.get_by_role("button", name="ナビゲーション", exact=True)
     expect(toggle).to_be_visible()
     if toggle.get_attribute("aria-expanded") == "false":
@@ -36,7 +34,9 @@ def navigate(page, label):
     page.get_by_role("navigation", name="ポータル").get_by_role("button", name=label, exact=True).click()
 
 
-def catalog_journey(url, case, tokens=None, consumer_subject="consumer"):
+def catalog_journey(
+    url: str, case: pytest.Item, tokens: dict[str, str] | None = None, consumer_subject: str = "consumer"
+) -> None:
     with sync_playwright() as playwright, ExitStack() as evidence:
         browser = playwright.chromium.launch(
             executable_path=os.getenv("CHROMIUM_PATH") or None,
@@ -75,6 +75,8 @@ def catalog_journey(url, case, tokens=None, consumer_subject="consumer"):
                 ROOT / "docs/examples/stock.openapi.json"
             )
             provider.get_by_role("button", name="下書きを保存").click()
+            expect(provider.get_by_role("button", name="公開する")).to_be_visible()
+            capture(provider, "draft", "提供者が保存した公開前の下書き")
             provider.get_by_role("button", name="公開する").click()
             expect(provider.get_by_role("button", name="掲載を取り下げる")).to_be_visible()
             capture(provider, "01-published", "提供者が公開した棚卸APIとOpenAPIの操作仕様")

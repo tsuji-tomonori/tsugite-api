@@ -12,6 +12,11 @@
 
 CloudFrontを入口とし、非公開S3、API Gateway、Lambda、Cognito、Aurora DSQLを利用する。従量課金を基本とし、NATゲートウェイを必要としない構成にする。
 
+### 受入テスト
+
+- 受入テスト `packages/infra/tests/test_stack.py::test_access_boundaries`
+- 受入テスト `packages/infra/tests/test_cost.py::test_cost_drivers_are_bounded`
+
 ## 却下した方針
 
 外部SaaSや常時稼働するNATゲートウェイを前提とする構成は採用しない。

@@ -1,5 +1,6 @@
 """ポータルと共通の表示モードを使うログインフォーム。"""
 
+import client
 from js import document
 from portal_auth import PortalLogin
 from puepy import t
@@ -61,7 +62,7 @@ def portal_form(ctx, action, store, refresh):
 
         password = read("login-password")
         if step in {"new_password", "confirm_reset"} and password != read("login-repeat"):
-            raise ValueError("新しいパスワードと確認用の入力が一致しません。")
+            raise client.InputError("新しいパスワードと確認用の入力が一致しません。")
         token = await flow.submit(
             username=read("login-user"), password=password, code=read("login-code")
         )

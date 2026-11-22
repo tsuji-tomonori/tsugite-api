@@ -1,0 +1,148 @@
+from js import document, window
+from portal_navigation import go
+from portal_session import login_page, logout
+from portal_ui import action, btn, ctx, role_title, route, value
+from puepy import Page, t
+from screen_registry import menu, resolve
+
+
+def theme_changed(event):
+    mode = str(event.target.value)
+    window.localStorage.setItem("visual-mode", mode)
+    document.documentElement.setAttribute("data-mode", mode)
+
+
+def set_navigation(opened):
+    ctx["nav_open"] = opened
+    workspace = document.getElementById("workspace")
+    if workspace:
+        workspace.setAttribute("data-nav", "open" if opened else "closed")
+        document.getElementById("nav-toggle").setAttribute(
+            "aria-expanded", "true" if opened else "false"
+        )
+
+
+def toggle_navigation(event):
+    set_navigation(str(event.currentTarget.getAttribute("aria-expanded")) != "true")
+
+
+def adapt_navigation(event):
+    set_navigation(not event.matches)
+
+
+async def global_search():
+    await go("catalog", query=value("global-query"))
+
+
+class Portal(Page):
+    def populate(self):
+        user, page = ctx["me"], route()
+        screen = resolve(page) if user else None
+        title = screen.page_title() if screen else "画面が見つかりません"
+        active = (screen.parent or screen.path) if screen else ""
+        nav_open = ctx.get("nav_open", not window.matchMedia("(max-width: 780px)").matches)
+        with t.header(classes="mast"):
+            with t.div(classes="identity"):
+                t.span("", classes="brand-mark", aria_hidden="true")
+                t.strong("継手API", classes="brand")
+                t.span("APIポータル", classes="product")
+            if user:
+                with t.form(classes="global-search", on_submit=action(global_search)):
+                    t.input(
+                        id="global-query",
+                        type="search",
+                        placeholder="APIカタログを検索",
+                        aria_label="すべての公開APIを検索",
+                    )
+            with t.label(classes="mode-control"):
+                t.span("表示", classes="mode-label")
+                with t.select(aria_label="表示モード", on_change=theme_changed):
+                    for key, label in (("auto", "端末設定"), ("light", "ライト"), ("dark", "ダーク")):
+                        t.option(
+                            label,
+                            value=key,
+                            selected=key == (window.localStorage.getItem("visual-mode") or "auto"),
+                        )
+            if user:
+                with t.button(
+                    type="button",
+                    classes="bell-button",
+                    aria_label="通知を開く（未読" + str(ctx["badge"]) + "件）",
+                    on_click=action(go, "notifications"),
+                ):
+                    t.span("", classes="bell-icon", aria_hidden="true")
+                    t.strong(str(ctx["badge"]) if ctx["badge"] else "", id="unread-count")
+                t.span(
+                    " / ".join(sorted(set(user["owners"] + user["projects"]))) or role_title(),
+                    classes="project",
+                )
+                btn("ログアウト", logout)
+        if not ctx["config"] or not user:
+            with t.section(classes="login box"):
+                if ctx["message"]:
+                    t.div(
+                        ctx["message"],
+                        role="alert" if ctx["error"] else "status",
+                        classes="notice error" if ctx["error"] else "notice",
+                    )
+                if ctx["config"]:
+                    login_page()
+                else:
+                    t.p("カタログを読み込み中…")
+            return
+        with t.div(classes="console-tools"):
+            with t.button(
+                type="button",
+                id="nav-toggle",
+                classes="menu-button",
+                aria_label="ナビゲーション",
+                aria_controls="portal-nav",
+                aria_expanded="true" if nav_open else "false",
+                on_click=toggle_navigation,
+            ):
+                t.span("", classes="menu-icon", aria_hidden="true")
+            with t.div(classes="crumb", aria_label="現在地"):
+                t.a("継手API", href="#/home")
+                t.span("›", aria_hidden="true")
+                t.strong(title)
+            if active != "guide":
+                t.a(
+                    "使い方ガイド",
+                    href="#/guide",
+                    classes="guide-shortcut",
+                    on_click=action(go, "guide"),
+                )
+        with t.div(id="workspace", classes="workspace", data_nav="open" if nav_open else "closed"):
+            with t.nav(id="portal-nav", classes="rail", aria_label="ポータル"):
+                t.strong("継手API", classes="rail-title")
+                for label, entries in menu(user).items():
+                    with t.div(classes="nav-group"):
+                        t.small(label)
+                        for entry in entries:
+                            selected = active == entry.path
+                            t.button(
+                                entry.page_title(),
+                                type="button",
+                                classes="nav-item active" if selected else "nav-item",
+                                aria_current="page" if selected else "false",
+                                on_click=action(go, entry.path),
+                            )
+            with t.section(classes="content"):
+                if ctx["message"]:
+                    t.div(
+                        ctx["message"],
+                        role="alert",
+                        classes="notice error" if ctx["error"] else "notice",
+                    )
+                if not screen:
+                    t.h1(title)
+                    return
+                if not screen.own_heading:
+                    with t.div(classes="page-heading"):
+                        with t.div():
+                            t.h1(title)
+                            if screen.description:
+                                t.p(screen.description, classes="subtitle")
+                        if screen.heading_action:
+                            screen.heading_action()
+                screen.view()

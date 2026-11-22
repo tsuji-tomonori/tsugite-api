@@ -1,12 +1,17 @@
 import os
+from pathlib import Path
 from xml.etree import ElementTree
 
+import pytest
 from playwright.sync_api import expect, sync_playwright
 
+from tests.support.screenshots import capture_image
 from tools.testing import test_report
 
 
-def test_report_image_viewer(tmp_path, monkeypatch):
+def test_report_image_viewer(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, request: pytest.FixtureRequest
+) -> None:
     """実行レポートの画像をオフラインで拡大し、キーボード・タッチ・印刷でも確認できる"""
     monkeypatch.setattr(test_report, "OUT", tmp_path)
     shots = tmp_path / "screenshots"
@@ -43,6 +48,7 @@ def test_report_image_viewer(tmp_path, monkeypatch):
         stage = modal.get_by_role("region", name="拡大画像")
         expect(stage.get_by_role("img", name="申請一覧")).to_be_visible()
         assert stage.evaluate("el => el.scrollWidth === el.clientWidth")
+        capture_image(request.node, "reports", page, "viewer", "実行レポートで開いた画面証跡")
         modal.get_by_label("表示倍率").select_option("2")
         expect(stage.locator("img")).to_have_css("width", "2000px")
         stage.evaluate("el => el.scrollLeft = 350")

@@ -1,5 +1,6 @@
 """Product publication, release history and environment-specific application forms."""
 
+import client
 from js import document
 from puepy import t
 
@@ -100,7 +101,7 @@ def read_offer(env, value):
         row = rows.item(i)
         label = str(row.querySelector(".field-name").value).strip()
         if not label:
-            raise ValueError(ENV[env] + "の申請項目名を入力してください")
+            raise client.InputError(ENV[env] + "の申請項目名を入力してください")
         fields.append(
             {
                 "label": label,
@@ -165,12 +166,12 @@ def answers(asset, env, value):
     for i, item in enumerate(rule.get("fields", [])):
         answer = value(f"answer-{env}-{i}")
         if item["required"] and not answer:
-            raise ValueError(item["label"] + "を入力してください")
+            raise client.InputError(item["label"] + "を入力してください")
         if answer:
             data[item["label"]] = answer
     accepted = bool(rule.get("terms") and document.getElementById("agree-" + env).checked)
     if rule.get("terms") and not accepted:
-        raise ValueError("利用規約への同意が必要です")
+        raise client.InputError("利用規約への同意が必要です")
     return {"answers": data, "terms_accepted": accepted, "offer_version": rule.get("version", "")}
 
 
