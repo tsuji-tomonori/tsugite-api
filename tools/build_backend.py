@@ -119,9 +119,9 @@ def build():
     )
     shutil.copy(ROOT / "packages/database/alembic.ini", dest)
     shutil.copytree(
-        ROOT / "agent",
+        ROOT / "packages/agent/src/agent",
         dest / "agent",
-        ignore=shutil.ignore_patterns("__pycache__", "models", "README.md"),
+        ignore=shutil.ignore_patterns("__pycache__", "models"),
     )
     guide_path = Path("packages/frontend/src/web_app")
     (dest / guide_path).mkdir(parents=True)

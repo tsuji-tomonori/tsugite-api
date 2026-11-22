@@ -8,6 +8,7 @@ resolution-markers = [
 
 [manifest]
 members = [
+    "tsugite-agent",
     "tsugite-api",
     "tsugite-backend",
     "tsugite-database",
@@ -2269,6 +2270,25 @@ wheels = [
 ]
 
 [[package]]
+name = "tsugite-agent"
+version = "0.1.0"
+source = { editable = "packages/agent" }
+dependencies = [
+    { name = "boto3" },
+    { name = "sqlalchemy" },
+    { name = "tsugite-backend" },
+    { name = "tsugite-database" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "boto3" },
+    { name = "sqlalchemy", specifier = ">=2,<3" },
+    { name = "tsugite-backend", editable = "packages/backend" },
+    { name = "tsugite-database", editable = "packages/database" },
+]
+
+[[package]]
 name = "tsugite-api"
 version = "0.1.0"
 source = { virtual = "." }
@@ -2330,6 +2350,7 @@ dependencies = [
     { name = "pyjwt", extra = ["crypto"] },
     { name = "pyyaml" },
     { name = "sqlalchemy" },
+    { name = "tsugite-agent" },
     { name = "tsugite-database" },
     { name = "uvicorn" },
 ]
@@ -2346,6 +2367,7 @@ requires-dist = [
     { name = "pyjwt", extras = ["crypto"] },
     { name = "pyyaml" },
     { name = "sqlalchemy", specifier = ">=2,<3" },
+    { name = "tsugite-agent", editable = "packages/agent" },
     { name = "tsugite-database", editable = "packages/database" },
     { name = "uvicorn" },
 ]

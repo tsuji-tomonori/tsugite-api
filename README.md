@@ -49,7 +49,7 @@ API操作はルートデコレーター、引数・モデル・項目・列挙�
 
 [インフラ設計書](docs/generated/infra/README.md)には、CDKコンポーネントごとのリソース一覧とパラメーターシートがあります。`task docs:infra` はCDKを合成し、`packages/infra/cdk.out/TsugiteApi.template.json` から各表を更新します。接続先を指定する場合は `task docs:infra -- --bindings <ファイル>` を使います。既に合成したテンプレートから表だけを更新するときは `task docs:infra:render` を実行します。
 
-ログイン後のホームでは日本語で公開APIを探し、操作手順を確認し、運営に問い合わせできます。モデルの構成と配備方法は[チャットの設計](agent/README.md)を参照してください。
+ログイン後のホームでは日本語で公開APIを探し、操作手順を確認し、運営に問い合わせできます。モデルの構成と配備方法は[チャットの設計](packages/agent/README.md)を参照してください。
 
 CIはPRで設計書を生成して成果物に含めます。既定ブランチの検証が通ると、生成結果に差分がある場合だけ `docs/generated/` を自動コミットします。
 
