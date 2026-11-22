@@ -39,6 +39,8 @@ class PortalIdentity(Construct):
         portal = pool.add_client(
             "WebClient",
             generate_secret=False,
+            auth_flows=cog.AuthFlow(user_password=True, user_srp=True),
+            prevent_user_existence_errors=True,
             o_auth=cog.OAuthSettings(
                 flows=cog.OAuthFlows(authorization_code_grant=True),
                 scopes=[cog.OAuthScope.OPENID],

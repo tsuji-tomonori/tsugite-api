@@ -36,3 +36,21 @@ aws cloudformation describe-stacks \
 Environment を参照するワークフローをマージする前に、AWS の `tsugite-github-actions-oidc` スタックをこのテンプレートで更新します。CloudFormation の更新画面では既存の `CreateGitHubOidcProvider` の値を引き継ぎます。更新完了後に PR をマージします。
 
 GitHub Job に Environment を設定すると、OIDC トークンの `sub` は Environment 名を含みます。IAM はこの `sub` と `ref` の両方を照合し、継手API リポジトリの `main` ブランチから `main` Environment を使うジョブに短期認証情報を発行します。作成する IAM ロールは、同一アカウント・リージョンの CDK 配備ロールと S3 アセット公開ロールを引き受けます。OIDC プロバイダーはアカウント内の他のリポジトリでも共有するため、削除時は保持します。
+
+## 初回ログイン用の管理者を作成する
+
+1. `TsugiteApi` の配備後、AWS 管理者が下記のコマンドで既存の OIDC スタックを更新します。`BootstrapAdminUserPoolId` に指定したプールだけを CD ロールで操作できます。既存の OIDC プロバイダー設定は引き継ぎます。
+2. GitHub の **Settings → Environments → main → Environment secrets** に `BOOTSTRAP_ADMIN_EMAIL` を登録します。値は初回ログインを担当する本人のメールアドレスです。
+3. **Actions → Create initial administrator → Run workflow** でブランチ `main` を選んで実行します。`invite` で Cognito が招待メールを送信し、`grant` でそのユーザーを `admin` グループに追加します。
+4. 両ジョブの成功後、ポータルの **社内アカウントでログイン** を開きます。ユーザー名 `initial-admin` とメールの仮パスワードで入り、新しいパスワードと認証アプリの MFA を設定します。
+
+```bash
+region=ap-northeast-1
+pool=$(aws cloudformation describe-stacks --region "$region" --stack-name TsugiteApi \
+  --query "Stacks[0].Outputs[?OutputKey=='UserPoolId'].OutputValue | [0]" --output text) &&
+aws cloudformation deploy --region "$region" --stack-name tsugite-github-actions-oidc \
+  --template-file deploy/aws/github-actions-oidc.yml --capabilities CAPABILITY_IAM \
+  --parameter-overrides "BootstrapAdminUserPoolId=$pool"
+```
+
+管理者が登録済みなら、再実行しても招待は送られません。`grant` だけが失敗した場合は同じ実行の **Re-run failed jobs** を選ぶと、元の招待のユーザー識別子を照合して再開します。管理者が空で同名ユーザーがすでにいる場合は招待を停止します。AWS 管理者が Cognito と元の実行履歴で作成元を確認してください。

@@ -13,6 +13,8 @@ def portal_module(monkeypatch):
         "api_docs",
         "chat_views",
         "client",
+        "login_views",
+        "portal_auth",
         "guide_content",
         "guide_search",
         "guide_views",

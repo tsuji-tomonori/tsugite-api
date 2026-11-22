@@ -8,6 +8,7 @@ import api_docs
 import chat_views
 import client
 import guide_views
+import login_views
 import operation_views
 import product_views
 import workspace_views
@@ -303,22 +304,21 @@ async def refresh_session():
     await load()
 
 
-async def login(persona=None):
-    if persona:
-        token = await client.api("/demo/" + persona, "POST")
-        client.store.setItem("access", token["access_token"])
-        await refresh_session()
-    else:
-        client.signin(ctx["config"])
+async def login(persona):
+    token = await client.api("/demo/" + persona, "POST")
+    client.store.setItem("access", token["access_token"])
+    await refresh_session()
 
 
 async def logout():
+    portal_login = client.store.getItem("portal_login")
+    client.store.removeItem("portal_login")
     client.store.removeItem("access")
     config = ctx["config"]
     ctx.clear()
     ctx.update(deepcopy(INITIAL_STATE), config=config)
     await go("home")
-    if not ctx["config"]["demo"]:
+    if not config["demo"] and not portal_login:
         window.location.assign(
             ctx["config"]["domain"]
             + "/logout?"
@@ -500,8 +500,8 @@ async def global_search():
 
 
 def login_page():
-    t.h1("継手APIにログイン")
     if ctx["config"]["demo"]:
+        t.h1("継手APIにログイン")
         t.p("ローカルで試す役割を選んでください。", classes="muted")
         with t.div(classes="btn-grouping"):
             for key, title in [
@@ -516,7 +516,7 @@ def login_page():
             field("登録メールアドレス", "login-email")
             btn("このユーザーでログイン", login_member)
     else:
-        btn("社内アカウントでログイン", login, primary=True)
+        login_views.portal_form(ctx, action, client.store, refresh_session)
 
 
 async def login_member():
@@ -1402,7 +1402,11 @@ class Portal(Page):
         if not ctx["config"] or not user:
             with t.section(classes="login box"):
                 if ctx["message"]:
-                    t.div(ctx["message"], role="alert", classes="notice error")
+                    t.div(
+                        ctx["message"],
+                        role="alert" if ctx["error"] else "status",
+                        classes="notice error" if ctx["error"] else "notice",
+                    )
                 if ctx["config"]:
                     login_page()
                 else:

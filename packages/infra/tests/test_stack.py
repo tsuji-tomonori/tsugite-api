@@ -15,6 +15,14 @@ def test_access_boundaries(tmp_path):
         env=Environment(account="111111111111", region="ap-northeast-1"),
     )
     template = Template.from_stack(stack)
+    template.has_resource_properties(
+        "AWS::Cognito::UserPoolClient",
+        {
+            "AllowedOAuthFlows": ["code"],
+            "ExplicitAuthFlows": Match.array_with(["ALLOW_USER_PASSWORD_AUTH"]),
+            "PreventUserExistenceErrors": "ENABLED",
+        },
+    )
     template.resource_count_is("AWS::EC2::NatGateway", 0)
     template.resource_count_is("AWS::DSQL::Cluster", 1)
     template.has_resource_properties(

@@ -88,6 +88,7 @@ def create_app() -> FastAPI:
         return {
             "demo": local_demo(),
             "domain": cfg.get("domain", ""),
+            "identity_endpoint": cfg.get("issuer", "").rsplit("/", 1)[0],
             "client_id": cfg.get("portal_client", ""),
         }
 

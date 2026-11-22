@@ -1,0 +1,59 @@
+name: Create initial administrator
+
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: tsugite-api-aws-deploy
+  queue: max
+
+jobs:
+  invite:
+    if: github.repository == 'tsuji-tomonori/tsugite-api' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: main
+    permissions:
+      contents: read
+      id-token: write
+    outputs:
+      pool: ${{ steps.invite.outputs.pool }}
+      subject: ${{ steps.invite.outputs.subject }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: aws-actions/configure-aws-credentials@61815dcd50bd041e203e49132bacad1fd04d2708 # v5
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+          role-session-name: gha-admin-invite-${{ github.run_id }}-${{ github.run_attempt }}
+      - id: invite
+        env:
+          BOOTSTRAP_ADMIN_EMAIL: ${{ secrets.BOOTSTRAP_ADMIN_EMAIL }}
+        run: python3 tools/bootstrap_admin.py invite
+
+  grant:
+    needs: invite
+    if: needs.invite.outputs.subject != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: main
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: aws-actions/configure-aws-credentials@61815dcd50bd041e203e49132bacad1fd04d2708 # v5
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+          role-session-name: gha-admin-grant-${{ github.run_id }}-${{ github.run_attempt }}
+      - env:
+          INVITED_POOL: ${{ needs.invite.outputs.pool }}
+          INVITED_SUBJECT: ${{ needs.invite.outputs.subject }}
+        run: python3 tools/bootstrap_admin.py grant
