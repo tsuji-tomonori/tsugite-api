@@ -25,6 +25,14 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
+        "infra-docs",
+        "パラメーターシートから配列の添字を落とす",
+        "tools/design/infrastructure.py",
+        'settings(f"{path}[{index}]", item)',
+        "settings(path, item)",
+        "tools/tests/test_infrastructure_docs.py::test_component_parameter_sheet",
+    ),
+    Mutation(
         "stock-lambda",
         "存在しない商品を成功として返す",
         "packages/infra/src/infra_app/lambdas/stock/stock.py",
