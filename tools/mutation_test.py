@@ -25,6 +25,30 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
+        "architecture",
+        "公開画面の空の登録を許可する",
+        "tests/architecture/frontend_screens.py",
+        " or not value.elts",
+        "",
+        "tests/architecture/test_frontend_screens.py::test_feature_requires_local_screen_declaration",
+    ),
+    Mutation(
+        "architecture",
+        "画面間の直接参照を許可する",
+        "tests/architecture/frontend_screens.py",
+        'parts[0] == "portal_pages"',
+        'parts[0] == "_unused"',
+        "tests/architecture/test_frontend_screens.py::test_feature_cannot_depend_on_another_screen_or_the_shell",
+    ),
+    Mutation(
+        "architecture",
+        "共通レイアウトの画面分岐を見逃す",
+        "tests/architecture/frontend_screens.py",
+        'module in {"app", "portal_shell"}',
+        'module == "app"',
+        "tests/architecture/test_frontend_screens.py::test_shared_layout_delegates_route_dispatch",
+    ),
+    Mutation(
         "frontend",
         "画面を配布するときにサブディレクトリを省く",
         "tools/build_frontend.py",
