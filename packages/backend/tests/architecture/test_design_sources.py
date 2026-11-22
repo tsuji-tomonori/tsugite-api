@@ -62,6 +62,23 @@ def policy_violations(entries, roots):
             if isinstance(statement, ast.ImportFrom)
             for a in statement.names
         }
+        approved_reads = set()
+        for function in (n for n in tree.body if isinstance(n, ast.FunctionDef)):
+            if (module, function.name) == ("tsugite_db.source_docs", "read_source"):
+                receiver = "path"
+            elif (module, function.name) == ("tools.design.generate", "remove_obsolete_pages"):
+                receiver = "file"
+            else:
+                continue
+            approved_reads.update(
+                call
+                for call in ast.walk(function)
+                if isinstance(call, ast.Call)
+                and isinstance(call.func, ast.Attribute)
+                and call.func.attr == "read_text"
+                and isinstance(call.func.value, ast.Name)
+                and call.func.value.id == receiver
+            )
         for node in ast.walk(tree):
             if not isinstance(node, ast.Call):
                 continue
@@ -71,18 +88,7 @@ def policy_violations(entries, roots):
                 name = aliases.get(name, name)
             if name in {"__import__", "import_module"}:
                 errors.append(f"{module}:{node.lineno}: 動的インポート")
-            if name not in READERS:
-                continue
-            # The only inputs are the checked .py reader and previously generated Markdown for cleanup.
-            if module == "tsugite_db.source_docs" and name == "read_text":
-                continue
-            if (
-                module == "tools.design.generate"
-                and name == "read_text"
-                and isinstance(callee, ast.Attribute)
-                and isinstance(callee.value, ast.Name)
-                and callee.value.id == "file"
-            ):
+            if name not in READERS or node in approved_reads:
                 continue
             errors.append(f"{module}:{node.lineno}: 外部データの読み込み {name}")
     return errors
@@ -113,13 +119,15 @@ def test_project_tools_do_not_parse_source_files_with_regex():
 
 
 def test_design_source_directories_contain_no_sidecar_data():
-    """API・ORM・設計書生成のソースに追加された外部マッピングファイルを検出する。"""
-    unexpected = []
-    for folder in ("packages/backend/src/app", "packages/database/src/tsugite_db", "tools/design"):
-        for path in (ROOT / folder).rglob("*"):
-            if path.is_file() and "__pycache__" not in path.parts and path.suffix not in {".py", ".pyi"}:
-                unexpected.append(path.relative_to(ROOT))
-    assert not unexpected, unexpected
+    """廃止した用語集の復活と設計書生成パッケージへの外部辞書の追加を検出する。"""
+    removed = (
+        "packages/backend/src/app/api_names.toml",
+        "packages/database/src/tsugite_db/names.toml",
+        "tools/design/labels.py",
+    )
+    assert not [name for name in removed if (ROOT / name).exists()]
+    formats = {".toml", ".json", ".yaml", ".yml", ".csv", ".tsv", ".xml"}
+    assert not [p for p in (ROOT / "tools/design").rglob("*") if p.suffix.lower() in formats]
 
 
 def test_analysis_policy_follows_renamed_helpers_and_relative_imports(tmp_path):
@@ -195,3 +203,60 @@ def test_business_names_cover_every_operation_field_and_database_column():
         assert all(japanese(name) for name in entry["columns"].values())
     with pytest.raises(ValueError, match="GET /api/new"):
         localize({"paths": {"/api/new": {"get": {}}}}, strict=True)
+
+
+def test_editing_declaration_comments_changes_openapi_and_design_pages(tmp_path, monkeypatch):
+    """定義元のコメントだけを変更するとOpenAPI、API詳細、DB定義書、AWS操作表に反映される。"""
+    from app import design_names as api_names
+    from tsugite_db import design_names as db_names
+    from tsugite_db.source_docs import read_source
+
+    from tools.design import generate as design
+
+    changes = (
+        ("packages/backend/src/app/main.py", "サービスの稼働状態を確認する", "稼働確認の試験操作"),
+        ("packages/backend/src/app/apis/outputs.py", "サービスの稼働状態", "稼働確認の試験項目"),
+        ("packages/database/src/tsugite_db/models.py", "APIカタログ", "試験用カタログ"),
+        (
+            "packages/backend/src/app/integrations/spec_archive.py",
+            "API仕様文書の保管（Amazon S3） / API仕様文書を保存",
+            "試験用保管サービス / 試験用仕様の保存",
+        ),
+    )
+    copies = {}
+    for relative, before, after in changes:
+        path = ROOT / relative
+        original = path.read_text(encoding="utf-8")
+        marker = "#: " + before + "\n"
+        assert marker in original
+        copy = tmp_path / path.name
+        copy.write_text(original.replace(marker, "#: " + after + "\n"), encoding="utf-8")
+        copies[path] = copy
+
+    def from_copy(path):
+        return read_source(copies.get(path.resolve(), path))
+
+    try:
+        with monkeypatch.context() as context:
+            for module in (api_names, db_names, design):
+                context.setattr(module, "read_source", from_copy)
+            api_names.declarations.cache_clear()
+            api_names.model_fields.cache_clear()
+            db_names.table_names.cache_clear()
+            spec, _ = design.catalog(True)
+            assert spec["paths"]["/api/health"]["get"]["summary"] == "稼働確認の試験操作"
+            assert (
+                spec["components"]["schemas"]["Health"]["properties"]["status"]["title"]
+                == "稼働確認の試験項目"
+            )
+            output = tmp_path / "generated"
+            design.generate(output)
+            assert "稼働確認の試験項目" in (output / "apis/get-api-health.md").read_text(
+                encoding="utf-8"
+            )
+            assert "試験用カタログ" in (output / "database.md").read_text(encoding="utf-8")
+            assert "試験用保管サービス" in (output / "crud.md").read_text(encoding="utf-8")
+    finally:
+        api_names.declarations.cache_clear()
+        api_names.model_fields.cache_clear()
+        db_names.table_names.cache_clear()

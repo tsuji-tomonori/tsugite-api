@@ -628,6 +628,10 @@ def generate(out=OUT):
         target.write_text(
             SIGNATURE + "\n\n" + "\n".join(lines).strip() + "\n", encoding="utf-8", newline="\n"
         )
+    remove_obsolete_pages(out, pages)
+
+
+def remove_obsolete_pages(out, pages):
     for file in (out / "apis").glob("*.md"):
         if file.relative_to(out).as_posix() not in pages and file.read_text(encoding="utf-8").startswith(
             SIGNATURE + "\n"

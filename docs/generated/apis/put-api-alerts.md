@@ -6,7 +6,7 @@ PUT `/api/alerts`
 
 [API一覧](../README.md) · [CRUD一覧](../crud.md)
 
-共通 · `save_rule_api_alerts_put` · [save_rule:34](../../../packages/backend/src/app/apis/governance/alerts.py#L34)
+共通 · `save_rule_api_alerts_put` · [save_rule:46](../../../packages/backend/src/app/apis/governance/alerts.py#L46)
 
 ## 入力
 
@@ -30,7 +30,7 @@ PUT `/api/alerts`
 | 利用プロジェクトの識別子 | project | 必須 | 文字列 |
 | 提供環境 | environment | 必須 | 文字列、指定値 検証環境（`sandbox`）、準本番環境（`staging`）、本番環境（`production`） |
 | 通知・停止の判定に使う呼び出し件数 | threshold | 必須 | 整数、最小値 `1.0`、最大値 `100000000.0` |
-| 呼び出し件数の集計区間（分） | minutes | 必須 | 整数、指定値 `1`、`5`、`15`、`60`、`1440` |
+| 呼び出し件数の集計区間（分） | minutes | 必須 | 整数、指定値 呼び出し件数の集計区間（分）（`1`）、呼び出し件数の集計区間（分）（`5`）、呼び出し件数の集計区間（分）（`15`）、呼び出し件数の集計区間（分）（`60`）、呼び出し件数の集計区間（分）（`1440`） |
 | 上限到達後の呼び出しを停止するか | stop | 必須 | 真偽値 |
 | 監視ルールが有効か | enabled | 任意 | 真偽値、既定値 `true` |
 
@@ -68,13 +68,13 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| [API利用申請・利用権](../database.md#access_rights) | access_rights | R | 検索 | select | [save_rule:40](../../../packages/backend/src/app/apis/governance/alerts.py#L40) |
+| [API利用申請・利用権](../database.md#access_rights) | access_rights | R | 検索 | select | [save_rule:52](../../../packages/backend/src/app/apis/governance/alerts.py#L52) |
 | [利用者の組織所属](../database.md#affiliations) | affiliations | R | 検索 | select | [populate:69](../../../packages/backend/src/app/core/workspace.py#L69) |
-| [API呼び出し件数の監視設定](../database.md#alert_rules) | alert_rules | C | レコードを追加 | db.add | [save_rule:52](../../../packages/backend/src/app/apis/governance/alerts.py#L52) |
-| [API呼び出し件数の監視設定](../database.md#alert_rules) | alert_rules | R | 主キーで取得 | db.get | [save_rule:49](../../../packages/backend/src/app/apis/governance/alerts.py#L49) |
-| [API呼び出し件数の監視設定](../database.md#alert_rules) | alert_rules | U | 指定されたカラムの値を更新 | setattr による属性更新 | [save_rule:54](../../../packages/backend/src/app/apis/governance/alerts.py#L54) |
-| [API呼び出し件数の監視設定](../database.md#alert_rules) | alert_rules | U | 現在の集計区間の呼び出し件数を設定 | calls に代入 | [save_rule:55](../../../packages/backend/src/app/apis/governance/alerts.py#L55) |
-| [API呼び出し件数の監視設定](../database.md#alert_rules) | alert_rules | U | 現在の集計区間の番号を設定 | window に代入 | [save_rule:55](../../../packages/backend/src/app/apis/governance/alerts.py#L55) |
+| [API呼び出し件数の監視設定](../database.md#alert_rules) | alert_rules | C | レコードを追加 | db.add | [save_rule:64](../../../packages/backend/src/app/apis/governance/alerts.py#L64) |
+| [API呼び出し件数の監視設定](../database.md#alert_rules) | alert_rules | R | 主キーで取得 | db.get | [save_rule:61](../../../packages/backend/src/app/apis/governance/alerts.py#L61) |
+| [API呼び出し件数の監視設定](../database.md#alert_rules) | alert_rules | U | 指定されたカラムの値を更新 | setattr による属性更新 | [save_rule:66](../../../packages/backend/src/app/apis/governance/alerts.py#L66) |
+| [API呼び出し件数の監視設定](../database.md#alert_rules) | alert_rules | U | 現在の集計区間の呼び出し件数を設定 | calls に代入 | [save_rule:67](../../../packages/backend/src/app/apis/governance/alerts.py#L67) |
+| [API呼び出し件数の監視設定](../database.md#alert_rules) | alert_rules | U | 現在の集計区間の番号を設定 | window に代入 | [save_rule:67](../../../packages/backend/src/app/apis/governance/alerts.py#L67) |
 | [APIカタログ](../database.md#assets) | assets | R | 主キーで取得 | db.get | [record:31](../../../packages/backend/src/app/apis/catalog/common.py#L31) |
 | [監査履歴](../database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [event:16](../../../packages/backend/src/app/apis/catalog/common.py#L16) |
 | [組織階層](../database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
@@ -85,7 +85,7 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:45](../../../packages/backend/src/app/core/config.py#L45) |
+| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:53](../../../packages/backend/src/app/core/config.py#L53) |
 
 <details><summary>解析した関数・依存</summary>
 

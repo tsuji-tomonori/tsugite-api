@@ -6,7 +6,7 @@ POST `/api/keys`
 
 [API一覧](../README.md) · [CRUD一覧](../crud.md)
 
-共通 · `issue_api_keys_post` · [issue:84](../../../packages/backend/src/app/apis/governance/keys.py#L84)
+共通 · `issue_api_keys_post` · [issue:97](../../../packages/backend/src/app/apis/governance/keys.py#L97)
 
 ## 入力
 
@@ -78,11 +78,11 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| [API利用申請・利用権](../database.md#access_rights) | access_rights | R | 検索 | select | [issue:91](../../../packages/backend/src/app/apis/governance/keys.py#L91) |
+| [API利用申請・利用権](../database.md#access_rights) | access_rights | R | 検索 | select | [issue:104](../../../packages/backend/src/app/apis/governance/keys.py#L104) |
 | [利用者の組織所属](../database.md#affiliations) | affiliations | R | 検索 | select | [populate:69](../../../packages/backend/src/app/core/workspace.py#L69) |
-| [API認証情報](../database.md#api_keys) | api_keys | C | レコードを追加 | db.add | [issue:116](../../../packages/backend/src/app/apis/governance/keys.py#L116) |
+| [API認証情報](../database.md#api_keys) | api_keys | C | レコードを追加 | db.add | [issue:129](../../../packages/backend/src/app/apis/governance/keys.py#L129) |
 | [APIカタログ](../database.md#assets) | assets | R | 主キーで取得 | db.get | [record:31](../../../packages/backend/src/app/apis/catalog/common.py#L31) |
-| [監査履歴](../database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [audit:37](../../../packages/backend/src/app/apis/governance/directory.py#L37) |
+| [監査履歴](../database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [audit:53](../../../packages/backend/src/app/apis/governance/directory.py#L53) |
 | [組織階層](../database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
 | [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:121](../../../packages/backend/src/app/core/auth.py#L121) |
 | [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:56](../../../packages/backend/src/app/core/workspace.py#L56) |
@@ -91,7 +91,7 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:45](../../../packages/backend/src/app/core/config.py#L45) |
+| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:53](../../../packages/backend/src/app/core/config.py#L53) |
 
 <details><summary>解析した関数・依存</summary>
 
