@@ -245,6 +245,8 @@ class AccessLog(Base):
     status: Mapped[int]
     #: 応答時間（ミリ秒）
     duration_ms: Mapped[int]
+    #: 呼び出し時のログ重要度・発生画面・運用作業
+    diagnostics: Mapped[str | None] = mapped_column(Text)
 
 
 #: API呼び出し件数の監視設定

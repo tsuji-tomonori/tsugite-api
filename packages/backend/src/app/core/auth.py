@@ -5,7 +5,7 @@ from typing import Annotated
 
 import jwt
 from app.core.config import local_demo, settings
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 from tsugite_db.models import Member
@@ -112,6 +112,8 @@ def identify(token: str) -> Actor:
             expires=int(claims["exp"]),
             base_projects=projects,
         )
+    except jwt.exceptions.PyJWKClientConnectionError as exc:
+        raise HTTPException(503, "認証サービスに接続できませんでした") from exc
     except (ValueError, KeyError, jwt.PyJWTError) as exc:
         raise HTTPException(401, "認証情報を確認してください") from exc
 
@@ -124,12 +126,14 @@ def check_member(db, actor):
 
 
 def current(
+    request: Request,
     credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer)],
     db: Annotated[Session, Depends(session)],
 ) -> Actor:
     if credentials is None:
         raise HTTPException(401, "ログインしてください")
     actor = identify(credentials.credentials)
+    request.state.actor_id = actor.subject
     check_member(db, actor)
     from app.core.workspace import populate
 

@@ -1,8 +1,8 @@
-import json
 from typing import Annotated
 
 from app.apis.schemas import Listing
 from app.core.auth import Actor, human
+from app.core.diagnostics import asset_object
 from fastapi import Depends, HTTPException
 from sqlalchemy.orm import Session
 from tsugite_db.models import Asset, Event
@@ -13,6 +13,7 @@ User = Annotated[Actor, Depends(human)]
 
 
 def event(db, request, actor, asset, action, project="", environment="", detail=""):
+    request.state.diagnostics = {"asset_id": asset.id}
     db.add(
         Event(
             actor=actor.subject,
@@ -40,7 +41,7 @@ def listing(row: Asset) -> Listing:
         owner=row.owner,
         name=row.name,
         summary=row.summary,
-        environments=list(json.loads(row.targets)),
+        environments=list(asset_object(row, "targets")),
         published=row.published,
         revision=row.revision,
     )

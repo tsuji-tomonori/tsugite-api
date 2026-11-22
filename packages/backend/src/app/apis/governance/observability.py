@@ -6,6 +6,7 @@ from app.apis import outputs
 from app.apis.catalog.common import DB, User
 from app.apis.governance.directory import manages, unit_condition
 from app.apis.governance.notifications import unread
+from app.core.diagnostics import exported_invocation
 from app.core.workspace import allowed_audience, private_project, units
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import Response
@@ -159,7 +160,10 @@ def download(
         last = records[249]
         headers["X-Next-Cursor"] = last.at.isoformat() + "|" + last.request_id
     return Response(
-        "".join(json.dumps(log_data(row), ensure_ascii=False) + "\n" for row in records[:250]),
+        "".join(
+            json.dumps(exported_invocation(row, log_data(row)), ensure_ascii=False) + "\n"
+            for row in records[:250]
+        ),
         media_type="application/x-ndjson",
         headers=headers,
     )

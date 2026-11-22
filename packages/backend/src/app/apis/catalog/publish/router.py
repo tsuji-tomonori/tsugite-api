@@ -1,9 +1,8 @@
-import json
-
 from app.apis.catalog.common import DB, User, event, listing, record
 from app.apis.catalog.releases import record_release
 from app.apis.schemas import Listing
 from app.core.config import targets
+from app.core.diagnostics import asset_object
 from app.integrations.upstream import probe
 from fastapi import APIRouter, HTTPException, Request
 
@@ -30,10 +29,10 @@ def publish(
             if any(
                 name not in bindings
                 or (bindings[name].owner, bindings[name].environment) != (a.owner, env)
-                for env, name in json.loads(a.targets).items()
+                for env, name in asset_object(a, "targets").items()
             ):
                 raise HTTPException(409, "接続設定を確認してください")
-            for name in set(json.loads(a.targets).values()):
+            for name in set(asset_object(a, "targets").values()):
                 probe(bindings[name])
             record_release(db, a)
         a.published = published

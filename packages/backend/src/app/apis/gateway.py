@@ -10,6 +10,7 @@ from app.apis.schemas import Env
 from app.core.auth import Actor, check_member
 from app.core.config import targets
 from app.core.credential_policy import check_operation
+from app.core.diagnostics import OperationalRepair, asset_object, invocation_details
 from app.core.openapi import path_items
 from app.core.workspace import allowed_audience, attribute, private_project, stopped
 from app.integrations.upstream import MAX_BODY, dispatch
@@ -113,7 +114,7 @@ async def invoke(
         project if project in actor.projects or project == private_project(actor.subject) else ""
     )
 
-    def log_result(status):
+    def log_result(status, **fields):
         attribute(db, request.state.request_id, actor, member_project)
         db.add(
             AccessLog(
@@ -127,6 +128,9 @@ async def invoke(
                 method=request.method,
                 operation=getattr(request.state, "operation", "") or "",
                 status=status,
+                diagnostics=invocation_details(
+                    "api", request.headers.get("x-tsugite-screen"), status, **fields
+                ),
                 duration_ms=round((monotonic() - started) * 1000),
             )
         )
@@ -134,13 +138,18 @@ async def invoke(
     try:
         authorize(db, key, project, environment, actor)
         path = "/" + tail
-        request.state.operation = operation_template(json.loads(asset.spec), request.method, path)
+        request.state.operation = operation_template(asset_object(asset, "spec"), request.method, path)
         if request.state.operation is None:
             raise HTTPException(404, "OpenAPIに定義されていない操作です")
         check_operation(db, asset, actor, request.method + " " + request.state.operation, project)
-        binding = targets().get(json.loads(asset.targets).get(environment))
+        binding = targets().get(asset_object(asset, "targets").get(environment))
         if not binding or (binding.owner, binding.environment) != (asset.owner, environment):
-            raise HTTPException(503, "接続先を利用できません")
+            raise OperationalRepair(
+                "invalid_target_binding",
+                "対象APIのassets.targetsと配備済み接続先の所有者・環境を照合し、正しい接続設定を復元する。対象環境で呼び出しを確認する。",
+                asset_id=asset.id,
+                detail="接続先を利用できません",
+            )
         body = bytearray()
         async for chunk in request.stream():
             body.extend(chunk)
@@ -175,7 +184,7 @@ async def invoke(
             environment,
             str(exc.status_code),
         )
-        log_result(exc.status_code)
+        log_result(exc.status_code, **(exc.fields if isinstance(exc, OperationalRepair) else {}))
         db.commit()
         raise
     except Exception as exc:

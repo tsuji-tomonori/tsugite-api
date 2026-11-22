@@ -25,6 +25,22 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
+        "backend",
+        "データ修正を要する障害を通常のサーバーエラーと記録する",
+        "packages/backend/src/app/core/log_record.py",
+        'level = "CRITICAL"',
+        'level = "ERROR"',
+        "packages/backend/tests/test_request_logs.py::test_http_log",
+    ),
+    Mutation(
+        "frontend",
+        "画面内の入力不備をサーバー障害として記録する",
+        "packages/frontend/src/web_app/client.py",
+        "failed=not user_error",
+        "failed=True",
+        "packages/frontend/tests/test_screen_logs.py::test_screen_error_context",
+    ),
+    Mutation(
         "model-layer",
         "判定モデルの依存群をSDKだけに置き換える",
         "tools/build_backend.py",

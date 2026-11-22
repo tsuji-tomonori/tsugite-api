@@ -71,6 +71,7 @@ def home(ctx, render):
             await client.api("/chat", "POST", {"job_id": job_id, "question": question})
             reply = await wait_for_result(job_id)
         except Exception as exc:
+            client.report(exc, "ask", route="/api/chat")
             reply = {"kind": "error", "answer": str(exc)}
         if ctx.get("chat") is state:
             turn["reply"] = reply
@@ -114,6 +115,7 @@ def home(ctx, render):
                 "/inquiries", "POST", {"inquiry_id": state["inquiry_id"], "question": question}
             )
         except Exception as exc:
+            client.report(exc, "send_inquiry", route="/api/inquiries")
             state["inquiry_error"] = str(exc)
         else:
             state.update(contact=False, draft="", contact_text="", inquiry_id=None, inquiry_error="")

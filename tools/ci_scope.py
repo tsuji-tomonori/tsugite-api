@@ -37,6 +37,8 @@ def affected(path, suites):
         return {"design", TOOLS}
     if path.endswith(".md") and ("/" not in path or path.startswith(("docs/", "deploy/", ".agents/"))):
         return set()
+    if path == "packages/backend/src/app/core/log_record.py":
+        return {BACKEND, FRONTEND, BROWSER, TOOLS, "types", "aws", "aws_portal"}
     if path.startswith(("packages/backend/src/", "packages/database/")):
         return {BACKEND, DATABASE, BROWSER, TOOLS, "types", "design", "aws"}
     if path.endswith(("/web_app/guide_content.py", "/web_app/guide_search.py")):

@@ -17,7 +17,14 @@ from puepy import Application, Page, t
 from pyodide.ffi.wrappers import add_event_listener
 from pyodide.http import pyfetch
 
-app = Application()
+
+class PortalApplication(Application):
+    def handle_error(self, exception):
+        client.report(exception, "render")
+        return super().handle_error(exception)
+
+
+app = PortalApplication()
 ctx = {
     "config": None,
     "me": None,
@@ -49,6 +56,7 @@ ctx = {
     "audit_offset": 0,
 }
 INITIAL_STATE = deepcopy(ctx)
+client.viewer = lambda: (ctx.get("me") or {}).get("subject")
 
 LABEL = {
     "pending": "承認待ち",
@@ -156,6 +164,7 @@ async def run(fn, *args):
     try:
         await fn(*args)
     except Exception as exc:
+        client.report(exc, fn.__name__)
         ctx.update(message=str(exc), error=True)
         if not client.store.getItem("access"):
             ctx["me"] = None
@@ -357,7 +366,7 @@ async def inquiry_page(incoming, offset):
 async def reply_inquiry(key):
     answer = value("reply-" + key)
     if len(answer) < 2:
-        raise ValueError("回答を入力してください")
+        raise client.InputError("回答を入力してください")
     await client.api("/inquiries/" + key + "/reply", "PUT", {"answer": answer})
     await load()
 
@@ -385,20 +394,20 @@ async def audit_page(offset):
 async def register(publish_now=False):
     chosen = [value(k) for k in product_views.ENV if value(k)]
     if not chosen:
-        raise ValueError("接続先を一つ以上選んでください")
+        raise client.InputError("接続先を一つ以上選んでください")
     bindings = ctx["me"]["targets"]
     spec_text = value("spec")
     files = document.getElementById("spec-file").files
     if files.length:
         file = files.item(0)
         if file.size > 500000:
-            raise ValueError("500KB以内のファイルを選んでください")
+            raise client.InputError("500KB以内のファイルを選んでください")
         spec_text = str(await file.text())
     try:
         spec = json.loads(spec_text)
         info = spec["info"]
     except (ValueError, TypeError, KeyError) as exc:
-        raise ValueError("OpenAPI 3.0 / 3.1 のJSONファイルを指定してください") from exc
+        raise client.InputError("OpenAPI 3.0 / 3.1 のJSONファイルを指定してください") from exc
     data = {
         "release_note": value("release-note"),
         "offers": {
@@ -467,11 +476,12 @@ async def invoke(asset):
     env, project = value("trial-grant").split("/")
     path = value("trial-path")
     if not path.startswith("/") or "#" in path:
-        raise ValueError("/ で始まる操作パスを指定してください")
+        raise client.InputError("/ で始まる操作パスを指定してください")
     method = value("trial-method")
     options = {
         "method": method,
         "headers": {
+            **client.screen_headers(),
             "Authorization": "Bearer " + str(client.store.getItem("access")),
             "Content-Type": "application/json",
         },
@@ -1240,10 +1250,13 @@ async def download_logs():
     while True:
         res = await pyfetch(
             client.prefix + "/access-logs/download?" + urlencode(params),
-            headers={"Authorization": "Bearer " + str(client.store.getItem("access"))},
+            headers={
+                **client.screen_headers(),
+                "Authorization": "Bearer " + str(client.store.getItem("access")),
+            },
         )
         if not res.ok:
-            raise ValueError("ログを取得できませんでした")
+            raise client.ResponseError("ログを取得できませんでした")
         parts.push(await res.js_response.blob())
         cursor = res.js_response.headers.get("x-next-cursor")
         if not cursor:
