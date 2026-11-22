@@ -1,15 +1,18 @@
 import json
 import os
 from copy import deepcopy
+from pathlib import Path
 
+import pytest
 from playwright.sync_api import expect, sync_playwright
 
 from tests.support.catalog import SPEC
 from tests.support.catalog_journey import navigate
 from tests.support.portal_server import serve_portal
+from tests.support.screenshots import capture_image
 
 
-def test_publish_and_apply_from_product_page(tmp_path):
+def test_publish_and_apply_from_product_page(tmp_path: Path, request: pytest.FixtureRequest) -> None:
     """商品を公開し、利用者が商品詳細から利用申請できる"""
     env = {**os.environ, "TSUGITE_DEMO": "1", "DATABASE_URL": "sqlite:///" + str(tmp_path / "portal.db")}
     with serve_portal(env) as url, sync_playwright() as pw:
@@ -46,6 +49,7 @@ def test_publish_and_apply_from_product_page(tmp_path):
                 .filter(has_text=title)
                 .get_by_role("heading", name="レスポンス")
             ).to_be_visible()
+        capture_image(request.node, "publication", user, "operations", "選んだ操作の入力と応答仕様")
         user.locator("#environment").select_option("staging")
         expect(user.get_by_label("本番の利用規約に同意する")).to_be_hidden()
         user.locator("#environment").select_option("production")
@@ -55,4 +59,5 @@ def test_publish_and_apply_from_product_page(tmp_path):
         user.get_by_role("button", name="申請する").click()
         expect(user.get_by_text("finance · 本番 · 利用中", exact=True)).to_be_visible()
         expect(user.get_by_text("テスト実施ID　QA-882", exact=True)).to_be_visible()
+        capture_image(request.node, "publication", user, "terms", "本番の利用条件と受理された申請内容")
         browser.close()

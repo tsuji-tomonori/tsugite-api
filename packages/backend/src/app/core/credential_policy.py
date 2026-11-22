@@ -3,6 +3,7 @@
 import json
 from time import time
 
+from app.core.diagnostics import asset_object
 from app.core.openapi import path_items
 from app.core.workspace import ancestry, units
 from fastapi import HTTPException
@@ -15,7 +16,7 @@ def clock():
 
 
 def operations(asset):
-    spec = json.loads(asset.spec)
+    spec = asset_object(asset, "spec")
     return sorted(
         f"{m.upper()} {p}"
         for p, item in path_items(spec)

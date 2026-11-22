@@ -37,7 +37,7 @@ def provider_view(asset, ctx, field, btn, load):
 
     async def save_selection(inherit=False):
         if str(document.getElementById("op-person").value) != subject:
-            raise ValueError("利用者を選び直した場合は「権限を表示」を押してください")
+            raise client.InputError("利用者を選び直した場合は「権限を表示」を押してください")
         values = (
             None
             if inherit

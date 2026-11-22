@@ -1,11 +1,13 @@
 import inspect
+from collections import Counter
 
 import pytest
 
 from tests.architecture.case_text import is_japanese_case_text
 
 
-def pytest_collection_modifyitems(items):
+def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
+    variants = Counter(item.nodeid.split("[", 1)[0] for item in items)
     invalid = []
     for item in items:
         description = inspect.getdoc(getattr(item, "obj", None)) or ""
@@ -21,6 +23,8 @@ def pytest_collection_modifyitems(items):
                 invalid.append(f"{item.nodeid}: case_detail に簡潔な日本語の説明を1つ指定してください")
             else:
                 description += f"（{args[0]}）"
+        item.user_properties.append(("nodeid", item.nodeid))
+        item.user_properties.append(("variants", variants[item.nodeid.split("[", 1)[0]]))
         item.user_properties.append(("case_description", description))
     if invalid:
         raise pytest.UsageError("\n".join(invalid))

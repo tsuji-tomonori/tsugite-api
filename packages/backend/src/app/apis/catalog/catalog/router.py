@@ -1,8 +1,7 @@
-import json
-
 from app.apis.catalog.common import DB, User, listing
 from app.apis.schemas import CatalogPage, Env, Listing
 from app.core.catalog_rank import rank_assets
+from app.core.diagnostics import asset_object
 from app.core.workspace import allowed_audience
 from fastapi import APIRouter, Query
 from sqlalchemy import select
@@ -24,7 +23,7 @@ def visible_collection(db, actor, inventory=False, environment=None, *, spec=Fal
     return [
         a
         for a in db.scalars(stmt)
-        if allowed_audience(a, actor) and (not environment or environment in json.loads(a.targets))
+        if allowed_audience(a, actor) and (not environment or environment in asset_object(a, "targets"))
     ]
 
 

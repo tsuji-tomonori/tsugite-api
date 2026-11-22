@@ -25,6 +25,22 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
+        "evidence",
+        "実行結果のない要件を合格にする",
+        "tools/requirement_evidence.py",
+        'statuses.append("未実行")',
+        'statuses.append("成功")',
+        "tools/tests/test_requirement_evidence.py::test_unexecuted_requirement_fails",
+    ),
+    Mutation(
+        "evidence",
+        "スキップを成功にする",
+        "tools/requirement_evidence.py",
+        '("skipped", "スキップ")',
+        '("skipped", "成功")',
+        "tools/tests/test_requirement_evidence.py::test_skipped_requirement_fails",
+    ),
+    Mutation(
         "infra-docs",
         "パラメーターシートから配列の添字を落とす",
         "tools/design/infrastructure.py",
@@ -39,6 +55,70 @@ MUTATIONS = (
         "status, result = 404",
         "status, result = 200",
         "packages/infra/tests/test_stock_lambda.py::test_stock_response[missing]",
+    ),
+    Mutation(
+        "backend",
+        "データ修正を要する障害を通常のサーバーエラーと記録する",
+        "packages/backend/src/app/core/log_record.py",
+        'level = "CRITICAL"',
+        'level = "ERROR"',
+        "packages/backend/tests/test_request_logs.py::test_http_log",
+    ),
+    Mutation(
+        "frontend",
+        "画面内の入力不備をサーバー障害として記録する",
+        "packages/frontend/src/web_app/client.py",
+        "failed=not user_error",
+        "failed=True",
+        "packages/frontend/tests/test_screen_logs.py::test_screen_error_context",
+    ),
+    Mutation(
+        "frontend",
+        "ログ取得の失敗時に未定義のクライアント例外を参照する",
+        "packages/frontend/src/web_app/portal_pages/logs.py",
+        'raise ValueError("ログを取得できませんでした")',
+        'raise client.ResponseError("ログを取得できませんでした")',
+        "packages/frontend/tests/test_access_log_download.py::test_failed_log_download_reports_error",
+    ),
+    Mutation(
+        "architecture",
+        "公開画面の空の登録を許可する",
+        "tests/architecture/frontend_screens.py",
+        " or not value.elts",
+        "",
+        "tests/architecture/test_frontend_screens.py::test_feature_requires_local_screen_declaration",
+    ),
+    Mutation(
+        "architecture",
+        "画面間の直接参照を許可する",
+        "tests/architecture/frontend_screens.py",
+        'parts[0] == "portal_pages"',
+        'parts[0] == "_unused"',
+        "tests/architecture/test_frontend_screens.py::test_feature_cannot_depend_on_another_screen_or_the_shell",
+    ),
+    Mutation(
+        "architecture",
+        "共通レイアウトの画面分岐を見逃す",
+        "tests/architecture/frontend_screens.py",
+        'module in {"app", "portal_shell"}',
+        'module == "app"',
+        "tests/architecture/test_frontend_screens.py::test_shared_layout_delegates_route_dispatch",
+    ),
+    Mutation(
+        "frontend",
+        "画面を配布するときにサブディレクトリを省く",
+        "tools/build_frontend.py",
+        'source.rglob("*.py")',
+        'source.glob("*.py")',
+        "packages/frontend/tests/test_screen_registry.py::test_new_screen_is_packaged_loaded_and_rendered",
+    ),
+    Mutation(
+        "frontend",
+        "同じルートを登録した画面で先に登録した画面を上書きする",
+        "packages/frontend/src/web_app/screen_registry.py",
+        "if screen.path in by_path:",
+        "if False:",
+        "packages/frontend/tests/test_screen_registry.py::test_duplicate_screen_path_is_rejected",
     ),
     Mutation(
         "model-layer",
@@ -171,7 +251,7 @@ MUTATIONS = (
     Mutation(
         "frontend",
         "未取得のメトリクスを描画時に直接参照する",
-        "packages/frontend/src/web_app/app.py",
+        "packages/frontend/src/web_app/portal_pages/dashboard.py",
         'data = ctx.get("home_metrics")',
         'data = ctx["home_metrics"]',
         "packages/frontend/tests/test_dashboard.py::test_dashboard_recovers_from_metrics_failure",
@@ -394,6 +474,14 @@ def run_test(workspace, target):
     return result, cases
 
 
+def detected(returncode: int, cases: list[ElementTree.Element]) -> bool:
+    return (
+        returncode == 1
+        and any(case.find("failure") is not None for case in cases)
+        and not any(case.find("error") is not None for case in cases)
+    )
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--layer", choices=sorted({entry.layer for entry in MUTATIONS}), action="append")
@@ -423,9 +511,7 @@ def main():
                 result, cases = run_test(workspace, mutation.test)
             finally:
                 path.write_text(source, encoding="utf-8")
-            errors = any(case.find("error") is not None for case in cases)
-            failures = any(case.find("failure") is not None for case in cases)
-            if result.returncode == 1 and failures and not errors:
+            if detected(result.returncode, cases):
                 print(f"検出: {mutation.layer} / {mutation.name}", flush=True)
             else:
                 print(result.stdout + result.stderr, file=sys.stderr)

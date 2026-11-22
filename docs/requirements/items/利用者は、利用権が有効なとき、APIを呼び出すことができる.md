@@ -12,6 +12,11 @@
 
 呼び出し元を識別し、商品・環境・プロジェクト・操作と公開範囲を照合する。権限取消、別環境、別プロジェクトの場合は転送しない。
 
+### 受入テスト
+
+- 受入テスト `tests/e2e/browser/test_portal.py::test_user_flow` / `06-invoked.png`
+- 受入テスト `tests/e2e/aws/test_portal.py::test_approved_calls_reach_upstream`
+
 ## 却下した方針
 
 認証に成功しただけで対象環境へ転送する方法は採用しない。

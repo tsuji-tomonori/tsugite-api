@@ -20,6 +20,12 @@ from tests.support.catalog_journey import catalog_journey
 from tests.support.portal_server import ROOT, serve_portal
 
 
+def http_access_records(path):
+    lines = path.read_text().splitlines()
+    records = (json.loads(line) for line in lines if line.lstrip().startswith("{"))
+    return [record for record in records if record.get("event") == "http.access"]
+
+
 @contextmanager
 def cognito_users(aws):
     cognito = aws.client("cognito-idp")
@@ -277,17 +283,15 @@ def test_approved_calls_reach_upstream(
         revoke = {"action": "revoke", "reason": "終了", "revision": approved["revision"]}
         assert api.post(decide, headers=owner, json=revoke).status_code == 200
         assert api.get(path, headers=invoker).status_code == 403
-        log_rows = [
-            json.loads(line)
-            for line in (tmp_path / "access.log").read_text().splitlines()
-            if line.startswith('{"event":')
-        ]
+        log_rows = http_access_records(tmp_path / "access.log")
         for response in (rejected, call):
             matches = [row for row in log_rows if row["request_id"] == response.headers["x-request-id"]]
             assert len(matches) == 1
             assert (matches[0]["status"], matches[0]["method"]) == (response.status_code, "GET")
             assert datetime.fromisoformat(matches[0]["at"]).tzinfo
             assert matches[0]["operation"] == ("/items" if response.is_success else None)
+            assert matches[0]["level"] == ("INFO" if response.is_success else "WARN")
+            assert matches[0]["source"] == "api"
             assert set(matches[0]) == {
                 "event",
                 "at",
@@ -296,6 +300,14 @@ def test_approved_calls_reach_upstream(
                 "method",
                 "request_id",
                 "status",
+                "source",
+                "level",
+                "reason",
+                "screen",
+                "actor_id",
+                "target_subject_id",
+                "asset_id",
+                "operator_action",
             }
             if upstream == "https":
                 request.node.user_properties.append(
@@ -425,11 +437,7 @@ def test_upstream_unavailable(aws, resources, tmp_path, request):
             ("invoke.start", "GET"),
             ("invoke.error", "502"),
         ]
-        logs = [
-            json.loads(line)
-            for line in (tmp_path / "access.log").read_text().splitlines()
-            if line.startswith('{"event":')
-        ]
+        logs = http_access_records(tmp_path / "access.log")
         assert [(e["status"], e["operation"]) for e in logs if e["request_id"] == trace] == [
             (502, "/items")
         ]
