@@ -94,7 +94,9 @@ def test_grant_only_invited_user(monkeypatch):
 
 def test_replaced_user_cannot_be_promoted(monkeypatch):
     """招待後に同名の別ユーザーに置き換わったときは権限を付与しない。"""
-    aws = Mock(side_effect=[STACK, {"Users": []}, {"UserAttributes": [{"Name": "sub", "Value": "other"}]}])
+    aws = Mock(
+        side_effect=[STACK, {"Users": []}, {"UserAttributes": [{"Name": "sub", "Value": "other"}]}]
+    )
     monkeypatch.setattr(bootstrap, "aws", aws)
     with pytest.raises(SystemExit, match="識別子"):
         bootstrap.grant(POOL, SUB)
