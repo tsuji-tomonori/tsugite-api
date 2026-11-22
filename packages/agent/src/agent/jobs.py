@@ -6,7 +6,7 @@ from dataclasses import asdict
 from functools import cache
 from hashlib import sha256
 from time import time
-from typing import Any
+from typing import Any, Protocol, cast
 
 import boto3
 from app.apis.catalog.catalog.router import visible_collection
@@ -24,13 +24,26 @@ FAILED = {"kind": "error", "answer": "回答を準備できませんでした。
 SETS = ("projects", "owners", "departments", "leads", "titles", "base_projects")
 
 
+class JobTable(Protocol):
+    def get_item(self, *, Key: dict[str, str], ConsistentRead: bool) -> dict[str, Any]: ...
+    def put_item(self, *, Item: dict[str, Any], **conditions: object) -> object: ...
+    def update_item(
+        self, *, Key: dict[str, str], UpdateExpression: str, **conditions: object
+    ) -> object: ...
+
+
+class DynamoResource(Protocol):
+    def Table(self, name: str) -> JobTable: ...
+
+
 class RateLimited(Exception):
     pass
 
 
 @cache
-def table():
-    return boto3.resource("dynamodb").Table(os.environ["CHAT_TABLE"])
+def table() -> JobTable:
+    dynamodb = cast(DynamoResource, boto3.resource("dynamodb"))
+    return dynamodb.Table(os.environ["CHAT_TABLE"])
 
 
 @cache

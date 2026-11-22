@@ -30,6 +30,8 @@ def encode(texts):
     mask = np.array([item.attention_mask for item in content], dtype=np.int64)
     available = {"input_ids": ids, "attention_mask": mask, "token_type_ids": np.zeros_like(ids)}
     values = session.run(None, {item.name: available[item.name] for item in session.get_inputs()})[0]
+    if not isinstance(values, np.ndarray):
+        raise ValueError("Expected dense embedding output from the decision model")
     if values.ndim == 3:
         values = (values * mask[:, :, None]).sum(axis=1) / mask.sum(axis=1, keepdims=True).clip(1)
     norms = np.linalg.norm(values, axis=1, keepdims=True)

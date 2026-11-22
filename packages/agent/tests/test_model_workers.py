@@ -103,7 +103,7 @@ def test_model_process_recovers_from_failed_health_check(monkeypatch):
     worker = load_worker("completion", monkeypatch, runtime=Mock())
     old, new = Mock(), Mock()
     old.poll.return_value = new.poll.return_value = None
-    worker.process = old
+    monkeypatch.setattr(worker, "process", old)
     start = Mock(return_value=new)
     request = Mock(side_effect=[OSError("unavailable"), {}])
     monkeypatch.setattr(worker.subprocess, "Popen", start)
