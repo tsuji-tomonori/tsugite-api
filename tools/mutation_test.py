@@ -25,6 +25,14 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
+        "frontend",
+        "ログ取得の失敗時に未定義のクライアント例外を参照する",
+        "packages/frontend/src/web_app/portal_pages/logs.py",
+        'raise ValueError("ログを取得できませんでした")',
+        'raise client.ResponseError("ログを取得できませんでした")',
+        "packages/frontend/tests/test_access_log_download.py::test_failed_log_download_reports_error",
+    ),
+    Mutation(
         "architecture",
         "公開画面の空の登録を許可する",
         "tests/architecture/frontend_screens.py",
