@@ -35,6 +35,21 @@ def test_chat_cites_authored_guide_steps(portal):
     assert "キー" in source["title"]
 
 
+def test_invalid_worker_step_returns_first_visible_guide_step(portal, monkeypatch):
+    """ワーカーの手順番号が文字列でも、閲覧できるガイドの最初の手順を案内する。"""
+    from agent import jobs
+
+    consumer = headers(portal, "consumer")
+    key, manual = ask(portal, consumer, "APIキーを発行する手順を教えて")
+    guide = manual["guides"][0]
+    saved = {"kind": "manual", "answer": "", "keys": [guide["id"]], "focus": [guide["id"], "2"]}
+    monkeypatch.setenv("CHAT_WORKER", "worker")
+    monkeypatch.setattr(jobs, "status", lambda subject, job_id: saved)
+    reply = portal.get("/api/chat", headers=consumer, params={"job_id": key})
+    assert reply.status_code == 200
+    assert reply.json()["answer"] == guide["steps"][0]
+
+
 def test_inquiry_requires_explicit_submission_and_private_reply(portal):
     """問い合わせの案内だけでは未送信で、送信後の回答は本人と管理者にだけ表示する。"""
     consumer = headers(portal, "consumer")

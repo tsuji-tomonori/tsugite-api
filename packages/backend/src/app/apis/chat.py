@@ -127,10 +127,13 @@ def chat_result(
     if keys and not (products or guides):
         return ChatResult(kind="empty", answer=NO_MATCH)
     answer = result["answer"]
-    if guides and result.get("focus"):
-        source, step = result["focus"]
+    focus = result.get("focus")
+    if guides and isinstance(focus, list) and len(focus) == 2:
+        source, step = focus
         primary = next((guide for guide in guides if guide.id == source), guides[0])
         excerpts = [*primary.steps, primary.result]
-        if excerpts:
-            answer = excerpts[step] if 0 <= step < len(excerpts) else excerpts[0]
-    return ChatResult(kind=result["kind"], answer=answer, products=products, guides=guides)
+        index = step if type(step) is int and 0 <= step < len(excerpts) else 0
+        answer = excerpts[index]
+    return ChatResult.model_validate(
+        {"kind": result["kind"], "answer": answer, "products": products, "guides": guides}
+    )
