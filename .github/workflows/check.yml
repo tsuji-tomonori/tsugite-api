@@ -22,6 +22,8 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
           persist-credentials: false
+      - name: 要件別の受入テスト定義を検査
+        run: python3 -m tools.requirement_evidence --check
       - name: 要件一覧と用語一覧を生成し、feat ブランチの新規要件を検査
         env:
           HEAD_BRANCH: ${{ github.head_ref }}
@@ -121,6 +123,21 @@ jobs:
           language: Python
           label: code-coverage/pytest
           fail-on-error: false
+      - name: 今回のJUnit・画面証跡から要件別の合否を判定
+        if: ${{ !cancelled() }}
+        env:
+          EVIDENCE_COMMIT: ${{ github.event.pull_request.head.sha }}
+        run: python3 -m tools.requirement_evidence --plan artifacts/ci-plan.json
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: requirement-evidence
+          path: |
+            evidence/report.md
+            evidence/requirements.xml
+            evidence/screenshots/
+            evidence/items/
+          if-no-files-found: error
       - name: Build screenshot report
         if: ${{ !cancelled() && steps.scope.outputs.report == 'true' && hashFiles('artifacts/junit.xml') != '' }}
         run: task report

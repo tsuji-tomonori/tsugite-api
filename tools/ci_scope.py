@@ -33,6 +33,8 @@ def affected(path, suites):
     for suite in suites:
         if path.startswith(suite + "/"):
             return {suite}
+    if path.startswith("docs/requirements/items/"):
+        return FULL
     if path.startswith("docs/generated/"):
         return {"design", TOOLS}
     if path.endswith(".md") and ("/" not in path or path.startswith(("docs/", "deploy/", ".agents/"))):

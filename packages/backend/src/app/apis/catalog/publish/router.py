@@ -10,6 +10,27 @@ from fastapi import APIRouter, HTTPException, Request
 router = APIRouter()
 
 
+#: 管理者が対象APIの呼び出しを全環境で停止または再開する
+@router.put("/apis/{key}/suspension", response_model=Listing, operation_id="set_suspension")
+def set_suspension(
+    #: 対象APIの識別子
+    key: str,
+    #: 全環境の呼び出しを停止するか
+    suspended: bool,
+    request: Request,
+    actor: User,
+    db: DB,
+):
+    if not actor.admin:
+        raise HTTPException(403)
+    asset = record(db, key)
+    if bool(asset.suspended) != suspended:
+        asset.suspended = suspended
+        event(db, request, actor, asset, "invoke.suspend" if suspended else "invoke.resume")
+        db.commit()
+    return listing(asset)
+
+
 #: APIの公開・掲載取り下げを切り替える
 @router.put("/apis/{key}/publication", response_model=Listing, operation_id="publish")
 def publish(

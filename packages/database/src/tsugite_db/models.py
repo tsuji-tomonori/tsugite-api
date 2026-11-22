@@ -78,6 +78,8 @@ class Asset(Base):
     removed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     #: カタログで公開中か
     published: Mapped[bool] = mapped_column(default=False)
+    #: 管理者による全環境の呼び出し停止
+    suspended: Mapped[bool | None] = mapped_column()
     #: 更新時の競合検出に使う版番号
     revision: Mapped[int] = mapped_column(default=1)
     __mapper_args__ = {"version_id_col": revision}

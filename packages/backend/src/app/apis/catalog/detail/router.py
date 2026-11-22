@@ -40,6 +40,7 @@ def detail(
         raise HTTPException(404)
     return Detail(
         **listing(a).model_dump(),
+        suspended=bool(a.suspended),
         spec=json.loads(a.spec),
         offers={
             env: describe(rule, a.revision, a.owner in actor.owners)

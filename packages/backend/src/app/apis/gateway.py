@@ -44,6 +44,8 @@ def allowed_path(spec: dict, method: str, path: str) -> bool:
 def authorize(db, key, project, environment, actor):
     check_member(db, actor)
     asset = record(db, key)
+    if asset.suspended:
+        raise HTTPException(403, "管理者がこのAPIへのアクセスを一時停止しています")
     grant = db.get(Access, right_id(key, project, environment))
     if actor.key_id:
         k = db.get(PortalKey, actor.key_id)
