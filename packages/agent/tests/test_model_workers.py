@@ -9,11 +9,12 @@ from unittest.mock import Mock
 
 import pytest
 
-MODELS = Path(__file__).resolve().parents[3] / "packages/agent/src/agent/models"
+ROOT = Path(__file__).resolve().parents[3]
+MODELS = ROOT / "packages/agent/src/agent/models"
 
 
 def load_worker(name, monkeypatch, **dependencies):
-    monkeypatch.syspath_prepend(str(MODELS.parents[1] / "packages/backend/src/app/core"))
+    monkeypatch.syspath_prepend(str(ROOT / "packages/backend/src/app/core"))
     for module, replacement in dependencies.items():
         if module == "runtime":
             replacement.logged_model.side_effect = lambda handler: handler
