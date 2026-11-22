@@ -12,6 +12,11 @@
 
 **業務監査**（公開・利用申請・判断などの業務操作の記録）と**アクセスログ**（呼び出しの開始・終了・拒否を含む実行記録）を**リクエストID**（同じ呼び出しに関する記録を照合する識別子）で結ぶ。提供元、主体、プロジェクト、環境、判断理由を追跡する。
 
+### 受入テスト
+
+- 受入テスト `tests/e2e/browser/test_requirement_flows.py::test_auditor_cross_checks_exports` / `trace-audit.png`
+- 受入テスト `tests/e2e/aws/test_portal.py::test_approved_calls_reach_upstream`
+
 ## 却下した方針
 
 別々の記録に照合できない識別子を付ける方法は採用しない。

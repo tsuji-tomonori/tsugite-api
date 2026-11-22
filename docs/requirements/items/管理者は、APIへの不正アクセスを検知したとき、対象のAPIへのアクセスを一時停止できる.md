@@ -12,6 +12,10 @@
 
 不正アクセスを検知し、対象APIに対する全アクセスを人の判断で一時停止できるようにする。
 
+### 受入テスト
+
+- 受入テスト `tests/e2e/browser/test_requirement_flows.py::test_admin_stops_target_after_denial` / `suspended.png`
+
 ## 却下した方針
 
 検知後に通知するだけで人が停止できない運用は採用しない。

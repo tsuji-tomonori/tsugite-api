@@ -9,7 +9,7 @@ from app.apis.catalog.catalog.router import visible_collection
 from app.apis.catalog.common import DB, User, listing
 from app.apis.schemas import Input, Listing
 from botocore.exceptions import BotoCoreError, ClientError
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 
 router = APIRouter()
@@ -72,20 +72,36 @@ class ChatResult(BaseModel):
 
 #: チャットの質問を受け付ける
 @router.post("/chat", response_model=ChatReceipt, status_code=202)
-def start_chat(data: ChatQuestion, actor: User, db: DB):
+def start_chat(data: ChatQuestion, actor: User, db: DB, request: Request):
     question = data.question.strip()
     if len(question) < 2:
         raise HTTPException(422, "質問を入力してください")
     if os.getenv("CHAT_WORKER"):
         try:
-            jobs.submit(question, actor, data.job_id)
+            jobs.submit(
+                question,
+                actor,
+                data.job_id,
+                request.state.request_id,
+                request.headers.get("x-tsugite-screen"),
+            )
         except jobs.RateLimited as exc:
             raise HTTPException(429, "数秒待ってから送信してください") from exc
         except (BotoCoreError, ClientError) as exc:
             raise HTTPException(503, "チャットに接続できませんでした") from exc
     else:
         key = jobs.key_for(actor.subject, data.job_id)
-        result = ask(question, lambda: visible_collection(db, actor, spec=True), actor, jobs.models)
+
+        def model(role, data):
+            return jobs.models(
+                role,
+                data,
+                actor_id=actor.subject,
+                request_id=request.state.request_id,
+                screen=request.headers.get("x-tsugite-screen"),
+            )
+
+        result = ask(question, lambda: visible_collection(db, actor, spec=True), actor, model)
         with _lock:
             if len(_local) >= 200:
                 _local.pop(next(iter(_local)))

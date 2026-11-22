@@ -213,4 +213,6 @@ def invoker(
 ) -> Actor:
     if not credentials:
         raise HTTPException(401)
-    return invocation_actor(db, credentials.credentials, request.headers)
+    actor = invocation_actor(db, credentials.credentials, request.headers)
+    request.state.actor_id = actor.subject
+    return actor

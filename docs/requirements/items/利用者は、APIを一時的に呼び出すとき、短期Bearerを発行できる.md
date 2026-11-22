@@ -12,6 +12,10 @@
 
 ポータルで有効期間と更新開始時刻を選ぶ。API Docsでも必要な時点で取得する。
 
+### 受入テスト
+
+- 受入テスト `tests/e2e/browser/test_credentials_console.py::test_credentials_console` / `credentials.png`
+
 ## 却下した方針
 
 短期の呼び出し用に無期限のBearerを配る方法は採用しない。

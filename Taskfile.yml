@@ -43,6 +43,20 @@ tasks:
     desc: 型検査
     cmds: ['uv run --locked --all-packages --group decision-model pyright', '{{.RUN}} mypy']
   docs:
+    desc: APIとインフラの設計書を更新
+    cmds:
+      - task: docs:api
+      - task: docs:infra
+  docs:infra:
+    desc: CDKを合成し、コンポーネント別のリソース一覧とパラメーターシートを更新
+    cmds:
+      - task: synth
+        vars: {CLI_ARGS: '{{.CLI_ARGS}}'}
+      - task: docs:infra:render
+  docs:infra:render:
+    desc: 合成済みCloudFormationテンプレートをMarkdownに変換
+    cmds: ['{{.RUN}} python -m tools.design.infrastructure']
+  docs:api:
     desc: OpenAPI仕様とSQL・AWSのCRUD設計書をMarkdownに出力
     cmds: ['{{.RUN}} python -m tools.design.generate']
   docs:commit:
@@ -152,7 +166,8 @@ tasks:
       - task: types
       - task: synth
       - task: contracts
-      - task: docs
+      - task: docs:api
+      - task: docs:infra:render
       - task: audit
       - task: test
       - task: test:aws

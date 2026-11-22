@@ -1,8 +1,7 @@
-import json
-
 from app.apis.catalog.common import DB, User, event, record, right_id
 from app.apis.catalog.offers import submission
 from app.apis.schemas import Apply, Right
+from app.core.diagnostics import asset_object
 from app.core.workspace import allowed_audience, policy, private_project, stopped
 from fastapi import APIRouter, HTTPException, Request
 from sqlalchemy import update
@@ -30,7 +29,7 @@ def apply(
         raise HTTPException(404)
     if stopped(db, actor, data.project):
         raise HTTPException(403, "利用停止中です")
-    if not asset.published or data.environment not in json.loads(asset.targets):
+    if not asset.published or data.environment not in asset_object(asset, "targets"):
         raise HTTPException(409, "対象のAPIまたは環境は申請できません")
     key_id = right_id(key, data.project, data.environment, actor.subject if data.personal else "")
     grant = db.get(Access, key_id)

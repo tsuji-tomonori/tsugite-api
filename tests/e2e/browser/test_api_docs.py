@@ -2,12 +2,16 @@ import json
 import os
 import ssl
 import subprocess
+from collections.abc import Iterator
 from contextlib import contextmanager
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
 from threading import Thread
+from typing import Any
 from urllib.parse import parse_qs, urlsplit
 
 import httpx
+import pytest
 from playwright.sync_api import expect, sync_playwright
 
 from tests.support.catalog import headers
@@ -16,15 +20,17 @@ from tests.support.portal_server import serve_portal
 
 
 @contextmanager
-def delivery_service(folder):
+def delivery_service(
+    folder: Path,
+) -> Iterator[tuple[dict[str, str], Path, list[tuple[str, dict[str, list[str]], object, str | None]]]]:
     calls = []
 
     class Delivery(BaseHTTPRequestHandler):
-        def do_HEAD(self):
+        def do_HEAD(self) -> None:
             self.send_response(200)
             self.end_headers()
 
-        def do_POST(self):
+        def do_POST(self) -> None:
             path = urlsplit(self.path)
             body = json.loads(self.rfile.read(int(self.headers["content-length"])))
             calls.append((path.path, parse_qs(path.query), body, self.headers.get("x-request-id")))
@@ -69,7 +75,7 @@ def delivery_service(folder):
             worker.join()
 
 
-def delivery_spec():
+def delivery_spec() -> dict[str, Any]:
     packages = {
         "type": "object",
         "required": ["packages"],
@@ -126,7 +132,7 @@ def delivery_spec():
     }
 
 
-def test_openapi_key_console(tmp_path, request):
+def test_openapi_key_console(tmp_path: Path, request: pytest.FixtureRequest) -> None:
     """OpenAPIの型からパス・クエリ・JSONを入力し、選択したキーでHTTPSの送料計算を実行する"""
     with delivery_service(tmp_path) as (target, cert, calls):
         config = tmp_path / "settings.json"

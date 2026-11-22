@@ -12,6 +12,10 @@
 
 提供者が利用者ごとにメソッドとパスを選ぶ。全解除で全操作を停止し、個別設定を解除すれば承認済みの範囲を継承する。
 
+### 受入テスト
+
+- 受入テスト `tests/e2e/browser/test_operation_console.py::test_person_operation_console` / `selected.png`
+
 ## 却下した方針
 
 本人を識別できない共有キーで個別の制限を回避する方法は採用しない。

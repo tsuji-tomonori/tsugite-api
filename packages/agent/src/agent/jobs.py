@@ -11,6 +11,8 @@ from typing import Any, Protocol, cast
 import boto3
 from app.apis.catalog.catalog.router import visible_collection
 from app.core.auth import Actor
+from app.core.diagnostics import OperationalRepair, emit
+from app.core.log_record import SCREENS
 from botocore.config import Config
 from botocore.exceptions import ClientError
 from sqlalchemy.orm import Session
@@ -58,7 +60,7 @@ def key_for(subject, job_id):
     return "job/" + sha256(subject.encode()).hexdigest() + "/" + str(job_id)
 
 
-def submit(question, actor, job_id):
+def submit(question, actor, job_id, request_id=None, screen=None):
     key = key_for(actor.subject, job_id)
     data = asdict(actor)
     for name in SETS:
@@ -82,7 +84,15 @@ def submit(question, actor, job_id):
         lambda_client().invoke(
             FunctionName=os.environ["CHAT_WORKER"],
             InvocationType="Event",
-            Payload=json.dumps({"key": key, "question": question, "actor": data}).encode(),
+            Payload=json.dumps(
+                {
+                    "key": key,
+                    "question": question,
+                    "actor": data,
+                    "request_id": request_id,
+                    "screen": screen if screen in SCREENS else None,
+                }
+            ).encode(),
         )
     except Exception:
         store(key, FAILED)
@@ -112,24 +122,59 @@ def store(key, result):
             raise
 
 
-def models(role: str, data: dict[Any, Any]) -> dict:
+def models(role: str, data: dict[Any, Any], **fields) -> dict:
     name = os.environ.get("CHAT_" + role.upper())
     if not name:
         return {}
     try:
         invocation = lambda_client().invoke(
-            FunctionName=name, Payload=json.dumps(data, ensure_ascii=False).encode()
+            FunctionName=name,
+            Payload=json.dumps(
+                {**data, "log_context": fields} if fields else data, ensure_ascii=False
+            ).encode(),
         )
         if not invocation.get("FunctionError"):
             payload = json.load(invocation["Payload"])
             if isinstance(payload, dict):
                 return payload
+        reason = "model_response_invalid"
     except Exception as exc:
-        print(json.dumps({"event": "chat.model_unavailable", "role": role, "error": type(exc).__name__}))
+        reason = type(exc).__name__
+    emit(
+        "chat.model_unavailable",
+        source="worker",
+        route="/api/chat",
+        method="POST",
+        failed=True,
+        operation=role,
+        reason=reason,
+        **fields,
+    )
     return {}
 
 
 def handler(event, context):
+    fields = {
+        "actor_id": event.get("actor", {}).get("subject"),
+        "request_id": event.get("request_id") or getattr(context, "aws_request_id", None),
+        "screen": event.get("screen"),
+    }
+    try:
+        return process(event, fields)
+    except Exception as exc:
+        emit(
+            "chat.worker_error",
+            source="worker",
+            route="/api/chat",
+            method="POST",
+            failed=True,
+            reason=type(exc).__name__,
+            **fields,
+        )
+        raise
+
+
+def process(event, fields):
     key = event["key"]
     job = table().get_item(Key={"pk": key}, ConsistentRead=True).get("Item")
     if not job or job.get("result") or job["deadline"] <= time():
@@ -142,8 +187,26 @@ def handler(event, context):
             return visible_collection(db, actor, spec=True)
 
     try:
-        result = ask(event["question"], products, actor, models)
+        result = ask(event["question"], products, actor, lambda role, data: models(role, data, **fields))
+    except OperationalRepair as exc:
+        emit(
+            "chat.worker_error",
+            source="worker",
+            route="/api/chat",
+            method="POST",
+            **exc.fields,
+            **fields,
+        )
+        result = FAILED
     except Exception as exc:
-        print(json.dumps({"event": "chat.worker_error", "error": type(exc).__name__}))
+        emit(
+            "chat.worker_error",
+            source="worker",
+            route="/api/chat",
+            method="POST",
+            failed=True,
+            reason=type(exc).__name__,
+            **fields,
+        )
         result = FAILED
     store(key, result)

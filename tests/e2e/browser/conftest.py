@@ -23,7 +23,7 @@ def browser_coverage(monkeypatch):
 
     from playwright.sync_api import Page
 
-    paths = {path.name: path.as_posix() for path in FRONTEND.glob("*.py")}
+    paths = {path.relative_to(FRONTEND).as_posix(): path.as_posix() for path in FRONTEND.rglob("*.py")}
     tracer = TRACE.read_text(encoding="utf-8")
     pages = set()
     arcs = {}

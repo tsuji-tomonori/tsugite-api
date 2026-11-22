@@ -13,7 +13,10 @@ MODELS = Path(__file__).resolve().parents[3] / "packages/agent/src/agent/models"
 
 
 def load_worker(name, monkeypatch, **dependencies):
+    monkeypatch.syspath_prepend(str(MODELS.parents[1] / "packages/backend/src/app/core"))
     for module, replacement in dependencies.items():
+        if module == "runtime":
+            replacement.logged_model.side_effect = lambda handler: handler
         monkeypatch.setitem(sys.modules, module, replacement)
     spec = importlib.util.spec_from_file_location(name, MODELS / f"{name}.py")
     assert spec is not None and spec.loader is not None
