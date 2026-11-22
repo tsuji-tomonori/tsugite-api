@@ -25,7 +25,6 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
-<<<<<<< PR9
         "coverage",
         "エージェントとモデルの未実行ファイルを分母から除外する",
         "pyproject.toml",
@@ -48,14 +47,14 @@ MUTATIONS = (
         "GRANT SELECT ON assets TO tsugite_chat",
         "GRANT SELECT, UPDATE ON assets TO tsugite_chat",
         "packages/backend/tests/test_migrate.py::test_grants_public_tables_without_altering_the_schema[chat]",
-=======
+    ),
+    Mutation(
         "frontend",
         "認証アプリの検証後に古いセッションを再利用する",
         "packages/frontend/src/web_app/portal_auth.py",
         'self.session = verified["Session"]',
         "self.session = self.session",
         "packages/frontend/tests/test_portal_login.py::test_invitation_and_totp_setup",
->>>>>>> main
     ),
     Mutation(
         "ci",
