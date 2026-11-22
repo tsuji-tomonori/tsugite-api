@@ -83,6 +83,7 @@ NO_RESOURCE_TAGS = {
     "AWS::Cognito::UserPoolGroup",
     "AWS::Cognito::UserPoolResourceServer",
     "AWS::IAM::Policy",
+    "AWS::Lambda::EventInvokeConfig",
     "AWS::Lambda::LayerVersion",
     "AWS::Lambda::Permission",
     "AWS::S3::BucketPolicy",
@@ -120,6 +121,7 @@ def test_every_resource_has_ownership(tmp_path, custom):
             "Identities",
             "Bindings",
             "Stack",
+            "Chat",
         }, logical_id
         props = resource.get("Properties", {})
         tags = props.get("UserPoolTags", props.get("Tags"))

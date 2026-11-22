@@ -40,7 +40,7 @@ def test_workspace_key_console(tmp_path, request):
         with browser_evidence(request.node, "workspace", admin, leader) as capture:
             admin.goto(url)
             admin.get_by_role("button", name="管理者", exact=True).click()
-            expect(admin.get_by_text("管理者としての利用状況")).to_be_visible()
+            expect(admin.get_by_role("heading", name="どのAPIをお探しですか？")).to_be_visible()
             for name, identifier, parent, kind in (
                 ("事業本部", "business", "", "department"),
                 ("経理部", "accounts", "business", "department"),
@@ -100,7 +100,7 @@ def test_workspace_key_console(tmp_path, request):
             capture(admin, "hierarchy", "事業本部・経理部・決算チームの下に新規プロジェクトを配置")
             leader.goto(url)
             leader.get_by_role("button", name="利用チーム", exact=True).click()
-            expect(leader.get_by_text("利用者としての利用状況")).to_be_visible()
+            expect(leader.get_by_role("heading", name="どのAPIをお探しですか？")).to_be_visible()
             menu(leader, re.compile("APIキー"))
             for name, kind, scope in (
                 ("在庫試験用", "personal", "selected"),

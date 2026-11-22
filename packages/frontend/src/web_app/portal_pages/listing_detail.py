@@ -101,7 +101,6 @@ async def invoke(asset):
     options = {
         "method": method,
         "headers": {
-            **client.screen_headers(),
             "Authorization": "Bearer " + str(client.store.getItem("access")),
             "Content-Type": "application/json",
         },

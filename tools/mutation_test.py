@@ -73,6 +73,14 @@ MUTATIONS = (
         "packages/frontend/tests/test_screen_registry.py::test_duplicate_screen_path_is_rejected",
     ),
     Mutation(
+        "model-layer",
+        "判定モデルの依存群をSDKだけに置き換える",
+        "tools/build_backend.py",
+        '["--only-group", "decision-model"]',
+        '["--only-group", "model-sdk"]',
+        "tools/tests/test_lambda_layer.py::test_each_lambda_layer_exports_its_locked_dependencies",
+    ),
+    Mutation(
         "architecture",
         "判定モデルが欠けた配布物を許可する",
         "tests/architecture/model_artifacts.py",
@@ -169,6 +177,30 @@ MUTATIONS = (
         "tools/tests/test_lambda_layer.py::test_layer_rebuild_is_reproducible",
     ),
     Mutation(
+        "coverage",
+        "エージェントとモデルの未実行ファイルを分母から除外する",
+        "pyproject.toml",
+        '    "agent",\n',
+        "",
+        "tools/tests/test_ci_scope.py::test_coverage_includes_all_runtime_layers_and_unexecuted_files",
+    ),
+    Mutation(
+        "models",
+        "取得したモデルのチェックサムを検証しない",
+        "agent/models/runtime.py",
+        'if "sha256" in item:',
+        "if False:",
+        "packages/backend/tests/test_model_workers.py::test_model_download_verifies_digest_before_reuse",
+    ),
+    Mutation(
+        "backend",
+        "チャットの参照ロールに商品の更新権限を加える",
+        "packages/backend/src/app/migrate.py",
+        "GRANT SELECT ON assets TO tsugite_chat",
+        "GRANT SELECT, UPDATE ON assets TO tsugite_chat",
+        "packages/backend/tests/test_migrate.py::test_grants_public_tables_without_altering_the_schema[chat]",
+    ),
+    Mutation(
         "frontend",
         "未取得のメトリクスを描画時に直接参照する",
         "packages/frontend/src/web_app/portal_pages/dashboard.py",
@@ -204,7 +236,7 @@ MUTATIONS = (
         "ci",
         "以前の実行行を含むテスト層の再計測を省く",
         "tools/ci_scope.py",
-        '("coverage_source" in flags and part.stat().st_size)',
+        "measured_changes\n                and part.stat().st_size",
         "False",
         "tools/tests/test_ci_scope.py::test_measured_source_invalidates_suites_that_executed_it",
     ),
@@ -223,6 +255,30 @@ MUTATIONS = (
         "if unknown:",
         "if False:",
         "tools/tests/test_requirements.py::test_undefined_term_in_condition_or_result_fails",
+    ),
+    Mutation(
+        "backend",
+        "生成クエリだけに一致する商品も候補に含める",
+        "agent/retrieval.py",
+        " and (index == 0 or similarities[0] >= 0.39)",
+        "",
+        "packages/backend/tests/test_agent_retrieval.py::test_rewritten_similarity_needs_support_from_original_question",
+    ),
+    Mutation(
+        "frontend",
+        "候補の商品リンクがカタログのトップを指す",
+        "packages/frontend/src/web_app/chat_views.py",
+        'href="#/api/" + quote(product["id"], safe="")',
+        'href="#/catalog"',
+        "packages/frontend/tests/test_components.py::test_chat_product_and_guide_are_linked",
+    ),
+    Mutation(
+        "infra",
+        "モデルの予備領域を増やす",
+        "packages/infra/src/infra_app/chat.py",
+        "ephemeral_storage_size=Size.mebibytes(512)",
+        "ephemeral_storage_size=Size.mebibytes(1024)",
+        "packages/infra/tests/test_cost.py::test_chat_uses_separate_on_demand_python_functions",
     ),
     Mutation(
         "backend",
@@ -345,7 +401,7 @@ MUTATIONS = (
 
 def copy_sources(workspace):
     ignore = shutil.ignore_patterns("dist", "cdk.out", ".venv", "__pycache__", "*.egg-info")
-    for folder in ("packages", "contracts", "tests", "tools"):
+    for folder in ("packages", "agent", "contracts", "tests", "tools"):
         shutil.copytree(ROOT / folder, workspace / folder, ignore=ignore)
     for file in ("conftest.py", "pyproject.toml"):
         shutil.copyfile(ROOT / file, workspace / file)

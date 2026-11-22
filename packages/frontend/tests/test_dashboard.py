@@ -14,7 +14,7 @@ def test_dashboard_recovers_from_metrics_failure(portal_module, monkeypatch):
     """管理者のメトリクス取得が失敗しても件数とログを表示し、再読み込みでグラフが戻る。"""
     client = portal_module("client")
     js = sys.modules["js"]
-    js.window.location = SimpleNamespace(hash="")
+    js.window.location = SimpleNamespace(hash="#/dashboard")
     js.window.matchMedia = Mock()
     monkeypatch.setitem(sys.modules, "pyodide.ffi.wrappers", SimpleNamespace(add_event_listener=Mock()))
     monkeypatch.setattr(client, "store", Mock())
@@ -40,7 +40,7 @@ def test_dashboard_recovers_from_metrics_failure(portal_module, monkeypatch):
 
     class DashboardPage(Page):
         def populate(self):
-            portal_module("screen_registry").resolve("home").view()
+            portal_module("screen_registry").resolve("dashboard").view()
 
     def markup():
         page = DashboardPage()

@@ -74,8 +74,9 @@ def test_existing_routes_and_role_menus(portal_module):
         "notifications",
         "departments",
         "projects",
+        "dashboard",
     ]
-    assert [s.path for s in menus["ヘルプ"]] == ["guide"]
+    assert [s.path for s in menus["ヘルプ"]] == ["guide", "inquiries"]
     assert [s.path for s in menus["ガバナンス"]] == ["metrics", "logs", "alerts", "audit"]
     assert "管理" not in menus and "提供者メニュー" not in menus
     assert [s.path for s in registry.menu({**user, "leads": ["a"]})["提供者メニュー"]] == ["inbox"]

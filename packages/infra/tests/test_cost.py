@@ -26,4 +26,33 @@ def test_cost_drivers_are_bounded(tmp_path):
         )
     groups = template.find_resources("AWS::Logs::LogGroup")
     retention = Counter(group.get("Properties", {}).get("RetentionInDays") for group in groups.values())
-    assert retention == {30: 3, 90: 1}
+    assert retention == {30: 7, 90: 1}
+
+
+def test_chat_uses_separate_on_demand_python_functions(tmp_path):
+    """チャット処理と3モデルを分離し、従量課金、実行枠、作業領域を制限する。"""
+    template = Template.from_stack(CatalogStack(App(outdir=str(tmp_path)), "TsugiteApi"))
+    template.has_resource_properties(
+        "AWS::Lambda::Function", {"Handler": "app.main.handler", "Runtime": "python3.15"}
+    )
+    template.has_resource_properties(
+        "AWS::Lambda::Function",
+        {"Handler": "agent.jobs.handler", "Runtime": "python3.15", "ReservedConcurrentExecutions": 4},
+    )
+    template.resource_properties_count_is(
+        "AWS::Lambda::Function",
+        {
+            "Runtime": "python3.14",
+            "ReservedConcurrentExecutions": 4,
+            "EphemeralStorage": {"Size": 512},
+            "Environment": {"Variables": {"MODEL_ROLE": Match.any_value()}},
+        },
+        3,
+    )
+    template.has_resource_properties(
+        "AWS::DynamoDB::Table",
+        {
+            "BillingMode": "PAY_PER_REQUEST",
+            "TimeToLiveSpecification": {"AttributeName": "expires", "Enabled": True},
+        },
+    )
