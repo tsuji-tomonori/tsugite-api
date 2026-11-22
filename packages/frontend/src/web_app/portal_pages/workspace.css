@@ -15,4 +15,3 @@
 .usage-bars li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 16px; margin-block: 16px; }
 .usage-bars meter { grid-column: 1 / -1; width: 100%; height: 1.25rem; }
 .usage-count { font-variant-numeric: tabular-nums; }
-

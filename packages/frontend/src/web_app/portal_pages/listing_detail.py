@@ -123,14 +123,15 @@ def detail_page():
     t.p(a["summary"])
     t.p(a["owner"] + " · " + ("公開中" if a["published"] else "未掲載"), classes="muted")
     if a["owner"] in ctx["me"]["owners"]:
-        btn(
-            "掲載を取り下げる" if a["published"] else "公開する",
-            publication,
-            a,
-            primary=not a["published"],
-        )
-        btn("内容を編集", go, "edit/" + a["id"])
-        btn("APIを削除", delete_listing, a)
+        with t.div(classes="btn-grouping"):
+            btn(
+                "掲載を取り下げる" if a["published"] else "公開する",
+                publication,
+                a,
+                primary=not a["published"],
+            )
+            btn("内容を編集", go, "edit/" + a["id"])
+            btn("APIを削除", delete_listing, a)
         policy_form(a)
         operation_views.provider_view(a, ctx, field, btn, load)
     with t.details(classes="box"):
