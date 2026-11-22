@@ -286,7 +286,7 @@ def test_governance_console(demo_url, request):
             expect(user.get_by_role("heading", name="利用件数アラート")).to_be_visible()
             notice = user.locator("article").filter(has_text="在庫API更新予定")
             notice.get_by_role("button", name="既読にする").click()
-            expect(notice.get_by_text("既読", exact=False)).to_be_visible()
+            expect(notice.locator("small").filter(has_text=re.compile(r"^既読 · "))).to_be_visible()
             expect(user.get_by_role("heading", name="管理者からのお知らせ")).to_be_visible()
             capture(user, "notices", "管理者・提供者・しきい値からの通知と個人の既読状態")
             navigate(user, "メトリクス")

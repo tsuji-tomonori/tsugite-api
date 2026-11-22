@@ -33,6 +33,8 @@ def affected(path, suites):
     for suite in suites:
         if path.startswith(suite + "/"):
             return {suite}
+    if path.startswith("docs/generated/infra/") or path == "tools/design/infrastructure.py":
+        return {TOOLS, "infra_design"}
     if path.startswith("docs/generated/"):
         return {"design", TOOLS}
     if path.endswith(".md") and ("/" not in path or path.startswith(("docs/", "deploy/", ".agents/"))):
@@ -43,6 +45,19 @@ def affected(path, suites):
         return {FRONTEND, BROWSER, BACKEND}
     if path == "tools/build_frontend.py":
         return {FRONTEND, BROWSER, TOOLS, "aws_portal"}
+    if (
+        path.startswith("packages/frontend/src/web_app/portal_pages/") and path.endswith(".py")
+    ) or path.endswith(
+        (
+            "/portal_shell.py",
+            "/portal_session.py",
+            "/portal_ui.py",
+            "/portal_navigation.py",
+            "/screen_registry.py",
+            "/listing_data.py",
+        )
+    ):
+        return {FRONTEND, BROWSER, "aws_portal"}
     if path == "packages/frontend/public/index.html" or path.endswith(
         ("/web_app/client.py", "/web_app/app.py", "/web_app/product_views.py", "/web_app/api_docs.py")
     ):
@@ -109,7 +124,7 @@ def select(paths, suites, cached):
             ):
                 selected.add(suite)
     aws = "aws" in flags or "aws_portal" in flags
-    synth = aws or "audit" in flags
+    synth = aws or "audit" in flags or "infra_design" in flags
     return {
         "full": full,
         "suites": [suite for suite in suites if suite in selected],
