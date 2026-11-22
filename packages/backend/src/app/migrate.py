@@ -36,6 +36,5 @@ def handler(event, context):
             if not conn.scalar(text("SELECT 1 FROM pg_roles WHERE rolname='tsugite_chat'")):
                 conn.exec_driver_sql("CREATE ROLE tsugite_chat WITH LOGIN")
             conn.exec_driver_sql(f"AWS IAM GRANT tsugite_chat TO '{chat_arn}'")
-            conn.exec_driver_sql("GRANT USAGE ON SCHEMA public TO tsugite_chat")
             conn.exec_driver_sql("GRANT SELECT ON assets TO tsugite_chat")
     return result

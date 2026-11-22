@@ -25,6 +25,14 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
+        "backend",
+        "チャットの参照ロールに商品の更新権限を加える",
+        "packages/backend/src/app/migrate.py",
+        "GRANT SELECT ON assets TO tsugite_chat",
+        "GRANT SELECT, UPDATE ON assets TO tsugite_chat",
+        "packages/backend/tests/test_migrate.py::test_grants_public_tables_without_altering_the_schema[chat]",
+    ),
+    Mutation(
         "ci",
         "ファイル移動時に移動元の変更を見落とす",
         "tools/ci_scope.py",

@@ -8,7 +8,7 @@ from pathlib import Path
 
 def main():
     asset = Path(sys.argv[1]).resolve()
-    socket_dir = sys.argv[2]
+    socket_dir, expected_revision = sys.argv[2:]
     sys.path.insert(0, str(asset))
     os.environ["LAMBDA_TASK_ROOT"] = str(asset)
 
@@ -27,6 +27,8 @@ def main():
     from app.migrate import handler
 
     role_arn = "arn:aws:iam::000000000000:role/tsugite-runtime"
+    chat_arn = "arn:aws:iam::000000000000:role/tsugite-chat"
+    roles = {"RuntimeRoleArn": role_arn, "ChatRoleArn": chat_arn}
     iam_grants = []
 
     @event.listens_for(database, "before_cursor_execute", retval=True)
@@ -41,14 +43,20 @@ def main():
 
     try:
         for request_type in ("Create", "Update"):
-            result = handler(
-                {"RequestType": request_type, "ResourceProperties": {"RuntimeRoleArn": role_arn}},
-                None,
-            )
+            result = handler({"RequestType": request_type, "ResourceProperties": roles}, None)
             assert result["PhysicalResourceId"] == "tsugite-catalog-schema"
-        assert iam_grants == [f"AWS IAM GRANT tsugite_app TO '{role_arn}'"] * 2
+        assert (
+            iam_grants
+            == [
+                f"AWS IAM GRANT tsugite_app TO '{role_arn}'",
+                f"AWS IAM GRANT tsugite_chat TO '{chat_arn}'",
+            ]
+            * 2
+        )
         with database.connect() as connection:
-            assert connection.scalar(text("SELECT version_num FROM alembic_version")) == "006"
+            assert list(connection.scalars(text("SELECT version_num FROM alembic_version"))) == [
+                expected_revision
+            ]
             connection.exec_driver_sql("SET ROLE tsugite_app")
             assert connection.scalar(text("SELECT current_user")) == "tsugite_app"
             assert connection.scalar(
@@ -67,6 +75,16 @@ def main():
                 "base_path",
                 "offers",
             ]
+            connection.execute(text("SELECT subject, question, answer FROM inquiries LIMIT 0"))
+            connection.exec_driver_sql("RESET ROLE")
+            connection.exec_driver_sql("SET ROLE tsugite_chat")
+            connection.execute(text("SELECT id, name FROM assets LIMIT 0"))
+            assert not connection.scalar(
+                text("SELECT has_table_privilege(current_user, 'assets', 'INSERT')")
+            )
+            assert not connection.scalar(
+                text("SELECT has_table_privilege(current_user, 'inquiries', 'SELECT')")
+            )
     finally:
         database.dispose()
 
