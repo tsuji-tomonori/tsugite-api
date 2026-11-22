@@ -25,6 +25,30 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
+        "ci-scope",
+        "データベース変更時にAPIのテストを外す",
+        "tools/ci_scope.py",
+        'return {DATABASE, AGENT, BACKEND, BROWSER, TOOLS, "types", "design", "aws"}',
+        'return {DATABASE, AGENT, BROWSER, TOOLS, "types", "design", "aws"}',
+        "tests/architecture/test_ci_scope.py::test_workspace_dependency_changes_verify_consumers",
+    ),
+    Mutation(
+        "ci-scope",
+        "共有ガイド変更時に利用側のテストを外す",
+        "tools/ci_scope.py",
+        "return {AGENT, FRONTEND, BROWSER, BACKEND}",
+        "return {FRONTEND, BROWSER}",
+        "tests/architecture/test_ci_scope.py::test_imported_modules_verify_their_actual_consumers",
+    ),
+    Mutation(
+        "ci-scope",
+        "PRテンプレートを全検証の対象に戻す",
+        "tools/ci_scope.py",
+        '"deploy/", ".agents/", ".github/"',
+        '"deploy/", ".agents/"',
+        "tests/architecture/test_ci_scope.py::test_verify_skips_unrelated_packages_even_without_coverage",
+    ),
+    Mutation(
         "evidence",
         "実行結果のない要件を合格にする",
         "tools/requirement_evidence.py",
@@ -292,7 +316,7 @@ MUTATIONS = (
         "ci",
         "以前の実行行を含むテスト層の再計測を省く",
         "tools/ci_scope.py",
-        "measured_changes\n                and part.stat().st_size",
+        "measured_changes\n                and part.is_file()",
         "False",
         "tools/tests/test_ci_scope.py::test_measured_source_invalidates_suites_that_executed_it",
     ),

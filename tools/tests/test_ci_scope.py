@@ -72,13 +72,15 @@ def test_measured_source_invalidates_suites_that_executed_it(tmp_path):
 
 
 def test_missing_coverage_never_becomes_a_partial_baseline(tmp_path):
-    """計測結果を復元できない層は再実行して全体カバレッジに含める。"""
+    """保存結果がない層は比較元での補完対象にし、PRの実行対象とは区別する。"""
     plan = ci.select(["packages/frontend/tests/test_components.py"], SUITES, tmp_path)
-    assert plan["suites"] == SUITES
+    assert plan["suites"] == [ci.FRONTEND]
+    assert set(ci.missing_parts(plan, SUITES, tmp_path)) == set(SUITES) - {ci.FRONTEND}
     cached_report(tmp_path)
     (tmp_path / "coverage-parts" / ci.part_name(ci.DATABASE)).unlink()
     plan = ci.select(["packages/frontend/tests/test_components.py"], SUITES, tmp_path)
-    assert plan["suites"] == [ci.DATABASE, ci.FRONTEND]
+    assert plan["suites"] == [ci.FRONTEND]
+    assert ci.missing_parts(plan, SUITES, tmp_path) == [ci.DATABASE]
 
 
 def test_unknown_or_shared_input_runs_all_checks(tmp_path):
@@ -225,3 +227,54 @@ def test_moved_agent_reuses_only_aggregate_baseline(monkeypatch):
 
     monkeypatch.setattr(check_coverage, "download_merged_coverage", download)
     assert check_coverage.merged_pr_coverage("owner/repo", "main", "sha") == 90
+
+
+def test_lock_changes_follow_transitive_old_and_new_consumers():
+    """間接依存の更新は利用パッケージに絞り、移動した依存は変更前と変更後の両方を検証する。"""
+    from copy import deepcopy
+
+    old = {
+        "package": [
+            {
+                "name": "infra",
+                "source": {"editable": "packages/infra"},
+                "dependencies": [{"name": "cdk"}],
+            },
+            {"name": "frontend", "source": {"editable": "packages/frontend"}},
+            {"name": "cdk", "source": {}, "dependencies": [{"name": "shared"}]},
+            {"name": "shared", "source": {}, "version": "1"},
+        ]
+    }
+    new = deepcopy(old)
+    new["package"][3]["version"] = "2"
+    assert ci.lock_projects(old, new) == {"packages/infra/pyproject.toml"}
+    new["package"][2]["dependencies"] = []
+    new["package"][1]["optional-dependencies"] = {"extra": [{"name": "shared"}]}
+    assert ci.lock_projects(old, new) == {
+        "packages/infra/pyproject.toml",
+        "packages/frontend/pyproject.toml",
+    }
+    new["revision"] = 2
+    assert ci.lock_projects(old, new) == {"uv.lock"}
+
+
+def test_template_plan_never_bootstraps_coverage(tmp_path, monkeypatch):
+    """PRテンプレートだけの差分はキャッシュがなくても準備やテストを起動せず、空の計測を公開しない。"""
+    import json
+
+    cached = tmp_path / "cache"
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("GITHUB_OUTPUT", str(tmp_path / "outputs"))
+    monkeypatch.setenv("GITHUB_REPOSITORY", "example/project")
+    monkeypatch.setenv("BASE_BRANCH", "main")
+    monkeypatch.setattr(
+        ci, "scope_inputs", lambda _: ("abc", [".github/pull_request_template.md"], SUITES, cached)
+    )
+    monkeypatch.setattr(ci, "download_merged_coverage", lambda *args: False)
+    ci.inspect_base("abc")
+    ci.plan("abc")
+    result = json.loads((ci.ARTIFACTS / "ci-plan.json").read_text())
+    assert result["documents"] and not result["suites"]
+    assert not any(result[key] for key in ("setup", "coverage", "chromium", "aws", "synth"))
+    lines = (tmp_path / "outputs").read_text().splitlines()
+    assert "missing=[]" in lines and "coverage_base=abc" in lines
