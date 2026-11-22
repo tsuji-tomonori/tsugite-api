@@ -11,17 +11,20 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "packages/infra"))
 
 
-def main():
+def synthesize_report(target: Path) -> Path:
     from src.infra_app.stack import CatalogStack
 
-    target = ROOT / "build/security-synth"
     app = App(outdir=str(target))
     CatalogStack(app, "TsugiteApi")
     Aspects.of(app).add(AwsSolutionsChecks(verbose=True))
     app.synth()
+    return next(target.glob("*NagReport.csv"))
+
+
+def main():
+    report = synthesize_report(ROOT / "build/security-synth")
     out = ROOT / "artifacts"
     out.mkdir(exist_ok=True)
-    report = next(target.glob("*NagReport.csv"))
     shutil.copyfile(report, out / "cdk-nag.csv")
 
 

@@ -4,10 +4,11 @@ from collections import Counter
 from pathlib import Path
 
 import pytest
-from aws_cdk import App, Aspects, Environment
+from aws_cdk import App, Environment
 from aws_cdk.assertions import Template
-from cdk_nag import AwsSolutionsChecks
 from src.infra_app.stack import CatalogStack
+
+from tools.audit_infra import synthesize_report
 
 HERE = Path(__file__).resolve().parent
 
@@ -40,12 +41,9 @@ def test_cloudformation_structure_matches_snapshot(catalog_stack):
     assert actual == expected
 
 
-def test_cdk_nag_detects_no_new_findings(catalog_stack, tmp_path):
+def test_cdk_nag_detects_no_new_findings(tmp_path):
     """AWS Solutionsの全ルールを実行し、記録済み以外の指摘がないことを確認する。"""
-    app = catalog_stack.node.root
-    Aspects.of(app).add(AwsSolutionsChecks(verbose=True))
-    app.synth()
-    report = tmp_path / "out" / "AwsSolutions-TsugiteApi-NagReport.csv"
+    report = synthesize_report(tmp_path / "out")
     with report.open(encoding="utf-8", newline="") as source:
         rows = list(csv.DictReader(source))
     assert rows and any(row["Compliance"] == "Compliant" for row in rows)

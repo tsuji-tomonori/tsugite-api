@@ -75,6 +75,7 @@ NO_RESOURCE_TAGS = {
     "AWS::Cognito::UserPoolGroup",
     "AWS::Cognito::UserPoolResourceServer",
     "AWS::IAM::Policy",
+    "AWS::Lambda::EventInvokeConfig",
     "AWS::Lambda::LayerVersion",
     "AWS::Lambda::Permission",
     "AWS::S3::BucketPolicy",
