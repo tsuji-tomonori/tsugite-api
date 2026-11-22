@@ -7,6 +7,7 @@ dependencies = [
     "sqlalchemy",
     "aurora-dsql-sqlalchemy",
     "aurora-dsql-python-connector[psycopg]>=0.2.7",
+    "certifi",
     "psycopg[binary]",
 ]
 
