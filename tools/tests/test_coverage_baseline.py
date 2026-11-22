@@ -1,4 +1,4 @@
-from unittest.mock import Mock
+import subprocess
 
 from tools import check_coverage as coverage
 
@@ -16,13 +16,43 @@ def test_flat_baseline_requires_equivalent_file_selection(tmp_path, monkeypatch)
     marker = tmp_path / coverage.POLICY_FILE
     marker.parent.mkdir(parents=True)
     marker.write_text(coverage.coverage_policy(legacy))
-    root = "packages/frontend/src/web_app/"
-    paths = Mock(return_value=(root + "app.py\\0").encode())
-    monkeypatch.setattr(coverage.subprocess, "check_output", paths)
-    assert coverage.compatible_baseline(tmp_path, "base-commit")
-    assert "base-commit" in paths.call_args.args[0]
-    paths.return_value += (root + "portal_pages/home.py\\0").encode()
-    assert not coverage.compatible_baseline(tmp_path, "base-commit")
-    paths.return_value = (root + "app.py\\0").encode()
-    marker.write_text(coverage.coverage_policy(legacy + "\\n# different tracer"))
-    assert not coverage.compatible_baseline(tmp_path, "base-commit")
+
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    subprocess.run(["git", "init", "-q"], cwd=repo, check=True)
+    source = repo / "packages/frontend/src/web_app"
+    source.mkdir(parents=True)
+    (source / "app.py").touch()
+    (source / "client.py").touch()
+
+    def commit():
+        subprocess.run(["git", "add", "."], cwd=repo, check=True)
+        subprocess.run(
+            [
+                "git",
+                "-c",
+                "user.name=test",
+                "-c",
+                "user.email=test@example.org",
+                "commit",
+                "-qm",
+                "tree",
+            ],
+            cwd=repo,
+            check=True,
+        )
+        return subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=repo, text=True).strip()
+
+    flat = commit()
+    (source / "pages").mkdir()
+    (source / "pages/home.py").touch()
+    nested = commit()
+    # 設定と計測器は同じまま、比較元コミットのファイル構成だけを変える。
+    (repo / "pyproject.toml").write_bytes((coverage.ROOT / "pyproject.toml").read_bytes())
+    tracer = coverage.ROOT / coverage.BROWSER_TRACE
+    monkeypatch.setattr(coverage, "BROWSER_TRACE", tracer)
+    monkeypatch.setattr(coverage, "ROOT", repo)
+    assert coverage.compatible_baseline(tmp_path, flat)
+    assert not coverage.compatible_baseline(tmp_path, nested)
+    marker.write_text(coverage.coverage_policy(legacy + "# different tracer"))
+    assert not coverage.compatible_baseline(tmp_path, flat)

@@ -130,7 +130,7 @@ def compatible_baseline(folder, sha):
     root = "packages/frontend/src/web_app/"
     paths = subprocess.check_output(
         ["git", "ls-tree", "-r", "-z", "--name-only", sha, "--", root], cwd=ROOT
-    ).split(b"\\0")
+    ).split(b"\0")
     files = [path.removeprefix(root.encode()) for path in paths if path.endswith(b".py")]
     return bool(files) and all(b"/" not in path for path in files)
 
