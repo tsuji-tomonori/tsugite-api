@@ -23,7 +23,7 @@ dev = ["pytest>=9", "pytest-given", "ruff", "pytest-cov", "pyright", "mypy", "py
 junit_family = "xunit1"
 markers = ["case_detail(text): パラメーターごとの条件や期待結果を日本語で示す"]
 pythonpath = ["packages/backend/src", "packages/database/src", "packages/infra", "."]
-testpaths = ["packages/backend/tests", "packages/frontend/tests", "packages/infra/tests", "packages/database/tests", "tests/e2e/browser", "tools/tests"]
+testpaths = ["tests/architecture", "packages/backend/tests", "packages/frontend/tests", "packages/infra/tests", "packages/database/tests", "tests/e2e/browser", "tools/tests"]
 
 [tool.ruff]
 target-version = "py314"

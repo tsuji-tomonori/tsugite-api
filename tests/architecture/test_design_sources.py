@@ -2,12 +2,12 @@
 
 import ast
 from importlib.util import resolve_name
-from pathlib import Path
 
 from tsugite_db.source_docs import SourceDocs
 
-ROOT = Path(__file__).resolve().parents[4]
-SOURCE_ROOTS = (ROOT, ROOT / "packages/backend/src", ROOT / "packages/database/src")
+from .project import ROOT
+
+SOURCE_ROOTS = (ROOT, *sorted((ROOT / "packages").glob("*/src")))
 ENTRY_POINTS = ("tools.design.generate", "app.design_names", "tsugite_db.design_names")
 # These modules supply the running application and ORM objects, both also used outside documentation.
 RUNTIME = {"app.main", "tsugite_db.models"}

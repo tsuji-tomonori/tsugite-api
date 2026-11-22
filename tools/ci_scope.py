@@ -87,11 +87,6 @@ def part_name(suite):
 
 def select(paths, suites, cached):
     flags = set().union(*(affected(path, suites) for path in paths))
-    if Path(BACKEND, "architecture/test_design_sources.py").is_file() and any(
-        path.startswith("tools/") and not path.startswith("tools/tests/") and path.endswith(".py")
-        for path in paths
-    ):
-        flags.add(BACKEND)
     full = "full" in flags or any(path.endswith("/pyproject.toml") for path in paths)
     if full:
         flags.update({"types", "design", "aws", "audit", "hooks"})
