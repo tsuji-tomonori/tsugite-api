@@ -179,7 +179,7 @@ def run_test(workspace, target):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--layer", choices=("backend", "frontend", "infra", "tools"), action="append")
+    parser.add_argument("--layer", choices=sorted({entry.layer for entry in MUTATIONS}), action="append")
     args = parser.parse_args()
     selected = [entry for entry in MUTATIONS if not args.layer or entry.layer in args.layer]
     failed = []
