@@ -73,11 +73,32 @@ def write_theme(definitions):
     )
 
 
+def bundle_styles(source, dist):
+    with (dist / "ui.css").open("a", encoding="utf-8") as bundle:
+        for css in sorted(source.rglob("*.css")):
+            bundle.write("\n" + css.read_text(encoding="utf-8") + "\n")
+
+
+def copy_app_modules(source, dist):
+    files = {}
+    for src in sorted(source.rglob("*.py")):
+        relative = src.relative_to(source)
+        dest = dist / relative
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(src, dest)
+        path = relative.as_posix()
+        if path != "app.py":
+            files["/" + path] = "./" + path
+    return files
+
+
 def build():
     CACHE.mkdir(parents=True, exist_ok=True)
     if DIST.exists():
         shutil.rmtree(DIST)
     shutil.copytree(ROOT / "packages/frontend/public", DIST)
+    source = ROOT / "packages/frontend/src/web_app"
+    bundle_styles(source, DIST)
     for name, (url, digest) in BUNDLES.items():
         archive = CACHE / (name + ".tgz")
         if not archive.exists() or sha256(archive.read_bytes()).hexdigest() != digest:
@@ -118,10 +139,7 @@ def build():
     for file in wheel.files or ():
         if file.name.upper() == "LICENSE":
             shutil.copy(wheel.locate_file(file), DIST / "vendor/puepy/LICENSE")
-    for src in sorted((ROOT / "packages/frontend/src/web_app").glob("*.py")):
-        shutil.copy(src, DIST / src.name)
-        if src.name != "app.py":
-            files["/" + src.name] = "./" + src.name
+    files.update(copy_app_modules(source, DIST))
     shutil.copy(ROOT / "packages/backend/src/app/core/log_record.py", DIST / "log_record.py")
     files["/log_record.py"] = "./log_record.py"
     (DIST / "pyscript.json").write_text(

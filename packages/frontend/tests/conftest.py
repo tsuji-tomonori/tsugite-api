@@ -9,20 +9,8 @@ import pytest
 @pytest.fixture
 def portal_module(monkeypatch):
     """PyScriptのブラウザー境界だけを代替し、画面モジュールを読み込む。"""
-    module_names = {
-        "api_docs",
-        "chat_views",
-        "client",
-        "login_views",
-        "portal_auth",
-        "guide_content",
-        "guide_search",
-        "guide_views",
-        "openapi_fields",
-        "product_views",
-    }
-    previously_loaded = module_names & sys.modules.keys()
     source = Path(__file__).resolve().parents[1] / "src/web_app"
+    previously_loaded = set(sys.modules)
     monkeypatch.syspath_prepend(str(source))
     monkeypatch.syspath_prepend(str(source.parents[2] / "backend/src/app/core"))
     js = ModuleType("js")
@@ -35,5 +23,7 @@ def portal_module(monkeypatch):
     monkeypatch.setitem(sys.modules, "pyodide", pyodide)
     monkeypatch.setitem(sys.modules, "pyodide.http", pyodide.http)
     yield import_module
-    for name in module_names - previously_loaded:
-        sys.modules.pop(name, None)
+    for name in set(sys.modules) - previously_loaded:
+        file = getattr(sys.modules[name], "__file__", None)
+        if name.startswith("portal_pages.") or (file and Path(file).is_relative_to(source)):
+            sys.modules.pop(name)
