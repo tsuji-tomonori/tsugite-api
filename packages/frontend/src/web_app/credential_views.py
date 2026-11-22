@@ -40,9 +40,9 @@ def minutes(identifier, label, low, high):
     try:
         value = int(val(identifier))
     except ValueError:
-        raise ValueError(label + "は分単位の整数で指定してください") from None
+        raise client.InputError(label + "は分単位の整数で指定してください") from None
     if not low <= value <= high:
-        raise ValueError(f"{label}は{low}～{high}分で選んでください")
+        raise client.InputError(f"{label}は{low}～{high}分で選んでください")
     return value
 
 
@@ -151,28 +151,28 @@ def render_form(ctx, project, options, field, btn, reload):
 
     async def issue():
         if val("credential-project") != project:
-            raise ValueError("変更先のプロジェクトで発行条件を確認してください")
+            raise client.InputError("変更先のプロジェクトで発行条件を確認してください")
         mode = val("cred-mode")
         kind = "shared" if mode == "system" else val("cred-kind")
         ttl = minutes("cred-ttl", "有効期限", 1, current_limit())
         refresh = minutes("cred-refresh", "更新開始", 1, ttl)
         selected = selected_indexes() if val("cred-scope") == "selected" else []
         if not selected and val("cred-scope") == "selected":
-            raise ValueError("対象APIを1件以上選んでください")
+            raise client.InputError("対象APIを1件以上選んでください")
         operations = {}
         for i in selected:
             if val(f"cred-actions-{i}") == "selected":
                 ids = [s for k, s in enumerate(assets[i]["operations"]) if checked(f"cred-op-{i}-{k}")]
                 if not ids:
-                    raise ValueError(assets[i]["name"] + "の操作を1件以上選んでください")
+                    raise client.InputError(assets[i]["name"] + "の操作を1件以上選んでください")
                 operations[assets[i]["id"]] = ids
         people = []
         if mode == "app" and kind == "shared" and val("cred-user-scope") == "selected":
             people = [r["subject"] for i, r in enumerate(members) if checked(f"cred-user-{i}")]
             if not people:
-                raise ValueError("利用者を1人以上選んでください")
+                raise client.InputError("利用者を1人以上選んでください")
         if not val("cred-name"):
-            raise ValueError("認証情報の名前を入力してください")
+            raise client.InputError("認証情報の名前を入力してください")
         result = await client.api(
             "/credentials",
             "POST",

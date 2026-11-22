@@ -231,6 +231,7 @@ def exchange(data: Exchange, db: DB, request: Request, response: Response):
         if scheme.lower() != "bearer" or not access:
             raise unavailable()
         actor = populate(db, identify(access))
+        request.state.actor_id = actor.subject
         check_member(db, actor)
         if actor.machine:
             raise unavailable()
@@ -238,6 +239,7 @@ def exchange(data: Exchange, db: DB, request: Request, response: Response):
         if request.headers.get("authorization"):
             raise HTTPException(400, "システム認証には利用者トークンを指定しません")
         actor = machine_actor(db, key)
+        request.state.actor_id = actor.subject
     result = mint(db, key, actor, "app" if key.mode == "app" else "")
     audit(db, actor, request, "token.exchange", key.project, key.id)
     db.commit()

@@ -20,6 +20,7 @@ def run_parts(suites):
 
     PARTS.mkdir(parents=True, exist_ok=True)
     reports = ElementTree.Element("testsuites")
+    failed_suites = []
     for suite in suites:
         part = PARTS / part_name(suite)
         prefix = ARTIFACTS / part.stem
@@ -40,13 +41,17 @@ def run_parts(suites):
         if junit.exists():
             reports.extend(ElementTree.parse(junit).getroot().iter("testsuite"))
             ElementTree.ElementTree(reports).write(ARTIFACTS / "junit.xml", encoding="utf-8")
-        result.check_returncode()
+        if result.returncode:
+            failed_suites.append(suite)
+            continue
         data = CoverageData(basename=str(part))
         data.read()
         executed = sorted(Path(name).as_posix() for name in data.measured_files() if data.lines(name))
         part.with_suffix(".json").write_text(json.dumps(executed) + "\n")
         if not executed:
             part.write_bytes(b"")
+    if failed_suites:
+        sys.exit("テストに失敗した対象　" + "、".join(failed_suites))
 
 
 if __name__ == "__main__":

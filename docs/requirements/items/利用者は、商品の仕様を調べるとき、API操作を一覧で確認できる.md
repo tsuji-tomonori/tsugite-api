@@ -12,6 +12,10 @@
 
 商品画面に全操作の一覧を表示し、選んだ操作の詳細へ移動できるようにする。
 
+### 受入テスト
+
+- 受入テスト `tests/e2e/browser/test_product_publication.py::test_publish_and_apply_from_product_page` / `operations.png`
+
 ## 却下した方針
 
 商品を代表する1操作だけを表示する方法は採用しない。

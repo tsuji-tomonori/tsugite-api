@@ -3,7 +3,7 @@ from uuid import UUID
 
 from app.apis.catalog.common import DB, User
 from app.apis.schemas import Input
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -103,6 +103,7 @@ def reply_to_inquiry(
     #: 問い合わせの識別子
     inquiry_id: UUID,
     data: InquiryReply,
+    request: Request,
     actor: User,
     db: DB,
 ):
@@ -111,6 +112,7 @@ def reply_to_inquiry(
     row = db.get(Inquiry, inquiry_id.hex)
     if row is None:
         raise HTTPException(404)
+    request.state.target_subject_id = row.subject
     answer = data.answer.strip()
     if len(answer) < 2:
         raise HTTPException(422, "回答を入力してください")

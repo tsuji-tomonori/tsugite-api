@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import math
 import re
 import unicodedata
@@ -11,6 +10,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Literal
 
+from app.core.diagnostics import asset_object
 from app.core.openapi import path_items
 
 if TYPE_CHECKING:
@@ -80,7 +80,7 @@ class Document:
 
 
 def document(asset: Asset) -> Document:
-    spec = json.loads(asset.spec)
+    spec = asset_object(asset, "spec")
     ops = [spec["info"].get("title", ""), spec["info"].get("description", "")]
     definitions = {
         normalize(t["name"]): normalize(t.get("description", "")) for t in spec.get("tags", [])

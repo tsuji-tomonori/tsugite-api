@@ -5,7 +5,7 @@ from functools import cache
 
 import numpy as np
 import onnxruntime as ort
-from runtime import model_file
+from runtime import logged_model, model_file
 from tokenizers import Tokenizer
 
 
@@ -52,6 +52,7 @@ def encode_cached(texts):
     return result
 
 
+@logged_model
 def handler(event, context):
     texts = event["texts"]
     if not 1 <= len(texts) <= 24 or any(not isinstance(text, str) or len(text) > 500 for text in texts):

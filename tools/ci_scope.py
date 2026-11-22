@@ -35,6 +35,8 @@ def affected(path, suites):
     for suite in suites:
         if path.startswith(suite + "/"):
             return {suite}
+    if path.startswith("docs/requirements/items/"):
+        return FULL
     if path.startswith("docs/generated/infra/") or path == "tools/design/infrastructure.py":
         return {TOOLS, "infra_design"}
     if path.startswith("docs/generated/"):
@@ -45,6 +47,8 @@ def affected(path, suites):
         or Path(path).name.lower() == "readme.md"
     ):
         return set()
+    if path == "packages/backend/src/app/core/log_record.py":
+        return {BACKEND, FRONTEND, BROWSER, TOOLS, "types", "aws", "aws_portal"}
     if path.startswith("packages/backend/"):
         return {BACKEND, BROWSER, TOOLS, "types", "design", "aws"}
     if path.startswith("packages/database/"):
@@ -53,6 +57,19 @@ def affected(path, suites):
         return {FRONTEND, BROWSER, BACKEND}
     if path == "tools/build_frontend.py":
         return {FRONTEND, BROWSER, TOOLS, "aws_portal"}
+    if (
+        path.startswith("packages/frontend/src/web_app/portal_pages/") and path.endswith(".py")
+    ) or path.endswith(
+        (
+            "/portal_shell.py",
+            "/portal_session.py",
+            "/portal_ui.py",
+            "/portal_navigation.py",
+            "/screen_registry.py",
+            "/listing_data.py",
+        )
+    ):
+        return {FRONTEND, BROWSER, "aws_portal"}
     if path == "packages/frontend/public/index.html" or path.endswith(
         ("/web_app/client.py", "/web_app/app.py", "/web_app/product_views.py", "/web_app/api_docs.py")
     ):

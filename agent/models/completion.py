@@ -5,10 +5,9 @@ import os
 import subprocess
 from pathlib import Path
 from time import monotonic, sleep
-from urllib.error import URLError
 from urllib.request import Request, urlopen
 
-from runtime import model_file
+from runtime import logged_model, model_failure, model_file
 
 HOST = "http://127.0.0.1:18080"
 process = None
@@ -28,7 +27,7 @@ def ready(role):
         try:
             request("/health", timeout=1)
             return
-        except OSError, URLError:
+        except OSError:
             process.kill()
             process.wait()
     model = model_file(role, "model.gguf")
@@ -67,7 +66,7 @@ def ready(role):
         try:
             request("/health", timeout=1)
             return
-        except OSError, URLError:
+        except OSError:
             sleep(0.15)
     if process.poll() is None:
         process.kill()
@@ -92,6 +91,7 @@ def complete(role, system, data, schema, tokens):
     return json.loads(result["choices"][0]["message"]["content"])
 
 
+@logged_model
 def handler(event, context):
     role = os.environ["MODEL_ROLE"]
     if role == "tool":
@@ -131,5 +131,6 @@ def handler(event, context):
     }
     try:
         return complete(role, system, data, schema, tokens)
-    except ValueError, KeyError, IndexError:
+    except (ValueError, KeyError, IndexError) as exc:
+        model_failure(event, context, exc)
         return {}

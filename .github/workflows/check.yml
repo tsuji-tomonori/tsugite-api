@@ -22,6 +22,8 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
           persist-credentials: false
+      - name: 要件別の受入テスト定義を検査
+        run: python3 -m tools.requirement_evidence --check
       - name: 要件一覧と用語一覧を生成し、feat ブランチの新規要件を検査
         env:
           HEAD_BRANCH: ${{ github.head_ref }}
@@ -115,12 +117,13 @@ jobs:
       - run: task audit
         if: steps.scope.outputs.audit == 'true'
       - name: 対象テストを実行し、全体カバレッジを集計
+        id: suites
         if: steps.scope.outputs.suites != '[]'
         run: uv run --locked --all-packages python -m tools.ci_scope --run-suites
       - run: task test:aws
-        if: steps.scope.outputs.aws == 'true' && steps.scope.outputs.aws_portal_only != 'true'
+        if: ${{ !cancelled() && (success() || steps.suites.outcome == 'failure') && steps.scope.outputs.aws == 'true' && steps.scope.outputs.aws_portal_only != 'true' }}
       - run: task test:aws -- -k test_cognito_browser
-        if: steps.scope.outputs.aws_portal_only == 'true'
+        if: ${{ !cancelled() && (success() || steps.suites.outcome == 'failure') && steps.scope.outputs.aws_portal_only == 'true' }}
       - name: Check line coverage against the ruleset
         if: steps.scope.outputs.coverage == 'true'
         env:
@@ -145,6 +148,21 @@ jobs:
           language: Python
           label: code-coverage/pytest
           fail-on-error: false
+      - name: 今回のJUnit・画面証跡から要件別の合否を判定
+        if: ${{ !cancelled() }}
+        env:
+          EVIDENCE_COMMIT: ${{ github.event.pull_request.head.sha }}
+        run: python3 -m tools.requirement_evidence --plan artifacts/ci-plan.json
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: requirement-evidence
+          path: |
+            evidence/report.md
+            evidence/requirements.xml
+            evidence/screenshots/
+            evidence/items/
+          if-no-files-found: error
       - name: Build screenshot report
         if: ${{ !cancelled() && steps.scope.outputs.report == 'true' && hashFiles('artifacts/junit.xml') != '' }}
         run: task report

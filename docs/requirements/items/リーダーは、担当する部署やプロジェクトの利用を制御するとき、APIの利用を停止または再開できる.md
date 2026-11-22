@@ -12,6 +12,10 @@
 
 担当部署・プロジェクトに対して停止・再開できるようにする。
 
+### 受入テスト
+
+- 受入テスト `tests/e2e/browser/test_workspace_console.py::test_workspace_key_console` / `stopped.png`
+
 ## 却下した方針
 
 担当外の部署・プロジェクトまで変更する方法は採用しない。

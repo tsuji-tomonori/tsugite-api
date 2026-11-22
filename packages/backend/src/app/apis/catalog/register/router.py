@@ -6,6 +6,7 @@ from app.apis.catalog.offers import configured
 from app.apis.catalog.releases import record_release
 from app.apis.schemas import Listing, Offer, Register
 from app.core.config import targets
+from app.core.diagnostics import asset_object
 from app.core.workspace import units
 from app.integrations.spec_archive import archive_spec, canonical
 from fastapi import APIRouter, HTTPException, Request
@@ -89,7 +90,7 @@ def edit(
     if row.revision != revision:
         raise HTTPException(409, "別の変更が入りました")
     spec = validated_spec(data, db)
-    structural = (json.loads(row.spec), json.loads(row.targets), row.base_path or "") != (
+    structural = (asset_object(row, "spec"), asset_object(row, "targets"), row.base_path or "") != (
         data.spec,
         data.targets,
         data.base_path,

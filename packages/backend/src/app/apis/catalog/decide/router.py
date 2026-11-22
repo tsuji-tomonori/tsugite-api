@@ -35,6 +35,7 @@ def decide(
     row = db.get(Access, right_id(key, project, environment) + ("/" + principal if principal else ""))
     if row is None:
         raise HTTPException(404)
+    request.state.target_subject_id = row.subject or row.applicant
     if data.action == "withdraw":
         allowed = row.subject == actor.subject if row.subject else project in actor.projects
     elif data.action == "revoke":
