@@ -19,9 +19,13 @@ BROWSER_FIXTURE = Path("tests/e2e/browser/conftest.py")
 BROWSER_TRACE = Path("tests/support/pyodide_trace.py")
 
 
-def coverage_policy(browser_fixture=None):
+def coverage_policy(browser_fixture=None, *, legacy_agent=False):
     with (ROOT / "pyproject.toml").open("rb") as file:
         config = tomllib.load(file)["tool"]["coverage"]
+    # 比較元のコミットでも移動前のエージェントを同じ範囲で計測する。
+    if legacy_agent:
+        roots = config["run"]["source"]
+        roots[:] = ["agent" if name == "packages/agent/src/agent" else name for name in roots]
     digest = hashlib.sha256(json.dumps(config, sort_keys=True).encode())
     if browser_fixture is None:
         browser_fixture = (ROOT / BROWSER_FIXTURE).read_text(encoding="utf-8")
@@ -123,6 +127,8 @@ def compatible_baseline(folder, sha):
     )
     flat = 'path.name: path.as_posix() for path in FRONTEND.glob("*.py")'
     fixture = (ROOT / BROWSER_FIXTURE).read_text(encoding="utf-8")
+    if marker.read_text().strip() == coverage_policy(legacy_agent=True):
+        return True
     if fixture.count(recursive) != 1 or marker.read_text().strip() != coverage_policy(
         fixture.replace(recursive, flat)
     ):
@@ -178,10 +184,17 @@ def measure_base_coverage(sha):
             (path / "artifacts").mkdir(exist_ok=True)
             # 同じ計測方法で比較するため、ベースの実装とテストに現在のブラウザー計測だけを加える。
             fixture = path / BROWSER_FIXTURE
-            with fixture.open("a", encoding="utf-8") as stream:
-                stream.write("\n" + (ROOT / BROWSER_FIXTURE).read_text(encoding="utf-8"))
+            instrumentation = (ROOT / BROWSER_FIXTURE).read_text(encoding="utf-8")
+            if not fixture.is_file() or instrumentation not in fixture.read_text(encoding="utf-8"):
+                with fixture.open("a", encoding="utf-8") as stream:
+                    stream.write("\n" + instrumentation)
             (path / BROWSER_TRACE).write_bytes((ROOT / BROWSER_TRACE).read_bytes())
             report = Path("artifacts/coverage.xml")
+            config = ROOT / "pyproject.toml"
+            with config.open("rb") as file:
+                roots = tomllib.load(file)["tool"]["coverage"]["run"]["source"]
+            if (path / "agent/jobs.py").is_file():
+                roots = ["agent" if root == "packages/agent/src/agent" else root for root in roots]
             command = [
                 "uv",
                 "run",
@@ -189,8 +202,8 @@ def measure_base_coverage(sha):
                 "--all-packages",
                 "pytest",
                 "-q",
-                "--cov",
-                f"--cov-config={ROOT / 'pyproject.toml'}",
+                *(f"--cov={root}" for root in roots),
+                f"--cov-config={config}",
                 f"--cov-report=xml:{report}",
             ]
             junit = path / "artifacts/baseline-tests.xml"

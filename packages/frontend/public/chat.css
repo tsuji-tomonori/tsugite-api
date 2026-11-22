@@ -12,9 +12,9 @@
 .chat-source p { margin-block: 4px; }
 .chat-source ol { padding-left: 1.6em; }
 .chat-source li { margin-block: 5px; }
-.chat-composer { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 8px; }
+.chat-composer { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: var(--action-gap); }
 .chat-composer .field { margin: 0; }
-.chat-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 14px; margin-block: 10px; }
+.chat-actions { display: flex; align-items: center; flex-wrap: wrap; gap: var(--action-gap); margin-block: 16px; }
 .chat-inquiry { border-top: 1px solid var(--line); padding-top: 10px; }
 .chat-inquiry textarea { min-height: 110px; }
 .chat-ticket { margin-block: 12px; }

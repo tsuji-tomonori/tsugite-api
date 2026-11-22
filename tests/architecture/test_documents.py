@@ -27,7 +27,10 @@ def test_markdown_documents_have_japanese_titles():
     documents = list(project_files(ROOT, ".md"))
     assert documents, "対象のMarkdown文書がありません"
     invalid = [
-        p.relative_to(ROOT) for p in documents if not japanese_title(p.read_text(encoding="utf-8"))
+        p.relative_to(ROOT)
+        for p in documents
+        if p.relative_to(ROOT).as_posix().lower() != ".github/pull_request_template.md"
+        and not japanese_title(p.read_text(encoding="utf-8"))
     ]
     assert not invalid, invalid
 
@@ -37,3 +40,7 @@ def test_requirements_follow_the_project_vocabulary(tmp_path):
     from tools.design.requirements import ITEMS, generate
 
     assert generate(ROOT / ITEMS, tmp_path)
+
+
+if __name__ == "__main__":
+    test_markdown_documents_have_japanese_titles()

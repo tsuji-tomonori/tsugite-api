@@ -22,11 +22,12 @@ def test_boundary_checker_rejects_cross_layer_imports():
             "データベース",
         ),
         ("packages/infra/app.py", "import agent.jobs as worker", "エージェント"),
-        ("agent/jobs.py", "from .models import completion", "モデル"),
-        ("agent/models/completion.py", "from .. import jobs", "エージェント"),
-        ("agent/retrieval.py", "from web_app import chat_views", "フロント"),
-        ("agent/retrieval.py", "import tools.packaging.build_chat", "開発ツール"),
-        ("agent/models/runtime.py", "import aws_cdk", "インフラ"),
+        ("packages/infra/app.py", "from packages.agent.src.agent import jobs", "エージェント"),
+        ("packages/agent/src/agent/jobs.py", "from .models import completion", "モデル"),
+        ("packages/agent/src/agent/models/completion.py", "from .. import jobs", "エージェント"),
+        ("packages/agent/src/agent/retrieval.py", "from web_app import chat_views", "フロント"),
+        ("packages/agent/src/agent/retrieval.py", "import tools.packaging.build_chat", "開発ツール"),
+        ("packages/agent/src/agent/models/runtime.py", "import aws_cdk", "インフラ"),
         ("tools/packaging/build_chat.py", "from packages.backend.tests import conftest", "テスト"),
     )
     for path, source, target in cases:
@@ -39,8 +40,11 @@ def test_boundary_checker_accepts_supported_collaboration():
     """APIのジョブ受付、エージェントのガイド共有、モデル内の参照を許可する。"""
     for path, source in (
         ("packages/backend/src/app/main.py", "from agent import jobs"),
-        ("agent/retrieval.py", "from packages.frontend.src.web_app.guide_content import GUIDES"),
-        ("agent/models/completion.py", "from . import runtime"),
+        (
+            "packages/agent/src/agent/retrieval.py",
+            "from packages.frontend.src.web_app.guide_content import GUIDES",
+        ),
+        ("packages/agent/src/agent/models/completion.py", "from . import runtime"),
     ):
         assert dependency_violations(Path(path), source) == []
 
@@ -60,7 +64,11 @@ def test_document_checker_uses_title_outside_code_examples():
 
 def test_project_discovery_includes_new_components(tmp_path):
     """新しい配下の文書と生成設計書を自動で検査し、ビルドの一時コピーを除外する。"""
-    sources = ("agent/models/README.md", "docs/generated/apis/detail.md", "new/README.md")
+    sources = (
+        "packages/agent/src/agent/models/README.md",
+        "docs/generated/apis/detail.md",
+        "new/README.md",
+    )
     for name in (*sources, "build/vendor/README.md"):
         path = tmp_path / name
         path.parent.mkdir(parents=True, exist_ok=True)

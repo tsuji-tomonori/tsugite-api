@@ -9,16 +9,18 @@ from unittest.mock import Mock
 
 import pytest
 
-MODELS = Path(__file__).resolve().parents[3] / "agent/models"
+ROOT = Path(__file__).resolve().parents[3]
+MODELS = ROOT / "packages/agent/src/agent/models"
 
 
 def load_worker(name, monkeypatch, **dependencies):
-    monkeypatch.syspath_prepend(str(MODELS.parents[1] / "packages/backend/src/app/core"))
+    monkeypatch.syspath_prepend(str(ROOT / "packages/backend/src/app/core"))
     for module, replacement in dependencies.items():
         if module == "runtime":
             replacement.logged_model.side_effect = lambda handler: handler
         monkeypatch.setitem(sys.modules, module, replacement)
     spec = importlib.util.spec_from_file_location(name, MODELS / f"{name}.py")
+    assert spec is not None and spec.loader is not None
     worker = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(worker)
     return worker
@@ -105,7 +107,7 @@ def test_model_process_recovers_from_failed_health_check(monkeypatch):
     worker = load_worker("completion", monkeypatch, runtime=Mock())
     old, new = Mock(), Mock()
     old.poll.return_value = new.poll.return_value = None
-    worker.process = old
+    monkeypatch.setattr(worker, "process", old)
     start = Mock(return_value=new)
     request = Mock(side_effect=[OSError("unavailable"), {}])
     monkeypatch.setattr(worker.subprocess, "Popen", start)

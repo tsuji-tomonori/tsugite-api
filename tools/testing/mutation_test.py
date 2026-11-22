@@ -25,6 +25,30 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
+        "ci-scope",
+        "データベース変更時にAPIのテストを外す",
+        "tools/ci/ci_scope.py",
+        'return {DATABASE, AGENT, BACKEND, BROWSER, TOOLS, "types", "design", "aws"}',
+        'return {DATABASE, AGENT, BROWSER, TOOLS, "types", "design", "aws"}',
+        "tests/architecture/test_ci_scope.py::test_workspace_dependency_changes_verify_consumers",
+    ),
+    Mutation(
+        "ci-scope",
+        "共有ガイド変更時に利用側のテストを外す",
+        "tools/ci/ci_scope.py",
+        "return {AGENT, FRONTEND, BROWSER, BACKEND}",
+        "return {FRONTEND, BROWSER}",
+        "tests/architecture/test_ci_scope.py::test_imported_modules_verify_their_actual_consumers",
+    ),
+    Mutation(
+        "ci-scope",
+        "PRテンプレートを全検証の対象に戻す",
+        "tools/ci/ci_scope.py",
+        '"deploy/", ".agents/", ".github/"',
+        '"deploy/", ".agents/"',
+        "tests/architecture/test_ci_scope.py::test_verify_skips_unrelated_packages_even_without_coverage",
+    ),
+    Mutation(
         "evidence",
         "実行結果のない要件を合格にする",
         "tools/testing/requirement_evidence.py",
@@ -49,6 +73,14 @@ MUTATIONS = (
         "tools/tests/test_infrastructure_docs.py::test_component_parameter_sheet",
     ),
     Mutation(
+        "stock-lambda",
+        "存在しない商品を成功として返す",
+        "packages/infra/src/infra_app/lambdas/stock/stock.py",
+        "status, result = 404",
+        "status, result = 200",
+        "packages/infra/tests/test_stock_lambda.py::test_stock_response[missing]",
+    ),
+    Mutation(
         "backend",
         "データ修正を要する障害を通常のサーバーエラーと記録する",
         "packages/backend/src/app/core/log_record.py",
@@ -66,7 +98,7 @@ MUTATIONS = (
     ),
     Mutation(
         "frontend",
-        "ログ取得の失敗時に未定義のクライアント例外を参照する",
+        "ログ取得の失敗を記録済みと扱い、画面側の障害ログを失う",
         "packages/frontend/src/web_app/portal_pages/logs.py",
         'raise ValueError("ログを取得できませんでした")',
         'raise client.ResponseError("ログを取得できませんでした")',
@@ -95,6 +127,14 @@ MUTATIONS = (
         'module in {"app", "portal_shell"}',
         'module == "app"',
         "tests/architecture/test_frontend_screens.py::test_shared_layout_delegates_route_dispatch",
+    ),
+    Mutation(
+        "frontend",
+        "部署一覧の次ページにも先頭の部署を表示する",
+        "packages/frontend/src/web_app/workspace_views.py",
+        "start = (number - 1) * PAGE_SIZE",
+        "start = 0",
+        "packages/frontend/tests/test_workspace_screens.py::test_directory_pages_filter_before_paginating",
     ),
     Mutation(
         "frontend",
@@ -220,17 +260,17 @@ MUTATIONS = (
         "coverage",
         "エージェントとモデルの未実行ファイルを分母から除外する",
         "pyproject.toml",
-        '    "agent",\n',
+        '    "packages/agent/src/agent",\n',
         "",
         "tools/tests/test_ci_scope.py::test_coverage_includes_all_runtime_layers_and_unexecuted_files",
     ),
     Mutation(
         "models",
         "取得したモデルのチェックサムを検証しない",
-        "agent/models/runtime.py",
+        "packages/agent/src/agent/models/runtime.py",
         'if "sha256" in item:',
         "if False:",
-        "packages/backend/tests/test_model_workers.py::test_model_download_verifies_digest_before_reuse",
+        "packages/agent/tests/test_model_workers.py::test_model_download_verifies_digest_before_reuse",
     ),
     Mutation(
         "backend",
@@ -276,7 +316,7 @@ MUTATIONS = (
         "ci",
         "以前の実行行を含むテスト層の再計測を省く",
         "tools/ci/ci_scope.py",
-        "measured_changes\n                and part.stat().st_size",
+        "measured_changes\n                and part.is_file()",
         "False",
         "tools/tests/test_ci_scope.py::test_measured_source_invalidates_suites_that_executed_it",
     ),
@@ -297,12 +337,12 @@ MUTATIONS = (
         "tools/tests/test_requirements.py::test_undefined_term_in_condition_or_result_fails",
     ),
     Mutation(
-        "backend",
+        "agent",
         "生成クエリだけに一致する商品も候補に含める",
-        "agent/retrieval.py",
+        "packages/agent/src/agent/retrieval.py",
         " and (index == 0 or similarities[0] >= 0.39)",
         "",
-        "packages/backend/tests/test_agent_retrieval.py::test_rewritten_similarity_needs_support_from_original_question",
+        "packages/agent/tests/test_agent_retrieval.py::test_rewritten_similarity_needs_support_from_original_question",
     ),
     Mutation(
         "frontend",
@@ -441,7 +481,7 @@ MUTATIONS = (
 
 def copy_sources(workspace):
     ignore = shutil.ignore_patterns("dist", "cdk.out", ".venv", "__pycache__", "*.egg-info")
-    for folder in ("packages", "agent", "deploy/config", "docs/examples", "tests", "tools"):
+    for folder in ("packages", "deploy/config", "docs/examples", "tests", "tools"):
         shutil.copytree(ROOT / folder, workspace / folder, ignore=ignore)
     shutil.copyfile(ROOT / "pyproject.toml", workspace / "pyproject.toml")
 

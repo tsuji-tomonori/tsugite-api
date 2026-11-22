@@ -54,3 +54,43 @@ for name in names:
         cwd=tmp_path,
         check=True,
     )
+
+
+def test_agent_imports_from_worker_deployment_package(tmp_path):
+    """配備用コードとLayerだけでワーカーを読み込み、同梱ガイドを使って回答を生成できる。"""
+    code = BUILD / "lambda"
+    with ZipFile(BUILD / "runtime-layer.zip") as archive:
+        archive.extractall(tmp_path)
+    script = """
+import sys
+from pathlib import Path
+code, dependencies = sys.argv[1:]
+sys.path[:0] = [code, dependencies]
+from agent import jobs
+from app.core.auth import Actor
+assert Path(jobs.__file__).resolve().is_relative_to(code)
+assert callable(jobs.handler)
+assert not Path(code, "agent/models").exists()
+viewer = Actor("consumer", frozenset(), frozenset(), False, False)
+result = jobs.ask("APIキーを発行する手順を教えて", lambda: [], viewer, lambda *_: {})
+assert result["kind"] == "manual" and result["keys"]
+"""
+    subprocess.run(
+        [
+            "uv",
+            "run",
+            "--no-project",
+            "--python",
+            "3.15",
+            "python",
+            "-I",
+            "-S",
+            "-c",
+            script,
+            str(code),
+            str(tmp_path / "python"),
+        ],
+        cwd=tmp_path,
+        check=True,
+        timeout=120,
+    )

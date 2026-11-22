@@ -2,9 +2,8 @@ import json
 from io import BytesIO
 from unittest.mock import Mock
 
-from app.core.auth import Actor
-
 from agent import jobs
+from app.core.auth import Actor
 
 
 def test_worker_dispatch_and_result_lifecycle(monkeypatch):
@@ -66,3 +65,14 @@ def test_worker_model_result_and_unavailable_model(monkeypatch):
     assert json.loads(client.invoke.call_args.kwargs["Payload"]) == {"question": "検索"}
     for _ in range(3):
         assert jobs.models("tool", {}) == {}
+
+
+def test_expired_job_returns_error_without_invoking_models(monkeypatch):
+    """期限ちょうどのジョブは失敗として返し、遅れて届いたワーカーが上書きしない。"""
+    table = Mock()
+    table.get_item.return_value = {"Item": {"deadline": 100, "expires": 200}}
+    monkeypatch.setattr(jobs, "table", lambda: table)
+    monkeypatch.setattr(jobs, "time", lambda: 100)
+    assert jobs.status("subject", "request") == jobs.FAILED
+    jobs.handler({"key": jobs.key_for("subject", "request")}, None)
+    table.update_item.assert_not_called()

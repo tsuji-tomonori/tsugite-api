@@ -16,7 +16,10 @@ def test_failed_log_download_reports_error(portal_module, monkeypatch):
     save = Mock()
     monkeypatch.setattr(logs, "save_blob", save)
 
-    with pytest.raises(ValueError, match="ログを取得できませんでした"):
+    monkeypatch.setattr(logs.window, "console", Mock(), raising=False)
+    with pytest.raises(ValueError, match="ログを取得できませんでした") as error:
         asyncio.run(logs.download_logs())
     assert fetch.await_args.kwargs["headers"]["Authorization"] == "Bearer test-token"
+    logs.client.report(error.value, "download_logs")
+    logs.window.console.error.assert_called_once()
     save.assert_not_called()
