@@ -25,6 +25,22 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
+        "ci",
+        "ファイル移動時に移動元の変更を見落とす",
+        "tools/ci_scope.py",
+        '"--no-renames"',
+        '"--find-renames"',
+        "tools/tests/test_ci_scope.py::test_git_diff_includes_deleted_and_both_renamed_paths",
+    ),
+    Mutation(
+        "ci",
+        "以前の実行行を含むテスト層の再計測を省く",
+        "tools/ci_scope.py",
+        '("coverage_source" in flags and part.stat().st_size)',
+        "False",
+        "tools/tests/test_ci_scope.py::test_measured_source_invalidates_suites_that_executed_it",
+    ),
+    Mutation(
         "tools",
         "既存要件の編集だけでfeatブランチを許可する",
         "tools/requirements.py",
@@ -180,7 +196,7 @@ def run_test(workspace, target):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--layer", choices=("backend", "frontend", "infra", "tools"), action="append")
+    parser.add_argument("--layer", choices=sorted({entry.layer for entry in MUTATIONS}), action="append")
     args = parser.parse_args()
     selected = [entry for entry in MUTATIONS if not args.layer or entry.layer in args.layer]
     failed = []
