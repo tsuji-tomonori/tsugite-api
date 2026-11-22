@@ -28,6 +28,8 @@ def affected(path, suites):
     for suite in suites:
         if path.startswith(suite + "/"):
             return {suite}
+    if path.startswith("docs/generated/infra/") or path == "tools/design/infrastructure.py":
+        return {TOOLS, "infra_design"}
     if path.startswith("docs/generated/"):
         return {"design", TOOLS}
     if path.endswith(".md") and ("/" not in path or path.startswith(("docs/", "deploy/", ".agents/"))):
@@ -93,7 +95,7 @@ def select(paths, suites, cached):
             if not part.is_file() or ("coverage_source" in flags and part.stat().st_size):
                 selected.add(suite)
     aws = "aws" in flags or "aws_portal" in flags
-    synth = aws or "audit" in flags
+    synth = aws or "audit" in flags or "infra_design" in flags
     return {
         "full": full,
         "suites": [suite for suite in suites if suite in selected],

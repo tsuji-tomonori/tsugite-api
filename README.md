@@ -46,6 +46,8 @@ CDKのスナップショットは標準構成の論理ID、リソース型と出
 
 API操作はルートデコレーター、引数・モデル・項目・列挙値はそれぞれの宣言の直前に `#: 和名` を書きます。DBモデルのクラスには同じ形式でテーブル名を書き、docstringの1段落目にレコード名、2段落目に1行が表す内容を書きます。AWS SDK呼び出しの直前には `#: サービスの和名 / 操作の和名` を書きます。`task docs` はPythonの構文木とコメントトークンをFastAPI・SQLAlchemyの定義と照合し、設計書とデモ環境のOpenAPIに和名を反映します。
 
+[インフラ設計書](docs/generated/infra/README.md)には、CDKコンポーネントごとのリソース一覧とパラメーターシートがあります。`task docs:infra` はCDKを合成し、`packages/infra/cdk.out/TsugiteApi.template.json` から各表を更新します。接続先を指定する場合は `task docs:infra -- --bindings <ファイル>` を使います。既に合成したテンプレートから表だけを更新するときは `task docs:infra:render` を実行します。
+
 CIはPRで設計書を生成して成果物に含めます。既定ブランチの検証が通ると、生成結果に差分がある場合だけ `docs/generated/` を自動コミットします。
 
 ## ポータルで操作手順を調べる

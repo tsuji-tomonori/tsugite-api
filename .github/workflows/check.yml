@@ -88,7 +88,9 @@ jobs:
           fi
       - run: uv run --locked --all-packages python tools/build_frontend.py
         if: steps.scope.outputs.frontend_build == 'true'
-      - run: task contracts docs
+      - run: task docs:infra:render
+        if: steps.scope.outputs.synth == 'true'
+      - run: task contracts docs:api
         if: steps.scope.outputs.design == 'true'
       - run: task audit
         if: steps.scope.outputs.audit == 'true'
@@ -132,4 +134,5 @@ jobs:
             artifacts/
             !artifacts/coverage-parts/
             packages/infra/cdk.out/*.template.json
+            ${{ steps.scope.outputs.synth == 'true' && 'docs/generated/infra/' || '' }}
             ${{ steps.scope.outputs.design == 'true' && 'docs/generated/' || '' }}
