@@ -23,6 +23,7 @@ task demo
 | `packages/backend` | FastAPIルーター、認証、業務処理とテスト | `task test:backend` |
 | `packages/database` | SQLAlchemyモデル、接続、Alembic移行とテスト | `task test:database` |
 | `packages/infra` | AWS CDKとテンプレートのテスト | `task test:infra` |
+| [`tests/architecture`](tests/architecture/README.md) | 全層の依存・文書規則と検査器のテスト | `task test:architecture` |
 | `tests/e2e` | ブラウザー操作とAWS Emulatorを使う横断テスト | `task test:e2e`、`task test:aws` |
 | `tools` | ビルド、設計書生成、監査、テストレポート | `task test:tools` |
 

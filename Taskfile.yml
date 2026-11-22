@@ -99,6 +99,9 @@ tasks:
     cmds:
       - '{{.RUN}} python tools/audit_infra.py'
       - '{{.RUN}} pip-audit --disable-pip --no-deps -r build/runtime.txt --format json --output artifacts/dependency-audit.json'
+  test:architecture:
+    desc: 全層の依存・文書規則と規則自体のテストを実行
+    cmds: ['{{.RUN}} pytest -q tests/architecture {{.CLI_ARGS}}']
   test:frontend:
     desc: フロントエンドの単体テスト
     cmds: ['{{.RUN}} pytest -q packages/frontend/tests {{.CLI_ARGS}}']
