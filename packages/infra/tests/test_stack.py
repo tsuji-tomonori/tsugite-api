@@ -7,7 +7,7 @@ from aws_cdk.assertions import Match, Template
 from src.infra_app.stack import CatalogStack
 
 
-def test_access_boundaries(tmp_path):
+def test_access_boundaries(tmp_path, request):
     """非公開S3、呼び出しの認可、キャッシュと配信の設定が設計どおりである"""
     stack = CatalogStack(
         App(outdir=str(tmp_path)),
@@ -15,6 +15,10 @@ def test_access_boundaries(tmp_path):
         env=Environment(account="111111111111", region="ap-northeast-1"),
     )
     template = Template.from_stack(stack)
+    nat_count = len(template.find_resources("AWS::EC2::NatGateway"))
+    request.node.user_properties.append(
+        ("measurement", f"AWS::EC2::NatGateway　期待 0 件 / 実測 {nat_count} 件")
+    )
     template.has_resource_properties(
         "AWS::Cognito::UserPoolClient",
         {

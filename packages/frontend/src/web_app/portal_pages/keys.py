@@ -34,11 +34,11 @@ def keys_view():
         restricted = value("key-scope") == "selected"
         selected = [a["id"] for a in assets if document.getElementById("key-asset-" + a["id"]).checked]
         if restricted and not selected:
-            raise ValueError("このキーで呼び出すAPIを選んでください")
+            raise client.InputError("このキーで呼び出すAPIを選んでください")
         kind = value("key-kind")
         project = value("key-project")
         if project == personal and kind == "shared":
-            raise ValueError("本人の利用申請には本人専用キーを選んでください")
+            raise client.InputError("本人の利用申請には本人専用キーを選んでください")
         result = await client.api(
             "/keys",
             "POST",

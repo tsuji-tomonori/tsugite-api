@@ -69,7 +69,7 @@ def membership_editor(root, unit, data, subject):
     async def save():
         selected = subject or value("org-subject")
         if not selected:
-            raise ValueError("ユーザーを選択してください")
+            raise client.InputError("ユーザーを選択してください")
         await client.api(
             "/workspace/memberships",
             "PUT",

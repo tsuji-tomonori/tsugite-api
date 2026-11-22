@@ -3,8 +3,10 @@
 import hashlib
 import os
 import time
+from pathlib import Path
 
 import httpx
+import pytest
 from playwright.sync_api import expect, sync_playwright
 
 from tests.support.catalog import approved, headers
@@ -12,7 +14,7 @@ from tests.support.catalog_journey import browser_evidence, navigate
 from tests.support.portal_server import serve_portal
 
 
-def test_credentials_console(tmp_path, request):
+def test_credentials_console(tmp_path: Path, request: pytest.FixtureRequest) -> None:
     """ブラウザーで3方式を発行し、実時計で1分後に更新、シークレット変更・失効まで確認する"""
     env = {**os.environ, "TSUGITE_DEMO": "1", "DATABASE_URL": "sqlite:///" + str(tmp_path / "cred.db")}
     with (

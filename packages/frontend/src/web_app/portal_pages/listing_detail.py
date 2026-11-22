@@ -15,6 +15,17 @@ from pyodide.http import pyfetch
 from screen_registry import Screen
 
 
+async def change_suspension(asset):
+    suspended = not asset["suspended"]
+    action = "一時停止" if suspended else "再開"
+    if window.confirm(asset["name"] + "への全環境のアクセスを" + action + "しますか？"):
+        await client.api(
+            "/apis/" + asset["id"] + "/suspension?suspended=" + str(suspended).lower(), "PUT"
+        )
+        await load()
+        ctx["message"] = "APIへのアクセスを" + action + "しました"
+
+
 async def save_policy(asset):
     data = {"visibility": value("policy-visibility")}
     for key in ("projects", "departments", "auto_departments", "delegates"):
@@ -96,11 +107,12 @@ async def invoke(asset):
     env, project = value("trial-grant").split("/")
     path = value("trial-path")
     if not path.startswith("/") or "#" in path:
-        raise ValueError("/ で始まる操作パスを指定してください")
+        raise client.InputError("/ で始まる操作パスを指定してください")
     method = value("trial-method")
     options = {
         "method": method,
         "headers": {
+            **client.screen_headers(),
             "Authorization": "Bearer " + str(client.store.getItem("access")),
             "Content-Type": "application/json",
         },
@@ -120,6 +132,12 @@ def detail_page():
         return
     t.h1(a["name"])
     t.p(a["summary"])
+    if ctx["me"]["admin"]:
+        btn(
+            "APIへのアクセスを再開" if a["suspended"] else "APIへのアクセスを一時停止",
+            change_suspension,
+            a,
+        )
     t.p(a["owner"] + " · " + ("公開中" if a["published"] else "未掲載"), classes="muted")
     if a["owner"] in ctx["me"]["owners"]:
         with t.div(classes="btn-grouping"):

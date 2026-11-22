@@ -98,9 +98,9 @@ def unit_editor(root, kind, label, by_id, paths, unit=None):
     async def save():
         key = draft["id"] if unit else value("org-unit-id")
         if not key or not value("org-unit-name"):
-            raise ValueError("名称と識別子を入力してください")
+            raise client.InputError("名称と識別子を入力してください")
         if not unit and key in by_id:
-            raise ValueError("この識別子は既に使われています")
+            raise client.InputError("この識別子は既に使われています")
         await client.api(
             "/workspace/units/" + quote(key, safe=""),
             "PUT",
