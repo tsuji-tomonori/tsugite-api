@@ -116,6 +116,14 @@ MUTATIONS = (
         "test_dsql_column_names_use_the_system_catalog",
     ),
     Mutation(
+        "backend",
+        "Aurora DSQLに public スキーマへの直接付与を発行する",
+        "packages/backend/src/app/migrate.py",
+        "        # DSQL protects the public schema, and its USAGE is inherited through PUBLIC.",
+        '        conn.exec_driver_sql("GRANT USAGE ON SCHEMA public TO tsugite_app")',
+        "packages/backend/tests/test_migrate.py::test_grants_public_tables_without_altering_the_schema",
+    ),
+    Mutation(
         "frontend",
         "操作側のパラメーターをパス側の定義で上書きする",
         "packages/frontend/src/web_app/openapi_fields.py",

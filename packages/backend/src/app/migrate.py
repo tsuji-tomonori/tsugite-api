@@ -23,7 +23,7 @@ def handler(event, context):
         if not conn.scalar(text("SELECT 1 FROM pg_roles WHERE rolname='tsugite_app'")):
             conn.exec_driver_sql("CREATE ROLE tsugite_app WITH LOGIN")
         conn.exec_driver_sql(f"AWS IAM GRANT tsugite_app TO '{arn}'")
-        conn.exec_driver_sql("GRANT USAGE ON SCHEMA public TO tsugite_app")
+        # DSQL protects the public schema, and its USAGE is inherited through PUBLIC.
         conn.exec_driver_sql(
             "GRANT SELECT, INSERT, UPDATE ON assets, access_rights, portal_members, alert_rules, directory_tree, affiliations, api_keys, credential_leases, credential_rules TO tsugite_app"
         )

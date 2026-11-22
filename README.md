@@ -104,7 +104,7 @@ task test:aws
 
 この版では、CloudFormationが `AWS::DSQL::Cluster` を受け付けません。DSQLはSDKでクラスターが稼働するところまで、業務データの読み書きはSQLiteで検証します。利用者にはエミュレーターのCognitoがパスワード認証で発行したトークンを使います。システム連携にはテスト用の署名鍵を使い、権限の承認前、別プロジェクト・別環境、取消後の呼び出しが拒否されることを確認します。Cognitoのホスト型ログイン、MFA、OAuthのトークン発行、CloudFront経由の全経路はこのE2Eの対象外です。
 
-配備テストは、合成したテンプレートから DB 移行 Lambda をエミュレーターに作成し、本番と同じ配布 ZIP が登録されたことを SHA-256 で照合します。エミュレーターの Python 実行環境ではネイティブ拡張を読み込めないため、同じ ZIP を展開した CPython 環境で、一時 PostgreSQL（`pg_config`、`initdb`、`pg_ctl` が必要）に Aurora DSQL 方言で接続し、移行ハンドラーの新規実行と再実行を検証します。実 AWS の DSQL 接続、IAM 認証、CloudFormation カスタムリソースのコールバックは本番デプロイで確認します。
+配備テストは、合成したテンプレートから DB 移行 Lambda をエミュレーターに作成し、本番と同じ配布 ZIP が登録されたことを SHA-256 で照合します。エミュレーターの Python 実行環境ではネイティブ拡張を読み込めないため、同じ ZIP を展開した CPython 環境で、一時 PostgreSQL（`pg_config`、`initdb`、`pg_ctl` が必要）に Aurora DSQL 方言で接続し、移行ハンドラーの新規実行と再実行を検証します。Aurora DSQL が拒否する `public` スキーマへの直接の権限変更をテストでも拒否し、実行ロールが引き継いだ `USAGE` とテーブル権限を確認します。実 AWS の DSQL 接続、IAM 認証、CloudFormation カスタムリソースのコールバックは本番デプロイで確認します。
 
 
 ## CDKの構成と検証レポート
