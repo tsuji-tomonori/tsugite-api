@@ -1818,6 +1818,7 @@ dependencies = [
     { name = "alembic" },
     { name = "aurora-dsql-python-connector", extra = ["psycopg"] },
     { name = "aurora-dsql-sqlalchemy" },
+    { name = "certifi" },
     { name = "psycopg", extra = ["binary"] },
     { name = "sqlalchemy" },
 ]
@@ -1827,6 +1828,7 @@ requires-dist = [
     { name = "alembic" },
     { name = "aurora-dsql-python-connector", extras = ["psycopg"], specifier = ">=0.2.7" },
     { name = "aurora-dsql-sqlalchemy" },
+    { name = "certifi" },
     { name = "psycopg", extras = ["binary"] },
     { name = "sqlalchemy" },
 ]
