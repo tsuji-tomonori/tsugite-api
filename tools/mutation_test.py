@@ -25,6 +25,14 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
+        "bootstrap",
+        "招待したユーザーと異なる識別子でも管理者にする",
+        "tools/bootstrap_admin.py",
+        'if not any(attr == {"Name": "sub", "Value": subject} for attr in user["UserAttributes"]):',
+        "if False:",
+        "tools/tests/test_bootstrap_admin.py::test_replaced_user_cannot_be_promoted",
+    ),
+    Mutation(
         "tools",
         "既存要件の編集だけでfeatブランチを許可する",
         "tools/requirements.py",
