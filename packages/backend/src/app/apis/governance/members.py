@@ -6,8 +6,9 @@ from app.apis.catalog.common import DB, User
 from app.apis.schemas import Input
 from app.core.auth import DEMO_GROUPS
 from app.core.config import local_demo, settings
+from app.core.diagnostics import OperationalRepair
 from app.core.workspace import configured_projects, units
-from botocore.exceptions import ClientError
+from botocore.exceptions import BotoCoreError, ClientError
 from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import Field
 from sqlalchemy import select
@@ -106,6 +107,19 @@ def list_members(
     return {"items": rows, "next": page.get("PaginationToken", ""), "projects": projects(db)}
 
 
+def undo_invitation(idp, username):
+    try:
+        #: 利用者・グループの管理（Cognitoユーザープール） / 招待に失敗した利用者を削除
+        idp.admin_delete_user(UserPoolId=pool(), Username=username)
+    except (BotoCoreError, ClientError) as exc:
+        if isinstance(exc, ClientError) and exc.response["Error"]["Code"] == "UserNotFoundException":
+            return
+        raise OperationalRepair(
+            "member_invitation_incomplete",
+            "対象のCognito利用者とportal_membersの登録状態を照合する。招待失敗で残った利用者を確認して取り消し、再度招待する。",
+        ) from exc
+
+
 #: ポータルに利用者を招待する
 @router.post("/members", status_code=201, responses={201: {"model": outputs.Person}})
 def invite(data: Invitation, request: Request, actor: User, db: DB):
@@ -130,6 +144,7 @@ def invite(data: Invitation, request: Request, actor: User, db: DB):
             raise HTTPException(409, "登録済みです") from exc
         try:
             subject = next(a["Value"] for a in user["Attributes"] if a["Name"] == "sub")
+            request.state.target_subject_id = subject
             if data.project in projects():
                 #: 利用者・グループの管理（Cognitoユーザープール） / 利用者をグループに追加
                 idp.admin_add_user_to_group(
@@ -139,8 +154,9 @@ def invite(data: Invitation, request: Request, actor: User, db: DB):
                 )
         except Exception:
             #: 利用者・グループの管理（Cognitoユーザープール） / 利用者を削除
-            idp.admin_delete_user(UserPoolId=pool(), Username=username)
+            undo_invitation(idp, username)
             raise
+    request.state.target_subject_id = subject
     db.add(Member(subject=subject, username=username, project=data.project, role=data.role))
     member_event(db, request, actor, "member.add", username)
     try:
@@ -149,7 +165,7 @@ def invite(data: Invitation, request: Request, actor: User, db: DB):
         db.rollback()
         if not local_demo() and not db.get(Member, subject):
             #: 利用者・グループの管理（Cognitoユーザープール） / 利用者を削除
-            boto3.client("cognito-idp").admin_delete_user(UserPoolId=pool(), Username=username)
+            undo_invitation(boto3.client("cognito-idp"), username)
         raise
     return {"subject": subject, "username": username}
 
@@ -196,9 +212,14 @@ def remove_member(
         try:
             #: 利用者・グループの管理（Cognitoユーザープール） / 利用者を削除
             idp.admin_delete_user(UserPoolId=pool(), Username=username)
-        except ClientError as exc:
-            if exc.response["Error"]["Code"] != "UserNotFoundException":
-                raise HTTPException(
-                    503, "ポータル利用を停止しました。Cognitoの削除を再実行してください"
+        except (ClientError, BotoCoreError) as exc:
+            if (
+                not isinstance(exc, ClientError)
+                or exc.response["Error"]["Code"] != "UserNotFoundException"
+            ):
+                raise OperationalRepair(
+                    "member_deletion_incomplete",
+                    "対象利用者のsubとポータルの停止状態を照合し、ユーザー管理画面から同じ利用者の削除を再実行する。Cognito側でも削除されたことを確認する。",
+                    detail="ポータル利用を停止しました。Cognitoの削除を再実行してください",
                 ) from exc
     return {"deleted": True}

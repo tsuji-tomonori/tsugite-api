@@ -93,9 +93,9 @@ def param_values(spec, param, value_text):
         try:
             data = json.loads(value_text)
         except ValueError as exc:
-            raise ValueError(f"{param['name']} はJSONで指定してください") from exc
+            raise client.InputError(f"{param['name']} はJSONで指定してください") from exc
         if not isinstance(data, list if kind == "array" else dict):
-            raise ValueError(f"{param['name']} の型は {kind} です")
+            raise client.InputError(f"{param['name']} の型は {kind} です")
         return data
     return value_text
 
@@ -114,7 +114,7 @@ def build_location(spec, path, params, entered):
         or any(p in (".", "..") for p in decoded_path.split("/"))
         or any(ord(c) < 32 for c in decoded_path)
     ):
-        raise ValueError("この操作パスをポータルから呼び出すことはできません")
+        raise client.InputError("この操作パスをポータルから呼び出すことはできません")
     query = []
     for i, param in enumerate(params):
         where, name = param["in"], param["name"]
@@ -123,7 +123,7 @@ def build_location(spec, path, params, entered):
         text = entered.get(i, "")
         if text == "":
             if where == "path" or param.get("required"):
-                raise ValueError(f"{name} を入力してください")
+                raise client.InputError(f"{name} を入力してください")
             continue
         data = param_values(spec, param, text)
         style = param.get("style", "form" if where == "query" else "simple")
@@ -132,7 +132,7 @@ def build_location(spec, path, params, entered):
         pairs = [(k, stringify(v)) for k, v in data.items()] if isinstance(data, dict) else []
         if where == "path":
             if style != "simple":
-                raise ValueError("この操作の実行には simple 形式のパスパラメータが必要です")
+                raise client.InputError("この操作の実行には simple 形式のパスパラメータが必要です")
             if isinstance(data, list):
                 encoded = ",".join(quote(v, safe="") for v in seq)
             elif isinstance(data, dict):
@@ -141,7 +141,7 @@ def build_location(spec, path, params, entered):
             else:
                 encoded = quote(stringify(data), safe="")
             if encoded in (".", ".."):
-                raise ValueError(f"{name} の値を確認してください")
+                raise client.InputError(f"{name} の値を確認してください")
             path = path.replace("{" + name + "}", encoded)
         elif isinstance(data, dict) and style == "deepObject":
             query.extend((f"{name}[{k}]", v) for k, v in pairs)
@@ -154,7 +154,7 @@ def build_location(spec, path, params, entered):
             items = [s for pair in pairs for s in pair] if isinstance(data, dict) else seq
             query.append((name, sep.join(items) if isinstance(data, (list, dict)) else stringify(data)))
     if "{" in path or "}" in path:
-        raise ValueError("必要なパスパラメータが仕様に定義されていません")
+        raise client.InputError("必要なパスパラメータが仕様に定義されていません")
     return path + ("?" + urlencode(query) if query else "")
 
 
@@ -181,7 +181,10 @@ def input_param(spec, param, element_id):
 
 
 async def credential_headers(key):
-    portal_auth = {"Authorization": "Bearer " + str(client.store.getItem("access"))}
+    portal_auth = {
+        **client.screen_headers(),
+        "Authorization": "Bearer " + str(client.store.getItem("access")),
+    }
     if key.get("mode") not in CREDENTIAL_MODES:
         return {**portal_auth, "X-Tsugite-Key-Id": key["id"]}
     issued = await pyfetch(
@@ -191,11 +194,11 @@ async def credential_headers(key):
     )
     payload = await issued.json()
     if not issued.ok:
-        raise ValueError(
+        raise client.ResponseError(
             f"HTTP {issued.status}　"
             + str(payload.get("detail", "アクセストークンを取得できませんでした"))
         )
-    return {"Authorization": "Bearer " + payload["access_token"]}
+    return {**client.screen_headers(), "Authorization": "Bearer " + payload["access_token"]}
 
 
 def try_operation(spec, asset, bindings, method, path, params, body, prefix):
@@ -228,14 +231,16 @@ def try_operation(spec, asset, bindings, method, path, params, body, prefix):
             if content:
                 text = value(prefix + "-body")
                 if not text and body.get("required"):
-                    raise ValueError("リクエスト本文を入力してください")
+                    raise client.InputError("リクエスト本文を入力してください")
                 if text:
                     media = value(prefix + "-media")
                     if media == "application/json" or media.endswith("+json"):
                         try:
                             json.loads(text)
                         except ValueError as exc:
-                            raise ValueError("リクエスト本文は正しいJSONで入力してください") from exc
+                            raise client.InputError(
+                                "リクエスト本文は正しいJSONで入力してください"
+                            ) from exc
                     headers["Content-Type"] = media
                     opts["body"] = text
             headers.update(await credential_headers(key))
@@ -247,6 +252,11 @@ def try_operation(spec, asset, bindings, method, path, params, body, prefix):
                 response = response[:12000] + "\n（先頭12,000文字まで表示）"
             out.textContent = f"HTTP {result.status}\nリクエストID　{trace}\n{response}"
         except Exception as exc:
+            client.report(
+                exc,
+                method.upper() + " " + path,
+                route="/api/invoke/{key}/{environment}/{project}/{tail:path}",
+            )
             out.textContent = str(exc)
         finally:
             button.disabled = False

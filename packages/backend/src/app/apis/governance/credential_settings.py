@@ -110,6 +110,7 @@ def set_operations(
     db: DB,
     actor: User,
 ):
+    request.state.target_subject_id = data.subject
     asset = owner(db, key, actor)
     if data.operations is not None and not set(data.operations) <= set(operations(asset)):
         raise HTTPException(422, "仕様に含まれる操作を指定してください")

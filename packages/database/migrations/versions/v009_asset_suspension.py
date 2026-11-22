@@ -4,8 +4,8 @@ import sqlalchemy as sa
 from alembic import op
 from tsugite_db.migration_columns import column_names
 
-revision = "008"
-down_revision = "007"
+revision = "009"
+down_revision = "008"
 
 
 def upgrade() -> None:

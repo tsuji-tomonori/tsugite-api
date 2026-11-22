@@ -164,6 +164,7 @@ def unit(
 #: 利用者の所属・役職・管理権限を設定する
 @router.put("/workspace/memberships", responses={200: {"model": Membership}})
 def assign(data: Membership, request: Request, actor: User, db: DB):
+    request.state.target_subject_id = data.subject
     administrator(actor)
     if data.unit_id not in units(db):
         raise HTTPException(404)

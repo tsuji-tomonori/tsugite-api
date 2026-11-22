@@ -1,10 +1,9 @@
-import json
-
 from app.apis.catalog.common import DB, User, listing, record
 from app.apis.catalog.offers import configured, describe
 from app.apis.catalog.releases import history
 from app.apis.schemas import Detail
 from app.core.credential_policy import individual
+from app.core.diagnostics import asset_object
 from app.core.workspace import allowed_audience
 from fastapi import APIRouter, HTTPException
 from sqlalchemy import select
@@ -41,7 +40,7 @@ def detail(
     return Detail(
         **listing(a).model_dump(),
         suspended=bool(a.suspended),
-        spec=json.loads(a.spec),
+        spec=asset_object(a, "spec"),
         offers={
             env: describe(rule, a.revision, a.owner in actor.owners)
             for env, rule in configured(a).items()
@@ -50,5 +49,5 @@ def detail(
         releases=history(db, a),
         allowed_operations=individual(db, key, actor.subject),
         base_path=a.base_path or "",
-        bindings=json.loads(a.targets) if a.owner in actor.owners else {},
+        bindings=asset_object(a, "targets") if a.owner in actor.owners else {},
     )
