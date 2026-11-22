@@ -8,13 +8,17 @@ from pathlib import Path
 
 def main():
     asset = Path(sys.argv[1]).resolve()
-    socket_dir = sys.argv[2]
-    sys.path.insert(0, str(asset))
+    layer = Path(sys.argv[2]).resolve()
+    socket_dir = sys.argv[3]
+    sys.path[:0] = [str(asset), str(layer)]
     os.environ["LAMBDA_TASK_ROOT"] = str(asset)
 
     import psycopg
     from sqlalchemy import create_engine, event, text
     from tsugite_db import session
+
+    assert Path(psycopg.__file__).is_relative_to(layer)
+    assert Path(session.__file__).is_relative_to(asset)
 
     # Load the production connector's dependencies even though the wire endpoint is local.
     import_module("aurora_dsql_psycopg")
