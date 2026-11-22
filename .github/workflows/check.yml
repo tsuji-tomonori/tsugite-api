@@ -81,8 +81,8 @@ jobs:
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
-          if ! git diff --quiet "$BASE_SHA...HEAD" -- uv.lock tools/packaging/build_backend.py; then
-            sha256sum build/runtime-layer.zip > "$RUNNER_TEMP/runtime-layer.sha256"
+          if ! git diff --quiet "$BASE_SHA...HEAD" -- uv.lock tools/packaging/build_backend.py tools/packaging/build_chat.py; then
+            sha256sum build/runtime-layer.zip build/decision-model-layer.zip build/model-sdk-layer.zip > "$RUNNER_TEMP/runtime-layer.sha256"
             uv run --locked --all-packages python tools/packaging/build_backend.py
             sha256sum --check "$RUNNER_TEMP/runtime-layer.sha256"
           fi

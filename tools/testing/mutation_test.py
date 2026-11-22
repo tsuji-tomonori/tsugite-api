@@ -25,12 +25,132 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
+        "model-layer",
+        "判定モデルの依存群をSDKだけに置き換える",
+        "tools/packaging/build_backend.py",
+        '["--only-group", "decision-model"]',
+        '["--only-group", "model-sdk"]',
+        "tools/tests/test_lambda_layer.py::test_each_lambda_layer_exports_its_locked_dependencies",
+    ),
+    Mutation(
+        "architecture",
+        "判定モデルが欠けた配布物を許可する",
+        "tests/architecture/model_artifacts.py",
+        '{"decision", "tool", "generate"} - manifest.keys()',
+        '{"tool", "generate"} - manifest.keys()',
+        "tests/architecture/test_rule_checks.py::test_model_distribution_requires_all_three_roles",
+    ),
+    Mutation(
+        "architecture",
+        "英語だけのテスト説明を許可する",
+        "tests/architecture/case_text.py",
+        " and bool(KANA.search(text))",
+        "",
+        "tests/architecture/test_rule_checks.py::test_case_explanation_requires_one_japanese_sentence",
+    ),
+    Mutation(
+        "architecture",
+        "層を越える依存をすべて許可する",
+        "tests/architecture/dependencies.py",
+        "target in ALLOWED[owner]",
+        "owner in ALLOWED",
+        "tests/architecture/test_rule_checks.py::test_boundary_checker_rejects_cross_layer_imports",
+    ),
+    Mutation(
+        "architecture",
+        "相対インポートの検査を飛ばす",
+        "tests/architecture/dependencies.py",
+        "elif isinstance(node, ast.ImportFrom):",
+        "elif isinstance(node, ast.ImportFrom) and not node.level:",
+        "tests/architecture/test_rule_checks.py::test_boundary_checker_rejects_cross_layer_imports",
+    ),
+    Mutation(
+        "architecture",
+        "共有ガイドの利用も拒否する",
+        "tests/architecture/dependencies.py",
+        'module == "agent.retrieval" and',
+        'module == "agent.unused" and',
+        "tests/architecture/test_rule_checks.py::test_boundary_checker_accepts_supported_collaboration",
+    ),
+    Mutation(
+        "architecture",
+        "新規パッケージを無条件にバックエンドとして扱う",
+        "tests/architecture/dependencies.py",
+        'raise ValueError(f"{path}: 新しいパッケージの依存規則を定義してください")',
+        'return "app"',
+        "tests/architecture/test_rule_checks.py::test_new_package_requires_layer_rules",
+    ),
+    Mutation(
+        "architecture",
+        "コード例の見出しを文書の表題として採用する",
+        "tests/architecture/test_documents.py",
+        'if not fence and line.startswith("# "):',
+        'if line.startswith("# "):',
+        "tests/architecture/test_rule_checks.py::test_document_checker_uses_title_outside_code_examples",
+    ),
+    Mutation(
+        "architecture",
+        "生成設計書を検査対象から外す",
+        "tests/architecture/project.py",
+        "if name not in EXCLUDED",
+        'if name != "generated" and name not in EXCLUDED',
+        "tests/architecture/test_rule_checks.py::test_project_discovery_includes_new_components",
+    ),
+    Mutation(
+        "architecture",
+        "長さだけで重みのハッシュを受け付ける",
+        "tests/architecture/model_artifacts.py",
+        ' or any(ch not in "0123456789abcdef" for ch in digest)',
+        "",
+        "tests/architecture/test_rule_checks.py::test_model_checker_rejects_unpinned_weight",
+    ),
+    Mutation(
+        "architecture",
+        "非同期テストを日本語説明の検査対象から外す",
+        "tests/architecture/test_case_descriptions.py",
+        "(ast.FunctionDef, ast.AsyncFunctionDef)",
+        "ast.FunctionDef",
+        "tests/architecture/test_rule_checks.py::test_case_discovery_includes_async_class_methods",
+    ),
+    Mutation(
+        "architecture",
+        "設計解析に正規表現を許可する",
+        "tests/architecture/test_design_sources.py",
+        'if imported.split(".")[0] in REGEX:',
+        "if False:",
+        "tests/architecture/test_design_sources.py::test_analysis_policy_follows_renamed_helpers_and_relative_imports",
+    ),
+    Mutation(
         "lambda-layer",
         "Layerに依存を配置するディレクトリを誤る",
         "tools/packaging/build_backend.py",
         'ZipInfo("python/"',
         'ZipInfo("wrong/"',
         "tools/tests/test_lambda_layer.py::test_layer_rebuild_is_reproducible",
+    ),
+    Mutation(
+        "coverage",
+        "エージェントとモデルの未実行ファイルを分母から除外する",
+        "pyproject.toml",
+        '    "agent",\n',
+        "",
+        "tools/tests/test_ci_scope.py::test_coverage_includes_all_runtime_layers_and_unexecuted_files",
+    ),
+    Mutation(
+        "models",
+        "取得したモデルのチェックサムを検証しない",
+        "agent/models/runtime.py",
+        'if "sha256" in item:',
+        "if False:",
+        "packages/backend/tests/test_model_workers.py::test_model_download_verifies_digest_before_reuse",
+    ),
+    Mutation(
+        "backend",
+        "チャットの参照ロールに商品の更新権限を加える",
+        "packages/backend/src/app/migrate.py",
+        "GRANT SELECT ON assets TO tsugite_chat",
+        "GRANT SELECT, UPDATE ON assets TO tsugite_chat",
+        "packages/backend/tests/test_migrate.py::test_grants_public_tables_without_altering_the_schema[chat]",
     ),
     Mutation(
         "frontend",
@@ -68,7 +188,7 @@ MUTATIONS = (
         "ci",
         "以前の実行行を含むテスト層の再計測を省く",
         "tools/ci/ci_scope.py",
-        '("coverage_source" in flags and part.stat().st_size)',
+        "measured_changes\n                and part.stat().st_size",
         "False",
         "tools/tests/test_ci_scope.py::test_measured_source_invalidates_suites_that_executed_it",
     ),
@@ -90,11 +210,35 @@ MUTATIONS = (
     ),
     Mutation(
         "backend",
+        "生成クエリだけに一致する商品も候補に含める",
+        "agent/retrieval.py",
+        " and (index == 0 or similarities[0] >= 0.39)",
+        "",
+        "packages/backend/tests/test_agent_retrieval.py::test_rewritten_similarity_needs_support_from_original_question",
+    ),
+    Mutation(
+        "frontend",
+        "候補の商品リンクがカタログのトップを指す",
+        "packages/frontend/src/web_app/chat_views.py",
+        'href="#/api/" + quote(product["id"], safe="")',
+        'href="#/catalog"',
+        "packages/frontend/tests/test_components.py::test_chat_product_and_guide_are_linked",
+    ),
+    Mutation(
+        "infra",
+        "モデルの予備領域を増やす",
+        "packages/infra/src/infra_app/chat.py",
+        "ephemeral_storage_size=Size.mebibytes(512)",
+        "ephemeral_storage_size=Size.mebibytes(1024)",
+        "packages/infra/tests/test_cost.py::test_chat_uses_separate_on_demand_python_functions",
+    ),
+    Mutation(
+        "backend",
         "設計項目の直前の和名コメントを読み飛ばす",
         "packages/database/src/tsugite_db/source_docs.py",
         "self.comments.get(node.lineno - 1",
         "self.comments.get(node.lineno - 2",
-        "packages/backend/tests/architecture/test_design_sources.py::"
+        "tests/architecture/test_design_sources.py::"
         "test_schema_field_uses_only_the_comment_on_its_declaration",
     ),
     Mutation(
@@ -103,7 +247,7 @@ MUTATIONS = (
         "packages/backend/src/app/design_names.py",
         "import inspect",
         "import inspect\nimport re as parser",
-        "packages/backend/tests/architecture/test_design_sources.py::"
+        "tests/architecture/test_design_sources.py::"
         "test_design_analysis_uses_only_python_sources_and_syntax_trees",
     ),
     Mutation(
@@ -209,7 +353,7 @@ MUTATIONS = (
 
 def copy_sources(workspace):
     ignore = shutil.ignore_patterns("dist", "cdk.out", ".venv", "__pycache__", "*.egg-info")
-    for folder in ("packages", "deploy/config", "docs/examples", "tests", "tools"):
+    for folder in ("packages", "agent", "deploy/config", "docs/examples", "tests", "tools"):
         shutil.copytree(ROOT / folder, workspace / folder, ignore=ignore)
     shutil.copyfile(ROOT / "pyproject.toml", workspace / "pyproject.toml")
 

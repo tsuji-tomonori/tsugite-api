@@ -100,6 +100,9 @@ tasks:
     cmds:
       - '{{.RUN}} python tools/ci/audit_infra.py'
       - '{{.RUN}} pip-audit --disable-pip --no-deps -r build/runtime.txt --format json --output artifacts/dependency-audit.json'
+  test:architecture:
+    desc: 全層の依存・文書規則と規則自体のテストを実行
+    cmds: ['{{.RUN}} pytest -q tests/architecture {{.CLI_ARGS}}']
   test:frontend:
     desc: フロントエンドの単体テスト
     cmds: ['{{.RUN}} pytest -q packages/frontend/tests {{.CLI_ARGS}}']
@@ -127,13 +130,14 @@ tasks:
   test:aws:
     desc: AWS EmulatorでのE2E（synthの後に実行）
     cmds:
+      - uv python install 3.15
       - |
         export AWS_EMULATOR_BINARY="${AWS_EMULATOR_BINARY:-${RUNNER_TEMP:-${TMPDIR:-/tmp}}/tsugite-aws-emulator/opt/aws-emulator/bin/aws-emulator}"
         {{.RUN}} python tools/testing/emulator_e2e.py --junitxml=artifacts/aws-emulator.xml {{.CLI_ARGS}}
   test:
     desc: 全パッケージとブラウザーのテスト結果を保存
     cmds:
-      - '{{.RUN}} pytest -q --cov=app --cov=tsugite_db --cov-branch --junitxml=artifacts/junit.xml --given-md=artifacts/scenarios.md --given-html=artifacts/scenarios.html {{.CLI_ARGS}}'
+      - '{{.RUN}} pytest -q --cov --cov-config=pyproject.toml --junitxml=artifacts/junit.xml --given-md=artifacts/scenarios.md --given-html=artifacts/scenarios.html {{.CLI_ARGS}}'
   report:
     desc: HTML・PDFテストレポートを作成
     cmds: ['{{.RUN}} python tools/testing/test_report.py --pdf']

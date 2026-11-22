@@ -1,8 +1,8 @@
 import json
 
 from app.apis.catalog.common import DB, User, listing
-from app.apis.catalog.search_rank import rank_assets
 from app.apis.schemas import CatalogPage, Env, Listing
+from app.core.catalog_rank import rank_assets
 from app.core.workspace import allowed_audience
 from fastapi import APIRouter, Query
 from sqlalchemy import select
@@ -12,19 +12,24 @@ from tsugite_db.models import Asset
 router = APIRouter()
 
 
-def collection(db, actor, inventory, q, environment=None):
+def visible_collection(db, actor, inventory=False, environment=None, *, spec=False, keys=None):
     stmt = select(Asset).where(
         Asset.removed_at.is_(None),
         Asset.owner.in_(actor.owners) if inventory else Asset.published.is_(True),
     )
-    if not q.strip():
+    if keys is not None:
+        stmt = stmt.where(Asset.id.in_(keys))
+    if not spec:
         stmt = stmt.options(defer(Asset.spec))
-    eligible = [
+    return [
         a
         for a in db.scalars(stmt)
         if allowed_audience(a, actor) and (not environment or environment in json.loads(a.targets))
     ]
-    return rank_assets(eligible, q)
+
+
+def collection(db, actor, inventory, q, environment=None):
+    return rank_assets(visible_collection(db, actor, inventory, environment, spec=bool(q.strip())), q)
 
 
 #: カタログのAPIを検索する

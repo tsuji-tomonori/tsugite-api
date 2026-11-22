@@ -47,6 +47,7 @@ task demo
 | `packages/backend` | FastAPIルーター、認証、業務処理とテスト | `task test:backend` |
 | `packages/database` | SQLAlchemyモデル、接続、Alembic移行とテスト | `task test:database` |
 | `packages/infra` | AWS CDKとテンプレートのテスト | `task test:infra` |
+| [`tests/architecture`](tests/architecture/README.md) | 全層の依存・文書規則と検査器のテスト | `task test:architecture` |
 | `tests/e2e` | ブラウザー操作とAWS Emulatorを使う横断テスト | `task test:e2e`、`task test:aws` |
 | `tools` | ビルド、設計書生成、監査、テストレポート | `task test:tools` |
 
@@ -61,6 +62,8 @@ CDKのスナップショットは標準構成の論理ID、リソース型と出
 `task docs` は実行中のデータベースやAWS資格情報を使わず、[API別の実装設計書](docs/generated/README.md)、[SQL・AWS操作のCRUD一覧](docs/generated/crud.md)、[入出力スキーマ](docs/generated/schemas.md)、[テーブル・レコード・カラム定義](docs/generated/database.md)を更新します。設計を変えるときはルーターの引数・応答モデル・依存関数を修正します。CRUD表はAPIを行に、SQLテーブルとAWSサービスをそれぞれ別の表の列に並べます。各セルで操作の種類を、API詳細で条件分岐を含む操作の根拠となるソース行を確認できます。転送先の利用者定義APIの項目は、登録時のOpenAPIで決まります。
 
 API操作はルートデコレーター、引数・モデル・項目・列挙値はそれぞれの宣言の直前に `#: 和名` を書きます。DBモデルのクラスには同じ形式でテーブル名を書き、docstringの1段落目にレコード名、2段落目に1行が表す内容を書きます。AWS SDK呼び出しの直前には `#: サービスの和名 / 操作の和名` を書きます。`task docs` はPythonの構文木とコメントトークンをFastAPI・SQLAlchemyの定義と照合し、設計書とデモ環境のOpenAPIに和名を反映します。
+
+ログイン後のホームでは日本語で公開APIを探し、操作手順を確認し、運営に問い合わせできます。モデルの構成と配備方法は[チャットの設計](agent/README.md)を参照してください。
 
 CIはPRで設計書を生成して成果物に含めます。既定ブランチの検証が通ると、生成結果に差分がある場合だけ `docs/generated/` を自動コミットします。
 

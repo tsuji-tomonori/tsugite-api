@@ -28,7 +28,18 @@ def test_cloudformation_structure_matches_snapshot(catalog_stack):
     """標準構成のリソース型と論理ID、スタック出力をスナップショットと照合する。"""
     template = Template.from_stack(catalog_stack).to_json()
     actual = {
-        "Resources": {key: resource["Type"] for key, resource in template["Resources"].items()},
+        "Resources": {
+            key: resource["Type"]
+            for key, resource in template["Resources"].items()
+            if resource["Metadata"]["Tsugite"]["Component"] != "Chat"
+        },
+        "ChatResources": dict(
+            Counter(
+                resource["Type"]
+                for resource in template["Resources"].values()
+                if resource["Metadata"]["Tsugite"]["Component"] == "Chat"
+            )
+        ),
         "Outputs": template["Outputs"],
     }
     expected = json.loads((HERE / "cloudformation_snapshot.json").read_text(encoding="utf-8"))
@@ -58,7 +69,12 @@ def test_backend_layer_changes_only_with_dependencies(tmp_path):
         AssetStaging.clear_asset_hash_cache()
         app = App(outdir=str(tmp_path / name))
         resources = Template.from_stack(CatalogStack(app, "TsugiteApi")).to_json()["Resources"]
-        handlers = {"app.main.handler", "app.authorizer.handler", "app.migrate.handler"}
+        handlers = {
+            "app.main.handler",
+            "app.authorizer.handler",
+            "app.migrate.handler",
+            "agent.jobs.handler",
+        }
         functions = {
             props["Handler"]: props
             for resource in resources.values()
@@ -70,7 +86,7 @@ def test_backend_layer_changes_only_with_dependencies(tmp_path):
         assert all(props["Layers"] == [{"Ref": layer_id}] for props in functions.values())
         layer = resources[layer_id]
         assert layer["Type"] == "AWS::Lambda::LayerVersion"
-        assert layer["Properties"]["CompatibleRuntimes"] == ["python3.14"]
+        assert layer["Properties"]["CompatibleRuntimes"] == ["python3.15"]
         return layer, functions["app.main.handler"]["Code"]
 
     baseline_layer, baseline_code = synth("baseline")
@@ -83,3 +99,41 @@ def test_backend_layer_changes_only_with_dependencies(tmp_path):
     updated_layer, code = synth("dependency-update")
     assert updated_layer["Properties"]["Content"] != baseline_layer["Properties"]["Content"]
     assert code == updated_code
+
+
+def test_model_layer_changes_are_isolated(tmp_path):
+    """モデルコードの変更ではLayerが変わらず、判定依存の変更は生成モデルに波及しない。"""
+
+    def synth(name):
+        AssetStaging.clear_asset_hash_cache()
+        app = App(outdir=str(tmp_path / name))
+        resources = Template.from_stack(CatalogStack(app, "TsugiteApi")).to_json()["Resources"]
+        codes = {}
+        layers = {}
+        for resource in resources.values():
+            if resource["Type"] != "AWS::Lambda::Function":
+                continue
+            props = resource["Properties"]
+            role = props.get("Environment", {}).get("Variables", {}).get("MODEL_ROLE")
+            if role:
+                (layer_ref,) = props["Layers"]
+                layer = resources[layer_ref["Ref"]]
+                assert layer["Type"] == "AWS::Lambda::LayerVersion"
+                assert layer["Properties"]["CompatibleRuntimes"] == [props["Runtime"]] == ["python3.14"]
+                codes[role] = props["Code"]
+                layers[role] = layer["Properties"]["Content"]
+        assert set(layers) == {"decision", "tool", "generate"}
+        assert layers["tool"] == layers["generate"] != layers["decision"]
+        return codes, layers
+
+    codes, layers = synth("baseline")
+    (stack.ROOT / "build/chat-decision/decision.py").write_text("# update\n", encoding="utf-8")
+    new_codes, new_layers = synth("code")
+    assert new_layers == layers
+    assert new_codes["decision"] != codes["decision"]
+    assert new_codes["tool"] == codes["tool"] and new_codes["generate"] == codes["generate"]
+    (stack.ROOT / "build/decision-model-layer.zip").write_bytes(b"new model dependencies")
+    final_codes, final_layers = synth("dependency")
+    assert final_codes == new_codes
+    assert final_layers["decision"] != layers["decision"]
+    assert final_layers["tool"] == layers["tool"]

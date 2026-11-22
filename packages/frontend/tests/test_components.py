@@ -24,6 +24,33 @@ def elements(dom):
     return {el.getAttribute("id"): el for el in dom.getElementsByTagName("*") if el.hasAttribute("id")}
 
 
+def test_chat_product_and_guide_are_linked(portal_module):
+    """チャットの候補と操作手順に、対応する商品・ガイドのリンクが付く。"""
+    chat = portal_module("chat_views")
+    _, dom = render(
+        chat.show_result,
+        {
+            "answer": "関連する情報を見つけました",
+            "products": [
+                {
+                    "id": "stock/2026",
+                    "name": "在庫照会",
+                    "summary": "棚卸",
+                    "environments": ["production"],
+                }
+            ],
+            "guides": [
+                {"id": "keys", "title": "キー発行", "steps": ["キーを選びます"], "result": "発行済み"}
+            ],
+        },
+    )
+    assert [link.getAttribute("href") for link in dom.getElementsByTagName("a")] == [
+        "#/api/stock%2F2026",
+        "#/guide/keys",
+    ]
+    assert dom.getElementsByTagName("li")[0].firstChild.data == "キーを選びます"
+
+
 def test_guide_results_render_matching_cards_only(portal_module):
     """提供者の検索結果で一致したガイドを先頭に表示し、件数を読み上げる。"""
     guide = portal_module("guide_views")

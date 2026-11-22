@@ -8,6 +8,8 @@ import sys
 from pathlib import Path
 
 from tools.packaging.build_backend import build as backend
+from tools.packaging.build_chat import build as chat
+from tools.packaging.build_chat import publish as publish_models
 from tools.packaging.build_frontend import build as frontend
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -54,6 +56,8 @@ def main():
             check=True,
         )
     elif args.command == "contracts":
+        # A direct script invocation places tools/ on sys.path. The API imports the sibling agent package.
+        sys.path.insert(0, str(ROOT))
         from app.main import create_app
         from tsugite_db.design_names import design_tables, table_names
 
@@ -80,6 +84,9 @@ def main():
     else:
         frontend()
         backend()
+        chat()
+        if args.command == "deploy":
+            publish_models()
         if args.command != "build":
             cdk_args = ["-c", "bindings=" + str(args.bindings.resolve())] if args.bindings else []
             if args.command == "deploy" and args.require_approval:

@@ -5,6 +5,7 @@ from datetime import datetime, timedelta, timezone
 from urllib.parse import quote, urlencode
 
 import api_docs
+import chat_views
 import client
 import guide_views
 import login_views
@@ -110,6 +111,8 @@ SAMPLE = {
 }
 PAGES = {
     "home": "ホーム",
+    "dashboard": "利用状況",
+    "inquiries": "問い合わせ",
     "guide": "使い方ガイド",
     "keys": "APIキー",
     "workspace": "組織・プロジェクト",
@@ -187,7 +190,7 @@ async def load():
     if not ctx["me"]:
         return
     page = route()
-    if page == "home":
+    if page == "dashboard":
         for key in ("dashboard", "home_metrics", "recent_logs"):
             ctx.pop(key, None)
     elif page == "metrics":
@@ -204,7 +207,7 @@ async def load():
             )
     elif page == "register":
         ctx["policy_directory"] = await client.api("/workspace")
-    elif page == "home":
+    elif page == "dashboard":
         results = await asyncio.gather(
             client.api("/dashboard"),
             client.api("/metrics?minutes=60"),
@@ -217,6 +220,12 @@ async def load():
         for result in results:
             if isinstance(result, BaseException):
                 raise result
+    elif page == "inquiries":
+        params = {
+            "incoming": str(ctx.get("inquiry_incoming", False)).lower(),
+            "offset": ctx.get("inquiry_offset", 0),
+        }
+        ctx["inquiries"] = await client.api("/inquiries?" + urlencode(params))
     elif page == "members" and ctx["me"]["admin"]:
         ctx["members"] = await client.api(
             "/members?" + urlencode({"cursor": ctx.get("member_cursor", "")})
@@ -337,6 +346,19 @@ async def logout():
 
 async def search():
     ctx.update(query=value("search"), env=value("filter-env"), page=1)
+    await load()
+
+
+async def inquiry_page(incoming, offset):
+    ctx.update(inquiry_incoming=incoming, inquiry_offset=offset)
+    await load()
+
+
+async def reply_inquiry(key):
+    answer = value("reply-" + key)
+    if len(answer) < 2:
+        raise ValueError("回答を入力してください")
+    await client.api("/inquiries/" + key + "/reply", "PUT", {"answer": answer})
     await load()
 
 
@@ -1450,9 +1472,9 @@ class Portal(Page):
                 for label, pages in [
                     (
                         "ワークスペース",
-                        ("home", "catalog", "keys", "mine", "notifications", "workspace"),
+                        ("home", "catalog", "keys", "mine", "notifications", "workspace", "dashboard"),
                     ),
-                    ("ヘルプ", ("guide",)),
+                    ("ヘルプ", ("guide", "inquiries")),
                     ("管理", ("members",)),
                     ("提供者メニュー", ("inventory", "inbox")),
                     ("ガバナンス", ("metrics", "logs", "alerts", "audit")),
@@ -1503,7 +1525,11 @@ class Portal(Page):
                     if page == "inventory":
                         btn("APIを登録", go, "register", primary=True)
                 if page == "home":
+                    chat_views.home(ctx, render)
+                elif page == "dashboard":
                     dashboard_view()
+                elif page == "inquiries":
+                    chat_views.inquiries(ctx, btn, reply_inquiry, inquiry_page)
                 elif page == "guide":
                     guide_views.index(ctx)
                 elif guide_detail:
