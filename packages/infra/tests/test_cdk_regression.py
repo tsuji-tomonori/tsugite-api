@@ -4,8 +4,9 @@ from collections import Counter
 from pathlib import Path
 
 import pytest
-from aws_cdk import App, Environment
+from aws_cdk import App, AssetStaging, Environment
 from aws_cdk.assertions import Template
+from src.infra_app import stack
 from src.infra_app.stack import CatalogStack
 
 from tools.audit_infra import synthesize_report
@@ -48,3 +49,37 @@ def test_cdk_nag_detects_no_new_findings(tmp_path):
     assert not unexpected, "CDK Nagの新規指摘\n" + "\n".join(
         f"{finding} × {count}" for finding, count in sorted(unexpected.items())
     )
+
+
+def test_backend_layer_changes_only_with_dependencies(tmp_path):
+    """ロジック変更で関数だけが更新され、依存変更で共有Layerだけが更新される。"""
+
+    def synth(name):
+        AssetStaging.clear_asset_hash_cache()
+        app = App(outdir=str(tmp_path / name))
+        resources = Template.from_stack(CatalogStack(app, "TsugiteApi")).to_json()["Resources"]
+        handlers = {"app.main.handler", "app.authorizer.handler", "app.migrate.handler"}
+        functions = {
+            props["Handler"]: props
+            for resource in resources.values()
+            if resource["Type"] == "AWS::Lambda::Function"
+            and (props := resource["Properties"]).get("Handler") in handlers
+        }
+        assert functions.keys() == handlers
+        layer_id = functions["app.main.handler"]["Layers"][0]["Ref"]
+        assert all(props["Layers"] == [{"Ref": layer_id}] for props in functions.values())
+        layer = resources[layer_id]
+        assert layer["Type"] == "AWS::Lambda::LayerVersion"
+        assert layer["Properties"]["CompatibleRuntimes"] == ["python3.14"]
+        return layer, functions["app.main.handler"]["Code"]
+
+    baseline_layer, baseline_code = synth("baseline")
+    code = stack.ROOT / "build/lambda/handler.py"
+    code.write_text("print('logic update')\n", encoding="utf-8")
+    layer, updated_code = synth("code-update")
+    assert layer == baseline_layer
+    assert updated_code != baseline_code
+    (stack.ROOT / "build/runtime-layer.zip").write_bytes(b"updated dependencies")
+    updated_layer, code = synth("dependency-update")
+    assert updated_layer["Properties"]["Content"] != baseline_layer["Properties"]["Content"]
+    assert code == updated_code

@@ -2,6 +2,11 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: GitHub Actions OIDC role for tsuji-tomonori/tsugite-api main deployments.
 
 Parameters:
+  BootstrapAdminUserPoolId:
+    Type: String
+    Default: ''
+    AllowedPattern: '^$|^[\w-]+_[0-9a-zA-Z]+$'
+    Description: Set to the UserPoolId output of TsugiteApi to enable the initial administrator workflow.
   CreateGitHubOidcProvider:
     Type: String
     Description: Set to false if this account already has the GitHub Actions OIDC provider.
@@ -11,6 +16,7 @@ Parameters:
       - 'false'
 
 Conditions:
+  EnableBootstrapAdmin: !Not [!Equals [!Ref BootstrapAdminUserPoolId, '']]
   CreateProvider: !Equals [!Ref CreateGitHubOidcProvider, 'true']
 
 Resources:
@@ -58,6 +64,26 @@ Resources:
           Value: TsugiteAPI
         - Key: ManagedBy
           Value: CloudFormation
+
+  BootstrapAdminPolicy:
+    Type: AWS::IAM::Policy
+    Condition: EnableBootstrapAdmin
+    Properties:
+      PolicyName: BootstrapPortalAdmin
+      Roles: [!Ref GitHubDeployRole]
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action: cloudformation:DescribeStacks
+            Resource: !Sub arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/TsugiteApi/*
+          - Effect: Allow
+            Action:
+              - cognito-idp:ListUsersInGroup
+              - cognito-idp:AdminCreateUser
+              - cognito-idp:AdminGetUser
+              - cognito-idp:AdminAddUserToGroup
+            Resource: !Sub arn:${AWS::Partition}:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${BootstrapAdminUserPoolId}
 
 Outputs:
   GitHubDeployRoleArn:

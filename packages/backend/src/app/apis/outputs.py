@@ -16,6 +16,8 @@ class PortalConfig(TypedDict):
     demo: bool
     #: ログイン用ドメイン
     domain: str
+    #: ユーザープールの認証API接続先
+    identity_endpoint: str
     #: ポータルのログイン用クライアント識別子
     client_id: str
 

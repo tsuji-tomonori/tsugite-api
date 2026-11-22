@@ -7,6 +7,7 @@ from urllib.parse import quote, urlencode
 import api_docs
 import client
 import guide_views
+import login_views
 import operation_views
 import product_views
 import workspace_views
@@ -186,6 +187,11 @@ async def load():
     if not ctx["me"]:
         return
     page = route()
+    if page == "home":
+        for key in ("dashboard", "home_metrics", "recent_logs"):
+            ctx.pop(key, None)
+    elif page == "metrics":
+        ctx.pop("metrics", None)
     if page != "keys":
         ctx.pop("issued_key", None)
     ctx["me"], badge = await asyncio.gather(client.api("/me"), client.api("/notifications/count"))
@@ -199,10 +205,18 @@ async def load():
     elif page == "register":
         ctx["policy_directory"] = await client.api("/workspace")
     elif page == "home":
-        ctx["dashboard"] = await client.api("/dashboard")
-        ctx["home_metrics"], ctx["recent_logs"] = await asyncio.gather(
-            client.api("/metrics?minutes=60"), client.api("/access-logs")
+        results = await asyncio.gather(
+            client.api("/dashboard"),
+            client.api("/metrics?minutes=60"),
+            client.api("/access-logs"),
+            return_exceptions=True,
         )
+        for key, result in zip(("dashboard", "home_metrics", "recent_logs"), results, strict=True):
+            if not isinstance(result, BaseException):
+                ctx[key] = result
+        for result in results:
+            if isinstance(result, BaseException):
+                raise result
     elif page == "members" and ctx["me"]["admin"]:
         ctx["members"] = await client.api(
             "/members?" + urlencode({"cursor": ctx.get("member_cursor", "")})
@@ -294,22 +308,21 @@ async def refresh_session():
     await load()
 
 
-async def login(persona=None):
-    if persona:
-        token = await client.api("/demo/" + persona, "POST")
-        client.store.setItem("access", token["access_token"])
-        await refresh_session()
-    else:
-        client.signin(ctx["config"])
+async def login(persona):
+    token = await client.api("/demo/" + persona, "POST")
+    client.store.setItem("access", token["access_token"])
+    await refresh_session()
 
 
 async def logout():
+    portal_login = client.store.getItem("portal_login")
+    client.store.removeItem("portal_login")
     client.store.removeItem("access")
     config = ctx["config"]
     ctx.clear()
     ctx.update(deepcopy(INITIAL_STATE), config=config)
     await go("home")
-    if not ctx["config"]["demo"]:
+    if not config["demo"] and not portal_login:
         window.location.assign(
             ctx["config"]["domain"]
             + "/logout?"
@@ -478,8 +491,8 @@ async def global_search():
 
 
 def login_page():
-    t.h1("継手APIにログイン")
     if ctx["config"]["demo"]:
+        t.h1("継手APIにログイン")
         t.p("ローカルで試す役割を選んでください。", classes="muted")
         with t.div(classes="btn-grouping"):
             for key, title in [
@@ -494,7 +507,7 @@ def login_page():
             field("登録メールアドレス", "login-email")
             btn("このユーザーでログイン", login_member)
     else:
-        btn("社内アカウントでログイン", login, primary=True)
+        login_views.portal_form(ctx, action, client.store, refresh_session)
 
 
 async def login_member():
@@ -871,34 +884,48 @@ def role_title():
 
 
 def dashboard_view():
-    summary = ctx["dashboard"]
+    summary = ctx.get("dashboard")
     t.p(role_title() + "としての利用状況", classes="subtitle")
-    with t.div(classes="stat-grid"):
-        cards = [("直近24時間の呼び出し", summary["calls"]), ("直近24時間のエラー", summary["errors"])]
-        if ctx["me"]["owners"] or ctx["me"]["admin"]:
-            cards.append(("管理対象のAPI", summary["inventory"]))
-        cards.extend([("承認待ち", summary["pending"]), ("利用中の契約", summary["approved"])])
-        for label, count in cards:
-            with t.article(classes="stat"):
-                t.span(label)
-                t.strong(str(count))
+    if summary is None:
+        t.p("利用状況の件数を取得できませんでした。")
+    else:
+        with t.div(classes="stat-grid"):
+            cards = [
+                ("直近24時間の呼び出し", summary["calls"]),
+                ("直近24時間のエラー", summary["errors"]),
+            ]
+            if ctx["me"]["owners"] or ctx["me"]["admin"]:
+                cards.append(("管理対象のAPI", summary["inventory"]))
+            cards.extend([("承認待ち", summary["pending"]), ("利用中の契約", summary["approved"])])
+            for label, count in cards:
+                with t.article(classes="stat"):
+                    t.span(label)
+                    t.strong(str(count))
     with t.div(classes="home-panels"):
         with t.section(classes="box"):
             t.h2("呼び出し件数の推移")
             t.p("直近24時間・1時間ごと（UTC）", classes="muted")
-            data = ctx["home_metrics"]
-            graph(data["points"], "calls", data["minutes"])
+            data = ctx.get("home_metrics")
+            if data is None:
+                t.p("メトリクスを取得できませんでした。")
+            else:
+                graph(data["points"], "calls", data["minutes"])
             btn("メトリクスを開く", go, "metrics")
         with t.section(classes="box"):
             t.h2("最近の呼び出し")
-            for row in ctx["recent_logs"][:4]:
+            logs = ctx.get("recent_logs")
+            for row in (logs or [])[:4]:
                 with t.div(classes="recent-call"):
                     t.strong(str(row["status"]))
                     t.span(row["method"] + " " + (row["operation"] or "操作未確定"))
                     t.small(row["at"][11:19] + " UTC")
-            if not ctx["recent_logs"]:
+            if logs is None:
+                t.p("最近の呼び出しを取得できませんでした。")
+            elif not logs:
                 t.p("直近24時間の呼び出しはありません。", classes="muted")
             btn("アクセスログを開く", go, "logs")
+    if summary is None or data is None or logs is None:
+        btn("利用状況を再読み込み", load)
     with t.div(classes="box"):
         t.h2("業務メニュー")
         with t.div(classes="btn-grouping"):
@@ -1151,8 +1178,13 @@ def graph(pts, key, minutes):
 
 
 def metrics_view():
-    filters_view(True)
-    data = ctx["metrics"]
+    if "workspace" in ctx and "dims" in ctx:
+        filters_view(True)
+    data = ctx.get("metrics")
+    if data is None:
+        t.p("メトリクスを取得できませんでした。")
+        btn("メトリクスを再読み込み", load)
+        return
     key = ctx["filters"]["measure"]
     pts = data["points"]
     with t.section(classes="box"):
@@ -1380,7 +1412,11 @@ class Portal(Page):
         if not ctx["config"] or not user:
             with t.section(classes="login box"):
                 if ctx["message"]:
-                    t.div(ctx["message"], role="alert", classes="notice error")
+                    t.div(
+                        ctx["message"],
+                        role="alert" if ctx["error"] else "status",
+                        classes="notice error" if ctx["error"] else "notice",
+                    )
                 if ctx["config"]:
                     login_page()
                 else:

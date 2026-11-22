@@ -1,5 +1,3 @@
-import base64
-import hashlib
 import json
 from urllib.parse import parse_qs, urlencode
 
@@ -8,12 +6,6 @@ from pyodide.http import pyfetch
 
 store = window.sessionStorage
 prefix = "/api"
-
-
-def random_text():
-    return str(window.crypto.randomUUID()).replace("-", "") + str(window.crypto.randomUUID()).replace(
-        "-", ""
-    )
 
 
 async def api(path, method="GET", data=None):
@@ -35,24 +27,6 @@ async def api(path, method="GET", data=None):
             detail = "入力内容を確認してください"
         raise ValueError(f"{detail or '処理できませんでした'} ({result.status})")
     return value
-
-
-def signin(cfg):
-    verifier = random_text()
-    state = random_text()
-    store.setItem("pkce", verifier)
-    store.setItem("oauth_state", state)
-    challenge = base64.urlsafe_b64encode(hashlib.sha256(verifier.encode()).digest()).decode().rstrip("=")
-    params = {
-        "response_type": "code",
-        "client_id": cfg["client_id"],
-        "redirect_uri": str(window.location.origin) + "/",
-        "scope": "openid",
-        "state": state,
-        "code_challenge": challenge,
-        "code_challenge_method": "S256",
-    }
-    window.location.assign(cfg["domain"] + "/oauth2/authorize?" + urlencode(params))
 
 
 async def callback(cfg):

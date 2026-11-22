@@ -15,13 +15,14 @@ class CatalogDatabase(Construct):
         self.cluster = dsql.CfnCluster(self, "Default", deletion_protection_enabled=True)
         self.cluster.apply_removal_policy(RemovalPolicy.RETAIN)
 
-    def install_schema(self, role, code):
+    def install_schema(self, role, code, dependencies):
         migration = catalog_function(
             self,
             "Migration",
             "app.migrate.handler",
             {"DSQL_HOST": self.cluster.attr_endpoint, "DSQL_USER": "admin"},
             code,
+            dependencies,
         )
         migration.add_to_role_policy(
             iam.PolicyStatement(
