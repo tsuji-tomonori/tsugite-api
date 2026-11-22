@@ -1,0 +1,50 @@
+import csv
+import json
+from collections import Counter
+from pathlib import Path
+
+import pytest
+from aws_cdk import App, Environment
+from aws_cdk.assertions import Template
+from src.infra_app.stack import CatalogStack
+
+from tools.audit_infra import synthesize_report
+
+HERE = Path(__file__).resolve().parent
+
+
+@pytest.fixture
+def catalog_stack(tmp_path):
+    return CatalogStack(
+        App(outdir=str(tmp_path / "out")),
+        "TsugiteApi",
+        env=Environment(account="111111111111", region="ap-northeast-1"),
+        analytics_reporting=False,
+    )
+
+
+def test_cloudformation_structure_matches_snapshot(catalog_stack):
+    """標準構成のリソース型と論理ID、スタック出力をスナップショットと照合する。"""
+    template = Template.from_stack(catalog_stack).to_json()
+    actual = {
+        "Resources": {key: resource["Type"] for key, resource in template["Resources"].items()},
+        "Outputs": template["Outputs"],
+    }
+    expected = json.loads((HERE / "cloudformation_snapshot.json").read_text(encoding="utf-8"))
+    assert actual == expected
+
+
+def test_cdk_nag_detects_no_new_findings(tmp_path):
+    """AWS Solutionsの全ルールを実行し、記録済み以外の指摘がないことを確認する。"""
+    report = synthesize_report(tmp_path / "out")
+    with report.open(encoding="utf-8", newline="") as source:
+        rows = list(csv.DictReader(source))
+    assert rows and any(row["Compliance"] == "Compliant" for row in rows)
+    findings = Counter(
+        f"{row['Rule ID']} {row['Resource ID']}" for row in rows if row["Compliance"] == "Non-Compliant"
+    )
+    known = json.loads((HERE / "cdk_nag_baseline.json").read_text(encoding="utf-8"))
+    unexpected = findings - Counter(known)
+    assert not unexpected, "CDK Nagの新規指摘\n" + "\n".join(
+        f"{finding} × {count}" for finding, count in sorted(unexpected.items())
+    )

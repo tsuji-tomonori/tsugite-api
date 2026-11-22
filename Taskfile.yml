@@ -109,8 +109,11 @@ tasks:
     desc: DBマイグレーションテスト
     cmds: ['{{.RUN}} pytest -q packages/database/tests {{.CLI_ARGS}}']
   test:infra:
-    desc: CDKの単体テスト（buildの後に実行）
+    desc: CDKの単体テスト
     cmds: ['{{.RUN}} pytest -q packages/infra/tests {{.CLI_ARGS}}']
+  test:mutation:
+    desc: 代表的な変更を一時コピーに加え、単体テストが検知するか確認
+    cmds: ['{{.RUN}} python tools/mutation_test.py {{.CLI_ARGS}}']
   test:tools:
     desc: 設計書生成・共通ツールのテスト
     cmds: ['{{.RUN}} pytest -q tools/tests {{.CLI_ARGS}}']

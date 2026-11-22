@@ -13,6 +13,7 @@ from tests.support.portal_server import serve_portal
 
 
 def test_credentials_console(tmp_path, request):
+    """ブラウザーで3方式を発行し、実時計で1分後に更新、シークレット変更・失効まで確認する"""
     env = {**os.environ, "TSUGITE_DEMO": "1", "DATABASE_URL": "sqlite:///" + str(tmp_path / "cred.db")}
     with (
         serve_portal(env) as url,

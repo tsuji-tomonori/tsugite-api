@@ -6,6 +6,7 @@ from tools.design.generate import SIGNATURE, catalog, generate
 
 
 def test_all_routes_inputs_outputs_and_cleanup(tmp_path):
+    """全APIの入出力を出力し、再生成時に不要な文書を取り除く"""
     generate(tmp_path)
     files = {p.relative_to(tmp_path): p.read_bytes() for p in tmp_path.rglob("*.md")}
     _, routes = catalog(True)
@@ -40,6 +41,7 @@ def test_all_routes_inputs_outputs_and_cleanup(tmp_path):
 
 
 def test_crud_matrices_cover_all_routes_and_match_per_api_evidence(tmp_path):
+    """CRUD表の全APIを個別設計書の根拠と照合できる"""
     from tsugite_db.design_names import table_names
 
     generate(tmp_path)
@@ -74,6 +76,7 @@ def test_crud_matrices_cover_all_routes_and_match_per_api_evidence(tmp_path):
 
 
 def test_sqlalchemy_and_conditional_aws_writes():
+    """ORMの操作と条件付きAWS書き込みを設計解析で追跡できる"""
     index = SourceIndex()
 
     def effects(key):
@@ -92,6 +95,7 @@ def test_sqlalchemy_and_conditional_aws_writes():
 
 
 def test_sql_sources_relative_import_recursion_and_dynamic_sql(tmp_path):
+    """相対インポートと再帰をたどり、動的SQLを識別できる"""
     module = tmp_path / "example"
     module.mkdir()
     (module / "routes.py").write_text(
@@ -111,12 +115,14 @@ def test_sql_sources_relative_import_recursion_and_dynamic_sql(tmp_path):
 
 
 def test_text_policy():
+    """UTF-8の正常な文書を許可し、異常な符号化や改行を検出する"""
     assert not list(violations("設計\n".encode()))
     for invalid in [b"abc", b"abc\n\n", b"abc\r\n", b"\xff\n", b"\xef\xbb\xbftext\n"]:
         assert list(violations(invalid))
 
 
 def test_business_names_cover_every_operation_field_and_database_column():
+    """全API項目とDBカラムに業務用の和名がある"""
     import pytest
     from app.design_names import localize
     from tsugite_db.design_names import design_tables, table_names
@@ -149,6 +155,7 @@ def test_business_names_cover_every_operation_field_and_database_column():
 
 
 def test_openapi_preserves_wire_names_and_labels_them_in_context(monkeypatch):
+    """OpenAPIの通信上の項目名を保ち、用途に応じた和名を表示する"""
     from app.main import create_app
     from fastapi.testclient import TestClient
     from openapi_spec_validator import validate

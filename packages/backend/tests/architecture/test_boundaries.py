@@ -4,6 +4,7 @@ from pytestarch import get_evaluable_architecture
 
 
 def test_persistence_has_no_http_dependencies():
+    """DB層はHTTPのルーターに依存しない"""
     root = Path("packages/database/src/tsugite_db").resolve()
     architecture = get_evaluable_architecture(root, root, exclude_external_libraries=False)
     assert "tsugite_db.models" in architecture.modules
@@ -11,6 +12,7 @@ def test_persistence_has_no_http_dependencies():
 
 
 def test_published_operations_have_stable_ids():
+    """公開操作のOpenAPI IDと実装が対応する"""
     from app.main import create_app
 
     schema = create_app().openapi()

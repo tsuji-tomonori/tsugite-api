@@ -7,6 +7,7 @@ from urllib.request import urlopen
 
 
 def test_deployed_resources(aws, resources):
+    """構築したS3・API Gateway・Lambdaのタグを取得し、在庫APIが商品を返す"""
     bucket = resources["Web3C8945DB"]
     s3 = aws.client("s3")
     assert all(s3.get_public_access_block(Bucket=bucket)["PublicAccessBlockConfiguration"].values())
@@ -64,6 +65,7 @@ def test_deployed_resources(aws, resources):
 
 
 def test_create_dsql_cluster(aws):
+    """DSQLクラスターが削除保護付きで稼働状態になる"""
     db = aws.client("dsql")
     cluster = db.create_cluster(deletionProtectionEnabled=True)
     for _ in range(40):
@@ -76,6 +78,7 @@ def test_create_dsql_cluster(aws):
 
 
 def test_openapi_archive_versions(aws, resources, monkeypatch):
+    """公開時にOpenAPI仕様の世代をS3に個別保存する"""
     from app.integrations.spec_archive import archive_spec
 
     from tests.support.catalog import SPEC
