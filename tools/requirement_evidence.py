@@ -218,11 +218,27 @@ def render(
         page = pages / (title + ".md")
         xml = page.with_suffix(".xml")
         ElementTree.ElementTree(evidence).write(xml, encoding="utf-8", xml_declaration=True)
-        rows = [row.replace("  - [", "  - ![").replace("](screenshots/", "](../screenshots/") for row in rows]
+        rows = [
+            row.replace("  - [", "  - ![").replace("](screenshots/", "](../screenshots/") for row in rows
+        ]
         page.write_text(
-            "\n".join([f"# {title}", "", f"判定　{verdict}", "", *([f"対象コミット　`{commit}`", ""] if commit else []),
-                        "## 実行したテストと証跡", "", *rows, "", f"[テスト実行記録（JUnit XML）]({quote(xml.name)})", ""]),
-            encoding="utf-8", newline="\n",
+            "\n".join(
+                [
+                    f"# {title}",
+                    "",
+                    f"判定　{verdict}",
+                    "",
+                    *([f"対象コミット　`{commit}`", ""] if commit else []),
+                    "## 実行したテストと証跡",
+                    "",
+                    *rows,
+                    "",
+                    f"[テスト実行記録（JUnit XML）]({quote(xml.name)})",
+                    "",
+                ]
+            ),
+            encoding="utf-8",
+            newline="\n",
         )
         lines.append(f"- [{verdict}　{title}](items/{quote(page.name)})")
     if errors:

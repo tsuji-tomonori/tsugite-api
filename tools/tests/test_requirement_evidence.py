@@ -12,7 +12,9 @@ def test_unexecuted_requirement_fails(tmp_path: Path) -> None:
     """実行予定の単体テストにJUnit結果がなければ、要件を未実行として不合格にする。"""
     assert not render({"配備条件": [CHECK]}, {}, {"tools/tests"}, tmp_path, tmp_path, [])
     report = (tmp_path / "report.md").read_text(encoding="utf-8")
-    assert "検証未完了　配備条件" in report and "未実行" in (tmp_path / "items/配備条件.md").read_text(encoding="utf-8")
+    assert "検証未完了　配備条件" in report and "未実行" in (tmp_path / "items/配備条件.md").read_text(
+        encoding="utf-8"
+    )
 
 
 def test_skipped_requirement_fails(tmp_path: Path) -> None:

@@ -440,7 +440,9 @@ async def change_suspension(asset):
     suspended = not asset["suspended"]
     action = "一時停止" if suspended else "再開"
     if window.confirm(asset["name"] + "への全環境のアクセスを" + action + "しますか？"):
-        await client.api("/apis/" + asset["id"] + "/suspension?suspended=" + str(suspended).lower(), "PUT")
+        await client.api(
+            "/apis/" + asset["id"] + "/suspension?suspended=" + str(suspended).lower(), "PUT"
+        )
         await load()
         ctx["message"] = "APIへのアクセスを" + action + "しました"
 
@@ -720,7 +722,11 @@ def detail_page():
     t.h1(a["name"])
     t.p(a["summary"])
     if ctx["me"]["admin"]:
-        btn("APIへのアクセスを再開" if a["suspended"] else "APIへのアクセスを一時停止", change_suspension, a)
+        btn(
+            "APIへのアクセスを再開" if a["suspended"] else "APIへのアクセスを一時停止",
+            change_suspension,
+            a,
+        )
     t.p(a["owner"] + " · " + ("公開中" if a["published"] else "未掲載"), classes="muted")
     if a["owner"] in ctx["me"]["owners"]:
         btn(
