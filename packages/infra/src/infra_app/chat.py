@@ -74,11 +74,7 @@ class PortalChat(Construct):
                 ("model-sdk", "SdkDependencies"),
             )
         }
-        for model, memory, timeout in (
-            ("decision", 3072, 35),
-            ("tool", 4096, 65),
-            ("generate", 4096, 65),
-        ):
+        for model, timeout in (("decision", 35), ("tool", 65), ("generate", 65)):
             name = model.title()
             inference_role = iam.Role(
                 self, name + "Role", assumed_by=iam.ServicePrincipal("lambda.amazonaws.com")
@@ -101,7 +97,7 @@ class PortalChat(Construct):
                 },
                 log_group=group,
                 role=inference_role,
-                memory_size=memory,
+                memory_size=3008,  # 配備先アカウントの関数あたりの上限（MB）
                 ephemeral_storage_size=Size.mebibytes(512),
                 timeout=Duration.seconds(timeout),
                 reserved_concurrent_executions=4,

@@ -137,3 +137,17 @@ def test_model_layer_changes_are_isolated(tmp_path):
     assert final_codes == new_codes
     assert final_layers["decision"] != layers["decision"]
     assert final_layers["tool"] == layers["tool"]
+
+
+def test_schema_waits_for_chat_models(catalog_stack):
+    """判定・ツール選択・生成の各関数の配備が完了してからDB移行を開始する。"""
+    template = Template.from_stack(catalog_stack)
+    functions = template.find_resources("AWS::Lambda::Function")
+    model_ids = {
+        logical_id
+        for logical_id, function in functions.items()
+        if "MODEL_ROLE" in function["Properties"].get("Environment", {}).get("Variables", {})
+    }
+    assert len(model_ids) == 3
+    schema = template.to_json()["Resources"]["Schema"]
+    assert model_ids.issubset(schema.get("DependsOn", []))

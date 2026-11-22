@@ -44,6 +44,7 @@ def test_chat_uses_separate_on_demand_python_functions(tmp_path):
         {
             "Runtime": "python3.14",
             "ReservedConcurrentExecutions": 4,
+            "MemorySize": 3008,
             "EphemeralStorage": {"Size": 512},
             "Environment": {"Variables": {"MODEL_ROLE": Match.any_value()}},
         },

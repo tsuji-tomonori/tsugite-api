@@ -54,3 +54,18 @@ aws cloudformation deploy --region "$region" --stack-name tsugite-github-actions
 ```
 
 管理者が登録済みなら、再実行しても招待は送られません。`grant` だけが失敗した場合は同じ実行の **Re-run failed jobs** を選ぶと、元の招待のユーザー識別子を照合して再開します。管理者が空で同名ユーザーがすでにいる場合は招待を停止します。AWS 管理者が Cognito と元の実行履歴で作成元を確認してください。
+
+## リビジョン 007 の適用後にロールバックが止まった場合
+
+対象は東京リージョンの `TsugiteApi` スタックです。2026年11月22日の配備ではモデル関数の作成が失敗し、旧移行関数が適用済みの `007` を読み取れず、`Schema` のロールバックが停止しました。
+
+1. 配備先アカウントでスタックの状態とイベントを確認します。以下の手順は、現在も `UPDATE_ROLLBACK_FAILED` で、ロールバック中の `Schema` の理由が `Can't locate revision identified by '007'` の場合に使います。ポータルの配布がキャンセルされた場合は、ロールバック再開時に再試行されます。
+2. 接続権限のある運用者が DSQL で `SELECT version_num FROM alembic_version` を実行し、`007` と移行で追加した `inquiries` テーブルの存在を確認します。修正版の配布物に `v007_inquiries.py` が含まれていることを確認します。
+3. DB と適用履歴を保持し、論理 ID `Schema` だけをスキップしてロールバックを再開します。
+
+   ```bash
+   aws cloudformation continue-update-rollback --region ap-northeast-1 \
+     --stack-name TsugiteApi --resources-to-skip Schema
+   ```
+
+4. `UPDATE_ROLLBACK_COMPLETE` を確認して修正版を配備します。スキップしたリソースは次の更新で整合させる必要があります。`Schema` が `UPDATE_COMPLETE`、スタックが `UPDATE_COMPLETE` になったこと、チャットでモデルの応答が得られることを確認します。
