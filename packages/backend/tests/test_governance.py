@@ -205,3 +205,56 @@ def test_log_download_pages(portal):
         f"req{n:03}" for n in range(251)
     ]
     assert "x-next-cursor" not in second.headers
+
+
+def test_admin_metrics_across_pages(portal):
+    """管理者が同時刻の501件をカーソル非対応のDBで集計しても、失敗や二重計上が起きない。"""
+    from datetime import UTC, datetime
+
+    from sqlalchemy import event
+    from sqlalchemy.orm import Session
+    from tsugite_db.models import AccessLog
+    from tsugite_db.session import engine
+
+    admin = headers(portal, "admin")
+    stamp = datetime.now(UTC)
+    database = engine()
+    with Session(database) as db:
+        db.add_all(
+            AccessLog(
+                request_id=f"req{n:03}",
+                at=stamp,
+                actor="consumer",
+                owner="supply",
+                project="finance",
+                asset_id="example",
+                environment="sandbox",
+                method="GET",
+                operation="/stock",
+                status=403 if n == 500 else 200,
+                duration_ms=n,
+            )
+            for n in range(501)
+        )
+        db.commit()
+
+    def reject_server_cursor(conn, cursor, statement, parameters, context, executemany):
+        assert not context.execution_options.get("stream_results")
+        assert not context.execution_options.get("yield_per")
+
+    event.listen(database, "before_cursor_execute", reject_server_cursor)
+    try:
+        data = portal.get("/api/metrics?minutes=60", headers=admin).raise_for_status().json()
+    finally:
+        event.remove(database, "before_cursor_execute", reject_server_cursor)
+    active = [point for point in data["points"] if point["calls"]]
+    assert len(active) == 1
+    assert active[0] == {
+        "at": stamp.replace(minute=0, second=0, microsecond=0).isoformat(),
+        "calls": 501,
+        "success": 500,
+        "errors": 1,
+        "denied": 1,
+        "avg_ms": 250.0,
+        "max_ms": 500,
+    }

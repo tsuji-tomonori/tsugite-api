@@ -165,6 +165,25 @@ def download(
     )
 
 
+def metric_rows(db, stmt):
+    # DSQLではサーバー側カーソルを使えないため、一意なリクエストIDを境に分割する。
+    page_size = 500
+    ordered = (
+        stmt.with_only_columns(
+            AccessLog.request_id, AccessLog.at, AccessLog.status, AccessLog.duration_ms
+        )
+        .order_by(AccessLog.request_id)
+        .limit(page_size)
+    )
+    page = ordered
+    while True:
+        rows = db.execute(page).all()
+        yield from rows
+        if len(rows) < page_size:
+            return
+        page = ordered.where(AccessLog.request_id > rows[-1].request_id)
+
+
 #: 時間帯別の呼び出し件数と応答時間を集計する
 @router.get("/metrics", responses={200: {"model": outputs.Metrics}})
 def metrics(
@@ -194,11 +213,7 @@ def metrics(
         )
         for n in range(first, last + 1)
     ]
-    selected = visible(stmt, actor, db, unit).with_only_columns(
-        AccessLog.at, AccessLog.status, AccessLog.duration_ms
-    )
-    for item in db.execute(selected.execution_options(yield_per=500)).mappings():
-        at, status, latency = item["at"], item["status"], item["duration_ms"]
+    for _, at, status, latency in metric_rows(db, visible(stmt, actor, db, unit)):
         bucket = buckets[int(at.replace(tzinfo=UTC).timestamp()) // seconds - first]
         bucket["calls"] += 1
         bucket["success"] += int(200 <= status < 300)
