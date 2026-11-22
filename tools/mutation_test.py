@@ -25,6 +25,14 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
+        "infra-docs",
+        "パラメーターシートから配列の添字を落とす",
+        "tools/design/infrastructure.py",
+        'settings(f"{path}[{index}]", item)',
+        "settings(path, item)",
+        "tools/tests/test_infrastructure_docs.py::test_component_parameter_sheet",
+    ),
+    Mutation(
         "model-layer",
         "判定モデルの依存群をSDKだけに置き換える",
         "tools/build_backend.py",
