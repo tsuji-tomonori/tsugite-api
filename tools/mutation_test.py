@@ -41,6 +41,22 @@ MUTATIONS = (
         "tools/tests/test_ci_scope.py::test_measured_source_invalidates_suites_that_executed_it",
     ),
     Mutation(
+        "tools",
+        "既存要件の編集だけでfeatブランチを許可する",
+        "tools/requirements.py",
+        '"--diff-filter=A"',
+        '"--diff-filter=AM"',
+        "tools/tests/test_requirements.py::test_feature_requires_added_requirement",
+    ),
+    Mutation(
+        "tools",
+        "未定義の用語を要件の見出しで許可する",
+        "tools/requirements.py",
+        "if unknown:",
+        "if False:",
+        "tools/tests/test_requirements.py::test_undefined_term_in_condition_or_result_fails",
+    ),
+    Mutation(
         "backend",
         "設計項目の直前の和名コメントを読み飛ばす",
         "packages/database/src/tsugite_db/source_docs.py",
@@ -163,7 +179,7 @@ def run_test(workspace, target):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--layer", choices=("backend", "frontend", "infra"), action="append")
+    parser.add_argument("--layer", choices=("backend", "frontend", "infra", "tools"), action="append")
     args = parser.parse_args()
     selected = [entry for entry in MUTATIONS if not args.layer or entry.layer in args.layer]
     failed = []

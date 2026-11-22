@@ -22,6 +22,16 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
           persist-credentials: false
+      - name: 要件一覧と用語一覧を生成し、feat ブランチの新規要件を検査
+        env:
+          HEAD_BRANCH: ${{ github.head_ref }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: python3 tools/requirements.py --branch "$HEAD_BRANCH" --base "$BASE_SHA"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: requirements
+          path: artifacts/requirements/
+          if-no-files-found: error
       - name: 変更の影響範囲と再利用するテスト結果を判定
         id: scope
         env:
