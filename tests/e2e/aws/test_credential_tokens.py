@@ -8,7 +8,7 @@ import httpx
 from tests.e2e.aws.https_stock import https_stock
 from tests.e2e.aws.test_portal import live_portal
 from tests.e2e.aws.test_scoped_keys import another_finance_user, subscribe
-from tools.seed_marketplace import CATALOG, offer
+from tools.demo.seed_marketplace import CATALOG, offer
 
 
 def stock_and_orders(api, provider, consumer):

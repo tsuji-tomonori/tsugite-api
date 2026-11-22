@@ -20,6 +20,7 @@ constraint-dependencies = ["pydantic>=2,<3", "sqlalchemy>=2,<3", "aws-cdk-lib>=2
 dev = ["pytest>=9", "pytest-given", "ruff", "pytest-cov", "pyright", "mypy", "pytestarch", "pip-audit"]
 
 [tool.pytest.ini_options]
+addopts = ["-p", "tests.support.pytest_cases"]
 junit_family = "xunit1"
 markers = ["case_detail(text): パラメーターごとの条件や期待結果を日本語で示す"]
 pythonpath = ["packages/backend/src", "packages/database/src", "packages/infra", "."]

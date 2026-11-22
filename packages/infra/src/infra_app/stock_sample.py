@@ -1,4 +1,4 @@
-"""Example upstream for the operations in examples/stock.openapi.json."""
+"""Example upstream for the operations in docs/examples/stock.openapi.json."""
 
 import json
 

@@ -1,6 +1,6 @@
 import re
 
-from tools.check_text import violations
+from tools.ci.check_text import violations
 from tools.design.effects import SourceIndex, raw_sql
 from tools.design.generate import SIGNATURE, catalog, generate
 

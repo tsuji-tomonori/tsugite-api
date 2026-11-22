@@ -7,10 +7,10 @@ import subprocess
 import sys
 from pathlib import Path
 
-from build_backend import build as backend
-from build_frontend import build as frontend
+from tools.packaging.build_backend import build as backend
+from tools.packaging.build_frontend import build as frontend
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 
 
 def main():

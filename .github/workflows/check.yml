@@ -26,7 +26,7 @@ jobs:
         env:
           HEAD_BRANCH: ${{ github.head_ref }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: python3 tools/requirements.py --branch "$HEAD_BRANCH" --base "$BASE_SHA"
+        run: python3 tools/design/requirements.py --branch "$HEAD_BRANCH" --base "$BASE_SHA"
       - uses: actions/upload-artifact@v4
         with:
           name: requirements
@@ -38,12 +38,12 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           BASE_BRANCH: ${{ github.base_ref }}
           GH_TOKEN: ${{ github.token }}
-        run: python3 -m tools.ci_scope --base "$BASE_SHA"
+        run: python3 -m tools.ci.ci_scope --base "$BASE_SHA"
       - name: 変更ファイルの文字コードと改行を検査
         if: steps.scope.outputs.full != 'true'
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: python3 tools/check_text.py --base "$BASE_SHA"
+        run: python3 tools/ci/check_text.py --base "$BASE_SHA"
       - uses: actions/setup-node@v4
         if: steps.scope.outputs.synth == 'true' || steps.scope.outputs.types == 'true' || contains(fromJSON(steps.scope.outputs.suites), 'packages/infra/tests')
         with:
@@ -81,12 +81,12 @@ jobs:
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
-          if ! git diff --quiet "$BASE_SHA...HEAD" -- uv.lock tools/build_backend.py; then
+          if ! git diff --quiet "$BASE_SHA...HEAD" -- uv.lock tools/packaging/build_backend.py; then
             sha256sum build/runtime-layer.zip > "$RUNNER_TEMP/runtime-layer.sha256"
-            uv run --locked --all-packages python tools/build_backend.py
+            uv run --locked --all-packages python tools/packaging/build_backend.py
             sha256sum --check "$RUNNER_TEMP/runtime-layer.sha256"
           fi
-      - run: uv run --locked --all-packages python tools/build_frontend.py
+      - run: uv run --locked --all-packages python tools/packaging/build_frontend.py
         if: steps.scope.outputs.frontend_build == 'true'
       - run: task contracts docs
         if: steps.scope.outputs.design == 'true'
@@ -94,7 +94,7 @@ jobs:
         if: steps.scope.outputs.audit == 'true'
       - name: 対象テストを実行し、全体カバレッジを集計
         if: steps.scope.outputs.reuse_xml != 'true'
-        run: uv run --locked --all-packages python -m tools.ci_scope --run-suites
+        run: uv run --locked --all-packages python -m tools.ci.ci_scope --run-suites
       - run: task test:aws
         if: steps.scope.outputs.aws == 'true' && steps.scope.outputs.aws_portal_only != 'true'
       - run: task test:aws -- -k test_cognito_browser
@@ -104,7 +104,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           BASE_BRANCH: ${{ github.base_ref }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: python3 tools/check_coverage.py artifacts/coverage.xml
+        run: python3 tools/ci/check_coverage.py artifacts/coverage.xml
       - name: Save coverage for future pull requests
         uses: actions/upload-artifact@v4
         with:

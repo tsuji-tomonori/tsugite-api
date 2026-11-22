@@ -23,7 +23,7 @@ class CatalogStack(Stack):
         self.tags.set_tag("Component", "Stack")
         self.tags.set_tag("Application", "TsugiteAPI")
         self.tags.set_tag("ManagedBy", "AWS-CDK")
-        prefix = tomllib.loads((ROOT / "contracts/http.toml").read_text())["api_prefix"]
+        prefix = tomllib.loads((ROOT / "deploy/config/http.toml").read_text())["api_prefix"]
         config_file = self.node.try_get_context("bindings")
         cfg = json.loads(Path(config_file).read_text()) if config_file else {}
         projects = cfg.get("projects", ["supply", "finance"])

@@ -14,7 +14,7 @@ from zoneinfo import ZoneInfo
 
 from playwright.sync_api import sync_playwright
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / "artifacts"
 COMPONENTS = {
     "Database": "データベース・移行",

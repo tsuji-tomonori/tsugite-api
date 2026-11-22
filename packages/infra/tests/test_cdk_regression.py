@@ -9,7 +9,7 @@ from aws_cdk.assertions import Template
 from src.infra_app import stack
 from src.infra_app.stack import CatalogStack
 
-from tools.audit_infra import synthesize_report
+from tools.ci.audit_infra import synthesize_report
 
 HERE = Path(__file__).resolve().parent
 

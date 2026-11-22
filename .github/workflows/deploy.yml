@@ -105,4 +105,4 @@ jobs:
 
       - name: Deploy the CDK stack and run its database migration
         if: steps.current.outputs.deploy == 'true'
-        run: uv run --locked --all-packages python tools/manage.py deploy --require-approval never
+        run: uv run --locked --all-packages python -m tools.operations.manage deploy --require-approval never

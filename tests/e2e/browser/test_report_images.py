@@ -3,7 +3,7 @@ from xml.etree import ElementTree
 
 from playwright.sync_api import expect, sync_playwright
 
-from tools import test_report
+from tools.testing import test_report
 
 
 def test_report_image_viewer(tmp_path, monkeypatch):

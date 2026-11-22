@@ -10,7 +10,7 @@ import tomllib
 from pathlib import Path
 from xml.etree import ElementTree
 
-from tools.check_coverage import download_merged_coverage
+from tools.ci.check_coverage import download_merged_coverage
 
 ARTIFACTS = Path("artifacts")
 PARTS = ARTIFACTS / "coverage-parts"
@@ -36,7 +36,7 @@ def affected(path, suites):
         return {BACKEND, DATABASE, BROWSER, TOOLS, "types", "design", "aws", "coverage_source"}
     if path.endswith(("/web_app/guide_content.py", "/web_app/guide_search.py")):
         return {FRONTEND, BROWSER, BACKEND}
-    if path == "tools/build_frontend.py":
+    if path == "tools/packaging/build_frontend.py":
         return {FRONTEND, BROWSER, TOOLS, "aws_portal"}
     if path == "packages/frontend/public/index.html" or path.endswith(
         ("/web_app/client.py", "/web_app/app.py", "/web_app/product_views.py", "/web_app/api_docs.py")
@@ -48,15 +48,17 @@ def affected(path, suites):
         return {INFRA, "aws", "audit"}
     if path.startswith("tools/design/"):
         return {TOOLS, "design"}
-    if path in {"tools/emulator_e2e.py", "tools/build_backend.py"} or path.startswith("tests/e2e/aws/"):
-        return {"aws", "audit"} if path == "tools/build_backend.py" else {"aws"}
-    if path == "tools/audit_infra.py":
+    if path == "tools/packaging/build_backend.py":
+        return {"aws", "audit"}
+    if path == "tools/testing/emulator_e2e.py" or path.startswith("tests/e2e/aws/"):
+        return {"aws"}
+    if path == "tools/ci/audit_infra.py":
         return {"audit"}
-    if path == "tools/test_report.py":
+    if path == "tools/testing/test_report.py":
         return {BROWSER, "aws"}
-    if path.startswith("examples/") or path == "tools/seed_marketplace.py":
+    if path.startswith("docs/examples/") or path == "tools/demo/seed_marketplace.py":
         return {BACKEND, BROWSER, INFRA, "aws"}
-    if path.startswith(".githooks/") or path in {".gitmessage.txt", "tools/test_git_hooks.sh"}:
+    if path.startswith(".githooks/") or path in {".gitmessage.txt", "tools/testing/test_git_hooks.sh"}:
         return {"hooks"}
     return FULL
 
@@ -101,7 +103,7 @@ def select(paths, suites, cached):
         "types": "types" in flags,
         "design": "design" in flags,
         "audit": "audit" in flags,
-        "hooks": "hooks" in flags and Path("tools/test_git_hooks.sh").exists(),
+        "hooks": "hooks" in flags and Path("tools/testing/test_git_hooks.sh").exists(),
         "synth": synth,
         "frontend_build": bool(selected & {BROWSER, BACKEND, TOOLS}) and not synth,
         "chromium": BROWSER in selected or aws,

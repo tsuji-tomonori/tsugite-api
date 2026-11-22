@@ -12,7 +12,7 @@ from pathlib import Path
 
 from tinycss2 import parse_component_value_list
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 DIST = ROOT / "packages/frontend/dist"
 CACHE = ROOT / "build/vendor"
 BUNDLES = {
@@ -125,7 +125,7 @@ def build():
     (DIST / "pyscript.json").write_text(
         json.dumps({"interpreter": "/vendor/pyodide/pyodide.mjs", "files": files})
     )
-    cfg = tomllib.loads((ROOT / "contracts/http.toml").read_text())
+    cfg = tomllib.loads((ROOT / "deploy/config/http.toml").read_text())
     (DIST / "entry.json").write_text(json.dumps(cfg))
 
 

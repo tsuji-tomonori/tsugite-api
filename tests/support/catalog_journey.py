@@ -72,7 +72,7 @@ def catalog_journey(url, case, tokens=None, consumer_subject="consumer"):
             provider.get_by_label("検証の接続先").select_option("sample-sandbox")
             provider.get_by_label("本番の接続先", exact=True).select_option("sample-production")
             provider.get_by_label("OpenAPIファイル").set_input_files(
-                ROOT / "examples/stock.openapi.json"
+                ROOT / "docs/examples/stock.openapi.json"
             )
             provider.get_by_role("button", name="下書きを保存").click()
             provider.get_by_role("button", name="公開する").click()

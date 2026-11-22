@@ -28,7 +28,7 @@ def test_large_catalog(demo_url, request):
     from playwright.sync_api import expect, sync_playwright
 
     from tests.support.catalog_journey import browser_evidence, navigate
-    from tools.seed_marketplace import CATALOG, offer, seed
+    from tools.demo.seed_marketplace import CATALOG, offer, seed
 
     with httpx.Client(base_url=demo_url + "/api/", trust_env=False) as api:
         ids = seed(api, 20)
@@ -99,7 +99,7 @@ def test_console_visual_modes(demo_url, request):
     from playwright.sync_api import expect, sync_playwright
 
     from tests.support.catalog_journey import browser_evidence, navigate
-    from tools.seed_marketplace import seed
+    from tools.demo.seed_marketplace import seed
 
     with httpx.Client(base_url=demo_url + "/api/", trust_env=False) as api:
         seed(api, 1)

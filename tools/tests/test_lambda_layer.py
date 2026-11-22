@@ -1,7 +1,7 @@
 import hashlib
 from zipfile import ZipFile
 
-from tools.build_backend import sync_layer
+from tools.packaging.build_backend import sync_layer
 
 
 def locked_wheel(directory, version):

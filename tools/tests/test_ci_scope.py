@@ -1,7 +1,7 @@
 import subprocess
 from pathlib import Path
 
-from tools import ci_scope as ci
+from tools.ci import ci_scope as ci
 
 SUITES = [ci.BACKEND, ci.DATABASE, ci.FRONTEND, ci.INFRA, ci.BROWSER, ci.TOOLS]
 
@@ -51,7 +51,7 @@ def test_frontend_builder_runs_stylesheet_and_design_policy_tests(tmp_path, monk
     policy = Path(ci.BACKEND, "architecture/test_design_sources.py")
     policy.parent.mkdir(parents=True)
     policy.touch()
-    plan = ci.select(["tools/build_frontend.py"], SUITES, tmp_path)
+    plan = ci.select(["tools/packaging/build_frontend.py"], SUITES, tmp_path)
     assert {ci.BACKEND, ci.FRONTEND, ci.BROWSER, ci.TOOLS} == set(plan["suites"])
 
 
@@ -90,7 +90,7 @@ def test_unknown_or_shared_input_runs_all_checks(tmp_path):
         "packages/new/code.py",
         "uv.lock",
         ".github/workflows/check.yml",
-        "contracts/http.toml",
+        "deploy/config/http.toml",
     ):
         plan = ci.select([path], SUITES, tmp_path)
         assert plan["full"] and plan["suites"] == SUITES

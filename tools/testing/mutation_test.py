@@ -10,7 +10,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from xml.etree import ElementTree
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 
 
 @dataclass(frozen=True)
@@ -27,7 +27,7 @@ MUTATIONS = (
     Mutation(
         "lambda-layer",
         "Layerに依存を配置するディレクトリを誤る",
-        "tools/build_backend.py",
+        "tools/packaging/build_backend.py",
         'ZipInfo("python/"',
         'ZipInfo("wrong/"',
         "tools/tests/test_lambda_layer.py::test_layer_rebuild_is_reproducible",
@@ -43,7 +43,7 @@ MUTATIONS = (
     Mutation(
         "ci",
         "ファイル移動時に移動元の変更を見落とす",
-        "tools/ci_scope.py",
+        "tools/ci/ci_scope.py",
         '"--no-renames"',
         '"--find-renames"',
         "tools/tests/test_ci_scope.py::test_git_diff_includes_deleted_and_both_renamed_paths",
@@ -51,7 +51,7 @@ MUTATIONS = (
     Mutation(
         "ci",
         "以前の実行行を含むテスト層の再計測を省く",
-        "tools/ci_scope.py",
+        "tools/ci/ci_scope.py",
         '("coverage_source" in flags and part.stat().st_size)',
         "False",
         "tools/tests/test_ci_scope.py::test_measured_source_invalidates_suites_that_executed_it",
@@ -59,7 +59,7 @@ MUTATIONS = (
     Mutation(
         "tools",
         "既存要件の編集だけでfeatブランチを許可する",
-        "tools/requirements.py",
+        "tools/design/requirements.py",
         '"--diff-filter=A"',
         '"--diff-filter=AM"',
         "tools/tests/test_requirements.py::test_feature_requires_added_requirement",
@@ -67,7 +67,7 @@ MUTATIONS = (
     Mutation(
         "tools",
         "未定義の用語を要件の見出しで許可する",
-        "tools/requirements.py",
+        "tools/design/requirements.py",
         "if unknown:",
         "if False:",
         "tools/tests/test_requirements.py::test_undefined_term_in_condition_or_result_fails",
@@ -183,7 +183,7 @@ MUTATIONS = (
     Mutation(
         "bootstrap",
         "招待したユーザーと異なる識別子でも管理者にする",
-        "tools/bootstrap_admin.py",
+        "tools/operations/bootstrap_admin.py",
         'if not any(attr == {"Name": "sub", "Value": subject} for attr in user["UserAttributes"]):',
         "if False:",
         "tools/tests/test_bootstrap_admin.py::test_replaced_user_cannot_be_promoted",
@@ -193,10 +193,9 @@ MUTATIONS = (
 
 def copy_sources(workspace):
     ignore = shutil.ignore_patterns("dist", "cdk.out", ".venv", "__pycache__", "*.egg-info")
-    for folder in ("packages", "contracts", "tests", "tools"):
+    for folder in ("packages", "deploy/config", "docs/examples", "tests", "tools"):
         shutil.copytree(ROOT / folder, workspace / folder, ignore=ignore)
-    for file in ("conftest.py", "pyproject.toml"):
-        shutil.copyfile(ROOT / file, workspace / file)
+    shutil.copyfile(ROOT / "pyproject.toml", workspace / "pyproject.toml")
 
 
 def run_test(workspace, target):

@@ -186,7 +186,7 @@ def test_approved_calls_reach_upstream(aws, resources, tmp_path, identity, upstr
             "summary": "棚卸し",
             "owner": "supply",
             "targets": {"sandbox": "sample-sandbox", "production": "sample-production"},
-            "spec": json.loads((ROOT / "examples/stock.openapi.json").read_text()),
+            "spec": json.loads((ROOT / "docs/examples/stock.openapi.json").read_text()),
         }
         if binding:
             data["base_path"] = "/v1"
@@ -292,7 +292,7 @@ def test_approved_calls_reach_upstream(aws, resources, tmp_path, identity, upstr
 
 def test_marketplace_contracts(aws, resources, tmp_path, request):
     """6種類を個別に登録・公開・承認して実行し、HTTPSの受信・業務応答・監査記録を照合する"""
-    from tools.seed_marketplace import CATALOG, offer
+    from tools.demo.seed_marketplace import CATALOG, offer
 
     expected = [
         {"items": [{"sku": "TS-01", "stock": 12}]},
@@ -354,7 +354,7 @@ def test_marketplace_contracts(aws, resources, tmp_path, request):
 
 def test_upstream_unavailable(aws, resources, tmp_path, request):
     """承認済みのHTTPS接続先が停止したとき、502と監査・アクセスログを同じIDで追跡できる"""
-    from tools.seed_marketplace import CATALOG, offer
+    from tools.demo.seed_marketplace import CATALOG, offer
 
     with ExitStack() as stack:
         with https_stock(aws, tmp_path, os.environ["AWS_CA_BUNDLE"]) as (binding, ca, _):
