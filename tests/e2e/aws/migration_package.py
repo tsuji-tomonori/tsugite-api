@@ -14,7 +14,6 @@ def main():
 
     import psycopg
     from sqlalchemy import create_engine, event, text
-
     from tsugite_db import session
 
     # Load the production connector's dependencies even though the wire endpoint is local.
