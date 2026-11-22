@@ -32,5 +32,8 @@ def test_request_carries_screen(portal_module, monkeypatch):
     monkeypatch.setattr(client, "pyfetch", fetch)
     asyncio.run(client.api("/me"))
     assert fetch.call_args.kwargs["headers"] == {"X-Tsugite-Screen": "guide"}
+    for route in ("departments", "projects"):
+        client.window.location.hash = "#/" + route + "/detail/private-unit"
+        assert client.screen_headers() == {"X-Tsugite-Screen": route}
     client.window.location.hash = "#/private-value"
     assert client.screen_headers() == {}

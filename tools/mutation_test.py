@@ -66,7 +66,7 @@ MUTATIONS = (
     ),
     Mutation(
         "frontend",
-        "ログ取得の失敗時に未定義のクライアント例外を参照する",
+        "ログ取得の失敗を記録済みと扱い、画面側の障害ログを失う",
         "packages/frontend/src/web_app/portal_pages/logs.py",
         'raise ValueError("ログを取得できませんでした")',
         'raise client.ResponseError("ログを取得できませんでした")',
