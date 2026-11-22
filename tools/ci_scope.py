@@ -90,11 +90,6 @@ def select(paths, suites, cached):
         and "/tests/" not in path
         and any(path.startswith(root + "/") for root in roots)
     }
-    if Path(BACKEND, "architecture/test_design_sources.py").is_file() and any(
-        path.startswith("tools/") and not path.startswith("tools/tests/") and path.endswith(".py")
-        for path in paths
-    ):
-        flags.add(BACKEND)
     full = "full" in flags or any(path.endswith("/pyproject.toml") for path in paths)
     if full:
         flags.update({"types", "design", "aws", "audit", "hooks"})
