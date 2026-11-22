@@ -145,3 +145,28 @@ def test_openapi_preserves_wire_names_and_labels_them_in_context(monkeypatch):
         assert records[model]["properties"]["status"]["title"] == expected
     assert records["ReleaseEntry"]["properties"]["removed"]["title"] == "削除した操作・構成要素"
     assert records["Removed"]["properties"]["removed"]["title"] == "所属を解除したか"
+
+
+def test_nested_contracts_preserve_legacy_records_and_follow_field_annotations():
+    """過去に保存した独自項目を返しつつ、公開する入れ子の型をフィールド宣言から取得する。"""
+    from app.apis.schemas import Right
+
+    evidence = {"legacy_key": {"retired_option": True}, "steps": ["previous-format"]}
+    grant = Right(
+        id="grant",
+        asset_id="asset",
+        project="consumer",
+        environment="sandbox",
+        reason="利用申請",
+        status="approved",
+        revision=1,
+        application=evidence,
+    )
+    assert grant.model_dump()["application"] == evidence
+    spec, _ = catalog(True)
+    schemas = spec["components"]["schemas"]
+    assert schemas["Right"]["properties"]["application"]["$ref"].endswith("/ApplicationEvidence")
+    assert schemas["Detail"]["properties"]["offers"]["additionalProperties"]["$ref"].endswith(
+        "/PublishedOffer"
+    )
+    assert schemas["Detail"]["properties"]["releases"]["items"]["$ref"].endswith("/ReleaseEntry")
