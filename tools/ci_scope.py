@@ -201,6 +201,7 @@ def run_suites():
 
     plan_data = json.loads((ARTIFACTS / "ci-plan.json").read_text())
     reports = ElementTree.Element("testsuites")
+    failed_suites = []
     for suite in plan_data["suites"]:
         part = PARTS / part_name(suite)
         prefix = ARTIFACTS / part.stem
@@ -221,13 +222,17 @@ def run_suites():
         if junit.exists():
             reports.extend(ElementTree.parse(junit).getroot().iter("testsuite"))
             ElementTree.ElementTree(reports).write(ARTIFACTS / "junit.xml", encoding="utf-8")
-        result.check_returncode()
+        if result.returncode:
+            failed_suites.append(suite)
+            continue
         data = CoverageData(basename=str(part))
         data.read()
         executed = sorted(Path(name).as_posix() for name in data.measured_files() if data.lines(name))
         part.with_suffix(".json").write_text(json.dumps(executed) + "\n")
         if not executed:
             part.write_bytes(b"")
+    if failed_suites:
+        sys.exit("テストに失敗した対象　" + "、".join(failed_suites))
     parts = [PARTS / part_name(suite) for suite in configured_suites()]
     measured = [str(part) for part in parts if part.stat().st_size]
     subprocess.run([sys.executable, "-m", "coverage", "combine", "--keep", *measured], check=True)

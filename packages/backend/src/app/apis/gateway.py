@@ -144,7 +144,8 @@ async def invoke(
         if request.state.operation is None:
             raise HTTPException(404, "OpenAPIに定義されていない操作です")
         check_operation(db, asset, actor, request.method + " " + request.state.operation, project)
-        binding = targets().get(asset_object(asset, "targets").get(environment))
+        target_name = asset_object(asset, "targets").get(environment)
+        binding = targets().get(target_name) if isinstance(target_name, str) else None
         if not binding or (binding.owner, binding.environment) != (asset.owner, environment):
             raise OperationalRepair(
                 "invalid_target_binding",

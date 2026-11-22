@@ -173,7 +173,9 @@ def test_admin_stops_target_after_denial(portal_session: PortalSession) -> None:
         row["request_id"] == denied.headers["x-request-id"] and row["status"] == 403 for row in logs
     )
     open_portal(api, page, "管理者")
-    page.goto(str(api.base_url).rstrip("/") + "/#/api/" + asset)
+    navigate(page, "アクセスログ")
+    row = page.locator(".audit-row").filter(has_text=denied.headers["x-request-id"])
+    row.get_by_role("button", name="対象APIを開く").click()
     stop = page.get_by_role("button", name=re.compile(r"API.*一時停止|全アクセス.*停止"))
     expect(stop).to_be_visible()
     page.on("dialog", lambda dialog: dialog.accept())

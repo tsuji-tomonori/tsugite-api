@@ -261,7 +261,12 @@ def render(
     ElementTree.ElementTree(suite).write(
         output / "requirements.xml", encoding="utf-8", xml_declaration=True
     )
-    (output / "report.md").write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8", newline="\n")
+    index = "\n".join(lines).rstrip() + "\n"
+    (output / "report.md").write_text(index, encoding="utf-8", newline="\n")
+    print(lines[2])
+    for name, checks in ((case.get("name"), case) for case in suite):
+        if checks.find("failure") is not None or checks.find("error") is not None:
+            print(f"要確認　{name}")
     return not failed
 
 

@@ -2,14 +2,14 @@
 
 import sqlalchemy as sa
 from alembic import op
+from tsugite_db.migration_columns import column_names
 
 revision = "008"
 down_revision = "007"
 
 
 def upgrade():
-    columns = sa.inspect(op.get_bind()).get_columns("invocation_logs")
-    if all(column["name"] != "diagnostics" for column in columns):
+    if "diagnostics" not in column_names(op.get_bind(), "invocation_logs"):
         op.add_column("invocation_logs", sa.Column("diagnostics", sa.Text(), nullable=True))
 
 

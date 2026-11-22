@@ -97,12 +97,13 @@ jobs:
       - run: task audit
         if: steps.scope.outputs.audit == 'true'
       - name: 対象テストを実行し、全体カバレッジを集計
+        id: suites
         if: steps.scope.outputs.reuse_xml != 'true'
         run: uv run --locked --all-packages python -m tools.ci_scope --run-suites
       - run: task test:aws
-        if: steps.scope.outputs.aws == 'true' && steps.scope.outputs.aws_portal_only != 'true'
+        if: ${{ !cancelled() && (success() || steps.suites.outcome == 'failure') && steps.scope.outputs.aws == 'true' && steps.scope.outputs.aws_portal_only != 'true' }}
       - run: task test:aws -- -k test_cognito_browser
-        if: steps.scope.outputs.aws_portal_only == 'true'
+        if: ${{ !cancelled() && (success() || steps.suites.outcome == 'failure') && steps.scope.outputs.aws_portal_only == 'true' }}
       - name: Check line coverage against the ruleset
         env:
           GH_TOKEN: ${{ github.token }}

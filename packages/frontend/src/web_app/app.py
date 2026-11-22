@@ -1341,6 +1341,8 @@ def logs_view():
             if row.get("key_id"):
                 t.small("キーID　" + row["key_id"], classes="mono")
             btn("対応する業務監査", trace_lookup, row["request_id"])
+            if ctx["me"]["admin"]:
+                btn("対象APIを開く", go, "api/" + row["asset_id"])
     if ctx.get("log_offset", 0):
         btn("前の50件", log_page, ctx["log_offset"] - 50)
     if len(rows) == 50:
