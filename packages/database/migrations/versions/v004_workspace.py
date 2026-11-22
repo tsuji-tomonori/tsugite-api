@@ -2,23 +2,24 @@
 
 import sqlalchemy as sa
 from alembic import op
+from tsugite_db.migration_columns import column_names
 
 revision = "004"
 down_revision = "003"
 
 
 def upgrade():
-    existing = {c["name"] for c in sa.inspect(op.get_bind()).get_columns("assets")}
+    existing = column_names(op.get_bind(), "assets")
     if "policy" not in existing:
         op.add_column("assets", sa.Column("policy", sa.Text(), nullable=True))
-    existing = {c["name"] for c in sa.inspect(op.get_bind()).get_columns("access_rights")}
+    existing = column_names(op.get_bind(), "access_rights")
     if "applicant" not in existing:
         op.add_column("access_rights", sa.Column("applicant", sa.String(180), nullable=True))
     if "subject" not in existing:
         op.add_column("access_rights", sa.Column("subject", sa.String(180), nullable=True))
     if "decision_note" not in existing:
         op.add_column("access_rights", sa.Column("decision_note", sa.Text(), nullable=True))
-    existing = {c["name"] for c in sa.inspect(op.get_bind()).get_columns("invocation_logs")}
+    existing = column_names(op.get_bind(), "invocation_logs")
     if "key_id" not in existing:
         op.add_column("invocation_logs", sa.Column("key_id", sa.String(32), nullable=True))
     op.create_table(
