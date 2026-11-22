@@ -43,7 +43,9 @@ tasks:
     cmds: ['{{.RUN}} pyright', '{{.RUN}} mypy']
   docs:
     desc: OpenAPI仕様とSQL・AWSのCRUD設計書をMarkdownに出力
-    cmds: ['{{.RUN}} python -m tools.design.generate']
+    cmds:
+      - '{{.RUN}} python -m tools.design.generate'
+      - tar -czf - docs/generated | base64 -w 1000 | sed 's/^/TSUGITE_GENERATED /'
   docs:commit:
     desc: CIで再生成した設計書の差分だけを既定ブランチへ反映
     preconditions:
