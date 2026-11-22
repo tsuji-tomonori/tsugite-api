@@ -75,7 +75,12 @@ def test_missing_coverage_never_becomes_a_partial_baseline(tmp_path):
 def test_unknown_or_shared_input_runs_all_checks(tmp_path):
     """未知の領域・依存ロック・CI定義を変更した場合は全検証を選ぶ。"""
     cached_report(tmp_path)
-    for path in ("packages/new/code.py", "uv.lock", ".github/workflows/check.yml", "contracts/http.toml"):
+    for path in (
+        "packages/new/code.py",
+        "uv.lock",
+        ".github/workflows/check.yml",
+        "contracts/http.toml",
+    ):
         plan = ci.select([path], SUITES, tmp_path)
         assert plan["full"] and plan["suites"] == SUITES
         assert plan["types"] and plan["audit"] and plan["aws"] and plan["design"]

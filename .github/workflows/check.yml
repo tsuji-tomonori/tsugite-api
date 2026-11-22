@@ -102,7 +102,7 @@ jobs:
           label: code-coverage/pytest
           fail-on-error: false
       - name: Build screenshot report
-        if: ${{ !cancelled() && steps.scope.outputs.report == 'true' }}
+        if: ${{ !cancelled() && steps.scope.outputs.report == 'true' && hashFiles('artifacts/junit.xml') != '' }}
         run: task report
       - uses: actions/upload-artifact@v4
         if: always()
