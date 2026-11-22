@@ -6,7 +6,7 @@ DELETE `/api/apis/{key}`
 
 [API一覧](../README.md) · [CRUD一覧](../crud.md)
 
-共通 · `delete_api_apis__key__delete` · [delete:142](../../../packages/backend/src/app/apis/catalog/register/router.py#L142)
+共通 · `delete_api_apis__key__delete` · [delete:154](../../../packages/backend/src/app/apis/catalog/register/router.py#L154)
 
 ## 入力
 
@@ -55,14 +55,14 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| [API利用申請・利用権](../database.md#access_rights) | access_rights | R | 検索 | select | [close_rights:130](../../../packages/backend/src/app/apis/catalog/register/router.py#L130) |
-| [API利用申請・利用権](../database.md#access_rights) | access_rights | U | 現在の承認担当を設定 | stage に代入 | [close_rights:134](../../../packages/backend/src/app/apis/catalog/register/router.py#L134) |
-| [API利用申請・利用権](../database.md#access_rights) | access_rights | U | 審査・取消の理由を設定 | decision_note に代入 | [close_rights:136](../../../packages/backend/src/app/apis/catalog/register/router.py#L136) |
-| [API利用申請・利用権](../database.md#access_rights) | access_rights | U | 利用申請の審査状態を設定 | status に代入 | [close_rights:137](../../../packages/backend/src/app/apis/catalog/register/router.py#L137) |
+| [API利用申請・利用権](../database.md#access_rights) | access_rights | R | 検索 | select | [close_rights:141](../../../packages/backend/src/app/apis/catalog/register/router.py#L141) |
+| [API利用申請・利用権](../database.md#access_rights) | access_rights | U | 現在の承認担当を設定 | stage に代入 | [close_rights:145](../../../packages/backend/src/app/apis/catalog/register/router.py#L145) |
+| [API利用申請・利用権](../database.md#access_rights) | access_rights | U | 審査・取消の理由を設定 | decision_note に代入 | [close_rights:147](../../../packages/backend/src/app/apis/catalog/register/router.py#L147) |
+| [API利用申請・利用権](../database.md#access_rights) | access_rights | U | 利用申請の審査状態を設定 | status に代入 | [close_rights:148](../../../packages/backend/src/app/apis/catalog/register/router.py#L148) |
 | [利用者の組織所属](../database.md#affiliations) | affiliations | R | 検索 | select | [populate:69](../../../packages/backend/src/app/core/workspace.py#L69) |
 | [APIカタログ](../database.md#assets) | assets | R | 主キーで取得 | db.get | [record:31](../../../packages/backend/src/app/apis/catalog/common.py#L31) |
-| [APIカタログ](../database.md#assets) | assets | U | カタログから削除した日時を設定 | removed_at に代入 | [delete:148](../../../packages/backend/src/app/apis/catalog/register/router.py#L148) |
-| [APIカタログ](../database.md#assets) | assets | U | カタログで公開中かを設定 | published に代入 | [delete:149](../../../packages/backend/src/app/apis/catalog/register/router.py#L149) |
+| [APIカタログ](../database.md#assets) | assets | U | カタログから削除した日時を設定 | removed_at に代入 | [delete:168](../../../packages/backend/src/app/apis/catalog/register/router.py#L168) |
+| [APIカタログ](../database.md#assets) | assets | U | カタログで公開中かを設定 | published に代入 | [delete:169](../../../packages/backend/src/app/apis/catalog/register/router.py#L169) |
 | [監査履歴](../database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [event:16](../../../packages/backend/src/app/apis/catalog/common.py#L16) |
 | [組織階層](../database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
 | [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:121](../../../packages/backend/src/app/core/auth.py#L121) |
@@ -72,7 +72,7 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:45](../../../packages/backend/src/app/core/config.py#L45) |
+| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:53](../../../packages/backend/src/app/core/config.py#L53) |
 
 <details><summary>解析した関数・依存</summary>
 

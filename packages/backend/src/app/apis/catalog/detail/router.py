@@ -13,8 +13,14 @@ from tsugite_db.models import Access
 router = APIRouter()
 
 
+#: APIの詳細と公開仕様を取得する
 @router.get("/apis/{key}", response_model=Detail, operation_id="detail")
-def detail(key: str, actor: User, db: DB):
+def detail(
+    #: カタログ掲載APIの識別子
+    key: str,
+    actor: User,
+    db: DB,
+):
     a = record(db, key)
     grant = db.scalar(
         select(Access.id)

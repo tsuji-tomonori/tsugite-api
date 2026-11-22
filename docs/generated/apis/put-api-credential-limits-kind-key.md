@@ -6,7 +6,7 @@ PUT `/api/credential-limits/{kind}/{key}`
 
 [API一覧](../README.md) · [CRUD一覧](../crud.md)
 
-共通 · `set_limit_api_credential_limits__kind___key__put` · [set_limit:134](../../../packages/backend/src/app/apis/governance/credential_settings.py#L134)
+共通 · `set_limit_api_credential_limits__kind___key__put` · [set_limit:169](../../../packages/backend/src/app/apis/governance/credential_settings.py#L169)
 
 ## 入力
 
@@ -66,14 +66,14 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| [API利用申請・利用権](../database.md#access_rights) | access_rights | R | 検索 | select | [bound_resource:115](../../../packages/backend/src/app/apis/governance/credential_settings.py#L115) |
+| [API利用申請・利用権](../database.md#access_rights) | access_rights | R | 検索 | select | [bound_resource:141](../../../packages/backend/src/app/apis/governance/credential_settings.py#L141) |
 | [利用者の組織所属](../database.md#affiliations) | affiliations | R | 検索 | select | [populate:69](../../../packages/backend/src/app/core/workspace.py#L69) |
 | [APIカタログ](../database.md#assets) | assets | R | 主キーで取得 | db.get | [record:31](../../../packages/backend/src/app/apis/catalog/common.py#L31) |
-| [監査履歴](../database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [audit:37](../../../packages/backend/src/app/apis/governance/directory.py#L37) |
-| [認証情報の利用制限](../database.md#credential_rules) | credential_rules | C | レコードを追加 | db.add | [set_limit:143](../../../packages/backend/src/app/apis/governance/credential_settings.py#L143) |
-| [認証情報の利用制限](../database.md#credential_rules) | credential_rules | R | 主キーで取得 | db.get | [set_limit:140](../../../packages/backend/src/app/apis/governance/credential_settings.py#L140) |
+| [監査履歴](../database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [audit:53](../../../packages/backend/src/app/apis/governance/directory.py#L53) |
+| [認証情報の利用制限](../database.md#credential_rules) | credential_rules | C | レコードを追加 | db.add | [set_limit:185](../../../packages/backend/src/app/apis/governance/credential_settings.py#L185) |
+| [認証情報の利用制限](../database.md#credential_rules) | credential_rules | R | 主キーで取得 | db.get | [set_limit:182](../../../packages/backend/src/app/apis/governance/credential_settings.py#L182) |
 | [認証情報の利用制限](../database.md#credential_rules) | credential_rules | R | 主キーで取得 | db.get | [minutes:33](../../../packages/backend/src/app/core/credential_policy.py#L33) |
-| [認証情報の利用制限](../database.md#credential_rules) | credential_rules | U | トークン有効期間の上限（分）を設定 | limit_minutes に代入 | [set_limit:144](../../../packages/backend/src/app/apis/governance/credential_settings.py#L144) |
+| [認証情報の利用制限](../database.md#credential_rules) | credential_rules | U | トークン有効期間の上限（分）を設定 | limit_minutes に代入 | [set_limit:186](../../../packages/backend/src/app/apis/governance/credential_settings.py#L186) |
 | [組織階層](../database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
 | [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:121](../../../packages/backend/src/app/core/auth.py#L121) |
 | [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:56](../../../packages/backend/src/app/core/workspace.py#L56) |
@@ -82,7 +82,7 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:45](../../../packages/backend/src/app/core/config.py#L45) |
+| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:53](../../../packages/backend/src/app/core/config.py#L53) |
 
 <details><summary>解析した関数・依存</summary>
 

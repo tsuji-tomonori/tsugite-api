@@ -76,10 +76,12 @@ def create_app() -> FastAPI:
         status = 409 if code in {"40001", "OC000", "OC001"} else 503
         return JSONResponse({"detail": "状態を再確認してから再実行してください"}, status)
 
+    #: サービスの稼働状態を確認する
     @app.get("/api/health", responses={200: {"model": outputs.Health}})
     def health():
         return {"status": "ok"}
 
+    #: ポータルのログイン設定を取得する
     @app.get("/api/config", responses={200: {"model": outputs.PortalConfig}})
     def config():
         cfg = settings()
@@ -90,9 +92,14 @@ def create_app() -> FastAPI:
         }
 
     if local_demo():
-
+        #: デモ利用者としてログインする
         @app.post("/api/demo/{persona}", responses={200: {"model": outputs.DemoToken}})
-        def local_login(persona: str, request: Request, db: DB):
+        def local_login(
+            #: デモでログインする利用者名
+            persona: str,
+            request: Request,
+            db: DB,
+        ):
             if request.headers.get("origin") and request.headers["origin"] != str(
                 request.base_url
             ).rstrip("/"):

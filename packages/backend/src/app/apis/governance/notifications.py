@@ -12,10 +12,15 @@ from tsugite_db.models import Access, Event, Notice, NoticeRead
 router = APIRouter()
 
 
+#: 送信する通知
 class Message(Input):
+    #: 通知の件名
     title: str = Field(min_length=1, max_length=160)
+    #: 通知本文
     body: str = Field(min_length=1, max_length=3000)
+    #: 通知先プロジェクトの識別子
     project: str = Field(min_length=1, max_length=64)
+    #: カタログ掲載APIの識別子
     asset_id: str = ""
 
 
@@ -35,8 +40,14 @@ def unread(db, actor):
     return db.scalar(select(func.count(Notice.id)).where(mailbox(actor), unread_query(actor))) or 0
 
 
+#: 受信した通知を一覧する
 @router.get("/notifications", responses={200: {"model": outputs.Inbox}})
-def inbox(actor: User, db: DB, offset: int = Query(0, ge=0)):
+def inbox(
+    actor: User,
+    db: DB,
+    #: 先頭から読み飛ばす件数
+    offset: int = Query(0, ge=0),
+):
     records = db.execute(
         select(Notice, unread_query(actor))
         .where(mailbox(actor))
@@ -61,11 +72,13 @@ def inbox(actor: User, db: DB, offset: int = Query(0, ge=0)):
     }
 
 
+#: 未読の通知件数を取得する
 @router.get("/notifications/count", responses={200: {"model": outputs.Unread}})
 def badge(actor: User, db: DB):
     return {"unread": unread(db, actor)}
 
 
+#: 利用者に通知を送る
 @router.post(
     "/notifications",
     status_code=201,
@@ -108,8 +121,14 @@ def send(data: Message, request: Request, actor: User, db: DB):
     return {"id": n.id}
 
 
+#: 通知を既読にする
 @router.put("/notifications/{key}/read", responses={200: {"model": outputs.Read}})
-def mark_read(key: str, actor: User, db: DB):
+def mark_read(
+    #: 既読にする通知の識別子
+    key: str,
+    actor: User,
+    db: DB,
+):
     if not db.scalar(select(Notice.id).where(Notice.id == key, mailbox(actor))):
         raise HTTPException(404)
     if not db.get(NoticeRead, (key, actor.subject)):

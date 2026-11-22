@@ -22,10 +22,20 @@ from tsugite_db.models import Access, PortalKey, new_id
 router = APIRouter()
 
 
+#: APIキーの発行条件
 class KeyInput(Input):
+    #: 認証情報の表示名
     name: str = Field(min_length=1, max_length=120)
+    #: 利用プロジェクトの識別子
     project: str
-    kind: Literal["shared", "personal"]
+    #: APIキーの利用範囲（個人・共有）
+    kind: Literal[
+        #: 共有
+        "shared",
+        #: 個人用
+        "personal",
+    ]
+    #: 対象APIの識別子一覧
     api_ids: list[str] = Field(default_factory=list)
 
 
@@ -43,6 +53,7 @@ def metadata(k):
     }
 
 
+#: 発行済みの認証情報を一覧する
 @router.get("/keys", responses={200: {"model": list[outputs.KeyMetadata]}})
 def list_keys(actor: User, db: DB):
     stmt = select(PortalKey)
@@ -60,6 +71,7 @@ def list_keys(actor: User, db: DB):
     ]
 
 
+#: 認証情報の対象に選べるAPIを一覧する
 @router.get("/key-assets", responses={200: {"model": list[Listing]}})
 def key_assets(actor: User, db: DB):
     from app.apis.catalog.common import listing
@@ -80,6 +92,7 @@ def key_assets(actor: User, db: DB):
     return [listing(a) for a in rows if allowed_audience(a, actor)]
 
 
+#: 従来方式のAPIキーを発行する
 @router.post("/keys", status_code=201, responses={201: {"model": outputs.IssuedKey}})
 def issue(data: KeyInput, request: Request, actor: User, db: DB):
     private = data.project == private_project(actor.subject)
@@ -119,8 +132,15 @@ def issue(data: KeyInput, request: Request, actor: User, db: DB):
     return {**metadata(k), "secret": secret}
 
 
+#: 認証情報を失効させる
 @router.delete("/keys/{key}", responses={200: {"model": outputs.Revoked}})
-def revoke(key: str, request: Request, actor: User, db: DB):
+def revoke(
+    #: 失効させる認証情報の識別子
+    key: str,
+    request: Request,
+    actor: User,
+    db: DB,
+):
     k = db.get(PortalKey, key)
     if not k or not (
         actor.admin

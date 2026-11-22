@@ -67,6 +67,7 @@ def authorize(db, key, project, environment, actor):
     return asset
 
 
+#: 接続先APIに{method}リクエストを転送する
 @router.api_route(
     "/invoke/{key}/{environment}/{project}/{tail:path}",
     methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
@@ -83,17 +84,24 @@ def authorize(db, key, project, environment, actor):
                 "description": desc,
             }
             for key, desc in [
+                #: APIキーの秘密値
                 ("X-API-Key", "キーの秘密値。X-Tsugite-Key-Idと排他。"),
+                #: ポータルで選んだ認証情報の識別子
                 ("X-Tsugite-Key-Id", "ポータルで選択したキーのID。X-API-Keyと排他。"),
+                #: 送信するデータの形式
                 ("Content-Type", "転送ボディのメディアタイプ。省略時はapplication/json。"),
             ]
         ],
     },
 )
 async def invoke(
+    #: 呼び出すAPIの識別子
     key: str,
+    #: 提供環境
     environment: Env,
+    #: 利用プロジェクトの識別子
     project: str,
+    #: 転送先の操作パス
     tail: str,
     request: Request,
     actor: Annotated[Actor, Depends(invoker)],

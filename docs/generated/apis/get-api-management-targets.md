@@ -6,7 +6,7 @@ GET `/api/management-targets`
 
 [API一覧](../README.md) · [CRUD一覧](../crud.md)
 
-共通 · `management_targets_api_management_targets_get` · [management_targets:231](../../../packages/backend/src/app/apis/governance/observability.py#L231)
+共通 · `management_targets_api_management_targets_get` · [management_targets:259](../../../packages/backend/src/app/apis/governance/observability.py#L259)
 
 ## 入力
 
@@ -44,11 +44,11 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| [API利用申請・利用権](../database.md#access_rights) | access_rights | R | テーブルを結合 | join | [management_targets:233](../../../packages/backend/src/app/apis/governance/observability.py#L233) |
-| [API利用申請・利用権](../database.md#access_rights) | access_rights | R | 検索 | select | [management_targets:233](../../../packages/backend/src/app/apis/governance/observability.py#L233) |
+| [API利用申請・利用権](../database.md#access_rights) | access_rights | R | テーブルを結合 | join | [management_targets:261](../../../packages/backend/src/app/apis/governance/observability.py#L261) |
+| [API利用申請・利用権](../database.md#access_rights) | access_rights | R | 検索 | select | [management_targets:261](../../../packages/backend/src/app/apis/governance/observability.py#L261) |
 | [利用者の組織所属](../database.md#affiliations) | affiliations | R | 検索 | select | [populate:69](../../../packages/backend/src/app/core/workspace.py#L69) |
-| [APIカタログ](../database.md#assets) | assets | R | テーブルを結合 | join | [management_targets:233](../../../packages/backend/src/app/apis/governance/observability.py#L233) |
-| [APIカタログ](../database.md#assets) | assets | R | 検索 | select | [management_targets:233](../../../packages/backend/src/app/apis/governance/observability.py#L233) |
+| [APIカタログ](../database.md#assets) | assets | R | テーブルを結合 | join | [management_targets:261](../../../packages/backend/src/app/apis/governance/observability.py#L261) |
+| [APIカタログ](../database.md#assets) | assets | R | 検索 | select | [management_targets:261](../../../packages/backend/src/app/apis/governance/observability.py#L261) |
 | [組織階層](../database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
 | [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:121](../../../packages/backend/src/app/core/auth.py#L121) |
 | [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:56](../../../packages/backend/src/app/core/workspace.py#L56) |
@@ -57,7 +57,7 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:45](../../../packages/backend/src/app/core/config.py#L45) |
+| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:53](../../../packages/backend/src/app/core/config.py#L53) |
 
 <details><summary>解析した関数・依存</summary>
 
