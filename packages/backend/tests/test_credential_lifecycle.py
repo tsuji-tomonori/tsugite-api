@@ -10,6 +10,7 @@ def bearer(token):
 
 
 def test_nested_token_lifetime(portal, monkeypatch):
+    """提供者・部署・プロジェクトの上限、更新と失効の秒境界、発行後の上限短縮を確認する"""
     owner, user, admin = (headers(portal, role) for role in ("provider", "consumer", "admin"))
     asset, _, path = approved(portal, owner, user)
     now = int(time())
@@ -81,6 +82,7 @@ def test_nested_token_lifetime(portal, monkeypatch):
 
 
 def test_persistent_system_and_legacy_expiry(portal, monkeypatch):
+    """60日後もシステム資格で再発行でき、古いアクセストークン・従来キーは失効する"""
     owner, user, admin = (headers(portal, role) for role in ("provider", "consumer", "admin"))
     asset, _, path = approved(portal, owner, user)
     start = int(time())

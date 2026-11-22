@@ -4,6 +4,7 @@ from tests.support.catalog import FORM, headers
 
 
 def test_gateway_authorizer_rechecks_each_invocation(portal, monkeypatch):
+    """権限を毎回照合し、取消後は同じトークンでも拒否する"""
     monkeypatch.setenv("ORIGIN_SECRET", "test-origin")
     owner = headers(portal, "provider")
     user = headers(portal, "consumer")
@@ -58,12 +59,14 @@ def test_gateway_authorizer_rechecks_each_invocation(portal, monkeypatch):
 
 
 def test_stack_deletion_preserves_database():
+    """スタック削除イベントでDBを削除しない"""
     from app.migrate import handler as migrate
 
     assert migrate({"RequestType": "Delete"}, None)["PhysicalResourceId"] == "tsugite-catalog-schema"
 
 
 def test_gateway_scoped_key_authorizer(portal, monkeypatch):
+    """API Gateway用の認可関数で、本人キー・別ユーザー・失効の判定を確認する"""
     from tests.support.catalog import approved
 
     monkeypatch.setenv("ORIGIN_SECRET", "origin")

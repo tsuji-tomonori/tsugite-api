@@ -46,20 +46,36 @@ def signer(monkeypatch):
 @pytest.mark.parametrize(
     "bad",
     [
-        {"issuer": "ignored", "iss": "https://other.invalid"},
-        {"token_use": "id"},
-        {"client_id": "other"},
-        {"exp": 0},
-        {"client_id": "batch", "scope": "openid"},
+        pytest.param(
+            {"issuer": "ignored", "iss": "https://other.invalid"},
+            id="bad0",
+            marks=pytest.mark.case_detail("発行元が設定値と異なる"),
+        ),
+        pytest.param(
+            {"token_use": "id"}, id="bad1", marks=pytest.mark.case_detail("IDトークンを送った場合")
+        ),
+        pytest.param(
+            {"client_id": "other"},
+            id="bad2",
+            marks=pytest.mark.case_detail("未登録クライアントから送信"),
+        ),
+        pytest.param({"exp": 0}, id="bad3", marks=pytest.mark.case_detail("有効期限を過ぎている")),
+        pytest.param(
+            {"client_id": "batch", "scope": "openid"},
+            id="bad4",
+            marks=pytest.mark.case_detail("システム用トークンに呼び出しスコープがない"),
+        ),
     ],
 )
 def test_invalid_token(signer, bad):
+    """条件を満たさないアクセストークンを401で拒否する"""
     with pytest.raises(HTTPException) as exc:
         auth.identify(signer(**bad))
     assert exc.value.status_code == 401
 
 
 def test_people_and_machines(signer):
+    """人とシステムを識別し、システムのポータル利用を拒否する"""
     human = auth.identify(signer())
     assert human.projects == {"finance"} and not human.machine
     machine = auth.identify(signer(client_id="batch", scope="hub/invoke"))

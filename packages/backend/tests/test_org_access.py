@@ -37,6 +37,7 @@ def setup_people(api, monkeypatch):
 
 
 def test_delegation_search_and_personal_isolation(portal, monkeypatch):
+    """公開範囲、委任判断、個人・プロジェクト別申請、部署・役職の自動承認を確認する"""
     admin, people = setup_people(portal, monkeypatch)
     owner = headers(portal, "provider")
     user, lead, neighbor = people["applicant"], people["approver"], people["neighbor"]
@@ -148,6 +149,7 @@ def test_delegation_search_and_personal_isolation(portal, monkeypatch):
 
 
 def test_invitation_respects_identity_source(portal):
+    """Cognitoグループの除外が有効で、ポータルで新設したプロジェクトへの招待も反映される"""
     from app.core.auth import Actor
     from app.core.workspace import populate
     from sqlalchemy.orm import Session

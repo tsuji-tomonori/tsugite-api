@@ -139,6 +139,7 @@ def live_portal(aws, resources, tmp_path, identity, binding=None, ca=None):
     "Cognitoで識別した2人が画面から申請し、承認済みの在庫照会Lambdaを呼ぶ", tags=["CAT", "AUTH", "AUDIT"]
 )
 def test_cognito_browser(aws, resources, tmp_path, request):
+    """Cognitoで識別した2人が画面で承認し、在庫照会・取消・監査まで進める"""
     with live_portal(aws, resources, tmp_path, "cognito-browser") as (url, tokens):
         response = httpx.get(
             url + "/api/me", headers={"Authorization": "Bearer " + tokens["user"]}, trust_env=False
@@ -148,9 +149,15 @@ def test_cognito_browser(aws, resources, tmp_path, request):
 
 
 @pytest.mark.parametrize(
-    ("identity", "upstream"), [("cognito", "lambda"), ("machine", "lambda"), ("cognito", "https")]
+    ("identity", "upstream"),
+    [
+        pytest.param("cognito", "lambda", marks=pytest.mark.case_detail("利用者がLambdaへ接続する")),
+        pytest.param("machine", "lambda", marks=pytest.mark.case_detail("システムがLambdaへ接続する")),
+        pytest.param("cognito", "https", marks=pytest.mark.case_detail("利用者がHTTPS先へ接続する")),
+    ],
 )
 def test_approved_calls_reach_upstream(aws, resources, tmp_path, identity, upstream, request):
+    """承認した呼び出しを接続先へ転送し、権限取消後は遮断する"""
     service = (
         https_stock(aws, tmp_path, os.environ["AWS_CA_BUNDLE"])
         if upstream == "https"
@@ -284,6 +291,7 @@ def test_approved_calls_reach_upstream(aws, resources, tmp_path, identity, upstr
 
 
 def test_marketplace_contracts(aws, resources, tmp_path, request):
+    """6種類を個別に登録・公開・承認して実行し、HTTPSの受信・業務応答・監査記録を照合する"""
     from tools.seed_marketplace import CATALOG, offer
 
     expected = [
@@ -345,6 +353,7 @@ def test_marketplace_contracts(aws, resources, tmp_path, request):
 
 
 def test_upstream_unavailable(aws, resources, tmp_path, request):
+    """承認済みのHTTPS接続先が停止したとき、502と監査・アクセスログを同じIDで追跡できる"""
     from tools.seed_marketplace import CATALOG, offer
 
     with ExitStack() as stack:
@@ -401,6 +410,7 @@ def test_upstream_unavailable(aws, resources, tmp_path, request):
 
 
 def test_cognito_member_lifecycle(aws, resources, tmp_path):
+    """AWS EmulatorのCognitoでユーザー追加・所属・削除・既発行トークンの停止を確認する"""
     with live_portal(aws, resources, tmp_path, "directory") as (url, tokens):
         admin = {"Authorization": "Bearer " + tokens["administrator"]}
         claims = jwt.decode(tokens["user"], options={"verify_signature": False})

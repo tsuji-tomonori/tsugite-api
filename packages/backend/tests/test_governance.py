@@ -8,6 +8,7 @@ from tests.support.catalog import FORM, approved, headers
 
 
 def test_member_lifecycle(portal):
+    """管理者が追加・削除し、同一メールで再登録しても旧利用権を復活させない"""
     admin, other = (headers(portal, r) for r in ("admin", "auditor"))
     data = {"email": "account@example.org", "role": "consumer", "project": "finance"}
     assert portal.post("/api/members", headers=other, json=data).status_code == 403
@@ -31,6 +32,7 @@ def test_member_lifecycle(portal):
 
 
 def test_listing_revisions(portal):
+    """掲載内容の修正と仕様の変更を区別し、競合を検知し、削除後も監査を保持する"""
     owner, user = (headers(portal, r) for r in ("provider", "consumer"))
     key, url, path = approved(portal, owner, user)
     revision = portal.get(url, headers=owner).json()["revision"]
@@ -71,6 +73,7 @@ def test_listing_revisions(portal):
 
 
 def test_notification_scope(portal, monkeypatch):
+    """管理者・提供者の通知先を制御し、同じプロジェクトでも既読状態を利用者ごとに保持する"""
     monkeypatch.setitem(DEMO_GROUPS, "second", ["use-finance"])
     monkeypatch.setitem(DEMO_GROUPS, "other", ["use-another"])
     owner, user, second, other, admin = (
@@ -98,6 +101,7 @@ def test_notification_scope(portal, monkeypatch):
 
 
 def test_alert_window_and_access_logs(portal, monkeypatch, request):
+    """同時実行の上限、通知のみ・停止・解除、次期間の回復、メトリクス集計とログの閲覧範囲を確認する"""
     from app.apis.governance import alerts
 
     monkeypatch.setattr(alerts, "time", lambda: 600.0)
@@ -159,6 +163,7 @@ def test_alert_window_and_access_logs(portal, monkeypatch, request):
 
 
 def test_log_download_pages(portal):
+    """同じ時刻の251件を複数ページに分けて全件取得し、重複・欠落と時差を確認する"""
     from datetime import UTC, datetime, timedelta, timezone
 
     from sqlalchemy.orm import Session

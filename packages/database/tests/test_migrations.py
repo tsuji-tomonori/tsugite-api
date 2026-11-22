@@ -5,6 +5,7 @@ from tsugite_db.session import engine
 
 
 def test_schema_matches_models_and_replays(tmp_path, monkeypatch):
+    """DB定義がモデルと一致し、旧版のデータを移行できる"""
     from tsugite_db.models import Base
 
     cfg = Config("packages/database/alembic.ini")

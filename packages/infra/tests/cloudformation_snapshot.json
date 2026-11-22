@@ -1,0 +1,99 @@
+{
+  "Outputs": {
+    "PortalUrl": {
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "https://",
+            {
+              "Fn::GetAtt": [
+                "PortalDF61C365",
+                "DomainName"
+              ]
+            },
+            "/"
+          ]
+        ]
+      }
+    },
+    "TokenEndpoint": {
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "https://",
+            {
+              "Ref": "IdentitiesLogin52266816"
+            },
+            ".auth.ap-northeast-1.amazoncognito.com/oauth2/token"
+          ]
+        ]
+      }
+    },
+    "UserPoolId": {
+      "Value": {
+        "Ref": "Identities1D2FC062"
+      }
+    }
+  },
+  "Resources": {
+    "Access9901B1FF": "AWS::Lambda::Function",
+    "AccessLogs8B620ECA": "AWS::Logs::LogGroup",
+    "ApiF70053CD": "AWS::Lambda::Function",
+    "ApiLogs3D05D88B": "AWS::Logs::LogGroup",
+    "Auditors": "AWS::Cognito::UserPoolGroup",
+    "BindingsProductionSample181511EB": "AWS::Lambda::Function",
+    "BindingsProductionSampleServiceRole4AC78C87": "AWS::IAM::Role",
+    "BindingsStagingSample55F4FE1F": "AWS::Lambda::Function",
+    "BindingsStagingSampleServiceRoleBB2519F8": "AWS::IAM::Role",
+    "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C512MiB6723FB92": "AWS::Lambda::Function",
+    "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C512MiBServiceRoleBA21DBC1": "AWS::IAM::Role",
+    "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C512MiBServiceRoleDefaultPolicy96C3E726": "AWS::IAM::Policy",
+    "Database": "AWS::DSQL::Cluster",
+    "Gateway43CB3636": "AWS::ApiGatewayV2::Api",
+    "GatewayANYapiinvokeproxyBD262200": "AWS::ApiGatewayV2::Route",
+    "GatewayANYapiinvokeproxyFastAPID630882A": "AWS::ApiGatewayV2::Integration",
+    "GatewayANYapiinvokeproxyFastAPIPermission90FA3531": "AWS::Lambda::Permission",
+    "GatewayANYapiproxyDDDE8D72": "AWS::ApiGatewayV2::Route",
+    "GatewayANYapiproxyFastAPIPermission50F5BE38": "AWS::Lambda::Permission",
+    "GatewayDefaultStage5D47CCA1": "AWS::ApiGatewayV2::Stage",
+    "GatewayProjectAccessEED0D117": "AWS::ApiGatewayV2::Authorizer",
+    "GatewayTsugiteApiGatewayProjectAccess032035CAPermission78664B72": "AWS::Lambda::Permission",
+    "HttpAccessLog2F8A15F0": "AWS::Logs::LogGroup",
+    "Identities1D2FC062": "AWS::Cognito::UserPool",
+    "IdentitiesHubScopeAC0542B3": "AWS::Cognito::UserPoolResourceServer",
+    "IdentitiesLogin52266816": "AWS::Cognito::UserPoolDomain",
+    "IdentitiesMachinefinance215ED571": "AWS::Cognito::UserPoolClient",
+    "IdentitiesMachinesupply12CFCB77": "AWS::Cognito::UserPoolClient",
+    "IdentitiesWebClientA2442E52": "AWS::Cognito::UserPoolClient",
+    "MigrationC13A4580": "AWS::Lambda::Function",
+    "MigrationLogs670D4322": "AWS::Logs::LogGroup",
+    "MigrationServiceRoleD1A96261": "AWS::IAM::Role",
+    "MigrationServiceRoleDefaultPolicyADF9DCD5": "AWS::IAM::Policy",
+    "OriginKey10CF34FB": "AWS::SecretsManager::Secret",
+    "PortalAdmins": "AWS::Cognito::UserPoolGroup",
+    "PortalDF61C365": "AWS::CloudFront::Distribution",
+    "PortalOrigin1S3OriginAccessControl8908121C": "AWS::CloudFront::OriginAccessControl",
+    "PortalSettings3D69E125": "AWS::SSM::Parameter",
+    "RuntimeRoleDefaultPolicy31263C89": "AWS::IAM::Policy",
+    "RuntimeRoleFD8790A4": "AWS::IAM::Role",
+    "RuntimeSpecifications07BBFA98": "AWS::S3::Bucket",
+    "RuntimeSpecificationsPolicy001E76F5": "AWS::S3::BucketPolicy",
+    "RuntimeTokenSigner23A3A8A2": "AWS::SecretsManager::Secret",
+    "Sample9DACD4DE": "AWS::Lambda::Function",
+    "SampleServiceRole93281BDB": "AWS::IAM::Role",
+    "Schema": "AWS::CloudFormation::CustomResource",
+    "SchemaProviderframeworkonEvent33CC9CF6": "AWS::Lambda::Function",
+    "SchemaProviderframeworkonEventServiceRole112B01E5": "AWS::IAM::Role",
+    "SchemaProviderframeworkonEventServiceRoleDefaultPolicyB5A9A421": "AWS::IAM::Policy",
+    "Web3C8945DB": "AWS::S3::Bucket",
+    "WebFilesAwsCliLayer2C3327E8": "AWS::Lambda::LayerVersion",
+    "WebFilesCustomResource512MiB4D7D8575": "Custom::CDKBucketDeployment",
+    "WebPolicy83ABEB90": "AWS::S3::BucketPolicy",
+    "ownfinance": "AWS::Cognito::UserPoolGroup",
+    "ownsupply": "AWS::Cognito::UserPoolGroup",
+    "usefinance": "AWS::Cognito::UserPoolGroup",
+    "usesupply": "AWS::Cognito::UserPoolGroup"
+  }
+}
