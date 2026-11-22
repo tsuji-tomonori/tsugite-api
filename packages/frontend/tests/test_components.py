@@ -150,3 +150,25 @@ def test_publication_history_shows_release_changes(portal_module):
         "追加　GET /stock",
         "変更　GET /items",
     ]
+
+
+def test_login_form_uses_native_labels_and_keyboard_submit(portal_module):
+    """ログインフォームに入力ラベルと自動入力の用途を示し、Enterで送信できる。"""
+    view = portal_module("login_views")
+    ctx = {"config": {"client_id": "web", "identity_endpoint": "https://identity.example"}}
+    _, dom = render(view.portal_form, ctx, Mock(), Mock(), Mock())
+    fields = elements(dom)
+    assert fields["login-user"].getAttribute("autocomplete") == "username"
+    assert fields["login-password"].getAttribute("autocomplete") == "current-password"
+    assert fields["login-password"].getAttribute("type") == "password"
+    assert (
+        dom.getElementsByTagName("form")[0].getElementsByTagName("button")[0].getAttribute("type")
+        == "submit"
+    )
+    assert [
+        label.getElementsByTagName("span")[0].firstChild.data
+        for label in dom.getElementsByTagName("label")
+    ] == [
+        "ユーザー名",
+        "パスワード",
+    ]

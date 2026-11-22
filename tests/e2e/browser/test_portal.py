@@ -298,3 +298,47 @@ def test_governance_console(demo_url, request):
             expect(provider.get_by_text("APIを削除しました")).to_be_visible()
             assert api.get(path, headers=consumer).status_code == 404
         browser.close()
+
+
+def test_portal_login_on_mobile(demo_url):
+    """スマートフォンでログインし、確認コードを入力して元のカタログへ戻れる。"""
+    from playwright.sync_api import expect, sync_playwright
+
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch(executable_path=os.getenv("CHROMIUM_PATH") or None)
+        page = browser.new_page(viewport={"width": 390, "height": 844})
+        token = page.request.post(demo_url + "/api/demo/consumer").json()["access_token"]
+        page.route(
+            "**/api/config",
+            lambda route: route.fulfill(
+                json={
+                    "demo": False,
+                    "client_id": "portal",
+                    "identity_endpoint": demo_url + "/identity",
+                }
+            ),
+        )
+        operations = []
+
+        def identity(route):
+            operation = route.request.headers["x-amz-target"].split(".")[-1]
+            operations.append(operation)
+            if operation == "InitiateAuth":
+                route.fulfill(json={"ChallengeName": "SOFTWARE_TOKEN_MFA", "Session": "pending"})
+            else:
+                route.fulfill(json={"AuthenticationResult": {"AccessToken": token}})
+
+        page.route("**/identity", identity)
+        page.goto(demo_url + "/#/catalog")
+        page.get_by_label("ユーザー名", exact=True).fill("member")
+        page.get_by_label("パスワード", exact=True).fill("example-password")
+        page.get_by_role("button", name="ログイン", exact=True).click()
+        page.get_by_label("確認コード").fill("012345")
+        page.get_by_role("button", name="確認してログイン").click()
+        expect(page.get_by_role("heading", name="APIカタログ", exact=True)).to_be_visible()
+        assert operations == ["InitiateAuth", "RespondToAuthChallenge"]
+        page.get_by_role("button", name="ログアウト").click()
+        expect(page.get_by_role("heading", name="継手APIにログイン")).to_be_visible()
+        assert page.url.startswith(demo_url + "/")
+        assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
+        browser.close()
