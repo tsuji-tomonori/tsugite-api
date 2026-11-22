@@ -1,44 +1,65 @@
 name: Verify
-on: [push, pull_request, workflow_dispatch]
+on:
+  pull_request:
+    branches: [main]
 permissions:
   contents: read
 jobs:
   test:
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: read
+      code-quality: write
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
       - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: true
-      - run: uv python install 3.14 && uv sync --locked --all-packages
-      - run: uv run --locked ruff format --check . && uv run --locked ruff check .
-      - run: uv run --locked pyright && uv run --locked mypy
-      - run: uv run --locked python tools/manage.py synth > /dev/null
-      - run: uv run --locked playwright install --with-deps chromium --only-shell
-      - run: uv run --locked python tools/manage.py contracts
-      - run: uv run --locked python tools/audit_infra.py
-      - run: uv run --locked pip-audit --disable-pip --no-deps -r build/runtime.txt --format json --output artifacts/dependency-audit.json
-      - run: uv run --locked pytest -q --cov=app --cov-branch --junitxml=artifacts/junit.xml --given-md=artifacts/scenarios.md --given-html=artifacts/scenarios.html
-      - name: Install official AWS Emulator 1.0.555
-        run: |
-          package="$RUNNER_TEMP/aws-emulator.deb"
-          curl --fail --location --retry 3 https://downloads.aws.com/aws-emulator/packages/aws-emulator/LTS/aws-emulator_1.0.555-1_amd64.deb --output "$package"
-          echo "c55fa772a1ab6de1c094659e9fac84826df43a744a9aead5c43a5dd68aa7799b  $package" | sha256sum --check
-          dpkg-deb --extract "$package" "$RUNNER_TEMP/emulator"
-          echo "AWS_EMULATOR_BINARY=$RUNNER_TEMP/emulator/opt/aws-emulator/bin/aws-emulator" >> "$GITHUB_ENV"
-      - name: Run AWS Emulator E2E
-        run: uv run --locked python tools/emulator_e2e.py --junitxml=artifacts/aws-emulator.xml
+      - run: uv tool install go-task-bin==3.54.0
+      - run: task setup
+      - run: task browser:install
+      - run: task emulator:install
+      - run: task ci
+      - name: Generate Cobertura coverage report
+        run: uv run --locked --all-packages coverage xml -o artifacts/coverage.xml
+      - name: Check line coverage against the ruleset
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BASE_BRANCH: ${{ github.base_ref }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: uv run --locked --all-packages python tools/check_coverage.py artifacts/coverage.xml
+      - name: Save coverage for future pull requests
+        uses: actions/upload-artifact@v4
+        with:
+          name: line-coverage
+          path: artifacts/coverage.xml
+          if-no-files-found: error
+      - name: Upload coverage to GitHub Code Quality
+        if: github.event.pull_request.head.repo.full_name == github.repository
+        uses: actions/upload-code-coverage@2b21a77928be8d5168c2b9581a67f2adbebacc52 # v1
+        with:
+          file: artifacts/coverage.xml
+          language: Python
+          label: code-coverage/pytest
+          fail-on-error: false
       - name: Build screenshot report
         if: always() && !cancelled()
-        run: uv run --locked python tools/test_report.py --pdf
+        run: task report
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: contracts-and-test-results
           path: |
             artifacts/
-            infra/cdk.out/*.template.json
+            packages/infra/cdk.out/*.template.json
+            docs/generated/

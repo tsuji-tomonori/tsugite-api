@@ -1,0 +1,65 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: GitHub Actions OIDC role for tsuji-tomonori/tsugite-api main deployments.
+
+Parameters:
+  CreateGitHubOidcProvider:
+    Type: String
+    Description: Set to false if this account already has the GitHub Actions OIDC provider.
+    Default: 'true'
+    AllowedValues:
+      - 'true'
+      - 'false'
+
+Conditions:
+  CreateProvider: !Equals [!Ref CreateGitHubOidcProvider, 'true']
+
+Resources:
+  GitHubOidcProvider:
+    Type: AWS::IAM::OIDCProvider
+    Condition: CreateProvider
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      Url: https://token.actions.githubusercontent.com
+      ClientIdList:
+        - sts.amazonaws.com
+
+  GitHubDeployRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Description: Allows the tsugite-api main branch and GitHub environment to assume CDK deployment roles.
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: !If
+                - CreateProvider
+                - !Ref GitHubOidcProvider
+                - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:oidc-provider/token.actions.githubusercontent.com
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals:
+                token.actions.githubusercontent.com:aud: sts.amazonaws.com
+                token.actions.githubusercontent.com:sub: repo:tsuji-tomonori@39981658/tsugite-api@1466432528:environment:main
+                token.actions.githubusercontent.com:ref: refs/heads/main
+      Policies:
+        - PolicyName: AssumeCdkBootstrapRoles
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: sts:AssumeRole
+                Resource:
+                  - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-deploy-role-${AWS::AccountId}-${AWS::Region}
+                  - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-file-publishing-role-${AWS::AccountId}-${AWS::Region}
+      Tags:
+        - Key: Application
+          Value: TsugiteAPI
+        - Key: ManagedBy
+          Value: CloudFormation
+
+Outputs:
+  GitHubDeployRoleArn:
+    Description: Set this ARN as AWS_DEPLOY_ROLE_ARN in the GitHub Actions main environment.
+    Value: !GetAtt GitHubDeployRole.Arn

@@ -1,0 +1,4 @@
+#!/bin/sh
+set -eu
+.githooks/scan-secrets
+exec task hook:staged

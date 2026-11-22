@@ -1,4 +1,6 @@
 #!/bin/sh
+set -eu
+.githooks/scan-secrets "$1"
 
 subject=$(awk '/[^[:space:]]/ { print; exit }' "$1") || exit 1
 types='build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test'

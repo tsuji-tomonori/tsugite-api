@@ -1,4 +1,4 @@
-"""継手APIの起動・検証・AWS配備。リポジトリ直下で uv run python tools/manage.py を実行する。"""
+"""継手APIの起動・検証・AWS配備。リポジトリ直下のTaskfileから実行する。"""
 
 import argparse
 import json
@@ -25,13 +25,20 @@ def main():
             name, help="AWS CDKの" + ("合成" if name == "synth" else "配備とDB移行")
         )
         cmd.add_argument("--bindings", type=Path, help="プロジェクトと接続先を指定するJSONファイル")
+        if name == "deploy":
+            cmd.add_argument(
+                "--require-approval",
+                choices=("never", "any-change", "broadening"),
+                help="CDKがデプロイ時に対話で承認を求める条件",
+            )
     args = parser.parse_args()
     os.chdir(ROOT)
     if args.command == "demo":
         os.environ["TSUGITE_DEMO"] = "1"
         frontend()
         subprocess.run(
-            [sys.executable, "-m", "alembic", "-c", "backend/alembic.ini", "upgrade", "head"], check=True
+            [sys.executable, "-m", "alembic", "-c", "packages/database/alembic.ini", "upgrade", "head"],
+            check=True,
         )
         subprocess.run(
             [
@@ -47,22 +54,26 @@ def main():
             check=True,
         )
     elif args.command == "contracts":
-        from app.db.models import Base
         from app.main import create_app
+        from tsugite_db.design_names import design_tables, table_names
 
         out = Path("artifacts")
         out.mkdir(exist_ok=True)
+        names = table_names()
         schema = {
             table.name: [
                 {
                     "column": c.name,
+                    "column_name_ja": names[table.name]["columns"][c.name],
+                    "table_name_ja": names[table.name]["table"],
+                    "record_name_ja": names[table.name]["record"],
                     "type": str(c.type),
                     "nullable": c.nullable,
                     "primary_key": c.primary_key,
                 }
                 for c in table.columns
             ]
-            for table in Base.metadata.sorted_tables
+            for table, _ in design_tables()
         }
         for name, data in (("openapi", create_app().openapi()), ("tables", schema)):
             (out / (name + ".json")).write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n")
@@ -70,10 +81,12 @@ def main():
         frontend()
         backend()
         if args.command != "build":
-            context = ["-c", "bindings=" + str(args.bindings.resolve())] if args.bindings else []
+            cdk_args = ["-c", "bindings=" + str(args.bindings.resolve())] if args.bindings else []
+            if args.command == "deploy" and args.require_approval:
+                cdk_args.extend(["--require-approval", args.require_approval])
             subprocess.run(
-                ["npx", "--yes", "--package", "aws-cdk@2.1149.0", "cdk", args.command, *context],
-                cwd=ROOT / "infra",
+                ["npx", "--yes", "--package", "aws-cdk@2.1149.0", "cdk", args.command, *cdk_args],
+                cwd=ROOT / "packages/infra",
                 check=True,
             )
 

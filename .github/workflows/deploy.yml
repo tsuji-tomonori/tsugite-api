@@ -1,0 +1,108 @@
+name: Deploy to AWS
+
+on:
+  push:
+    branches: [main]
+
+permissions: {}
+
+jobs:
+  verify-merge:
+    name: Confirm merged pull request
+    if: github.repository == 'tsuji-tomonori/tsugite-api' && !github.event.deleted && !github.event.forced
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      pull-requests: read
+    outputs:
+      merged: ${{ steps.merge.outputs.merged }}
+    steps:
+      - name: Match the main commit to a merged pull request
+        id: merge
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          endpoint="repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls?per_page=100"
+
+          # A push event can arrive before the pull request is indexed by GitHub.
+          for delay in 1 2 4 8 0; do
+            pulls=$(gh api --paginate --slurp "$endpoint")
+            if jq -e --arg sha "$GITHUB_SHA" --arg repo "$GITHUB_REPOSITORY" '
+              any(.[][]; .merged_at != null and .merge_commit_sha == $sha and
+                .base.ref == "main" and .base.repo.full_name == $repo)
+            ' <<< "$pulls" > /dev/null; then
+              echo "merged=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            sleep "$delay"
+          done
+
+          echo "No merged pull request targets main at $GITHUB_SHA. Skipping deployment."
+
+  deploy:
+    if: needs.verify-merge.outputs.merged == 'true'
+    needs: verify-merge
+    environment: main
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      id-token: write
+    concurrency:
+      group: tsugite-api-aws-deploy
+      queue: max
+    steps:
+      - name: Check that this commit is still the tip of main
+        id: current
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          latest=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq '.object.sha')
+          if [[ "$latest" == "$GITHUB_SHA" ]]; then
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "main has advanced to $latest. Skipping the older deployment."
+          fi
+
+      - name: Check AWS configuration
+        if: steps.current.outputs.deploy == 'true'
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION }}
+          AWS_DEPLOY_ROLE_ARN: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+        run: |
+          : "${AWS_REGION:?Set AWS_REGION in the GitHub Actions main environment}"
+          : "${AWS_DEPLOY_ROLE_ARN:?Set AWS_DEPLOY_ROLE_ARN in the GitHub Actions main environment to the CloudFormation GitHubDeployRoleArn output}"
+
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        if: steps.current.outputs.deploy == 'true'
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        if: steps.current.outputs.deploy == 'true'
+        with:
+          node-version: "22"
+
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
+        if: steps.current.outputs.deploy == 'true'
+        with:
+          enable-cache: false
+
+      - name: Install deployment dependencies
+        if: steps.current.outputs.deploy == 'true'
+        run: |
+          uv python install 3.14
+          uv sync --locked --all-packages
+
+      - name: Authenticate to AWS using OIDC
+        if: steps.current.outputs.deploy == 'true'
+        uses: aws-actions/configure-aws-credentials@61815dcd50bd041e203e49132bacad1fd04d2708 # v5
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+          role-session-name: gha-tsugite-${{ github.run_id }}-${{ github.run_attempt }}
+
+      - name: Deploy the CDK stack and run its database migration
+        if: steps.current.outputs.deploy == 'true'
+        run: uv run --locked --all-packages python tools/manage.py deploy --require-approval never

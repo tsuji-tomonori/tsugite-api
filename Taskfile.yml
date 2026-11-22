@@ -1,0 +1,151 @@
+version: '3'
+
+vars:
+  RUN: uv run --locked --all-packages
+  MANAGE: '{{.RUN}} python tools/manage.py'
+
+tasks:
+  default:
+    cmds: [task --list]
+  setup:
+    desc: Python・依存関係を同期し、このcloneのGitフックを有効にする
+    cmds:
+      - uv python install 3.14
+      - uv sync --locked --all-packages
+      - git config --local core.hooksPath .githooks
+      - git config --local commit.template .gitmessage.txt
+  deps:add:
+    desc: ワークスペースのパッケージに依存を追加
+    cmds: ['uv add {{.CLI_ARGS}}']
+  deps:remove:
+    desc: ワークスペースのパッケージから依存を削除
+    cmds: ['uv remove {{.CLI_ARGS}}']
+  lock:
+    desc: ワークスペースの依存ロックを更新
+    cmds: ['uv lock']
+  hook:staged:
+    cmds: ['uv run --locked --no-sync python tools/check_text.py --staged']
+  text:
+    desc: Git管理下のテキストを検査
+    cmds: ['{{.RUN}} python tools/check_text.py']
+  lint:
+    desc: 書式と静的検査
+    cmds:
+      - '{{.RUN}} ruff format --check .'
+      - '{{.RUN}} ruff check .'
+      - task: text
+  format:
+    desc: Pythonのimportと書式を整える
+    cmds:
+      - '{{.RUN}} ruff check --fix .'
+      - '{{.RUN}} ruff format .'
+  types:
+    desc: 型検査
+    cmds: ['{{.RUN}} pyright', '{{.RUN}} mypy']
+  docs:
+    desc: OpenAPI仕様とSQL・AWSのCRUD設計書をMarkdownに出力
+    cmds: ['{{.RUN}} python -m tools.design.generate']
+  docs:commit:
+    desc: CIで再生成した設計書の差分だけを既定ブランチへ反映
+    preconditions:
+      - test "$GITHUB_ACTIONS" = true
+      - test "$GITHUB_REF_NAME" = "$DEFAULT_BRANCH"
+    cmds:
+      - task: docs
+      - |
+        # A newer push has its own verification and publication run.
+        if [ "$(git ls-remote --exit-code origin "refs/heads/$DEFAULT_BRANCH" | cut -f1)" != "$GITHUB_SHA" ]; then
+          exit 0
+        fi
+        git add -A -- docs/generated
+        if ! git diff --cached --quiet -- docs/generated; then
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' -c core.hooksPath=/dev/null commit -m 'docs: regenerate API implementation design' --only -- docs/generated
+          git push origin "HEAD:refs/heads/$DEFAULT_BRANCH"
+        fi
+  demo:
+    desc: ローカルポータルを起動
+    cmds: ['{{.MANAGE}} demo {{.CLI_ARGS}}']
+  seed:
+    desc: デモのAPIを登録
+    cmds: ['{{.RUN}} python tools/seed_marketplace.py {{.CLI_ARGS}}']
+  build:
+    desc: SPAとLambda配布物を作成
+    cmds: ['{{.MANAGE}} build']
+  synth:
+    desc: ビルドしてCDKテンプレートを合成
+    cmds: ['{{.MANAGE}} synth {{.CLI_ARGS}}']
+  deploy:
+    desc: AWSに配備してDBを移行
+    cmds: ['{{.MANAGE}} deploy {{.CLI_ARGS}}']
+  migrate:
+    desc: 指定されたデータベースを最新版へ移行
+    cmds: ['{{.RUN}} alembic -c packages/database/alembic.ini upgrade head']
+  contracts:
+    desc: OpenAPI JSONとテーブル定義を出力
+    cmds: ['{{.MANAGE}} contracts']
+  browser:install:
+    desc: PlaywrightのChromiumとシステム依存を導入
+    cmds: ['{{.RUN}} playwright install --with-deps chromium --only-shell']
+  emulator:install:
+    desc: CI用バージョンのAWS Emulatorを一時ディレクトリへ導入
+    cmds:
+      - |
+        dir="${RUNNER_TEMP:-${TMPDIR:-/tmp}}/tsugite-aws-emulator"
+        mkdir -p "$dir"
+        curl --fail --location --retry 3 https://downloads.aws.com/aws-emulator/packages/aws-emulator/LTS/aws-emulator_1.0.555-1_amd64.deb --output "$dir/package.deb"
+        echo "c55fa772a1ab6de1c094659e9fac84826df43a744a9aead5c43a5dd68aa7799b  $dir/package.deb" | sha256sum --check
+        dpkg-deb --extract "$dir/package.deb" "$dir"
+  audit:
+    desc: CDKおよびLambda実行時依存関係を監査（synthの後に実行）
+    cmds:
+      - '{{.RUN}} python tools/audit_infra.py'
+      - '{{.RUN}} pip-audit --disable-pip --no-deps -r build/runtime.txt --format json --output artifacts/dependency-audit.json'
+  test:frontend:
+    desc: フロントエンドの単体テスト
+    cmds: ['{{.RUN}} pytest -q packages/frontend/tests {{.CLI_ARGS}}']
+  test:backend:
+    desc: バックエンドの単体・APIテスト
+    cmds: ['{{.RUN}} pytest -q packages/backend/tests {{.CLI_ARGS}}']
+  test:database:
+    desc: DBマイグレーションテスト
+    cmds: ['{{.RUN}} pytest -q packages/database/tests {{.CLI_ARGS}}']
+  test:infra:
+    desc: CDKの単体テスト
+    cmds: ['{{.RUN}} pytest -q packages/infra/tests {{.CLI_ARGS}}']
+  test:mutation:
+    desc: 代表的な変更を一時コピーに加え、単体テストが検知するか確認
+    cmds: ['{{.RUN}} python tools/mutation_test.py {{.CLI_ARGS}}']
+  test:hooks:
+    desc: 一時リポジトリでコミットとプッシュのフックを検証
+    cmds: ['bash tools/test_git_hooks.sh']
+  test:tools:
+    desc: 設計書生成・共通ツールのテスト
+    cmds: ['{{.RUN}} pytest -q tools/tests {{.CLI_ARGS}}']
+  test:e2e:
+    desc: ブラウザーでのE2E（buildの後に実行）
+    cmds: ['{{.RUN}} pytest -q tests/e2e/browser {{.CLI_ARGS}}']
+  test:aws:
+    desc: AWS EmulatorでのE2E（synthの後に実行）
+    cmds:
+      - |
+        export AWS_EMULATOR_BINARY="${AWS_EMULATOR_BINARY:-${RUNNER_TEMP:-${TMPDIR:-/tmp}}/tsugite-aws-emulator/opt/aws-emulator/bin/aws-emulator}"
+        {{.RUN}} python tools/emulator_e2e.py --junitxml=artifacts/aws-emulator.xml {{.CLI_ARGS}}
+  test:
+    desc: 全パッケージとブラウザーのテスト結果を保存
+    cmds:
+      - '{{.RUN}} pytest -q --cov=app --cov=tsugite_db --cov-branch --junitxml=artifacts/junit.xml --given-md=artifacts/scenarios.md --given-html=artifacts/scenarios.html {{.CLI_ARGS}}'
+  report:
+    desc: HTML・PDFテストレポートを作成
+    cmds: ['{{.RUN}} python tools/test_report.py --pdf']
+  ci:
+    desc: CIの検証を順に実行
+    cmds:
+      - task: test:hooks
+      - task: lint
+      - task: types
+      - task: synth
+      - task: contracts
+      - task: docs
+      - task: audit
+      - task: test
+      - task: test:aws
