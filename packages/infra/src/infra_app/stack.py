@@ -8,6 +8,7 @@ from aws_cdk import aws_lambda as fn
 from constructs import Construct
 
 from .bindings import UpstreamBindings
+from .chat import PortalChat
 from .database import CatalogDatabase
 from .delivery import PortalDelivery
 from .functions import ROOT
@@ -37,7 +38,8 @@ class CatalogStack(Stack):
         dependency_code = fn.Code.from_asset(str(ROOT / "build/runtime-layer.zip"))
         database = CatalogDatabase(self, "Database")
         runtime = ApiRuntime(self, "Runtime", database.cluster, param, code, dependency_code)
-        database.install_schema(runtime.role, code, runtime.dependencies)
+        chat = PortalChat(self, "Chat", runtime.api, database.cluster, code, runtime.dependencies)
+        database.install_schema(runtime.role, code, runtime.dependencies, chat.worker_role)
         gateway = CatalogGateway(self, "Gateway", prefix, runtime.api, runtime.authorizer)
         delivery = PortalDelivery(self, "Portal", prefix, gateway.api, runtime.origin_secret)
         identity = PortalIdentity(self, "Identities", projects, delivery.url)

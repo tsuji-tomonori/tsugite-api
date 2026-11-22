@@ -5,6 +5,7 @@ from aws_cdk import aws_lambda as fn
 from aws_cdk import aws_logs as logs
 
 ROOT = Path(__file__).resolve().parents[4]
+EVENT_PYTHON = fn.Runtime("python3.15", fn.RuntimeFamily.PYTHON)
 
 
 def catalog_function(scope, name, handler, env, code, dependencies, execution_role=None):
@@ -12,7 +13,7 @@ def catalog_function(scope, name, handler, env, code, dependencies, execution_ro
     f = fn.Function(
         scope,
         name,
-        runtime=fn.Runtime.PYTHON_3_14,
+        runtime=EVENT_PYTHON,
         handler=handler,
         code=code,
         layers=[dependencies],

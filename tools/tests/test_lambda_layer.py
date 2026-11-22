@@ -1,6 +1,7 @@
 import hashlib
 from zipfile import ZipFile
 
+from tools import build_backend
 from tools.build_backend import sync_layer
 
 
@@ -47,3 +48,28 @@ def test_layer_rebuild_is_reproducible(tmp_path, monkeypatch):
         )
     sync_layer(locked_wheel(tmp_path, "2.0"), second)
     assert first.read_bytes() != second.read_bytes()
+
+
+def test_each_lambda_layer_exports_its_locked_dependencies(tmp_path, monkeypatch):
+    """各Layerが対応する依存群をロックから取り出し、正しいPythonの版で同期する。"""
+    monkeypatch.setattr(build_backend, "ROOT", tmp_path)
+    exports = {}
+    installs = {}
+
+    def export(args, **kwargs):
+        assert args[:3] == ["uv", "export", "--locked"]
+        assert "--no-emit-workspace" in args and "--no-hashes" not in args
+        assert kwargs["check"] and kwargs["cwd"] == tmp_path
+        exports[args[-1]] = args[3 : args.index("--no-emit-workspace")]
+
+    def install(requirements, archive, python_version):
+        installs[archive.name] = (exports[str(requirements)], python_version)
+
+    monkeypatch.setattr(build_backend.subprocess, "run", export)
+    monkeypatch.setattr(build_backend, "sync_layer", install)
+    build_backend.build_layers()
+    assert installs == {
+        "runtime-layer.zip": (["--package", "tsugite-backend", "--no-dev"], "3.15"),
+        "decision-model-layer.zip": (["--only-group", "decision-model"], "3.14"),
+        "model-sdk-layer.zip": (["--only-group", "model-sdk"], "3.14"),
+    }

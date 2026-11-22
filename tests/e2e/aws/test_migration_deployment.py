@@ -4,11 +4,12 @@ import json
 import shlex
 import shutil
 import subprocess
-import sys
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
 import pytest
+from alembic.config import Config
+from alembic.script import ScriptDirectory
 from boto3.s3.transfer import TransferConfig
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -111,18 +112,27 @@ def test_run_packaged_migration_on_postgresql(aws, migration_archive, tmp_path):
         )
         try:
             runner = Path(__file__).with_name("migration_package.py")
+            config = Config(str(ROOT / "packages/database/alembic.ini"))
+            revision = ScriptDirectory.from_config(config).get_current_head()
+            assert revision is not None
             subprocess.run(
                 [
-                    sys.executable,
+                    "uv",
+                    "run",
+                    "--no-project",
+                    "--python",
+                    "3.15",
+                    "python",
                     "-I",
                     "-S",
                     str(runner),
                     str(package_dir),
                     str(layer_dir / "python"),
                     directory,
+                    revision,
                 ],
                 check=True,
-                timeout=45,
+                timeout=120,
             )
         finally:
             subprocess.run([*control, "-m", "fast", "stop"], check=True, timeout=25)

@@ -44,15 +44,13 @@ def test_css_and_authentication_have_different_consumers(tmp_path):
     assert auth["aws_portal_only"] and auth["aws"] and auth["synth"]
 
 
-def test_frontend_builder_runs_stylesheet_and_design_policy_tests(tmp_path, monkeypatch):
+def test_frontend_builder_runs_stylesheet_and_design_policy_tests(tmp_path):
     """画面のビルド処理を変えるとCSS解析とコード解析の規則も検査する。"""
     cached_report(tmp_path)
-    monkeypatch.chdir(tmp_path)
-    policy = Path(ci.BACKEND, "architecture/test_design_sources.py")
-    policy.parent.mkdir(parents=True)
-    policy.touch()
-    plan = ci.select(["tools/build_frontend.py"], SUITES, tmp_path)
-    assert {ci.BACKEND, ci.FRONTEND, ci.BROWSER, ci.TOOLS} == set(plan["suites"])
+    suites = [*SUITES, ci.ARCHITECTURE]
+    (tmp_path / "coverage-parts" / ci.part_name(ci.ARCHITECTURE)).touch()
+    plan = ci.select(["tools/build_frontend.py"], suites, tmp_path)
+    assert {ci.ARCHITECTURE, ci.FRONTEND, ci.BROWSER, ci.TOOLS} == set(plan["suites"])
 
 
 def test_infra_and_aws_require_browser_and_assets(tmp_path):
@@ -117,3 +115,84 @@ def test_git_diff_includes_deleted_and_both_renamed_paths(tmp_path, monkeypatch)
     git("add", "-A")
     git("-c", "user.name=CI", "-c", "user.email=ci@example.invalid", "commit", "-qm", "head")
     assert set(ci.changed_paths("HEAD^")) == {str(old), str(new), str(removed)}
+
+
+def test_coverage_includes_all_runtime_layers_and_unexecuted_files(tmp_path, monkeypatch):
+    """全領域の実行行と未実行行を区別し、未読込のモデルとインフラの入口も分母に含める。"""
+    import json
+    import os
+    import sys
+
+    sources = [
+        "packages/backend/src/app/api.py",
+        "packages/database/src/tsugite_db/session.py",
+        "packages/frontend/src/web_app/app.py",
+        "packages/infra/src/infra_app/stack.py",
+        "packages/infra/app.py",
+        "agent/worker.py",
+        "agent/models/nested/inference.py",
+    ]
+    for name in [*sources, "packages/infra/tests/test_stack.py", "packages/infra/cdk.out/asset/copy.py"]:
+        file = tmp_path / name
+        file.parent.mkdir(parents=True, exist_ok=True)
+        file.write_text("def run():\n    return 123\n")
+    config = Path(ci.__file__).resolve().parents[1] / "pyproject.toml"
+    command = [sys.executable, "-m", "coverage"]
+    env = {**os.environ, "COVERAGE_FILE": str(tmp_path / ".coverage")}
+    subprocess.run(
+        [*command, "run", f"--rcfile={config}", sources[2]], cwd=tmp_path, env=env, check=True
+    )
+    subprocess.run([*command, "json", f"--rcfile={config}"], cwd=tmp_path, env=env, check=True)
+    files = json.loads((tmp_path / "coverage.json").read_text())["files"]
+    files = {Path(name).as_posix(): data for name, data in files.items()}
+    assert set(files) == set(sources)
+    assert files[sources[2]]["executed_lines"] == [1]
+    assert files[sources[2]]["missing_lines"] == [2]
+    assert all(files[name]["missing_lines"] == [1, 2] for name in sources if name != sources[2])
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("COVERAGE_FILE", env["COVERAGE_FILE"])
+    report = tmp_path / "coverage.xml"
+    ci.write_coverage_report(report)
+    assert {entry.attrib["filename"] for entry in ci.ElementTree.parse(report).iter("class")} == set(
+        sources
+    )
+
+
+def test_changed_screen_invalidates_only_suites_that_executed_it(tmp_path):
+    """画面変更時はその画面を実行した別の層を再計測し、無関係な層の結果を再利用する。"""
+    import json
+
+    cached_report(tmp_path)
+    screen = "packages/frontend/src/web_app/guide_views.py"
+    for suite, files in [(ci.DATABASE, [screen]), (ci.INFRA, ["packages/infra/app.py"])]:
+        part = tmp_path / "coverage-parts" / ci.part_name(suite)
+        part.write_bytes(b"measured")
+        part.with_suffix(".json").write_text(json.dumps(files))
+    plan = ci.select([screen], SUITES, tmp_path)
+    assert set(plan["suites"]) == {ci.FRONTEND, ci.DATABASE, ci.BROWSER}
+
+
+def test_cache_requires_same_coverage_policy(tmp_path):
+    """旧形式または異なる計測条件の結果は再利用せず、同じ条件の結果だけを使う。"""
+    marker = tmp_path / ci.POLICY_FILE
+    marker.parent.mkdir()
+    assert not ci.compatible_coverage(tmp_path)
+    marker.write_text("legacy")
+    assert not ci.compatible_coverage(tmp_path)
+    marker.write_text(ci.coverage_policy())
+    assert ci.compatible_coverage(tmp_path)
+
+
+def test_baseline_retry_requires_only_browser_timeouts(tmp_path):
+    """比較元でブラウザーのタイムアウトだけが起きた場合に限り再計測する。"""
+    from tools.check_coverage import only_browser_timeouts
+
+    junit = tmp_path / "junit.xml"
+    for elements, retry in [
+        ("", False),
+        ("<failure>playwright._impl._errors.TimeoutError</failure>", True),
+        ("<failure>AssertionError</failure>", False),
+        ("<failure>playwright._impl._errors.TimeoutError</failure><error/>", False),
+    ]:
+        junit.write_text(f"<testsuite><testcase>{elements}</testcase></testsuite>")
+        assert only_browser_timeouts(junit) is retry

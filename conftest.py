@@ -2,7 +2,7 @@ import inspect
 
 import pytest
 
-from tests.support.case_text import is_japanese_case_text
+from tests.architecture.case_text import is_japanese_case_text
 
 
 def pytest_collection_modifyitems(items):
