@@ -25,6 +25,94 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
+        "architecture",
+        "判定モデルが欠けた配布物を許可する",
+        "tests/architecture/model_artifacts.py",
+        '{"decision", "tool", "generate"} - manifest.keys()',
+        '{"tool", "generate"} - manifest.keys()',
+        "tests/architecture/test_rule_checks.py::test_model_distribution_requires_all_three_roles",
+    ),
+    Mutation(
+        "architecture",
+        "英語だけのテスト説明を許可する",
+        "tests/architecture/case_text.py",
+        " and bool(KANA.search(text))",
+        "",
+        "tests/architecture/test_rule_checks.py::test_case_explanation_requires_one_japanese_sentence",
+    ),
+    Mutation(
+        "architecture",
+        "層を越える依存をすべて許可する",
+        "tests/architecture/dependencies.py",
+        "target in ALLOWED[owner]",
+        "owner in ALLOWED",
+        "tests/architecture/test_rule_checks.py::test_boundary_checker_rejects_cross_layer_imports",
+    ),
+    Mutation(
+        "architecture",
+        "相対インポートの検査を飛ばす",
+        "tests/architecture/dependencies.py",
+        "elif isinstance(node, ast.ImportFrom):",
+        "elif isinstance(node, ast.ImportFrom) and not node.level:",
+        "tests/architecture/test_rule_checks.py::test_boundary_checker_rejects_cross_layer_imports",
+    ),
+    Mutation(
+        "architecture",
+        "共有ガイドの利用も拒否する",
+        "tests/architecture/dependencies.py",
+        'module == "agent.retrieval" and',
+        'module == "agent.unused" and',
+        "tests/architecture/test_rule_checks.py::test_boundary_checker_accepts_supported_collaboration",
+    ),
+    Mutation(
+        "architecture",
+        "新規パッケージを無条件にバックエンドとして扱う",
+        "tests/architecture/dependencies.py",
+        'raise ValueError(f"{path}: 新しいパッケージの依存規則を定義してください")',
+        'return "app"',
+        "tests/architecture/test_rule_checks.py::test_new_package_requires_layer_rules",
+    ),
+    Mutation(
+        "architecture",
+        "コード例の見出しを文書の表題として採用する",
+        "tests/architecture/test_documents.py",
+        'if not fence and line.startswith("# "):',
+        'if line.startswith("# "):',
+        "tests/architecture/test_rule_checks.py::test_document_checker_uses_title_outside_code_examples",
+    ),
+    Mutation(
+        "architecture",
+        "生成設計書を検査対象から外す",
+        "tests/architecture/project.py",
+        "if name not in EXCLUDED",
+        'if name != "generated" and name not in EXCLUDED',
+        "tests/architecture/test_rule_checks.py::test_project_discovery_includes_new_components",
+    ),
+    Mutation(
+        "architecture",
+        "長さだけで重みのハッシュを受け付ける",
+        "tests/architecture/model_artifacts.py",
+        ' or any(ch not in "0123456789abcdef" for ch in digest)',
+        "",
+        "tests/architecture/test_rule_checks.py::test_model_checker_rejects_unpinned_weight",
+    ),
+    Mutation(
+        "architecture",
+        "非同期テストを日本語説明の検査対象から外す",
+        "tests/architecture/test_case_descriptions.py",
+        "(ast.FunctionDef, ast.AsyncFunctionDef)",
+        "ast.FunctionDef",
+        "tests/architecture/test_rule_checks.py::test_case_discovery_includes_async_class_methods",
+    ),
+    Mutation(
+        "architecture",
+        "設計解析に正規表現を許可する",
+        "tests/architecture/test_design_sources.py",
+        'if imported.split(".")[0] in REGEX:',
+        "if False:",
+        "tests/architecture/test_design_sources.py::test_analysis_policy_follows_renamed_helpers_and_relative_imports",
+    ),
+    Mutation(
         "lambda-layer",
         "Layerに依存を配置するディレクトリを誤る",
         "tools/build_backend.py",
@@ -94,7 +182,7 @@ MUTATIONS = (
         "packages/database/src/tsugite_db/source_docs.py",
         "self.comments.get(node.lineno - 1",
         "self.comments.get(node.lineno - 2",
-        "packages/backend/tests/architecture/test_design_sources.py::"
+        "tests/architecture/test_design_sources.py::"
         "test_schema_field_uses_only_the_comment_on_its_declaration",
     ),
     Mutation(
@@ -103,7 +191,7 @@ MUTATIONS = (
         "packages/backend/src/app/design_names.py",
         "import inspect",
         "import inspect\nimport re as parser",
-        "packages/backend/tests/architecture/test_design_sources.py::"
+        "tests/architecture/test_design_sources.py::"
         "test_design_analysis_uses_only_python_sources_and_syntax_trees",
     ),
     Mutation(
