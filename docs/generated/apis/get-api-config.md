@@ -36,9 +36,15 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 ## SQL・AWSの操作
 
-| 種別 | 対象の和名 | 物理名 | CRUD | 処理内容 | 実装 | 根拠 |
-| --- | --- | --- | --- | --- | --- | --- |
-| AWS | 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:45](../../../packages/backend/src/app/core/config.py#L45) |
+### SQLテーブル
+
+該当する操作を検出しませんでした。
+
+### AWSサービス
+
+| 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
+| --- | --- | --- | --- | --- | --- |
+| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:45](../../../packages/backend/src/app/core/config.py#L45) |
 
 <details><summary>解析した関数・依存</summary>
 

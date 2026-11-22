@@ -63,16 +63,23 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 ## SQL・AWSの操作
 
-| 種別 | 対象の和名 | 物理名 | CRUD | 処理内容 | 実装 | 根拠 |
-| --- | --- | --- | --- | --- | --- | --- |
-| AWS | 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:45](../../../packages/backend/src/app/core/config.py#L45) |
-| SQL | [利用者の組織所属](../database.md#affiliations) | affiliations | R | 検索 | select | [populate:69](../../../packages/backend/src/app/core/workspace.py#L69) |
-| SQL | [監査履歴](../database.md#audit_events) | audit_events | R | 検索 | select | [audit:24](../../../packages/backend/src/app/apis/catalog/audit/router.py#L24) |
-| SQL | [組織階層](../database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
-| SQL | [API呼び出し履歴](../database.md#invocation_logs) | invocation_logs | R | 主キーで取得 | db.get | [audit:27](../../../packages/backend/src/app/apis/catalog/audit/router.py#L27) |
-| SQL | [API呼び出しと組織の対応](../database.md#invocation_units) | invocation_units | R | 検索 | select | [audit:29](../../../packages/backend/src/app/apis/catalog/audit/router.py#L29) |
-| SQL | [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:121](../../../packages/backend/src/app/core/auth.py#L121) |
-| SQL | [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:56](../../../packages/backend/src/app/core/workspace.py#L56) |
+### SQLテーブル
+
+| 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
+| --- | --- | --- | --- | --- | --- |
+| [利用者の組織所属](../database.md#affiliations) | affiliations | R | 検索 | select | [populate:69](../../../packages/backend/src/app/core/workspace.py#L69) |
+| [監査履歴](../database.md#audit_events) | audit_events | R | 検索 | select | [audit:24](../../../packages/backend/src/app/apis/catalog/audit/router.py#L24) |
+| [組織階層](../database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
+| [API呼び出し履歴](../database.md#invocation_logs) | invocation_logs | R | 主キーで取得 | db.get | [audit:27](../../../packages/backend/src/app/apis/catalog/audit/router.py#L27) |
+| [API呼び出しと組織の対応](../database.md#invocation_units) | invocation_units | R | 検索 | select | [audit:29](../../../packages/backend/src/app/apis/catalog/audit/router.py#L29) |
+| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:121](../../../packages/backend/src/app/core/auth.py#L121) |
+| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:56](../../../packages/backend/src/app/core/workspace.py#L56) |
+
+### AWSサービス
+
+| 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
+| --- | --- | --- | --- | --- | --- |
+| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:45](../../../packages/backend/src/app/core/config.py#L45) |
 
 <details><summary>解析した関数・依存</summary>
 

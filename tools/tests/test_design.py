@@ -39,6 +39,40 @@ def test_all_routes_inputs_outputs_and_cleanup(tmp_path):
     assert all(t in ndjson for t in ["application/x-ndjson", "X-Next-Cursor", "Content-Disposition"])
 
 
+def test_crud_matrices_cover_all_routes_and_match_per_api_evidence(tmp_path):
+    from tsugite_db.design_names import table_names
+
+    generate(tmp_path)
+    document = (tmp_path / "crud.md").read_text()
+    sql, aws = document.split("## AWSサービス別の操作表")
+    _, routes = catalog(True)
+    for section, heading in ((sql, "SQLテーブル"), (aws, "AWSサービス")):
+        section = section.split("\n## 静的解析で特定できなかった操作")[0]
+        rows = [row.strip("|").split(" | ") for row in section.splitlines() if row.startswith("| ")]
+        resources = [re.search(r"`([^`]+)`", cell)[1] for cell in rows[0][1:]]
+        used = set()
+        seen = set()
+        for api, *cells in rows[2:]:
+            match = re.search(r"\[(\w+) `([^`]+)`\]\((apis/[^)]+)\)", api)
+            method, path, file = match.groups()
+            assert (path, method) not in seen
+            seen.add((path, method))
+            detail = (tmp_path / file).read_text().split(f"### {heading}\n\n")[1].split("\n\n", 1)[0]
+            expected = {}
+            for row in detail.splitlines()[2:]:
+                _, physical, actions, *_ = row.strip(" |").split(" | ")
+                expected.setdefault(physical, set()).update(actions.split("/"))
+            assert len(cells) == len(resources)
+            used.update(expected)
+            assert set(expected) <= set(resources)
+            for resource, cell in zip(resources, cells, strict=True):
+                actions = expected.get(resource, set())
+                ordered = [v for v in ("C", "R", "U", "D", "実行", "要確認") if v in actions]
+                assert cell.strip() == ("/".join(ordered) or "—"), (path, method, resource)
+        assert resources == sorted(table_names() if heading == "SQLテーブル" else used)
+        assert seen == set(routes)
+
+
 def test_sqlalchemy_and_conditional_aws_writes():
     index = SourceIndex()
 
@@ -52,6 +86,7 @@ def test_sqlalchemy_and_conditional_aws_writes():
         table == "assets" and detail in {"status に代入", "decision_note に代入"}
         for _, table, _, _, _, detail in index.trace(["app.apis.catalog.register.router.delete"]).effects
     )
+    assert effects("app.integrations.spec_archive.archive_spec") == {("AWS", "s3", "C")}
     invite = effects("app.apis.governance.members.invite")
     assert {("AWS", "cognito-idp", "C"), ("AWS", "cognito-idp", "D")} <= invite
 

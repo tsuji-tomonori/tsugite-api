@@ -2,66 +2,140 @@
 
 # API別 SQL・AWS CRUD一覧
 
-SQLテーブルはAWS環境ではAurora DSQL、ローカルデモではSQLiteを使います。C＝作成、R＝参照、U＝更新、D＝削除。LambdaのInvokeは「実行」です。認証依存、条件分岐、失敗時の補償処理を含む到達可能な操作を示します。実行順・実行回数は表しません。各操作のリンクから根拠の実装行を確認できます。
+[SQLテーブル別](#sql) · [AWSサービス別](#aws)
 
-静的解析ではSQLAlchemyの式・ORM属性の代入・リテラルSQL、boto3クライアントの呼び出しを追跡します。動的なディスパッチ、外部ライブラリ内部のSQL・AWS操作は解析範囲外です。
+行はAPI、列は操作対象です。C＝作成、R＝参照、U＝更新、D＝削除。複数の操作は `R/U` のように併記し、該当する操作が検出されなかったセルは「—」で示します。Lambdaの呼び出しは「実行」、分類できない操作は「要確認」です。
 
-| APIの和名 | メソッド・パス | SQLテーブル | AWSサービス | 要確認件数 |
-| --- | --- | --- | --- | --- |
-| API呼び出し履歴を検索する | [GET `/api/access-logs`](apis/get-api-access-logs.md) | 利用者の組織所属（`affiliations`、R）、組織階層（`directory_tree`、R）、API呼び出し履歴（`invocation_logs`、R）、API呼び出しと組織の対応（`invocation_units`、R）、ポータル利用者（`portal_members`、R） | 設定パラメータの保管（Systems Manager）（`ssm`、R） | 0 |
-| API呼び出し履歴をファイルに出力する | [GET `/api/access-logs/download`](apis/get-api-access-logs-download.md) | 利用者の組織所属（`affiliations`、R）、組織階層（`directory_tree`、R）、API呼び出し履歴（`invocation_logs`、R）、API呼び出しと組織の対応（`invocation_units`、R）、ポータル利用者（`portal_members`、R） | 設定パラメータの保管（Systems Manager）（`ssm`、R） | 0 |
-| 呼び出し件数の監視ルールを一覧する | [GET `/api/alerts`](apis/get-api-alerts.md) | 利用者の組織所属（`affiliations`、R）、API呼び出し件数の監視設定（`alert_rules`、R）、APIカタログ（`assets`、R）、組織階層（`directory_tree`、R）、ポータル利用者（`portal_members`、R） | 設定パラメータの保管（Systems Manager）（`ssm`、R） | 0 |
-| 呼び出し件数の通知・停止条件を設定する | [PUT `/api/alerts`](apis/put-api-alerts.md) | API利用申請・利用権（`access_rights`、R）、利用者の組織所属（`affiliations`、R）、API呼び出し件数の監視設定（`alert_rules`、C/R/U）、APIカタログ（`assets`、R）、監査履歴（`audit_events`、C）、組織階層（`directory_tree`、R）、ポータル利用者（`portal_members`、R） | 設定パラメータの保管（Systems Manager）（`ssm`、R） | 0 |
-| カタログのAPIを検索する | [GET `/api/apis`](apis/get-api-apis.md) | 利用者の組織所属（`affiliations`、R）、APIカタログ（`assets`、R）、組織階層（`directory_tree`、R）、ポータル利用者（`portal_members`、R） | 設定パラメータの保管（Systems Manager）（`ssm`、R） | 0 |
-| APIをカタログに登録する | [POST `/api/apis`](apis/post-api-apis.md) | 利用者の組織所属（`affiliations`、R）、APIカタログ（`assets`、C）、監査履歴（`audit_events`、C）、組織階層（`directory_tree`、R）、ポータル利用者（`portal_members`、R） | API仕様文書の保管（Amazon S3）（`s3`、C/U）、設定パラメータの保管（Systems Manager）（`ssm`、R） | 0 |
-| APIをカタログから削除する（論理削除） | [DELETE `/api/apis/{key}`](apis/delete-api-apis-key.md) | API利用申請・利用権（`access_rights`、R/U）、利用者の組織所属（`affiliations`、R）、APIカタログ（`assets`、R/U）、監査履歴（`audit_events`、C）、組織階層（`directory_tree`、R）、ポータル利用者（`portal_members`、R） | 設定パラメータの保管（Systems Manager）（`ssm`、R） | 0 |
-| APIの詳細と公開仕様を取得する | [GET `/api/apis/{key}`](apis/get-api-apis-key.md) | API利用申請・利用権（`access_rights`、R）、利用者の組織所属（`affiliations`、R）、APIカタログ（`assets`、R）、認証情報の利用制限（`credential_rules`、R）、組織階層（`directory_tree`、R）、ポータル利用者（`portal_members`、R）、商品別API仕様の公開履歴（`spec_releases`、R） | 設定パラメータの保管（Systems Manager）（`ssm`、R） | 0 |
-| APIの登録内容を更新する | [PUT `/api/apis/{key}`](apis/put-api-apis-key.md) | API利用申請・利用権（`access_rights`、R/U）、利用者の組織所属（`affiliations`、R）、APIカタログ（`assets`、R/U）、監査履歴（`audit_events`、C）、組織階層（`directory_tree`、R）、ポータル利用者（`portal_members`、R）、商品別API仕様の公開履歴（`spec_releases`、C/R） | API仕様文書の保管（Amazon S3）（`s3`、C/U）、設定パラメータの保管（Systems Manager）（`ssm`、R） | 0 |
-| APIの利用者別操作権限を確認する | [GET `/api/apis/{key}/operation-policy`](apis/get-api-apis-key-operation-policy.md) | API利用申請・利用権（`access_rights`、R）、利用者の組織所属（`affiliations`、R）、APIカタログ（`assets`、R）、認証情報の利用制限（`credential_rules`、R）、組織階層（`directory_tree`、R）、ポータル利用者（`portal_members`、R） | 利用者・グループの管理（Cognitoユーザープール）（`cognito-idp`、R）、設定パラメータの保管（Systems Manager）（`ssm`、R） | 0 |
-| APIの利用者別操作権限を設定する | [PUT `/api/apis/{key}/operation-policy`](apis/put-api-apis-key-operation-policy.md) | API利用申請・利用権（`access_rights`、R）、利用者の組織所属（`affiliations`、R）、APIカタログ（`assets`、R）、監査履歴（`audit_events`、C）、認証情報の利用制限（`credential_rules`、C/R/U）、組織階層（`directory_tree`、R）、ポータル利用者（`portal_members`、R） | 利用者・グループの管理（Cognitoユーザープール）（`cognito-idp`、R）、設定パラメータの保管（Systems Manager）（`ssm`、R） | 0 |
-| APIの公開範囲と申請の承認条件を確認する | [GET `/api/apis/{key}/policy`](apis/get-api-apis-key-policy.md) | 利用者の組織所属（`affiliations`、R）、APIカタログ（`assets`、R）、組織階層（`directory_tree`、R）、ポータル利用者（`portal_members`、R） | 設定パラメータの保管（Systems Manager）（`ssm`、R） | 0 |
-| APIの公開範囲と申請の承認条件を設定する | [PUT `/api/apis/{key}/policy`](apis/put-api-apis-key-policy.md) | 利用者の組織所属（`affiliations`、R）、APIカタログ（`assets`、R/U）、監査履歴（`audit_events`、C）、組織階層（`directory_tree`、R）、ポータル利用者（`portal_members`、R） | 設定パラメータの保管（Systems Manager）（`ssm`、R） | 0 |
-| APIの公開・掲載取り下げを切り替える | [PUT `/api/apis/{key}/publication`](apis/put-api-apis-key-publication.md) | 利用者の組織所属（`affiliations`、R）、APIカタログ（`assets`、R/U）、監査履歴（`audit_events`、C）、組織階層（`directory_tree`、R）、ポータル利用者（`portal_members`、R）、商品別API仕様の公開履歴（`spec_releases`、C/R） | 接続先関数の実行（Lambda）（`lambda`、実行）、API仕様文書の保管（Amazon S3）（`s3`、C/U）、秘密情報の保管（Secrets Manager）（`secretsmanager`、R）、設定パラメータの保管（Systems Manager）（`ssm`、R） | 0 |
-| 特定の環境でのAPI利用を申請する | [POST `/api/apis/{key}/requests`](apis/post-api-apis-key-requests.md) | API利用申請・利用権（`access_rights`、C/R/U）、利用者の組織所属（`affiliations`、R）、APIカタログ（`assets`、R/U）、監査履歴（`audit_events`、C）、組織階層（`directory_tree`、R）、ポータル利用者（`portal_members`、R） | 設定パラメータの保管（Systems Manager）（`ssm`、R） | 0 |
-| 監査履歴を検索する | [GET `/api/audit`](apis/get-api-audit.md) | 利用者の組織所属（`affiliations`、R）、監査履歴（`audit_events`、R）、組織階層（`directory_tree`、R）、API呼び出し履歴（`invocation_logs`、R）、API呼び出しと組織の対応（`invocation_units`、R）、ポータル利用者（`portal_members`、R） | 設定パラメータの保管（Systems Manager）（`ssm`、R） | 0 |
-| クライアント認証情報をアクセストークンに交換する | [POST `/api/auth/token`](apis/post-api-auth-token.md) | API利用申請・利用権（`access_rights`、R）、利用者の組織所属（`affiliations`、R）、API認証情報（`api_keys`、R）、監査履歴（`audit_events`、C）、短期トークンの発行状態（`credential_leases`、C/R/U）、認証情報の利用制限（`credential_rules`、R）、組織階層（`directory_tree`、R）、ポータル利用者（`portal_members`、R） | 設定パラメータの保管（Systems Manager）（`ssm`、R） | 0 |
-| カタログのAPIをページ単位で取得する | [GET `/api/catalog-page`](apis/get-api-catalog-page.md) | 利用者の組織所属（`affiliations`、R）、APIカタログ（`assets`、R）、組織階層（`directory_tree`、R）、ポータル利用者（`portal_members`、R） | 設定パラメータの保管（Systems Manager）（`ssm`、R） | 0 |
-| ポータルのログイン設定を取得する | [GET `/api/config`](apis/get-api-config.md) | — | 設定パラメータの保管（Systems Manager）（`ssm`、R） | 0 |
-| API・組織単位のトークン有効期間上限を確認する | [GET `/api/credential-limits/{kind}/{key}`](apis/get-api-credential-limits-kind-key.md) | API利用申請・利用権（`access_rights`、R）、利用者の組織所属（`affiliations`、R）、APIカタログ（`assets`、R）、認証情報の利用制限（`credential_rules`、R）、組織階層（`directory_tree`、R）、ポータル利用者（`portal_members`、R） | 設定パラメータの保管（Systems Manager）（`ssm`、R） | 0 |
-| API・組織単位のトークン有効期間上限を設定する | [PUT `/api/credential-limits/{kind}/{key}`](apis/put-api-credential-limits-kind-key.md) | API利用申請・利用権（`access_rights`、R）、利用者の組織所属（`affiliations`、R）、APIカタログ（`assets`、R）、監査履歴（`audit_events`、C）、認証情報の利用制限（`credential_rules`、C/R/U）、組織階層（`directory_tree`、R）、ポータル利用者（`portal_members`、R） | 設定パラメータの保管（Systems Manager）（`ssm`、R） | 0 |
-| 利用条件を指定して認証情報を発行する | [POST `/api/credentials`](apis/post-api-credentials.md) | API利用申請・利用権（`access_rights`、R）、利用者の組織所属（`affiliations`、R）、API認証情報（`api_keys`、C）、APIカタログ（`assets`、R）、監査履歴（`audit_events`、C）、短期トークンの発行状態（`credential_leases`、C/R/U）、認証情報の利用制限（`credential_rules`、R）、組織階層（`directory_tree`、R）、ポータル利用者（`portal_members`、R） | 利用者・グループの管理（Cognitoユーザープール）（`cognito-idp`、R）、設定パラメータの保管（Systems Manager）（`ssm`、R） | 0 |
-| 認証情報の発行時に選べる対象と上限を取得する | [GET `/api/credentials/options`](apis/get-api-credentials-options.md) | API利用申請・利用権（`access_rights`、R）、利用者の組織所属（`affiliations`、R）、APIカタログ（`assets`、R）、認証情報の利用制限（`credential_rules`、R）、組織階層（`directory_tree`、R）、ポータル利用者（`portal_members`、R） | 利用者・グループの管理（Cognitoユーザープール）（`cognito-idp`、R）、設定パラメータの保管（Systems Manager）（`ssm`、R） | 0 |
-| クライアントシークレットを再発行する | [POST `/api/credentials/{key_id}/rotate`](apis/post-api-credentials-key_id-rotate.md) | 利用者の組織所属（`affiliations`、R）、API認証情報（`api_keys`、R/U）、監査履歴（`audit_events`、C）、組織階層（`directory_tree`、R）、ポータル利用者（`portal_members`、R） | 設定パラメータの保管（Systems Manager）（`ssm`、R） | 0 |
-| ポータルから短期アクセストークンを取得する | [POST `/api/credentials/{key_id}/token`](apis/post-api-credentials-key_id-token.md) | API利用申請・利用権（`access_rights`、R）、利用者の組織所属（`affiliations`、R）、API認証情報（`api_keys`、R）、監査履歴（`audit_events`、C）、短期トークンの発行状態（`credential_leases`、C/R/U）、認証情報の利用制限（`credential_rules`、R）、組織階層（`directory_tree`、R）、ポータル利用者（`portal_members`、R） | 設定パラメータの保管（Systems Manager）（`ssm`、R） | 0 |
-| ダッシュボードの件数を集計する | [GET `/api/dashboard`](apis/get-api-dashboard.md) | API利用申請・利用権（`access_rights`、R）、利用者の組織所属（`affiliations`、R）、APIカタログ（`assets`、R）、組織階層（`directory_tree`、R）、API呼び出し履歴（`invocation_logs`、R）、API呼び出しと組織の対応（`invocation_units`、R）、通知（`notices`、R）、ポータル利用者（`portal_members`、R） | 設定パラメータの保管（Systems Manager）（`ssm`、R） | 0 |
-| デモ利用者としてログインする | [POST `/api/demo/{persona}`](apis/post-api-demo-persona.md) | ポータル利用者（`portal_members`、R） | — | 0 |
-| サービスの稼働状態を確認する | [GET `/api/health`](apis/get-api-health.md) | — | — | 0 |
-| 接続先APIにDELETEリクエストを転送する | [DELETE `/api/invoke/{key}/{environment}/{project}/{tail}`](apis/delete-api-invoke-key-environment-project-tail.md) | API利用申請・利用権（`access_rights`、R）、利用者の組織所属（`affiliations`、R）、API呼び出し件数の監視設定（`alert_rules`、R/U）、API認証情報（`api_keys`、R）、APIカタログ（`assets`、R）、監査履歴（`audit_events`、C）、認証情報の利用制限（`credential_rules`、R）、組織階層（`directory_tree`、R）、API呼び出し履歴（`invocation_logs`、C）、API呼び出しと組織の対応（`invocation_units`、C）、通知（`notices`、C）、ポータル利用者（`portal_members`、R） | 接続先関数の実行（Lambda）（`lambda`、実行）、秘密情報の保管（Secrets Manager）（`secretsmanager`、R）、設定パラメータの保管（Systems Manager）（`ssm`、R） | 0 |
-| 接続先APIにGETリクエストを転送する | [GET `/api/invoke/{key}/{environment}/{project}/{tail}`](apis/get-api-invoke-key-environment-project-tail.md) | API利用申請・利用権（`access_rights`、R）、利用者の組織所属（`affiliations`、R）、API呼び出し件数の監視設定（`alert_rules`、R/U）、API認証情報（`api_keys`、R）、APIカタログ（`assets`、R）、監査履歴（`audit_events`、C）、認証情報の利用制限（`credential_rules`、R）、組織階層（`directory_tree`、R）、API呼び出し履歴（`invocation_logs`、C）、API呼び出しと組織の対応（`invocation_units`、C）、通知（`notices`、C）、ポータル利用者（`portal_members`、R） | 接続先関数の実行（Lambda）（`lambda`、実行）、秘密情報の保管（Secrets Manager）（`secretsmanager`、R）、設定パラメータの保管（Systems Manager）（`ssm`、R） | 0 |
-| 接続先APIにPATCHリクエストを転送する | [PATCH `/api/invoke/{key}/{environment}/{project}/{tail}`](apis/patch-api-invoke-key-environment-project-tail.md) | API利用申請・利用権（`access_rights`、R）、利用者の組織所属（`affiliations`、R）、API呼び出し件数の監視設定（`alert_rules`、R/U）、API認証情報（`api_keys`、R）、APIカタログ（`assets`、R）、監査履歴（`audit_events`、C）、認証情報の利用制限（`credential_rules`、R）、組織階層（`directory_tree`、R）、API呼び出し履歴（`invocation_logs`、C）、API呼び出しと組織の対応（`invocation_units`、C）、通知（`notices`、C）、ポータル利用者（`portal_members`、R） | 接続先関数の実行（Lambda）（`lambda`、実行）、秘密情報の保管（Secrets Manager）（`secretsmanager`、R）、設定パラメータの保管（Systems Manager）（`ssm`、R） | 0 |
-| 接続先APIにPOSTリクエストを転送する | [POST `/api/invoke/{key}/{environment}/{project}/{tail}`](apis/post-api-invoke-key-environment-project-tail.md) | API利用申請・利用権（`access_rights`、R）、利用者の組織所属（`affiliations`、R）、API呼び出し件数の監視設定（`alert_rules`、R/U）、API認証情報（`api_keys`、R）、APIカタログ（`assets`、R）、監査履歴（`audit_events`、C）、認証情報の利用制限（`credential_rules`、R）、組織階層（`directory_tree`、R）、API呼び出し履歴（`invocation_logs`、C）、API呼び出しと組織の対応（`invocation_units`、C）、通知（`notices`、C）、ポータル利用者（`portal_members`、R） | 接続先関数の実行（Lambda）（`lambda`、実行）、秘密情報の保管（Secrets Manager）（`secretsmanager`、R）、設定パラメータの保管（Systems Manager）（`ssm`、R） | 0 |
-| 接続先APIにPUTリクエストを転送する | [PUT `/api/invoke/{key}/{environment}/{project}/{tail}`](apis/put-api-invoke-key-environment-project-tail.md) | API利用申請・利用権（`access_rights`、R）、利用者の組織所属（`affiliations`、R）、API呼び出し件数の監視設定（`alert_rules`、R/U）、API認証情報（`api_keys`、R）、APIカタログ（`assets`、R）、監査履歴（`audit_events`、C）、認証情報の利用制限（`credential_rules`、R）、組織階層（`directory_tree`、R）、API呼び出し履歴（`invocation_logs`、C）、API呼び出しと組織の対応（`invocation_units`、C）、通知（`notices`、C）、ポータル利用者（`portal_members`、R） | 接続先関数の実行（Lambda）（`lambda`、実行）、秘密情報の保管（Secrets Manager）（`secretsmanager`、R）、設定パラメータの保管（Systems Manager）（`ssm`、R） | 0 |
-| 認証情報の対象に選べるAPIを一覧する | [GET `/api/key-assets`](apis/get-api-key-assets.md) | API利用申請・利用権（`access_rights`、R）、利用者の組織所属（`affiliations`、R）、APIカタログ（`assets`、R）、組織階層（`directory_tree`、R）、ポータル利用者（`portal_members`、R） | 設定パラメータの保管（Systems Manager）（`ssm`、R） | 0 |
-| 発行済みの認証情報を一覧する | [GET `/api/keys`](apis/get-api-keys.md) | 利用者の組織所属（`affiliations`、R）、API認証情報（`api_keys`、R）、組織階層（`directory_tree`、R）、ポータル利用者（`portal_members`、R） | 設定パラメータの保管（Systems Manager）（`ssm`、R） | 0 |
-| 従来方式のAPIキーを発行する | [POST `/api/keys`](apis/post-api-keys.md) | API利用申請・利用権（`access_rights`、R）、利用者の組織所属（`affiliations`、R）、API認証情報（`api_keys`、C）、APIカタログ（`assets`、R）、監査履歴（`audit_events`、C）、組織階層（`directory_tree`、R）、ポータル利用者（`portal_members`、R） | 設定パラメータの保管（Systems Manager）（`ssm`、R） | 0 |
-| 認証情報を失効させる | [DELETE `/api/keys/{key}`](apis/delete-api-keys-key.md) | 利用者の組織所属（`affiliations`、R）、API認証情報（`api_keys`、R/U）、監査履歴（`audit_events`、C）、組織階層（`directory_tree`、R）、ポータル利用者（`portal_members`、R） | 設定パラメータの保管（Systems Manager）（`ssm`、R） | 0 |
-| 監視対象に指定できるAPIの利用先を一覧する | [GET `/api/management-targets`](apis/get-api-management-targets.md) | API利用申請・利用権（`access_rights`、R）、利用者の組織所属（`affiliations`、R）、APIカタログ（`assets`、R）、組織階層（`directory_tree`、R）、ポータル利用者（`portal_members`、R） | 設定パラメータの保管（Systems Manager）（`ssm`、R） | 0 |
-| ログイン中の利用者の所属と権限を確認する | [GET `/api/me`](apis/get-api-me.md) | 利用者の組織所属（`affiliations`、R）、組織階層（`directory_tree`、R）、ポータル利用者（`portal_members`、R） | 設定パラメータの保管（Systems Manager）（`ssm`、R） | 0 |
-| ポータルの利用者を一覧する | [GET `/api/members`](apis/get-api-members.md) | 利用者の組織所属（`affiliations`、R）、組織階層（`directory_tree`、R）、ポータル利用者（`portal_members`、R） | 利用者・グループの管理（Cognitoユーザープール）（`cognito-idp`、R）、設定パラメータの保管（Systems Manager）（`ssm`、R） | 0 |
-| ポータルに利用者を招待する | [POST `/api/members`](apis/post-api-members.md) | 利用者の組織所属（`affiliations`、R）、監査履歴（`audit_events`、C）、組織階層（`directory_tree`、R）、ポータル利用者（`portal_members`、C/R） | 利用者・グループの管理（Cognitoユーザープール）（`cognito-idp`、C/D）、設定パラメータの保管（Systems Manager）（`ssm`、R） | 0 |
-| ポータルの利用者を削除する | [DELETE `/api/members/{subject}`](apis/delete-api-members-subject.md) | 利用者の組織所属（`affiliations`、R）、監査履歴（`audit_events`、C）、組織階層（`directory_tree`、R）、ポータル利用者（`portal_members`、C/R/U） | 利用者・グループの管理（Cognitoユーザープール）（`cognito-idp`、D/R）、設定パラメータの保管（Systems Manager）（`ssm`、R） | 0 |
-| 利用統計を絞り込めるAPIとプロジェクトを一覧する | [GET `/api/metric-dimensions`](apis/get-api-metric-dimensions.md) | 利用者の組織所属（`affiliations`、R）、APIカタログ（`assets`、R）、組織階層（`directory_tree`、R）、API呼び出し履歴（`invocation_logs`、R）、API呼び出しと組織の対応（`invocation_units`、R）、ポータル利用者（`portal_members`、R） | 設定パラメータの保管（Systems Manager）（`ssm`、R） | 0 |
-| 時間帯別の呼び出し件数と応答時間を集計する | [GET `/api/metrics`](apis/get-api-metrics.md) | 利用者の組織所属（`affiliations`、R）、組織階層（`directory_tree`、R）、API呼び出し履歴（`invocation_logs`、R）、API呼び出しと組織の対応（`invocation_units`、R）、ポータル利用者（`portal_members`、R） | 設定パラメータの保管（Systems Manager）（`ssm`、R） | 0 |
-| 受信した通知を一覧する | [GET `/api/notifications`](apis/get-api-notifications.md) | 利用者の組織所属（`affiliations`、R）、組織階層（`directory_tree`、R）、通知（`notices`、R）、ポータル利用者（`portal_members`、R） | 設定パラメータの保管（Systems Manager）（`ssm`、R） | 0 |
-| 利用者に通知を送る | [POST `/api/notifications`](apis/post-api-notifications.md) | API利用申請・利用権（`access_rights`、R）、利用者の組織所属（`affiliations`、R）、APIカタログ（`assets`、R）、監査履歴（`audit_events`、C）、組織階層（`directory_tree`、R）、通知（`notices`、C）、ポータル利用者（`portal_members`、R） | 設定パラメータの保管（Systems Manager）（`ssm`、R） | 0 |
-| 未読の通知件数を取得する | [GET `/api/notifications/count`](apis/get-api-notifications-count.md) | 利用者の組織所属（`affiliations`、R）、組織階層（`directory_tree`、R）、通知（`notices`、R）、ポータル利用者（`portal_members`、R） | 設定パラメータの保管（Systems Manager）（`ssm`、R） | 0 |
-| 通知を既読にする | [PUT `/api/notifications/{key}/read`](apis/put-api-notifications-key-read.md) | 利用者の組織所属（`affiliations`、R）、組織階層（`directory_tree`、R）、通知の既読履歴（`notice_reads`、C/R）、通知（`notices`、R）、ポータル利用者（`portal_members`、R） | 設定パラメータの保管（Systems Manager）（`ssm`、R） | 0 |
-| APIの利用申請を一覧する | [GET `/api/requests`](apis/get-api-requests.md) | API利用申請・利用権（`access_rights`、R）、利用者の組織所属（`affiliations`、R）、APIカタログ（`assets`、R）、監査履歴（`audit_events`、R）、組織階層（`directory_tree`、R）、ポータル利用者（`portal_members`、R） | 設定パラメータの保管（Systems Manager）（`ssm`、R） | 0 |
-| プロジェクトの利用申請を承認・却下・取り下げ・取消する | [POST `/api/requests/{key}/{project}/{environment}`](apis/post-api-requests-key-project-environment.md) | API利用申請・利用権（`access_rights`、R/U）、利用者の組織所属（`affiliations`、R）、APIカタログ（`assets`、R）、監査履歴（`audit_events`、C）、組織階層（`directory_tree`、R）、ポータル利用者（`portal_members`、R） | 設定パラメータの保管（Systems Manager）（`ssm`、R） | 0 |
-| 個人の利用申請を承認・却下・取り下げ・取消する | [POST `/api/requests/{key}/{project}/{environment}/{principal}`](apis/post-api-requests-key-project-environment-principal.md) | API利用申請・利用権（`access_rights`、R/U）、利用者の組織所属（`affiliations`、R）、APIカタログ（`assets`、R）、監査履歴（`audit_events`、C）、組織階層（`directory_tree`、R）、ポータル利用者（`portal_members`、R） | 設定パラメータの保管（Systems Manager）（`ssm`、R） | 0 |
-| 組織の構成と利用者の所属を確認する | [GET `/api/workspace`](apis/get-api-workspace.md) | 利用者の組織所属（`affiliations`、R）、組織階層（`directory_tree`、R）、ポータル利用者（`portal_members`、R） | 設定パラメータの保管（Systems Manager）（`ssm`、R） | 0 |
-| 利用者の所属を解除する | [DELETE `/api/workspace/memberships`](apis/delete-api-workspace-memberships.md) | 利用者の組織所属（`affiliations`、C/R/U）、監査履歴（`audit_events`、C）、組織階層（`directory_tree`、R）、ポータル利用者（`portal_members`、R） | 設定パラメータの保管（Systems Manager）（`ssm`、R） | 0 |
-| 利用者の所属・役職・管理権限を設定する | [PUT `/api/workspace/memberships`](apis/put-api-workspace-memberships.md) | 利用者の組織所属（`affiliations`、C/R/U）、監査履歴（`audit_events`、C）、組織階層（`directory_tree`、R）、ポータル利用者（`portal_members`、R） | 設定パラメータの保管（Systems Manager）（`ssm`、R） | 0 |
-| 部署・プロジェクトを登録または更新する | [PUT `/api/workspace/units/{key}`](apis/put-api-workspace-units-key.md) | 利用者の組織所属（`affiliations`、R）、監査履歴（`audit_events`、C）、組織階層（`directory_tree`、C/R/U）、ポータル利用者（`portal_members`、R） | 設定パラメータの保管（Systems Manager）（`ssm`、R） | 0 |
-| 部署・プロジェクトの利用を停止または再開する | [PUT `/api/workspace/units/{key}/state`](apis/put-api-workspace-units-key-state.md) | 利用者の組織所属（`affiliations`、R）、監査履歴（`audit_events`、C）、組織階層（`directory_tree`、C/R/U）、ポータル利用者（`portal_members`、R） | 設定パラメータの保管（Systems Manager）（`ssm`、R） | 0 |
-| 部署・プロジェクトの所属者とAPI利用実績を取得する | [GET `/api/workspace/units/{key}/usage`](apis/get-api-workspace-units-key-usage.md) | 利用者の組織所属（`affiliations`、R）、APIカタログ（`assets`、R）、組織階層（`directory_tree`、R）、API呼び出し履歴（`invocation_logs`、R）、API呼び出しと組織の対応（`invocation_units`、R）、ポータル利用者（`portal_members`、R） | 利用者・グループの管理（Cognitoユーザープール）（`cognito-idp`、R）、設定パラメータの保管（Systems Manager）（`ssm`、R） | 0 |
+認証処理、条件分岐、失敗時の補償処理を含みます。APIのリンクから操作の根拠となるソース行を確認できます。動的に決まる呼び出しや外部ライブラリ内の操作には、静的解析で特定できないものがあります。
+
+<a id="sql"></a>
+
+## SQLテーブル別のCRUD表
+
+列はデータベース定義書の全テーブルです。AWS環境はAurora DSQL、ローカルデモはSQLiteを使います。
+
+| API（和名・メソッド・パス） | [API利用申請・利用権](database.md#access_rights)<br>`access_rights` | [利用者の組織所属](database.md#affiliations)<br>`affiliations` | [データベース移行版管理](database.md#alembic_version)<br>`alembic_version` | [API呼び出し件数の監視設定](database.md#alert_rules)<br>`alert_rules` | [API認証情報](database.md#api_keys)<br>`api_keys` | [APIカタログ](database.md#assets)<br>`assets` | [監査履歴](database.md#audit_events)<br>`audit_events` | [短期トークンの発行状態](database.md#credential_leases)<br>`credential_leases` | [認証情報の利用制限](database.md#credential_rules)<br>`credential_rules` | [組織階層](database.md#directory_tree)<br>`directory_tree` | [API呼び出し履歴](database.md#invocation_logs)<br>`invocation_logs` | [API呼び出しと組織の対応](database.md#invocation_units)<br>`invocation_units` | [通知の既読履歴](database.md#notice_reads)<br>`notice_reads` | [通知](database.md#notices)<br>`notices` | [ポータル利用者](database.md#portal_members)<br>`portal_members` | [商品別API仕様の公開履歴](database.md#spec_releases)<br>`spec_releases` |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| API呼び出し履歴を検索する<br>[GET `/api/access-logs`](apis/get-api-access-logs.md) | — | R | — | — | — | — | — | — | — | R | R | R | — | — | R | — |
+| API呼び出し履歴をファイルに出力する<br>[GET `/api/access-logs/download`](apis/get-api-access-logs-download.md) | — | R | — | — | — | — | — | — | — | R | R | R | — | — | R | — |
+| 呼び出し件数の監視ルールを一覧する<br>[GET `/api/alerts`](apis/get-api-alerts.md) | — | R | — | R | — | R | — | — | — | R | — | — | — | — | R | — |
+| 呼び出し件数の通知・停止条件を設定する<br>[PUT `/api/alerts`](apis/put-api-alerts.md) | R | R | — | C/R/U | — | R | C | — | — | R | — | — | — | — | R | — |
+| カタログのAPIを検索する<br>[GET `/api/apis`](apis/get-api-apis.md) | — | R | — | — | — | R | — | — | — | R | — | — | — | — | R | — |
+| APIをカタログに登録する<br>[POST `/api/apis`](apis/post-api-apis.md) | — | R | — | — | — | C | C | — | — | R | — | — | — | — | R | — |
+| APIをカタログから削除する（論理削除）<br>[DELETE `/api/apis/{key}`](apis/delete-api-apis-key.md) | R/U | R | — | — | — | R/U | C | — | — | R | — | — | — | — | R | — |
+| APIの詳細と公開仕様を取得する<br>[GET `/api/apis/{key}`](apis/get-api-apis-key.md) | R | R | — | — | — | R | — | — | R | R | — | — | — | — | R | R |
+| APIの登録内容を更新する<br>[PUT `/api/apis/{key}`](apis/put-api-apis-key.md) | R/U | R | — | — | — | R/U | C | — | — | R | — | — | — | — | R | C/R |
+| APIの利用者別操作権限を確認する<br>[GET `/api/apis/{key}/operation-policy`](apis/get-api-apis-key-operation-policy.md) | R | R | — | — | — | R | — | — | R | R | — | — | — | — | R | — |
+| APIの利用者別操作権限を設定する<br>[PUT `/api/apis/{key}/operation-policy`](apis/put-api-apis-key-operation-policy.md) | R | R | — | — | — | R | C | — | C/R/U | R | — | — | — | — | R | — |
+| APIの公開範囲と申請の承認条件を確認する<br>[GET `/api/apis/{key}/policy`](apis/get-api-apis-key-policy.md) | — | R | — | — | — | R | — | — | — | R | — | — | — | — | R | — |
+| APIの公開範囲と申請の承認条件を設定する<br>[PUT `/api/apis/{key}/policy`](apis/put-api-apis-key-policy.md) | — | R | — | — | — | R/U | C | — | — | R | — | — | — | — | R | — |
+| APIの公開・掲載取り下げを切り替える<br>[PUT `/api/apis/{key}/publication`](apis/put-api-apis-key-publication.md) | — | R | — | — | — | R/U | C | — | — | R | — | — | — | — | R | C/R |
+| 特定の環境でのAPI利用を申請する<br>[POST `/api/apis/{key}/requests`](apis/post-api-apis-key-requests.md) | C/R/U | R | — | — | — | R/U | C | — | — | R | — | — | — | — | R | — |
+| 監査履歴を検索する<br>[GET `/api/audit`](apis/get-api-audit.md) | — | R | — | — | — | — | R | — | — | R | R | R | — | — | R | — |
+| クライアント認証情報をアクセストークンに交換する<br>[POST `/api/auth/token`](apis/post-api-auth-token.md) | R | R | — | — | R | — | C | C/R/U | R | R | — | — | — | — | R | — |
+| カタログのAPIをページ単位で取得する<br>[GET `/api/catalog-page`](apis/get-api-catalog-page.md) | — | R | — | — | — | R | — | — | — | R | — | — | — | — | R | — |
+| ポータルのログイン設定を取得する<br>[GET `/api/config`](apis/get-api-config.md) | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| API・組織単位のトークン有効期間上限を確認する<br>[GET `/api/credential-limits/{kind}/{key}`](apis/get-api-credential-limits-kind-key.md) | R | R | — | — | — | R | — | — | R | R | — | — | — | — | R | — |
+| API・組織単位のトークン有効期間上限を設定する<br>[PUT `/api/credential-limits/{kind}/{key}`](apis/put-api-credential-limits-kind-key.md) | R | R | — | — | — | R | C | — | C/R/U | R | — | — | — | — | R | — |
+| 利用条件を指定して認証情報を発行する<br>[POST `/api/credentials`](apis/post-api-credentials.md) | R | R | — | — | C | R | C | C/R/U | R | R | — | — | — | — | R | — |
+| 認証情報の発行時に選べる対象と上限を取得する<br>[GET `/api/credentials/options`](apis/get-api-credentials-options.md) | R | R | — | — | — | R | — | — | R | R | — | — | — | — | R | — |
+| クライアントシークレットを再発行する<br>[POST `/api/credentials/{key_id}/rotate`](apis/post-api-credentials-key_id-rotate.md) | — | R | — | — | R/U | — | C | — | — | R | — | — | — | — | R | — |
+| ポータルから短期アクセストークンを取得する<br>[POST `/api/credentials/{key_id}/token`](apis/post-api-credentials-key_id-token.md) | R | R | — | — | R | — | C | C/R/U | R | R | — | — | — | — | R | — |
+| ダッシュボードの件数を集計する<br>[GET `/api/dashboard`](apis/get-api-dashboard.md) | R | R | — | — | — | R | — | — | — | R | R | R | — | R | R | — |
+| デモ利用者としてログインする<br>[POST `/api/demo/{persona}`](apis/post-api-demo-persona.md) | — | — | — | — | — | — | — | — | — | — | — | — | — | — | R | — |
+| サービスの稼働状態を確認する<br>[GET `/api/health`](apis/get-api-health.md) | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| 接続先APIにDELETEリクエストを転送する<br>[DELETE `/api/invoke/{key}/{environment}/{project}/{tail}`](apis/delete-api-invoke-key-environment-project-tail.md) | R | R | — | R/U | R | R | C | — | R | R | C | C | — | C | R | — |
+| 接続先APIにGETリクエストを転送する<br>[GET `/api/invoke/{key}/{environment}/{project}/{tail}`](apis/get-api-invoke-key-environment-project-tail.md) | R | R | — | R/U | R | R | C | — | R | R | C | C | — | C | R | — |
+| 接続先APIにPATCHリクエストを転送する<br>[PATCH `/api/invoke/{key}/{environment}/{project}/{tail}`](apis/patch-api-invoke-key-environment-project-tail.md) | R | R | — | R/U | R | R | C | — | R | R | C | C | — | C | R | — |
+| 接続先APIにPOSTリクエストを転送する<br>[POST `/api/invoke/{key}/{environment}/{project}/{tail}`](apis/post-api-invoke-key-environment-project-tail.md) | R | R | — | R/U | R | R | C | — | R | R | C | C | — | C | R | — |
+| 接続先APIにPUTリクエストを転送する<br>[PUT `/api/invoke/{key}/{environment}/{project}/{tail}`](apis/put-api-invoke-key-environment-project-tail.md) | R | R | — | R/U | R | R | C | — | R | R | C | C | — | C | R | — |
+| 認証情報の対象に選べるAPIを一覧する<br>[GET `/api/key-assets`](apis/get-api-key-assets.md) | R | R | — | — | — | R | — | — | — | R | — | — | — | — | R | — |
+| 発行済みの認証情報を一覧する<br>[GET `/api/keys`](apis/get-api-keys.md) | — | R | — | — | R | — | — | — | — | R | — | — | — | — | R | — |
+| 従来方式のAPIキーを発行する<br>[POST `/api/keys`](apis/post-api-keys.md) | R | R | — | — | C | R | C | — | — | R | — | — | — | — | R | — |
+| 認証情報を失効させる<br>[DELETE `/api/keys/{key}`](apis/delete-api-keys-key.md) | — | R | — | — | R/U | — | C | — | — | R | — | — | — | — | R | — |
+| 監視対象に指定できるAPIの利用先を一覧する<br>[GET `/api/management-targets`](apis/get-api-management-targets.md) | R | R | — | — | — | R | — | — | — | R | — | — | — | — | R | — |
+| ログイン中の利用者の所属と権限を確認する<br>[GET `/api/me`](apis/get-api-me.md) | — | R | — | — | — | — | — | — | — | R | — | — | — | — | R | — |
+| ポータルの利用者を一覧する<br>[GET `/api/members`](apis/get-api-members.md) | — | R | — | — | — | — | — | — | — | R | — | — | — | — | R | — |
+| ポータルに利用者を招待する<br>[POST `/api/members`](apis/post-api-members.md) | — | R | — | — | — | — | C | — | — | R | — | — | — | — | C/R | — |
+| ポータルの利用者を削除する<br>[DELETE `/api/members/{subject}`](apis/delete-api-members-subject.md) | — | R | — | — | — | — | C | — | — | R | — | — | — | — | C/R/U | — |
+| 利用統計を絞り込めるAPIとプロジェクトを一覧する<br>[GET `/api/metric-dimensions`](apis/get-api-metric-dimensions.md) | — | R | — | — | — | R | — | — | — | R | R | R | — | — | R | — |
+| 時間帯別の呼び出し件数と応答時間を集計する<br>[GET `/api/metrics`](apis/get-api-metrics.md) | — | R | — | — | — | — | — | — | — | R | R | R | — | — | R | — |
+| 受信した通知を一覧する<br>[GET `/api/notifications`](apis/get-api-notifications.md) | — | R | — | — | — | — | — | — | — | R | — | — | — | R | R | — |
+| 利用者に通知を送る<br>[POST `/api/notifications`](apis/post-api-notifications.md) | R | R | — | — | — | R | C | — | — | R | — | — | — | C | R | — |
+| 未読の通知件数を取得する<br>[GET `/api/notifications/count`](apis/get-api-notifications-count.md) | — | R | — | — | — | — | — | — | — | R | — | — | — | R | R | — |
+| 通知を既読にする<br>[PUT `/api/notifications/{key}/read`](apis/put-api-notifications-key-read.md) | — | R | — | — | — | — | — | — | — | R | — | — | C/R | R | R | — |
+| APIの利用申請を一覧する<br>[GET `/api/requests`](apis/get-api-requests.md) | R | R | — | — | — | R | R | — | — | R | — | — | — | — | R | — |
+| プロジェクトの利用申請を承認・却下・取り下げ・取消する<br>[POST `/api/requests/{key}/{project}/{environment}`](apis/post-api-requests-key-project-environment.md) | R/U | R | — | — | — | R | C | — | — | R | — | — | — | — | R | — |
+| 個人の利用申請を承認・却下・取り下げ・取消する<br>[POST `/api/requests/{key}/{project}/{environment}/{principal}`](apis/post-api-requests-key-project-environment-principal.md) | R/U | R | — | — | — | R | C | — | — | R | — | — | — | — | R | — |
+| 組織の構成と利用者の所属を確認する<br>[GET `/api/workspace`](apis/get-api-workspace.md) | — | R | — | — | — | — | — | — | — | R | — | — | — | — | R | — |
+| 利用者の所属を解除する<br>[DELETE `/api/workspace/memberships`](apis/delete-api-workspace-memberships.md) | — | C/R/U | — | — | — | — | C | — | — | R | — | — | — | — | R | — |
+| 利用者の所属・役職・管理権限を設定する<br>[PUT `/api/workspace/memberships`](apis/put-api-workspace-memberships.md) | — | C/R/U | — | — | — | — | C | — | — | R | — | — | — | — | R | — |
+| 部署・プロジェクトを登録または更新する<br>[PUT `/api/workspace/units/{key}`](apis/put-api-workspace-units-key.md) | — | R | — | — | — | — | C | — | — | C/R/U | — | — | — | — | R | — |
+| 部署・プロジェクトの利用を停止または再開する<br>[PUT `/api/workspace/units/{key}/state`](apis/put-api-workspace-units-key-state.md) | — | R | — | — | — | — | C | — | — | C/R/U | — | — | — | — | R | — |
+| 部署・プロジェクトの所属者とAPI利用実績を取得する<br>[GET `/api/workspace/units/{key}/usage`](apis/get-api-workspace-units-key-usage.md) | — | R | — | — | — | R | — | — | — | R | R | R | — | — | R | — |
+
+<a id="aws"></a>
+
+## AWSサービス別の操作表
+
+列はAPIからAWS SDKを通じて操作するサービスです。
+
+| API（和名・メソッド・パス） | 利用者・グループの管理（Cognitoユーザープール）<br>`cognito-idp` | 接続先関数の実行（Lambda）<br>`lambda` | API仕様文書の保管（Amazon S3）<br>`s3` | 秘密情報の保管（Secrets Manager）<br>`secretsmanager` | 設定パラメータの保管（Systems Manager）<br>`ssm` |
+| --- | --- | --- | --- | --- | --- |
+| API呼び出し履歴を検索する<br>[GET `/api/access-logs`](apis/get-api-access-logs.md) | — | — | — | — | R |
+| API呼び出し履歴をファイルに出力する<br>[GET `/api/access-logs/download`](apis/get-api-access-logs-download.md) | — | — | — | — | R |
+| 呼び出し件数の監視ルールを一覧する<br>[GET `/api/alerts`](apis/get-api-alerts.md) | — | — | — | — | R |
+| 呼び出し件数の通知・停止条件を設定する<br>[PUT `/api/alerts`](apis/put-api-alerts.md) | — | — | — | — | R |
+| カタログのAPIを検索する<br>[GET `/api/apis`](apis/get-api-apis.md) | — | — | — | — | R |
+| APIをカタログに登録する<br>[POST `/api/apis`](apis/post-api-apis.md) | — | — | C | — | R |
+| APIをカタログから削除する（論理削除）<br>[DELETE `/api/apis/{key}`](apis/delete-api-apis-key.md) | — | — | — | — | R |
+| APIの詳細と公開仕様を取得する<br>[GET `/api/apis/{key}`](apis/get-api-apis-key.md) | — | — | — | — | R |
+| APIの登録内容を更新する<br>[PUT `/api/apis/{key}`](apis/put-api-apis-key.md) | — | — | C | — | R |
+| APIの利用者別操作権限を確認する<br>[GET `/api/apis/{key}/operation-policy`](apis/get-api-apis-key-operation-policy.md) | R | — | — | — | R |
+| APIの利用者別操作権限を設定する<br>[PUT `/api/apis/{key}/operation-policy`](apis/put-api-apis-key-operation-policy.md) | R | — | — | — | R |
+| APIの公開範囲と申請の承認条件を確認する<br>[GET `/api/apis/{key}/policy`](apis/get-api-apis-key-policy.md) | — | — | — | — | R |
+| APIの公開範囲と申請の承認条件を設定する<br>[PUT `/api/apis/{key}/policy`](apis/put-api-apis-key-policy.md) | — | — | — | — | R |
+| APIの公開・掲載取り下げを切り替える<br>[PUT `/api/apis/{key}/publication`](apis/put-api-apis-key-publication.md) | — | 実行 | C | R | R |
+| 特定の環境でのAPI利用を申請する<br>[POST `/api/apis/{key}/requests`](apis/post-api-apis-key-requests.md) | — | — | — | — | R |
+| 監査履歴を検索する<br>[GET `/api/audit`](apis/get-api-audit.md) | — | — | — | — | R |
+| クライアント認証情報をアクセストークンに交換する<br>[POST `/api/auth/token`](apis/post-api-auth-token.md) | — | — | — | — | R |
+| カタログのAPIをページ単位で取得する<br>[GET `/api/catalog-page`](apis/get-api-catalog-page.md) | — | — | — | — | R |
+| ポータルのログイン設定を取得する<br>[GET `/api/config`](apis/get-api-config.md) | — | — | — | — | R |
+| API・組織単位のトークン有効期間上限を確認する<br>[GET `/api/credential-limits/{kind}/{key}`](apis/get-api-credential-limits-kind-key.md) | — | — | — | — | R |
+| API・組織単位のトークン有効期間上限を設定する<br>[PUT `/api/credential-limits/{kind}/{key}`](apis/put-api-credential-limits-kind-key.md) | — | — | — | — | R |
+| 利用条件を指定して認証情報を発行する<br>[POST `/api/credentials`](apis/post-api-credentials.md) | R | — | — | — | R |
+| 認証情報の発行時に選べる対象と上限を取得する<br>[GET `/api/credentials/options`](apis/get-api-credentials-options.md) | R | — | — | — | R |
+| クライアントシークレットを再発行する<br>[POST `/api/credentials/{key_id}/rotate`](apis/post-api-credentials-key_id-rotate.md) | — | — | — | — | R |
+| ポータルから短期アクセストークンを取得する<br>[POST `/api/credentials/{key_id}/token`](apis/post-api-credentials-key_id-token.md) | — | — | — | — | R |
+| ダッシュボードの件数を集計する<br>[GET `/api/dashboard`](apis/get-api-dashboard.md) | — | — | — | — | R |
+| デモ利用者としてログインする<br>[POST `/api/demo/{persona}`](apis/post-api-demo-persona.md) | — | — | — | — | — |
+| サービスの稼働状態を確認する<br>[GET `/api/health`](apis/get-api-health.md) | — | — | — | — | — |
+| 接続先APIにDELETEリクエストを転送する<br>[DELETE `/api/invoke/{key}/{environment}/{project}/{tail}`](apis/delete-api-invoke-key-environment-project-tail.md) | — | 実行 | — | R | R |
+| 接続先APIにGETリクエストを転送する<br>[GET `/api/invoke/{key}/{environment}/{project}/{tail}`](apis/get-api-invoke-key-environment-project-tail.md) | — | 実行 | — | R | R |
+| 接続先APIにPATCHリクエストを転送する<br>[PATCH `/api/invoke/{key}/{environment}/{project}/{tail}`](apis/patch-api-invoke-key-environment-project-tail.md) | — | 実行 | — | R | R |
+| 接続先APIにPOSTリクエストを転送する<br>[POST `/api/invoke/{key}/{environment}/{project}/{tail}`](apis/post-api-invoke-key-environment-project-tail.md) | — | 実行 | — | R | R |
+| 接続先APIにPUTリクエストを転送する<br>[PUT `/api/invoke/{key}/{environment}/{project}/{tail}`](apis/put-api-invoke-key-environment-project-tail.md) | — | 実行 | — | R | R |
+| 認証情報の対象に選べるAPIを一覧する<br>[GET `/api/key-assets`](apis/get-api-key-assets.md) | — | — | — | — | R |
+| 発行済みの認証情報を一覧する<br>[GET `/api/keys`](apis/get-api-keys.md) | — | — | — | — | R |
+| 従来方式のAPIキーを発行する<br>[POST `/api/keys`](apis/post-api-keys.md) | — | — | — | — | R |
+| 認証情報を失効させる<br>[DELETE `/api/keys/{key}`](apis/delete-api-keys-key.md) | — | — | — | — | R |
+| 監視対象に指定できるAPIの利用先を一覧する<br>[GET `/api/management-targets`](apis/get-api-management-targets.md) | — | — | — | — | R |
+| ログイン中の利用者の所属と権限を確認する<br>[GET `/api/me`](apis/get-api-me.md) | — | — | — | — | R |
+| ポータルの利用者を一覧する<br>[GET `/api/members`](apis/get-api-members.md) | R | — | — | — | R |
+| ポータルに利用者を招待する<br>[POST `/api/members`](apis/post-api-members.md) | C/D | — | — | — | R |
+| ポータルの利用者を削除する<br>[DELETE `/api/members/{subject}`](apis/delete-api-members-subject.md) | R/D | — | — | — | R |
+| 利用統計を絞り込めるAPIとプロジェクトを一覧する<br>[GET `/api/metric-dimensions`](apis/get-api-metric-dimensions.md) | — | — | — | — | R |
+| 時間帯別の呼び出し件数と応答時間を集計する<br>[GET `/api/metrics`](apis/get-api-metrics.md) | — | — | — | — | R |
+| 受信した通知を一覧する<br>[GET `/api/notifications`](apis/get-api-notifications.md) | — | — | — | — | R |
+| 利用者に通知を送る<br>[POST `/api/notifications`](apis/post-api-notifications.md) | — | — | — | — | R |
+| 未読の通知件数を取得する<br>[GET `/api/notifications/count`](apis/get-api-notifications-count.md) | — | — | — | — | R |
+| 通知を既読にする<br>[PUT `/api/notifications/{key}/read`](apis/put-api-notifications-key-read.md) | — | — | — | — | R |
+| APIの利用申請を一覧する<br>[GET `/api/requests`](apis/get-api-requests.md) | — | — | — | — | R |
+| プロジェクトの利用申請を承認・却下・取り下げ・取消する<br>[POST `/api/requests/{key}/{project}/{environment}`](apis/post-api-requests-key-project-environment.md) | — | — | — | — | R |
+| 個人の利用申請を承認・却下・取り下げ・取消する<br>[POST `/api/requests/{key}/{project}/{environment}/{principal}`](apis/post-api-requests-key-project-environment-principal.md) | — | — | — | — | R |
+| 組織の構成と利用者の所属を確認する<br>[GET `/api/workspace`](apis/get-api-workspace.md) | — | — | — | — | R |
+| 利用者の所属を解除する<br>[DELETE `/api/workspace/memberships`](apis/delete-api-workspace-memberships.md) | — | — | — | — | R |
+| 利用者の所属・役職・管理権限を設定する<br>[PUT `/api/workspace/memberships`](apis/put-api-workspace-memberships.md) | — | — | — | — | R |
+| 部署・プロジェクトを登録または更新する<br>[PUT `/api/workspace/units/{key}`](apis/put-api-workspace-units-key.md) | — | — | — | — | R |
+| 部署・プロジェクトの利用を停止または再開する<br>[PUT `/api/workspace/units/{key}/state`](apis/put-api-workspace-units-key-state.md) | — | — | — | — | R |
+| 部署・プロジェクトの所属者とAPI利用実績を取得する<br>[GET `/api/workspace/units/{key}/usage`](apis/get-api-workspace-units-key-usage.md) | R | — | — | — | R |

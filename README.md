@@ -28,7 +28,7 @@ task demo
 
 親の `pyproject.toml` にPythonの対象範囲、共通のバージョン制約、検査設定を置きます。各メンバーの `pyproject.toml` に直接依存を書き、ルートの単一ロックファイルを共有します。依存の追加には `task deps:add -- --package tsugite-backend パッケージ名`、各種コマンドの一覧には `task --list` を使います。
 
-`task docs` は実行中のデータベースやAWS資格情報を使わず、[API別の実装設計書](docs/generated/README.md)、[SQL・AWS操作のCRUD一覧](docs/generated/crud.md)、[入出力スキーマ](docs/generated/schemas.md)、[テーブル・レコード・カラム定義](docs/generated/database.md)を更新します。設計を変えるときはルーターの引数・応答モデル・依存関数を修正します。CRUD表には条件分岐を含む到達可能な操作と根拠のソース行が載ります。転送先の利用者定義APIの項目は、登録時のOpenAPIで決まります。
+`task docs` は実行中のデータベースやAWS資格情報を使わず、[API別の実装設計書](docs/generated/README.md)、[SQL・AWS操作のCRUD一覧](docs/generated/crud.md)、[入出力スキーマ](docs/generated/schemas.md)、[テーブル・レコード・カラム定義](docs/generated/database.md)を更新します。設計を変えるときはルーターの引数・応答モデル・依存関数を修正します。CRUD表はAPIを行に、SQLテーブルとAWSサービスをそれぞれ別の表の列に並べます。各セルで操作の種類を、API詳細で条件分岐を含む操作の根拠となるソース行を確認できます。転送先の利用者定義APIの項目は、登録時のOpenAPIで決まります。
 
 APIと項目の和名は [API用語集](packages/backend/src/app/api_names.toml)、テーブル・レコード・カラムの和名と1行の意味は [DB用語集](packages/database/src/tsugite_db/names.toml) で管理します。API用語集はデモ環境で配信するOpenAPI（`/api/openapi.json`）にも反映されます。新しいAPI・項目・テーブル・カラムを追加するときは和名も登録してください。CIの設計書生成で登録漏れを検出します。
 

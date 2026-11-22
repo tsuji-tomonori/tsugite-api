@@ -332,6 +332,19 @@ def database_design():
     ]
 
 
+def crud_matrix(operations, kind, columns):
+    resources = sorted(columns)
+    headers = ["API（和名・メソッド・パス）", *(columns[key] for key in resources)]
+    rows = []
+    for api, effects in operations:
+        cells = []
+        for resource in resources:
+            actions = effects.get((kind, resource), set())
+            cells.append("/".join(code for code in ACTIONS if code in actions) or "—")
+        rows.append([api, *cells])
+    return grid(headers, rows)
+
+
 def generate(out=OUT):
     spec, records = catalog(True)
     demo_routes = set(records)
@@ -348,6 +361,7 @@ def generate(out=OUT):
     pages = {}
     overview = []
     crud = []
+    unresolved = []
     for (path, method), (route, op) in sorted(records.items()):
         filename = method.lower() + "-" + re.sub(r"[^\w.-]+", "-", path).strip("-") + ".md"
         dest = "apis/" + filename
@@ -413,11 +427,11 @@ def generate(out=OUT):
                     *returns,
                     "```",
                 ]
-        lines += ["", "## SQL・AWSの操作", ""]
+        lines += ["", "## SQL・AWSの操作"]
         grouped = defaultdict(set)
-        evidence = []
+        evidence = {"SQL": [], "AWS": []}
         for kind, resource, action, func, line, detail in sorted(facts.effects):
-            grouped[kind, resource].add(action)
+            grouped[kind, resource].update(action.split("/"))
             if kind == "SQL":
                 resource_label = f"[{tables[resource]['table']}](../database.md#{resource})"
                 col = detail.removesuffix(" に代入")
@@ -428,9 +442,8 @@ def generate(out=OUT):
             else:
                 resource_label = AWS_SERVICES[resource]
                 operation = AWS_METHODS.get(detail, ACTIONS[action])
-            evidence.append(
+            evidence[kind].append(
                 (
-                    kind,
                     resource_label,
                     resource,
                     action,
@@ -439,11 +452,13 @@ def generate(out=OUT):
                     source_link(index, func, line),
                 )
             )
-        lines += (
-            grid(["種別", "対象の和名", "物理名", "CRUD", "処理内容", "実装", "根拠"], evidence)
-            if evidence
-            else ["該当する操作を検出しませんでした。"]
-        )
+        for kind, heading in (("SQL", "SQLテーブル"), ("AWS", "AWSサービス")):
+            lines += ["", f"### {heading}", ""]
+            lines += (
+                grid(["対象の和名", "物理名", "操作", "処理内容", "実装", "根拠"], evidence[kind])
+                if evidence[kind]
+                else ["該当する操作を検出しませんでした。"]
+            )
         for func, line, reason in sorted(facts.unresolved):
             lines += ["", f"要確認　{reason}　" + source_link(index, func, line)]
         lines += [
@@ -454,22 +469,10 @@ def generate(out=OUT):
             "",
             "</details>",
         ]
-        crud.append(
-            (
-                title,
-                link,
-                *[
-                    "、".join(
-                        f"{tables[res]['table'] if k == 'SQL' else AWS_SERVICES[res]}（`{res}`、{'/'.join(sorted(ops))}）"
-                        for (k, res), ops in sorted(grouped.items())
-                        if k == kind
-                    )
-                    or "—"
-                    for kind in ("SQL", "AWS")
-                ],
-                len(facts.unresolved),
-            )
-        )
+        api = f"{title}<br>{link}"
+        crud.append((api, grouped))
+        if facts.unresolved:
+            unresolved.append((api, len(facts.unresolved)))
         pages[dest] = lines
     with patch.dict(os.environ, {"TSUGITE_DEMO": "1", "AWS_LAMBDA_FUNCTION_NAME": ""}):
         schema_url = create_app().openapi_url
@@ -491,12 +494,48 @@ def generate(out=OUT):
     pages["crud.md"] = [
         "# API別 SQL・AWS CRUD一覧",
         "",
-        "SQLテーブルはAWS環境ではAurora DSQL、ローカルデモではSQLiteを使います。C＝作成、R＝参照、U＝更新、D＝削除。LambdaのInvokeは「実行」です。認証依存、条件分岐、失敗時の補償処理を含む到達可能な操作を示します。実行順・実行回数は表しません。各操作のリンクから根拠の実装行を確認できます。",
+        "[SQLテーブル別](#sql) · [AWSサービス別](#aws)",
         "",
-        "静的解析ではSQLAlchemyの式・ORM属性の代入・リテラルSQL、boto3クライアントの呼び出しを追跡します。動的なディスパッチ、外部ライブラリ内部のSQL・AWS操作は解析範囲外です。",
+        "行はAPI、列は操作対象です。C＝作成、R＝参照、U＝更新、D＝削除。複数の操作は `R/U` のように併記し、該当する操作が検出されなかったセルは「—」で示します。Lambdaの呼び出しは「実行」、分類できない操作は「要確認」です。",
         "",
-        *grid(["APIの和名", "メソッド・パス", "SQLテーブル", "AWSサービス", "要確認件数"], crud),
+        "認証処理、条件分岐、失敗時の補償処理を含みます。APIのリンクから操作の根拠となるソース行を確認できます。動的に決まる呼び出しや外部ライブラリ内の操作には、静的解析で特定できないものがあります。",
+        "",
+        '<a id="sql"></a>',
+        "",
+        "## SQLテーブル別のCRUD表",
+        "",
+        "列はデータベース定義書の全テーブルです。AWS環境はAurora DSQL、ローカルデモはSQLiteを使います。",
+        "",
+        *crud_matrix(
+            crud,
+            "SQL",
+            {key: f"[{entry['table']}](database.md#{key})<br>`{key}`" for key, entry in tables.items()},
+        ),
+        "",
+        '<a id="aws"></a>',
+        "",
+        "## AWSサービス別の操作表",
+        "",
+        "列はAPIからAWS SDKを通じて操作するサービスです。",
+        "",
+        *crud_matrix(
+            crud,
+            "AWS",
+            {
+                key: f"{AWS_SERVICES[key]}<br>`{key}`"
+                for _, effects in crud
+                for kind, key in effects
+                if kind == "AWS"
+            },
+        ),
     ]
+    if unresolved:
+        pages["crud.md"] += [
+            "",
+            "## 静的解析で特定できなかった操作",
+            "",
+            *grid(["API", "要確認件数"], unresolved),
+        ]
     lines = ["# 入出力スキーマ", "", "[API一覧](README.md)"]
     for key, schema in sorted(spec["components"].get("schemas", {}).items()):
         lines += ["", f'<a id="{key.lower()}"></a>', "", f"## {schema['title']}（{key}）", ""]

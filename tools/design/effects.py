@@ -322,11 +322,13 @@ class SourceIndex:
                 for svc in service(part.func.value):
                     action = part.func.attr
                     detail = action
-                    if any(
-                        k.arg == "InvocationType" and literal(k.value) == "DryRun" for k in part.keywords
-                    ):
+                    op = aws_action(action)
+                    options = {kw.arg: literal(kw.value) for kw in part.keywords}
+                    if (svc, action, options.get("IfNoneMatch")) == ("s3", "put_object", "*"):
+                        op = "C"
+                    if options.get("InvocationType") == "DryRun":
                         detail += " (DryRun)"
-                    add("AWS", svc, aws_action(action), part, detail)
+                    add("AWS", svc, op, part, detail)
         return facts
 
     def trace(self, roots):

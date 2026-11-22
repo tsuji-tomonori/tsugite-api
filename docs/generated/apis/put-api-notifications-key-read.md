@@ -50,17 +50,24 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 ## SQL・AWSの操作
 
-| 種別 | 対象の和名 | 物理名 | CRUD | 処理内容 | 実装 | 根拠 |
-| --- | --- | --- | --- | --- | --- | --- |
-| AWS | 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:45](../../../packages/backend/src/app/core/config.py#L45) |
-| SQL | [利用者の組織所属](../database.md#affiliations) | affiliations | R | 検索 | select | [populate:69](../../../packages/backend/src/app/core/workspace.py#L69) |
-| SQL | [組織階層](../database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
-| SQL | [通知の既読履歴](../database.md#notice_reads) | notice_reads | C | レコードを追加 | db.add | [mark_read:116](../../../packages/backend/src/app/apis/governance/notifications.py#L116) |
-| SQL | [通知の既読履歴](../database.md#notice_reads) | notice_reads | R | 主キーで取得 | db.get | [mark_read:115](../../../packages/backend/src/app/apis/governance/notifications.py#L115) |
-| SQL | [通知の既読履歴](../database.md#notice_reads) | notice_reads | R | 主キーで取得 | db.get | [mark_read:121](../../../packages/backend/src/app/apis/governance/notifications.py#L121) |
-| SQL | [通知](../database.md#notices) | notices | R | 検索 | select | [mark_read:113](../../../packages/backend/src/app/apis/governance/notifications.py#L113) |
-| SQL | [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:121](../../../packages/backend/src/app/core/auth.py#L121) |
-| SQL | [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:56](../../../packages/backend/src/app/core/workspace.py#L56) |
+### SQLテーブル
+
+| 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
+| --- | --- | --- | --- | --- | --- |
+| [利用者の組織所属](../database.md#affiliations) | affiliations | R | 検索 | select | [populate:69](../../../packages/backend/src/app/core/workspace.py#L69) |
+| [組織階層](../database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
+| [通知の既読履歴](../database.md#notice_reads) | notice_reads | C | レコードを追加 | db.add | [mark_read:116](../../../packages/backend/src/app/apis/governance/notifications.py#L116) |
+| [通知の既読履歴](../database.md#notice_reads) | notice_reads | R | 主キーで取得 | db.get | [mark_read:115](../../../packages/backend/src/app/apis/governance/notifications.py#L115) |
+| [通知の既読履歴](../database.md#notice_reads) | notice_reads | R | 主キーで取得 | db.get | [mark_read:121](../../../packages/backend/src/app/apis/governance/notifications.py#L121) |
+| [通知](../database.md#notices) | notices | R | 検索 | select | [mark_read:113](../../../packages/backend/src/app/apis/governance/notifications.py#L113) |
+| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:121](../../../packages/backend/src/app/core/auth.py#L121) |
+| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:56](../../../packages/backend/src/app/core/workspace.py#L56) |
+
+### AWSサービス
+
+| 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
+| --- | --- | --- | --- | --- | --- |
+| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:45](../../../packages/backend/src/app/core/config.py#L45) |
 
 <details><summary>解析した関数・依存</summary>
 

@@ -80,17 +80,24 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 ## SQL・AWSの操作
 
-| 種別 | 対象の和名 | 物理名 | CRUD | 処理内容 | 実装 | 根拠 |
-| --- | --- | --- | --- | --- | --- | --- |
-| AWS | 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:45](../../../packages/backend/src/app/core/config.py#L45) |
-| SQL | [API利用申請・利用権](../database.md#access_rights) | access_rights | R | 検索 | select | [detail:20](../../../packages/backend/src/app/apis/catalog/detail/router.py#L20) |
-| SQL | [利用者の組織所属](../database.md#affiliations) | affiliations | R | 検索 | select | [populate:69](../../../packages/backend/src/app/core/workspace.py#L69) |
-| SQL | [APIカタログ](../database.md#assets) | assets | R | 主キーで取得 | db.get | [record:31](../../../packages/backend/src/app/apis/catalog/common.py#L31) |
-| SQL | [認証情報の利用制限](../database.md#credential_rules) | credential_rules | R | 主キーで取得 | db.get | [individual:28](../../../packages/backend/src/app/core/credential_policy.py#L28) |
-| SQL | [組織階層](../database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
-| SQL | [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:121](../../../packages/backend/src/app/core/auth.py#L121) |
-| SQL | [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:56](../../../packages/backend/src/app/core/workspace.py#L56) |
-| SQL | [商品別API仕様の公開履歴](../database.md#spec_releases) | spec_releases | R | 検索 | select | [history:63](../../../packages/backend/src/app/apis/catalog/releases.py#L63) |
+### SQLテーブル
+
+| 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
+| --- | --- | --- | --- | --- | --- |
+| [API利用申請・利用権](../database.md#access_rights) | access_rights | R | 検索 | select | [detail:20](../../../packages/backend/src/app/apis/catalog/detail/router.py#L20) |
+| [利用者の組織所属](../database.md#affiliations) | affiliations | R | 検索 | select | [populate:69](../../../packages/backend/src/app/core/workspace.py#L69) |
+| [APIカタログ](../database.md#assets) | assets | R | 主キーで取得 | db.get | [record:31](../../../packages/backend/src/app/apis/catalog/common.py#L31) |
+| [認証情報の利用制限](../database.md#credential_rules) | credential_rules | R | 主キーで取得 | db.get | [individual:28](../../../packages/backend/src/app/core/credential_policy.py#L28) |
+| [組織階層](../database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
+| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:121](../../../packages/backend/src/app/core/auth.py#L121) |
+| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:56](../../../packages/backend/src/app/core/workspace.py#L56) |
+| [商品別API仕様の公開履歴](../database.md#spec_releases) | spec_releases | R | 検索 | select | [history:63](../../../packages/backend/src/app/apis/catalog/releases.py#L63) |
+
+### AWSサービス
+
+| 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
+| --- | --- | --- | --- | --- | --- |
+| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:45](../../../packages/backend/src/app/core/config.py#L45) |
 
 <details><summary>解析した関数・依存</summary>
 

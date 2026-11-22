@@ -50,9 +50,15 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 ## SQL・AWSの操作
 
-| 種別 | 対象の和名 | 物理名 | CRUD | 処理内容 | 実装 | 根拠 |
-| --- | --- | --- | --- | --- | --- | --- |
-| SQL | [ポータル利用者](../database.md#portal_members) | portal_members | R | 検索 | select | [demo_token:55](../../../packages/backend/src/app/core/auth.py#L55) |
+### SQLテーブル
+
+| 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
+| --- | --- | --- | --- | --- | --- |
+| [ポータル利用者](../database.md#portal_members) | portal_members | R | 検索 | select | [demo_token:55](../../../packages/backend/src/app/core/auth.py#L55) |
+
+### AWSサービス
+
+該当する操作を検出しませんでした。
 
 <details><summary>解析した関数・依存</summary>
 

@@ -34,6 +34,12 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 ## SQL・AWSの操作
 
+### SQLテーブル
+
+該当する操作を検出しませんでした。
+
+### AWSサービス
+
 該当する操作を検出しませんでした。
 
 <details><summary>解析した関数・依存</summary>

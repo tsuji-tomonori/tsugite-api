@@ -51,19 +51,26 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 ## SQL・AWSの操作
 
-| 種別 | 対象の和名 | 物理名 | CRUD | 処理内容 | 実装 | 根拠 |
-| --- | --- | --- | --- | --- | --- | --- |
-| AWS | 利用者・グループの管理（Cognitoユーザープール） | cognito-idp | D | 利用者を削除 | admin_delete_user | [remove_member:164](../../../packages/backend/src/app/apis/governance/members.py#L164) |
-| AWS | 利用者・グループの管理（Cognitoユーザープール） | cognito-idp | R | 利用者の登録情報を取得 | admin_get_user | [remove_member:148](../../../packages/backend/src/app/apis/governance/members.py#L148) |
-| AWS | 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:45](../../../packages/backend/src/app/core/config.py#L45) |
-| SQL | [利用者の組織所属](../database.md#affiliations) | affiliations | R | 検索 | select | [populate:69](../../../packages/backend/src/app/core/workspace.py#L69) |
-| SQL | [監査履歴](../database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [member_event:38](../../../packages/backend/src/app/apis/governance/members.py#L38) |
-| SQL | [組織階層](../database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
-| SQL | [ポータル利用者](../database.md#portal_members) | portal_members | C | レコードを追加 | db.add | [remove_member:157](../../../packages/backend/src/app/apis/governance/members.py#L157) |
-| SQL | [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [remove_member:139](../../../packages/backend/src/app/apis/governance/members.py#L139) |
-| SQL | [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:121](../../../packages/backend/src/app/core/auth.py#L121) |
-| SQL | [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:56](../../../packages/backend/src/app/core/workspace.py#L56) |
-| SQL | [ポータル利用者](../database.md#portal_members) | portal_members | U | 削除済みかを設定 | deleted に代入 | [remove_member:159](../../../packages/backend/src/app/apis/governance/members.py#L159) |
+### SQLテーブル
+
+| 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
+| --- | --- | --- | --- | --- | --- |
+| [利用者の組織所属](../database.md#affiliations) | affiliations | R | 検索 | select | [populate:69](../../../packages/backend/src/app/core/workspace.py#L69) |
+| [監査履歴](../database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [member_event:38](../../../packages/backend/src/app/apis/governance/members.py#L38) |
+| [組織階層](../database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
+| [ポータル利用者](../database.md#portal_members) | portal_members | C | レコードを追加 | db.add | [remove_member:157](../../../packages/backend/src/app/apis/governance/members.py#L157) |
+| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [remove_member:139](../../../packages/backend/src/app/apis/governance/members.py#L139) |
+| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:121](../../../packages/backend/src/app/core/auth.py#L121) |
+| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:56](../../../packages/backend/src/app/core/workspace.py#L56) |
+| [ポータル利用者](../database.md#portal_members) | portal_members | U | 削除済みかを設定 | deleted に代入 | [remove_member:159](../../../packages/backend/src/app/apis/governance/members.py#L159) |
+
+### AWSサービス
+
+| 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
+| --- | --- | --- | --- | --- | --- |
+| 利用者・グループの管理（Cognitoユーザープール） | cognito-idp | D | 利用者を削除 | admin_delete_user | [remove_member:164](../../../packages/backend/src/app/apis/governance/members.py#L164) |
+| 利用者・グループの管理（Cognitoユーザープール） | cognito-idp | R | 利用者の登録情報を取得 | admin_get_user | [remove_member:148](../../../packages/backend/src/app/apis/governance/members.py#L148) |
+| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:45](../../../packages/backend/src/app/core/config.py#L45) |
 
 <details><summary>解析した関数・依存</summary>
 

@@ -99,35 +99,42 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 ## SQL・AWSの操作
 
-| 種別 | 対象の和名 | 物理名 | CRUD | 処理内容 | 実装 | 根拠 |
-| --- | --- | --- | --- | --- | --- | --- |
-| AWS | 利用者・グループの管理（Cognitoユーザープール） | cognito-idp | R | グループの利用者を一覧 | list_users_in_group | [federated_members:199](../../../packages/backend/src/app/apis/governance/directory.py#L199) |
-| AWS | 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:45](../../../packages/backend/src/app/core/config.py#L45) |
-| SQL | [API利用申請・利用権](../database.md#access_rights) | access_rights | R | 検索 | select | [key_assets:68](../../../packages/backend/src/app/apis/governance/keys.py#L68) |
-| SQL | [API利用申請・利用権](../database.md#access_rights) | access_rights | R | 検索 | select | [approved_assets:49](../../../packages/backend/src/app/core/credential_policy.py#L49) |
-| SQL | [利用者の組織所属](../database.md#affiliations) | affiliations | R | 主キーで取得 | db.get | [federated_members:206](../../../packages/backend/src/app/apis/governance/directory.py#L206) |
-| SQL | [利用者の組織所属](../database.md#affiliations) | affiliations | R | 検索 | select | [roster:59](../../../packages/backend/src/app/apis/governance/directory.py#L59) |
-| SQL | [利用者の組織所属](../database.md#affiliations) | affiliations | R | 検索 | select | [populate:69](../../../packages/backend/src/app/core/workspace.py#L69) |
-| SQL | [API認証情報](../database.md#api_keys) | api_keys | C | レコードを追加 | db.add | [issue:165](../../../packages/backend/src/app/apis/governance/credentials.py#L165) |
-| SQL | [APIカタログ](../database.md#assets) | assets | R | 主キーで取得 | db.get | [issue:140](../../../packages/backend/src/app/apis/governance/credentials.py#L140) |
-| SQL | [APIカタログ](../database.md#assets) | assets | R | 検索 | select | [key_assets:76](../../../packages/backend/src/app/apis/governance/keys.py#L76) |
-| SQL | [監査履歴](../database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [audit:37](../../../packages/backend/src/app/apis/governance/directory.py#L37) |
-| SQL | [短期トークンの発行状態](../database.md#credential_leases) | credential_leases | C | レコードを追加 | db.add | [mint:80](../../../packages/backend/src/app/apis/governance/credentials.py#L80) |
-| SQL | [短期トークンの発行状態](../database.md#credential_leases) | credential_leases | R | 主キーで取得 | db.get | [mint:68](../../../packages/backend/src/app/apis/governance/credentials.py#L68) |
-| SQL | [短期トークンの発行状態](../database.md#credential_leases) | credential_leases | U | トークン有効期限（UNIX秒）を設定 | expires に代入 | [mint:81](../../../packages/backend/src/app/apis/governance/credentials.py#L81) |
-| SQL | [短期トークンの発行状態](../database.md#credential_leases) | credential_leases | U | 発行時の認証情報の版番号を設定 | generation に代入 | [mint:81](../../../packages/backend/src/app/apis/governance/credentials.py#L81) |
-| SQL | [短期トークンの発行状態](../database.md#credential_leases) | credential_leases | U | トークン発行時刻（UNIX秒）を設定 | issued に代入 | [mint:81](../../../packages/backend/src/app/apis/governance/credentials.py#L81) |
-| SQL | [短期トークンの発行状態](../database.md#credential_leases) | credential_leases | U | 発行したトークンを区別する一意値を設定 | nonce に代入 | [mint:81](../../../packages/backend/src/app/apis/governance/credentials.py#L81) |
-| SQL | [短期トークンの発行状態](../database.md#credential_leases) | credential_leases | U | トークンを更新できる時刻（UNIX秒）を設定 | refresh_at に代入 | [mint:81](../../../packages/backend/src/app/apis/governance/credentials.py#L81) |
-| SQL | [認証情報の利用制限](../database.md#credential_rules) | credential_rules | R | 主キーで取得 | db.get | [minutes:33](../../../packages/backend/src/app/core/credential_policy.py#L33) |
-| SQL | [組織階層](../database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
-| SQL | [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [federated_members:208](../../../packages/backend/src/app/apis/governance/directory.py#L208) |
-| SQL | [ポータル利用者](../database.md#portal_members) | portal_members | R | 検索 | select | [roster:53](../../../packages/backend/src/app/apis/governance/directory.py#L53) |
-| SQL | [ポータル利用者](../database.md#portal_members) | portal_members | R | 検索 | select | [roster:63](../../../packages/backend/src/app/apis/governance/directory.py#L63) |
-| SQL | [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [roster:68](../../../packages/backend/src/app/apis/governance/directory.py#L68) |
-| SQL | [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [roster:80](../../../packages/backend/src/app/apis/governance/directory.py#L80) |
-| SQL | [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:121](../../../packages/backend/src/app/core/auth.py#L121) |
-| SQL | [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:56](../../../packages/backend/src/app/core/workspace.py#L56) |
+### SQLテーブル
+
+| 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
+| --- | --- | --- | --- | --- | --- |
+| [API利用申請・利用権](../database.md#access_rights) | access_rights | R | 検索 | select | [key_assets:68](../../../packages/backend/src/app/apis/governance/keys.py#L68) |
+| [API利用申請・利用権](../database.md#access_rights) | access_rights | R | 検索 | select | [approved_assets:49](../../../packages/backend/src/app/core/credential_policy.py#L49) |
+| [利用者の組織所属](../database.md#affiliations) | affiliations | R | 主キーで取得 | db.get | [federated_members:206](../../../packages/backend/src/app/apis/governance/directory.py#L206) |
+| [利用者の組織所属](../database.md#affiliations) | affiliations | R | 検索 | select | [roster:59](../../../packages/backend/src/app/apis/governance/directory.py#L59) |
+| [利用者の組織所属](../database.md#affiliations) | affiliations | R | 検索 | select | [populate:69](../../../packages/backend/src/app/core/workspace.py#L69) |
+| [API認証情報](../database.md#api_keys) | api_keys | C | レコードを追加 | db.add | [issue:165](../../../packages/backend/src/app/apis/governance/credentials.py#L165) |
+| [APIカタログ](../database.md#assets) | assets | R | 主キーで取得 | db.get | [issue:140](../../../packages/backend/src/app/apis/governance/credentials.py#L140) |
+| [APIカタログ](../database.md#assets) | assets | R | 検索 | select | [key_assets:76](../../../packages/backend/src/app/apis/governance/keys.py#L76) |
+| [監査履歴](../database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [audit:37](../../../packages/backend/src/app/apis/governance/directory.py#L37) |
+| [短期トークンの発行状態](../database.md#credential_leases) | credential_leases | C | レコードを追加 | db.add | [mint:80](../../../packages/backend/src/app/apis/governance/credentials.py#L80) |
+| [短期トークンの発行状態](../database.md#credential_leases) | credential_leases | R | 主キーで取得 | db.get | [mint:68](../../../packages/backend/src/app/apis/governance/credentials.py#L68) |
+| [短期トークンの発行状態](../database.md#credential_leases) | credential_leases | U | トークン有効期限（UNIX秒）を設定 | expires に代入 | [mint:81](../../../packages/backend/src/app/apis/governance/credentials.py#L81) |
+| [短期トークンの発行状態](../database.md#credential_leases) | credential_leases | U | 発行時の認証情報の版番号を設定 | generation に代入 | [mint:81](../../../packages/backend/src/app/apis/governance/credentials.py#L81) |
+| [短期トークンの発行状態](../database.md#credential_leases) | credential_leases | U | トークン発行時刻（UNIX秒）を設定 | issued に代入 | [mint:81](../../../packages/backend/src/app/apis/governance/credentials.py#L81) |
+| [短期トークンの発行状態](../database.md#credential_leases) | credential_leases | U | 発行したトークンを区別する一意値を設定 | nonce に代入 | [mint:81](../../../packages/backend/src/app/apis/governance/credentials.py#L81) |
+| [短期トークンの発行状態](../database.md#credential_leases) | credential_leases | U | トークンを更新できる時刻（UNIX秒）を設定 | refresh_at に代入 | [mint:81](../../../packages/backend/src/app/apis/governance/credentials.py#L81) |
+| [認証情報の利用制限](../database.md#credential_rules) | credential_rules | R | 主キーで取得 | db.get | [minutes:33](../../../packages/backend/src/app/core/credential_policy.py#L33) |
+| [組織階層](../database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
+| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [federated_members:208](../../../packages/backend/src/app/apis/governance/directory.py#L208) |
+| [ポータル利用者](../database.md#portal_members) | portal_members | R | 検索 | select | [roster:53](../../../packages/backend/src/app/apis/governance/directory.py#L53) |
+| [ポータル利用者](../database.md#portal_members) | portal_members | R | 検索 | select | [roster:63](../../../packages/backend/src/app/apis/governance/directory.py#L63) |
+| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [roster:68](../../../packages/backend/src/app/apis/governance/directory.py#L68) |
+| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [roster:80](../../../packages/backend/src/app/apis/governance/directory.py#L80) |
+| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:121](../../../packages/backend/src/app/core/auth.py#L121) |
+| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:56](../../../packages/backend/src/app/core/workspace.py#L56) |
+
+### AWSサービス
+
+| 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
+| --- | --- | --- | --- | --- | --- |
+| 利用者・グループの管理（Cognitoユーザープール） | cognito-idp | R | グループの利用者を一覧 | list_users_in_group | [federated_members:199](../../../packages/backend/src/app/apis/governance/directory.py#L199) |
+| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:45](../../../packages/backend/src/app/core/config.py#L45) |
 
 <details><summary>解析した関数・依存</summary>
 
