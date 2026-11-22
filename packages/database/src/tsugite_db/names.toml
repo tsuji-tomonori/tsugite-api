@@ -1,0 +1,207 @@
+# table はテーブルの和名、record は1行の和名、grain はその1行が表す範囲。
+[assets]
+table = "APIカタログ"
+record = "掲載API"
+grain = "提供プロジェクトがカタログに登録したAPIを1件保存します。"
+[assets.columns]
+offers = "環境別の申請項目・利用規約・承認経路（JSON）"
+release_note = "次の公開版の変更説明"
+id = "掲載APIの識別子"
+owner = "提供プロジェクトの識別子"
+name = "API名"
+summary = "APIの用途・概要"
+base_path = "接続先APIの基底パス"
+spec = "登録したOpenAPI仕様（JSON）"
+targets = "提供環境と接続先の対応（JSON）"
+policy = "公開範囲と承認条件（JSON）"
+removed_at = "カタログから削除した日時"
+published = "カタログで公開中か"
+revision = "更新時の競合検出に使う版番号"
+
+[access_rights]
+table = "API利用申請・利用権"
+record = "環境別の利用申請・利用権"
+grain = "API・利用プロジェクト・環境の組み合わせごとに、申請から承認・取消までの状態を保存します。個人申請では対象利用者も区別します。"
+[access_rights.columns]
+submission = "申請時の回答・利用条件・審査履歴（JSON）"
+stage = "現在の承認担当"
+id = "利用権の識別子"
+asset_id = "申請対象APIの識別子"
+project = "利用プロジェクトの識別子"
+environment = "利用を申請した環境"
+applicant = "申請した利用者の識別子"
+subject = "個人申請の対象利用者識別子"
+decision_note = "審査・取消の理由"
+reason = "利用申請の理由"
+status = "利用申請の審査状態"
+revision = "更新時の競合検出に使う版番号"
+
+[audit_events]
+table = "監査履歴"
+record = "監査イベント"
+grain = "API登録、利用申請、審査、呼び出しなどで記録された操作を1件保存します。"
+[audit_events.columns]
+id = "監査イベントの識別子"
+at = "監査対象の操作日時"
+actor = "操作した利用者・システムの識別子"
+project = "操作に関係するプロジェクト・組織"
+owner = "提供プロジェクトの識別子"
+asset_id = "対象APIの識別子"
+environment = "操作対象の環境"
+action = "監査対象の操作種別"
+detail = "監査記録の補足内容"
+request_id = "操作をたどるためのリクエスト識別子"
+
+[portal_members]
+table = "ポータル利用者"
+record = "利用者アカウント"
+grain = "ポータルで管理する利用者1人のアカウント情報を保存します。"
+[portal_members.columns]
+subject = "利用者の識別子"
+username = "ログイン名"
+project = "登録時の所属プロジェクト"
+role = "登録時の役割"
+deleted = "削除済みか"
+
+[notices]
+table = "通知"
+record = "配信通知"
+grain = "宛先を指定して送信した通知メッセージを1件保存します。"
+[notices.columns]
+id = "通知の識別子"
+at = "通知の送信日時"
+sender = "通知の送信者"
+project = "通知先プロジェクト"
+asset_id = "通知に関連するAPIの識別子"
+title = "通知の件名"
+body = "通知本文"
+
+[notice_reads]
+table = "通知の既読履歴"
+record = "利用者別の既読記録"
+grain = "ある利用者がある通知を既読にしたことを1件保存します。"
+[notice_reads.columns]
+notice_id = "既読にした通知の識別子"
+subject = "既読にした利用者の識別子"
+
+[invocation_logs]
+table = "API呼び出し履歴"
+record = "API呼び出し記録"
+grain = "転送APIが記録した1リクエストの呼び出し元、対象、応答結果を保存します。"
+[invocation_logs.columns]
+request_id = "呼び出しのリクエスト識別子"
+at = "APIの呼び出し日時"
+actor = "呼び出し元の利用者・システム識別子"
+owner = "提供プロジェクトの識別子"
+project = "呼び出し元プロジェクトの識別子"
+asset_id = "呼び出したAPIの識別子"
+environment = "呼び出した環境"
+key_id = "利用した認証情報の識別子"
+method = "HTTPメソッド"
+operation = "呼び出したAPI操作"
+status = "HTTPステータスコード"
+duration_ms = "応答時間（ミリ秒）"
+
+[alert_rules]
+table = "API呼び出し件数の監視設定"
+record = "環境別の呼び出し件数監視ルール"
+grain = "API・利用プロジェクト・環境ごとに、通知・停止の条件と現在の集計件数を保存します。"
+[alert_rules.columns]
+id = "監視ルールの識別子"
+asset_id = "監視するAPIの識別子"
+project = "監視する利用プロジェクト"
+environment = "監視する提供環境"
+threshold = "通知・停止の基準件数"
+minutes = "呼び出し件数の集計区間（分）"
+stop = "上限到達後の呼び出しを停止するか"
+enabled = "監視ルールが有効か"
+window = "現在の集計区間の番号"
+calls = "現在の集計区間の呼び出し件数"
+
+[directory_tree]
+table = "組織階層"
+record = "組織構成の保存記録"
+grain = "部署とプロジェクトの階層全体を1つの構成として保存します。"
+[directory_tree.columns]
+id = "組織構成の識別子"
+units = "部署・プロジェクトの階層データ（JSON）"
+revision = "更新時の競合検出に使う版番号"
+
+[affiliations]
+table = "利用者の組織所属"
+record = "組織別の所属記録"
+grain = "利用者1人と所属先1組織の組み合わせごとに、役職と管理権限を保存します。"
+[affiliations.columns]
+subject = "所属する利用者の識別子"
+unit_id = "所属先の部署・プロジェクト識別子"
+title = "所属先での役職名"
+leader = "所属先の管理権限があるか"
+active = "所属が有効か"
+
+[credential_leases]
+table = "短期トークンの発行状態"
+record = "短期トークンの再利用・更新記録"
+grain = "発行経路・認証情報・利用者の組み合わせごとに、発行済みトークンを再利用できる期間を記録します。"
+[credential_leases.columns]
+id = "発行経路・認証情報・利用者から作る識別子"
+issued = "トークン発行時刻（UNIX秒）"
+expires = "トークン有効期限（UNIX秒）"
+refresh_at = "トークンを更新できる時刻（UNIX秒）"
+nonce = "発行したトークンを区別する一意値"
+generation = "発行時の認証情報の版番号"
+revision = "更新時の競合検出に使う版番号"
+
+[credential_rules]
+table = "認証情報の利用制限"
+record = "対象別の有効期間・操作制限"
+grain = "対象のAPI、組織、またはAPIと利用者の組み合わせに対する制限を1件保存します。"
+[credential_rules.columns]
+id = "制限の適用対象を表す識別子"
+limit_minutes = "トークン有効期間の上限（分）"
+ops = "利用を許可するAPI操作（JSON）"
+revision = "更新時の競合検出に使う版番号"
+
+[api_keys]
+table = "API認証情報"
+record = "発行済みのAPI認証情報"
+grain = "発行した認証情報ごとに利用範囲、所有者、秘密値の照合情報、失効状態を保存します。"
+[api_keys.columns]
+id = "認証情報の識別子"
+mode = "認証方式"
+config = "有効期間・利用者・操作の制限（JSON）"
+created = "認証情報の発行時刻（UNIX秒）"
+digest = "秘密値を照合するためのハッシュ値"
+project = "認証情報を利用するプロジェクト"
+creator = "認証情報を発行した利用者の識別子"
+name = "認証情報の表示名"
+kind = "認証情報の利用範囲（個人・共有）"
+scopes = "利用対象APIの識別子一覧（JSON）"
+revoked = "認証情報が失効済みか"
+revision = "認証情報の版番号"
+
+[invocation_units]
+table = "API呼び出しと組織の対応"
+record = "呼び出しの組織別集計対象"
+grain = "呼び出し1件をどの組織の利用実績に含めるか、リクエストと組織の組み合わせで保存します。"
+[invocation_units.columns]
+request_id = "呼び出しのリクエスト識別子"
+unit_id = "利用実績を集計する組織の識別子"
+
+[alembic_version]
+table = "データベース移行版管理"
+record = "適用済みマイグレーション版"
+grain = "Alembicが適用済みとして管理している最新のマイグレーション版を、移行履歴の先端ごとに1件保存します。"
+[alembic_version.columns]
+version_num = "適用済みのマイグレーション版番号"
+
+[spec_releases]
+table = "商品別API仕様の公開履歴"
+record = "商品API仕様の公開版"
+grain = "商品ごとに公開したAPI仕様の1版を保存します。商品識別子と公開版番号の組み合わせで1件を特定します。"
+[spec_releases.columns]
+asset_id = "公開した商品の識別子"
+number = "商品内の公開版番号"
+at = "仕様を公開した日時"
+digest = "保存したOpenAPI文書の内容を識別するハッシュ値"
+manifest = "操作・構成要素と内容のハッシュ値の対応（JSON）"
+summary = "公開時の変更内容と版情報（JSON）"

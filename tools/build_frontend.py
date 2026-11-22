@@ -12,7 +12,7 @@ from importlib.util import find_spec
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-DIST = ROOT / "frontend/dist"
+DIST = ROOT / "packages/frontend/dist"
 CACHE = ROOT / "build/vendor"
 BUNDLES = {
     "pyscript": (
@@ -58,7 +58,7 @@ def build():
     CACHE.mkdir(parents=True, exist_ok=True)
     if DIST.exists():
         shutil.rmtree(DIST)
-    shutil.copytree(ROOT / "frontend/public", DIST)
+    shutil.copytree(ROOT / "packages/frontend/public", DIST)
     for name, (url, digest) in BUNDLES.items():
         archive = CACHE / (name + ".tgz")
         if not archive.exists() or sha256(archive.read_bytes()).hexdigest() != digest:
@@ -99,7 +99,7 @@ def build():
     for file in wheel.files or ():
         if file.name.upper() == "LICENSE":
             shutil.copy(wheel.locate_file(file), DIST / "vendor/puepy/LICENSE")
-    for src in sorted((ROOT / "frontend/src/web_app").glob("*.py")):
+    for src in sorted((ROOT / "packages/frontend/src/web_app").glob("*.py")):
         shutil.copy(src, DIST / src.name)
         if src.name != "app.py":
             files["/" + src.name] = "./" + src.name

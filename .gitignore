@@ -5,8 +5,8 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
-frontend/dist/
-infra/cdk.out/
+packages/frontend/dist/
+packages/infra/cdk.out/
 build/
 artifacts/
 .env
