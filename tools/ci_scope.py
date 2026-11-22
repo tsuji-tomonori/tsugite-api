@@ -10,7 +10,12 @@ import tomllib
 from pathlib import Path
 from xml.etree import ElementTree
 
-from tools.check_coverage import download_merged_coverage
+from tools.check_coverage import (
+    POLICY_FILE,
+    compatible_coverage,
+    coverage_policy,
+    download_merged_coverage,
+)
 
 ARTIFACTS = Path("artifacts")
 PARTS = ARTIFACTS / "coverage-parts"
@@ -143,8 +148,11 @@ def plan(base):
         download_merged_coverage(
             os.environ["GITHUB_REPOSITORY"], os.environ["BASE_BRANCH"], merge_base, cached
         )
+    if not compatible_coverage(cached):
+        cached = cached / "no-compatible-baseline"
     result = select(paths, suites, cached)
     PARTS.mkdir(parents=True, exist_ok=True)
+    (ARTIFACTS / POLICY_FILE).write_text(coverage_policy() + "\n")
     for suite in suites:
         source = cached / "coverage-parts" / part_name(suite)
         if suite not in result["suites"] and source.is_file():
@@ -162,6 +170,29 @@ def plan(base):
     with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
         for key, value in result.items():
             print(f"{key}={json.dumps(value)}", file=output)
+
+
+def write_coverage_report(destination):
+    from coverage import Coverage
+
+    # 全スイートの計測済みデータを、同名の app.py も識別できるリポジトリ相対パスで出力する。
+    coverage = Coverage(source=[str(Path.cwd())])
+    coverage.load()
+    coverage.xml_report(outfile=str(destination))
+    totals = {}
+    for entry in ElementTree.parse(destination).iter("class"):
+        path = Path(entry.attrib["filename"])
+        if path.parts[0] == "packages":
+            area = path.parts[1]
+        else:
+            area = "models" if path.parts[:2] == ("agent", "models") else path.parts[0]
+        counts = totals.setdefault(area, [0, 0])
+        lines = entry.findall("./lines/line")
+        counts[0] += sum(int(line.attrib["hits"]) > 0 for line in lines)
+        counts[1] += len(lines)
+    for area, (covered, total) in sorted(totals.items()):
+        if total:
+            print(f"{area}: {covered}/{total} lines ({100 * covered / total:.2f}%)")
 
 
 def run_suites():
@@ -192,15 +223,14 @@ def run_suites():
         result.check_returncode()
         data = CoverageData(basename=str(part))
         data.read()
-        executed = sorted(name for name in data.measured_files() if data.lines(name))
+        executed = sorted(Path(name).as_posix() for name in data.measured_files() if data.lines(name))
         part.with_suffix(".json").write_text(json.dumps(executed) + "\n")
         if not executed:
             part.write_bytes(b"")
     parts = [PARTS / part_name(suite) for suite in configured_suites()]
     measured = [str(part) for part in parts if part.stat().st_size]
     subprocess.run([sys.executable, "-m", "coverage", "combine", "--keep", *measured], check=True)
-    report = str(ARTIFACTS / "coverage.xml")
-    subprocess.run([sys.executable, "-m", "coverage", "xml", "-o", report], check=True)
+    write_coverage_report(ARTIFACTS / "coverage.xml")
 
 
 if __name__ == "__main__":

@@ -1,9 +1,11 @@
 """Enforce active GitHub line coverage rules on a pull request."""
 
+import hashlib
 import json
 import os
 import subprocess
 import sys
+import tomllib
 from fractions import Fraction
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -11,9 +13,24 @@ from urllib.parse import quote
 from xml.etree import ElementTree
 
 BASELINE_ARTIFACT = "line-coverage"
-# Verify run 44974628339 measured 2,070 of 2,372 lines on the tree merged by PR #1.
-BOOTSTRAP_SHA = "cfc39b7bcae2fb54e8b2eb7239a151a8be52286e"
-BOOTSTRAP_COVERAGE = Fraction(2070 * 100, 2372)
+ROOT = Path(__file__).resolve().parents[1]
+POLICY_FILE = Path("coverage-parts/policy.sha256")
+BROWSER_FIXTURE = Path("tests/e2e/browser/conftest.py")
+BROWSER_TRACE = Path("tests/support/pyodide_trace.py")
+
+
+def coverage_policy():
+    with (ROOT / "pyproject.toml").open("rb") as file:
+        config = tomllib.load(file)["tool"]["coverage"]
+    digest = hashlib.sha256(json.dumps(config, sort_keys=True).encode())
+    for path in (BROWSER_FIXTURE, BROWSER_TRACE):
+        digest.update((ROOT / path).read_text(encoding="utf-8").encode())
+    return digest.hexdigest()
+
+
+def compatible_coverage(folder):
+    marker = Path(folder) / POLICY_FILE
+    return marker.is_file() and marker.read_text().strip() == coverage_policy()
 
 
 def github_json(endpoint, *query_args):
@@ -93,7 +110,7 @@ def download_merged_coverage(repository, branch, sha, folder):
 
 def merged_pr_coverage(repository, branch, sha):
     with TemporaryDirectory() as folder:
-        if download_merged_coverage(repository, branch, sha, folder):
+        if download_merged_coverage(repository, branch, sha, folder) and compatible_coverage(folder):
             return line_coverage(Path(folder) / "coverage.xml")
     return None
 
@@ -116,9 +133,23 @@ def measure_base_coverage(sha):
                 env=env,
             )
             (path / "artifacts").mkdir(exist_ok=True)
-            subprocess.run(["task", "test"], cwd=path, check=True, env=env)
+            # 同じ計測方法で比較するため、ベースの実装とテストに現在のブラウザー計測だけを加える。
+            fixture = path / BROWSER_FIXTURE
+            with fixture.open("a", encoding="utf-8") as stream:
+                stream.write("\n" + (ROOT / BROWSER_FIXTURE).read_text(encoding="utf-8"))
+            (path / BROWSER_TRACE).write_bytes((ROOT / BROWSER_TRACE).read_bytes())
             report = Path("artifacts/coverage.xml")
-            command = ["uv", "run", "--locked", "--all-packages", "coverage", "xml", "-o", str(report)]
+            command = [
+                "uv",
+                "run",
+                "--locked",
+                "--all-packages",
+                "pytest",
+                "-q",
+                "--cov",
+                f"--cov-config={ROOT / 'pyproject.toml'}",
+                f"--cov-report=xml:{report}",
+            ]
             subprocess.run(command, cwd=path, check=True, env=env)
             return line_coverage(path / report)
         finally:
@@ -126,9 +157,6 @@ def measure_base_coverage(sha):
 
 
 def baseline_coverage(repository, branch, sha):
-    if sha == BOOTSTRAP_SHA:
-        return BOOTSTRAP_COVERAGE
-
     coverage = merged_pr_coverage(repository, branch, sha)
     return measure_base_coverage(sha) if coverage is None else coverage
 

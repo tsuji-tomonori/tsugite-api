@@ -45,7 +45,7 @@ def browser_coverage(monkeypatch):
             f"scope['start']({list(paths)!r}, {PREFIX!r})\n"
             f"exec(compile({entry!r}, 'app.py', 'exec'), globals())\n"
         )
-        route.fulfill(response=response, body=bootstrap)
+        route.fulfill(status=response.status, content_type="text/plain; charset=utf-8", body=bootstrap)
 
     def goto(page, url, **options):
         if page not in pages and urlsplit(url).hostname == "127.0.0.1":

@@ -1,6 +1,7 @@
 """ブラウザー内のPythonで実行した画面コードの行遷移をテストランナーへ返す。"""
 
 import json
+import os
 import sys
 
 from js import console
@@ -10,11 +11,13 @@ from js import console
 # 各ファイルで初めて通った行遷移のみを、関数から戻るときにまとめて通知する。
 def start(files, prefix):
     seen = {name: set() for name in files}
+    paths = {
+        path: name for name in files for path in (name, "./" + name, os.path.join(os.getcwd(), name))
+    }
 
     def trace(frame, event, arg):
-        filename = frame.f_code.co_filename
-        name = filename.rsplit("/", 1)[-1]
-        if name not in seen or filename.rsplit("/", 1)[0] not in (name, ".", "/home/pyodide"):
+        name = paths.get(frame.f_code.co_filename)
+        if name is None:
             return None
 
         entry = -frame.f_code.co_firstlineno
