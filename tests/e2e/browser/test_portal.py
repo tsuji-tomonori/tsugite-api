@@ -18,10 +18,43 @@ def demo_url(tmp_path):
 
 @scenario("提供者の公開から承認・取消までを画面で操作する", tags=["CAT", "AUTH", "AUDIT"])
 def test_user_flow(demo_url, request):
+    """デモの提供者と利用者が公開・申請・承認・実行・権限取消を画面で完了できる"""
     catalog_journey(demo_url, request.node)
 
 
+def test_home_chat_and_inquiry(demo_url):
+    """ホームで商品と手順を調べ、運営への問い合わせを明示的に送信できる。"""
+    import httpx
+    from playwright.sync_api import expect, sync_playwright
+
+    from tools.seed_marketplace import seed
+
+    with httpx.Client(base_url=demo_url + "/api/", trust_env=False) as api:
+        seed(api, 1)
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch(executable_path=os.getenv("CHROMIUM_PATH") or None)
+        page = browser.new_page(viewport={"width": 390, "height": 844})
+        page.goto(demo_url)
+        page.get_by_role("button", name="利用チーム", exact=True).click()
+        expect(page.get_by_role("heading", name="どのAPIをお探しですか？")).to_be_visible()
+        page.get_by_role("button", name="在庫を確認できるAPIを探して").click()
+        history = page.get_by_role("log", name="会話")
+        expect(history.locator('a[href^="#/api/"]').first).to_be_visible()
+        page.get_by_label("質問", exact=True).fill("APIキーを発行する手順を教えて")
+        page.get_by_role("button", name="送信", exact=True).click()
+        expect(history.get_by_role("link", name="ガイドで確認").first).to_be_visible()
+        page.get_by_role("button", name="運営に問い合わせる").click()
+        page.get_by_label("問い合わせ内容").fill("利用申請を確認してください")
+        page.get_by_role("button", name="問い合わせを送信").click()
+        expect(history.get_by_text("問い合わせを受け付けました。受付番号", exact=False)).to_be_visible()
+        page.get_by_role("link", name="自分の問い合わせ", exact=True).click()
+        expect(page.get_by_text("回答待ち", exact=True)).to_be_visible()
+        assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
+        browser.close()
+
+
 def test_large_catalog(demo_url, request):
+    """6業務・20拠点の公開120件を全件照合し、PC・スマートフォンの検索とページ送りを確認する"""
     import httpx
     from playwright.sync_api import expect, sync_playwright
 
@@ -92,6 +125,7 @@ def test_large_catalog(demo_url, request):
 
 
 def test_console_visual_modes(demo_url, request):
+    """11月の外観変更を反映した明暗テーマの文字コントラストとキーボード操作を確認する"""
     import httpx
     from playwright.sync_api import expect, sync_playwright
 
@@ -193,6 +227,7 @@ def test_console_visual_modes(demo_url, request):
 
 
 def test_governance_console(demo_url, request):
+    """3役で利用状況、ユーザー管理、通知、ログ保存、掲載終了を確認する"""
     import json
     import re
 
@@ -219,6 +254,8 @@ def test_governance_console(demo_url, request):
             ):
                 view.goto(demo_url)
                 view.get_by_role("button", name=label, exact=True).click()
+                expect(view.get_by_role("heading", name="どのAPIをお探しですか？")).to_be_visible()
+                navigate(view, "利用状況")
                 expect(view.get_by_text(role + "としての利用状況")).to_be_visible()
 
             navigate(admin, "ユーザー管理")
@@ -276,7 +313,7 @@ def test_governance_console(demo_url, request):
             assert json.loads(audit_file.value.path().read_text())["action"] == "invoke.denied"
             capture(user, "audit", "429のリクエストIDで照合した業務監査")
             for view, role in ((admin, "管理者"), (provider, "提供者"), (user, "利用者")):
-                navigate(view, "ホーム")
+                navigate(view, "利用状況")
                 expect(view.locator(".recent-call")).to_have_count(3)
                 expect(
                     view.locator(".stat").filter(has_text="直近24時間の呼び出し").locator("strong")

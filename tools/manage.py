@@ -8,6 +8,8 @@ import sys
 from pathlib import Path
 
 from build_backend import build as backend
+from build_chat import build as chat
+from build_chat import publish as publish_models
 from build_frontend import build as frontend
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -80,6 +82,9 @@ def main():
     else:
         frontend()
         backend()
+        chat()
+        if args.command == "deploy":
+            publish_models()
         if args.command != "build":
             cdk_args = ["-c", "bindings=" + str(args.bindings.resolve())] if args.bindings else []
             if args.command == "deploy" and args.require_approval:

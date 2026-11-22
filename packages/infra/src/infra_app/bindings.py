@@ -4,6 +4,7 @@ from aws_cdk import Stack
 from aws_cdk import aws_iam as iam
 from aws_cdk import aws_lambda as fn
 from aws_cdk import aws_ssm as ssm
+from cdk_nag import NagSuppressions
 from constructs import Construct
 
 
@@ -23,6 +24,13 @@ class UpstreamBindings(Construct):
                     runtime=fn.Runtime.PYTHON_3_14,
                     handler="index.handler",
                     code=fn.Code.from_inline(Path(__file__).with_name("stock_sample.py").read_text()),
+                )
+                NagSuppressions.add_resource_suppressions(
+                    sample,
+                    [{
+                        "id": "AwsSolutions-L1",
+                        "reason": "The sample uses the stable Python 3.14 runtime for AWS Emulator compatibility.",
+                    }],
                 )
                 targets["stock-" + environment] = {
                     "owner": "supply",

@@ -13,6 +13,7 @@ def build():
         shutil.rmtree(dest)
     dest.mkdir(parents=True)
     requirements = ROOT / "build/runtime.txt"
+    versions = requirements.with_name("runtime-versions.txt")
     subprocess.run(
         [
             "uv",
@@ -23,11 +24,20 @@ def build():
             "--no-dev",
             "--no-emit-workspace",
             "--no-header",
+            "--no-hashes",
             "-o",
-            str(requirements),
+            str(versions),
         ],
         cwd=ROOT,
         stdout=subprocess.DEVNULL,
+        check=True,
+    )
+    subprocess.run(
+        [
+            "uv", "pip", "compile", str(versions), "--python-version", "3.15",
+            "--python-platform", "x86_64-manylinux_2_34", "--only-binary", ":all:",
+            "--generate-hashes", "--output-file", str(requirements),
+        ],
         check=True,
     )
     subprocess.run(
@@ -39,7 +49,7 @@ def build():
             "--target",
             str(dest),
             "--python-version",
-            "3.14",
+            "3.15",
             "--python-platform",
             "x86_64-manylinux_2_34",
             "--only-binary",
@@ -64,6 +74,15 @@ def build():
         ignore=shutil.ignore_patterns("__pycache__"),
     )
     shutil.copy(ROOT / "packages/database/alembic.ini", dest)
+    shutil.copytree(
+        ROOT / "agent",
+        dest / "agent",
+        ignore=shutil.ignore_patterns("__pycache__", "models", "README.md"),
+    )
+    guide_path = Path("packages/frontend/src/web_app")
+    (dest / guide_path).mkdir(parents=True)
+    for name in ("guide_content.py", "guide_search.py"):
+        shutil.copy(ROOT / guide_path / name, dest / guide_path / name)
     for path in dest.rglob("__pycache__"):
         shutil.rmtree(path)
 

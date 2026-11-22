@@ -8,6 +8,7 @@ from src.infra_app.stack import CatalogStack
 
 
 def test_access_boundaries(tmp_path):
+    """非公開S3、呼び出しの認可、キャッシュと配信の設定が設計どおりである"""
     stack = CatalogStack(
         App(outdir=str(tmp_path)),
         "TsugiteApi",
@@ -81,8 +82,17 @@ NO_RESOURCE_TAGS = {
 }
 
 
-@pytest.mark.parametrize("custom", [False, True], ids=["sample", "custom-project"])
+@pytest.mark.parametrize(
+    "custom",
+    [
+        pytest.param(False, id="sample", marks=pytest.mark.case_detail("サンプル付きの標準構成を検証")),
+        pytest.param(
+            True, id="custom-project", marks=pytest.mark.case_detail("独自プロジェクト構成を検証")
+        ),
+    ],
+)
 def test_every_resource_has_ownership(tmp_path, custom):
+    """すべてのリソースに管理情報を付け、タグ対応リソースには同じ値を付ける"""
     config = tmp_path / "bindings.json"
     config.write_text(json.dumps({"projects": ["warehouse-team"], "targets": {}}))
     app = App(outdir=str(tmp_path / "out"), context={"bindings": str(config)} if custom else {})
@@ -102,6 +112,7 @@ def test_every_resource_has_ownership(tmp_path, custom):
             "Identities",
             "Bindings",
             "Stack",
+            "Chat",
         }, logical_id
         props = resource.get("Properties", {})
         tags = props.get("UserPoolTags", props.get("Tags"))
@@ -116,6 +127,7 @@ def test_every_resource_has_ownership(tmp_path, custom):
 
 
 def test_existing_resources_keep_their_logical_ids(tmp_path):
+    """既存リソースの論理IDと分割後の所属が対応する"""
     stack = CatalogStack(App(outdir=str(tmp_path)), "TsugiteApi")
     resources = Template.from_stack(stack).to_json()["Resources"]
     old_groups = json.loads(Path(__file__).with_name("legacy_resources.json").read_text())

@@ -17,7 +17,9 @@ def handler(event, context):
     root = Path(os.getenv("LAMBDA_TASK_ROOT", "."))
     command.upgrade(Config(str(root / "alembic.ini")), "head")
     arn = event["ResourceProperties"]["RuntimeRoleArn"]
-    if not re.fullmatch(r"arn:[a-z0-9-]+:iam::[0-9]{12}:role/[A-Za-z0-9+=,.@_/-]+", arn):
+    chat_arn = event["ResourceProperties"].get("ChatRoleArn")
+    role_pattern = r"arn:[a-z0-9-]+:iam::[0-9]{12}:role/[A-Za-z0-9+=,.@_/-]+"
+    if not re.fullmatch(role_pattern, arn) or (chat_arn and not re.fullmatch(role_pattern, chat_arn)):
         raise ValueError("Invalid IAM role")
     with engine().connect().execution_options(isolation_level="AUTOCOMMIT") as conn:
         if not conn.scalar(text("SELECT 1 FROM pg_roles WHERE rolname='tsugite_app'")):
@@ -25,9 +27,15 @@ def handler(event, context):
         conn.exec_driver_sql(f"AWS IAM GRANT tsugite_app TO '{arn}'")
         conn.exec_driver_sql("GRANT USAGE ON SCHEMA public TO tsugite_app")
         conn.exec_driver_sql(
-            "GRANT SELECT, INSERT, UPDATE ON assets, access_rights, portal_members, alert_rules, directory_tree, affiliations, api_keys, credential_leases, credential_rules TO tsugite_app"
+            "GRANT SELECT, INSERT, UPDATE ON assets, access_rights, portal_members, alert_rules, directory_tree, affiliations, api_keys, credential_leases, credential_rules, inquiries TO tsugite_app"
         )
         conn.exec_driver_sql(
             "GRANT SELECT, INSERT ON spec_releases, audit_events, invocation_logs, notices, notice_reads, invocation_units TO tsugite_app"
         )
+        if chat_arn:
+            if not conn.scalar(text("SELECT 1 FROM pg_roles WHERE rolname='tsugite_chat'")):
+                conn.exec_driver_sql("CREATE ROLE tsugite_chat WITH LOGIN")
+            conn.exec_driver_sql(f"AWS IAM GRANT tsugite_chat TO '{chat_arn}'")
+            conn.exec_driver_sql("GRANT USAGE ON SCHEMA public TO tsugite_chat")
+            conn.exec_driver_sql("GRANT SELECT ON assets TO tsugite_chat")
     return result

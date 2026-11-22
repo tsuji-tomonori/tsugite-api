@@ -13,7 +13,7 @@ from mangum import Mangum
 from sqlalchemy.exc import IntegrityError, OperationalError
 from sqlalchemy.orm.exc import StaleDataError
 
-from app.apis import catalog, gateway, outputs
+from app.apis import catalog, chat, gateway, inquiries, outputs
 from app.apis.catalog.common import DB
 from app.apis.governance import router as governance
 from app.core.auth import demo_token
@@ -108,6 +108,8 @@ def create_app() -> FastAPI:
 
     app.include_router(governance.router, prefix="/api")
     app.include_router(catalog.router, prefix="/api")
+    app.include_router(chat.router, prefix="/api")
+    app.include_router(inquiries.router, prefix="/api")
     app.include_router(gateway.router, prefix="/api")
     static = Path(os.getenv("FRONTEND_DIST", "packages/frontend/dist"))
     if static.is_dir() and not os.getenv("AWS_LAMBDA_FUNCTION_NAME"):

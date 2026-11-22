@@ -5,7 +5,10 @@ import re
 import unicodedata
 from collections import Counter
 
-from guide_content import GUIDES, audiences
+if __package__:
+    from .guide_content import GUIDES, audiences
+else:
+    from guide_content import GUIDES, audiences
 
 
 def normalize(text):

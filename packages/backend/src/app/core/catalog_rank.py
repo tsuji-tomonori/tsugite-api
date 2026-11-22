@@ -1,5 +1,7 @@
 """Hybrid ranking over the listings the caller is already allowed to discover."""
 
+from __future__ import annotations
+
 import json
 import math
 import re
@@ -7,10 +9,12 @@ import unicodedata
 from collections import Counter, defaultdict
 from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 from app.core.openapi import path_items
-from tsugite_db.models import Asset
+
+if TYPE_CHECKING:
+    from tsugite_db.models import Asset
 
 # Each axis describes a business concept. OpenAPI tags extend these axes with
 # domain-specific descriptions from the permitted catalog at query time.
