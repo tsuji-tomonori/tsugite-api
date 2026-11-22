@@ -56,7 +56,7 @@ def main():
             check=True,
         )
     elif args.command == "contracts":
-        # A direct script invocation places tools/ on sys.path. The API imports the sibling agent package.
+        # A direct script invocation places tools/ on sys.path. The agent reads the shared frontend guide modules from the repository.
         sys.path.insert(0, str(ROOT))
         from app.main import create_app
         from tsugite_db.design_names import design_tables, table_names

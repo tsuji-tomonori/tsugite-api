@@ -2,7 +2,7 @@
 name = "tsugite-backend"
 version = "0.1.0"
 requires-python = ">=3.14,<3.16"
-dependencies = ["fastapi","uvicorn","pydantic>=2","sqlalchemy>=2,<3","alembic","tsugite-database","PyJWT[crypto]","httpx","mangum","boto3","pyyaml","openapi-spec-validator"]
+dependencies = ["fastapi","uvicorn","pydantic>=2","sqlalchemy>=2,<3","alembic","tsugite-agent","tsugite-database","PyJWT[crypto]","httpx","mangum","boto3","pyyaml","openapi-spec-validator"]
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"

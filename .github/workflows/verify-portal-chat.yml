@@ -29,7 +29,7 @@ jobs:
         run: |
           uv run --locked python tools/manage.py contracts
           uv run --locked python -m tools.design.generate
-          uv run --locked pytest -q packages/backend/tests packages/database/tests tools/tests --junitxml=artifacts/api.xml
+          uv run --locked pytest -q packages/agent/tests packages/backend/tests packages/database/tests tools/tests --junitxml=artifacts/api.xml
       - if: matrix.suite == 'browser'
         run: uv run --locked pytest -q tests/e2e/browser --junitxml=artifacts/browser.xml
       - if: matrix.suite == 'cdk'

@@ -22,6 +22,7 @@ from tools.ci_coverage_parts import ARTIFACTS, PARTS, part_name, run_parts
 BROWSER = "tests/e2e/browser"
 TOOLS = "tools/tests"
 ARCHITECTURE = "tests/architecture"
+AGENT = "packages/agent/tests"
 BACKEND = "packages/backend/tests"
 DATABASE = "packages/database/tests"
 FRONTEND = "packages/frontend/tests"
@@ -34,7 +35,7 @@ def affected(path, suites):
         return FULL
     for suite in suites:
         if path.startswith(suite + "/"):
-            return {suite}
+            return {suite, "types"} if suite == AGENT else {suite}
     if path.startswith("docs/requirements/items/"):
         return FULL
     if path.startswith("docs/generated/infra/") or path == "tools/design/infrastructure.py":
@@ -48,13 +49,13 @@ def affected(path, suites):
     ):
         return set()
     if path == "packages/backend/src/app/core/log_record.py":
-        return {BACKEND, FRONTEND, BROWSER, TOOLS, "types", "aws", "aws_portal"}
+        return {AGENT, BACKEND, FRONTEND, BROWSER, TOOLS, "types", "aws", "aws_portal"}
     if path.startswith("packages/backend/"):
-        return {BACKEND, BROWSER, TOOLS, "types", "design", "aws"}
+        return {AGENT, BACKEND, BROWSER, TOOLS, "types", "design", "aws"}
     if path.startswith("packages/database/"):
-        return {DATABASE, BACKEND, BROWSER, TOOLS, "types", "design", "aws"}
+        return {DATABASE, AGENT, BACKEND, BROWSER, TOOLS, "types", "design", "aws"}
     if path.endswith(("/web_app/guide_content.py", "/web_app/guide_search.py")):
-        return {FRONTEND, BROWSER, BACKEND}
+        return {AGENT, FRONTEND, BROWSER, BACKEND}
     if path == "tools/build_frontend.py":
         return {FRONTEND, BROWSER, TOOLS, "aws_portal"}
     if (
@@ -78,10 +79,10 @@ def affected(path, suites):
         return {FRONTEND, BROWSER, TOOLS, "aws_portal"}
     if path.startswith("packages/frontend/"):
         return {FRONTEND, BROWSER}
-    if path == "agent/models/manifest.json":
-        return {BACKEND, BROWSER, INFRA, TOOLS, "audit", "aws"}
-    if path.startswith("agent/") or path == "tools/build_chat.py":
-        return {BACKEND, BROWSER, TOOLS, "audit", "aws"}
+    if path.startswith("packages/agent/"):
+        return {AGENT, BACKEND, BROWSER, INFRA, "types", "audit", "aws"}
+    if path == "tools/build_chat.py":
+        return {AGENT, BACKEND, BROWSER, INFRA, TOOLS, "types", "audit", "aws"}
     if path.startswith("packages/infra/"):
         return {INFRA, "aws", "audit"}
     if path.startswith("tools/design/"):
@@ -331,10 +332,9 @@ def write_coverage_report(destination):
     totals = {}
     for entry in ElementTree.parse(destination).iter("class"):
         path = Path(entry.attrib["filename"])
-        if path.parts[0] == "packages":
-            area = path.parts[1]
-        else:
-            area = "models" if path.parts[:2] == ("agent", "models") else path.parts[0]
+        area = path.parts[1] if path.parts[0] == "packages" else path.parts[0]
+        if path.is_relative_to("packages/agent/src/agent/models"):
+            area = "models"
         counts = totals.setdefault(area, [0, 0])
         lines = entry.findall("./lines/line")
         counts[0] += sum(int(line.attrib["hits"]) > 0 for line in lines)

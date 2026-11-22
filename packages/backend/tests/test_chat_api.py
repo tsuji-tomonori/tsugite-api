@@ -1,3 +1,5 @@
+import json
+from unittest.mock import Mock
 from uuid import uuid4
 
 from tests.support.catalog import FORM, headers
@@ -71,3 +73,40 @@ def test_inquiry_requires_explicit_submission_and_private_reply(portal):
     assert portal.put(path, headers=provider, json=reply).status_code == 403
     assert portal.put(path, headers=admin, json=reply).status_code == 200
     assert portal.get("/api/inquiries", headers=consumer).json()[0]["answer"] == reply["answer"]
+
+
+def test_async_chat_resolves_public_product_through_worker(portal, monkeypatch):
+    """APIが受け付けた質問をワーカーがDBで検索し、本人の受付番号で公開商品を取得できる。"""
+    from agent import jobs
+
+    provider = headers(portal, "provider")
+    consumer = headers(portal, "consumer")
+    product = portal.post("/api/apis", headers=provider, json=FORM).raise_for_status().json()["id"]
+    portal.put(f"/api/apis/{product}/publication?published=true", headers=provider).raise_for_status()
+    rows = {}
+    table = Mock()
+    queue = Mock()
+    table.put_item.side_effect = lambda Item, **kwargs: rows.update({Item["pk"]: Item})
+    table.get_item.side_effect = lambda Key, **kwargs: {"Item": rows.get(Key["pk"])}
+
+    def save_result(Key, ExpressionAttributeValues, **kwargs):
+        rows[Key["pk"]]["result"] = ExpressionAttributeValues[":result"]
+
+    table.update_item.side_effect = save_result
+    monkeypatch.setattr(jobs, "table", lambda: table)
+    monkeypatch.setattr(jobs, "lambda_client", lambda: queue)
+    monkeypatch.setenv("CHAT_WORKER", "worker")
+    for name in ("CHAT_DECISION", "CHAT_TOOL", "CHAT_GENERATE"):
+        monkeypatch.delenv(name, raising=False)
+
+    receipt, pending = ask(portal, consumer, "在庫を確認できるAPIを探したい")
+    assert pending["kind"] == "pending"
+    queue.invoke.assert_called_once()
+    invocation = queue.invoke.call_args.kwargs
+    assert (invocation["FunctionName"], invocation["InvocationType"]) == ("worker", "Event")
+    jobs.handler(json.loads(invocation["Payload"]), None)
+    params = {"job_id": receipt}
+    result = portal.get("/api/chat", headers=consumer, params=params).raise_for_status().json()
+    assert result["kind"] == "catalog"
+    assert [row["id"] for row in result["products"]] == [product]
+    assert portal.get("/api/chat", headers=provider, params=params).status_code == 404

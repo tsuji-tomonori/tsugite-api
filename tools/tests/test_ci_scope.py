@@ -3,7 +3,7 @@ from pathlib import Path
 
 from tools import ci_scope as ci
 
-SUITES = [ci.BACKEND, ci.DATABASE, ci.FRONTEND, ci.INFRA, ci.BROWSER, ci.TOOLS]
+SUITES = [ci.AGENT, ci.BACKEND, ci.DATABASE, ci.FRONTEND, ci.INFRA, ci.BROWSER, ci.TOOLS]
 
 
 def cached_report(folder):
@@ -67,7 +67,7 @@ def test_measured_source_invalidates_suites_that_executed_it(tmp_path):
     cached_report(tmp_path)
     (tmp_path / "coverage-parts" / ci.part_name(ci.INFRA)).write_bytes(b"measured")
     plan = ci.select(["packages/database/src/tsugite_db/models.py"], SUITES, tmp_path)
-    assert set(plan["suites"]) == {ci.BACKEND, ci.DATABASE, ci.INFRA, ci.BROWSER, ci.TOOLS}
+    assert set(plan["suites"]) == {ci.AGENT, ci.BACKEND, ci.DATABASE, ci.INFRA, ci.BROWSER, ci.TOOLS}
     assert plan["design"] and plan["types"] and plan["aws"]
 
 
@@ -131,8 +131,8 @@ def test_coverage_includes_all_runtime_layers_and_unexecuted_files(tmp_path, mon
         "packages/frontend/src/web_app/app.py",
         "packages/infra/src/infra_app/stack.py",
         "packages/infra/app.py",
-        "agent/worker.py",
-        "agent/models/nested/inference.py",
+        "packages/agent/src/agent/worker.py",
+        "packages/agent/src/agent/models/nested/inference.py",
     ]
     for name in [*sources, "packages/infra/tests/test_stack.py", "packages/infra/cdk.out/asset/copy.py"]:
         file = tmp_path / name
@@ -198,6 +198,35 @@ def test_baseline_retry_requires_only_browser_timeouts(tmp_path):
     ]:
         junit.write_text(f"<testsuite><testcase>{elements}</testcase></testsuite>")
         assert only_browser_timeouts(junit) is retry
+
+
+def test_agent_sources_select_agent_consumers_and_deployment_checks(tmp_path):
+    """エージェントとモデルの変更で単体・API結合・構造・型・配布物の検査を選ぶ。"""
+    cached_report(tmp_path)
+    suites = [*SUITES, ci.ARCHITECTURE]
+    (tmp_path / "coverage-parts" / ci.part_name(ci.ARCHITECTURE)).touch()
+    for path in ("jobs.py", "models/decision.py", "models/manifest.json"):
+        plan = ci.select(["packages/agent/src/agent/" + path], suites, tmp_path)
+        assert set(plan["suites"]) == {ci.AGENT, ci.BACKEND, ci.ARCHITECTURE, ci.BROWSER, ci.INFRA}
+        assert all(plan[key] for key in ("types", "aws", "synth", "audit"))
+        assert not plan["full"]
+
+
+def test_moved_agent_reuses_only_aggregate_baseline(monkeypatch):
+    """移動前と同じ範囲の総カバレッジを比較に使い、古いパスのスイート別結果は再利用しない。"""
+    from tools import check_coverage
+
+    def download(repository, branch, sha, folder):
+        base = Path(folder)
+        marker = base / ci.POLICY_FILE
+        marker.parent.mkdir()
+        marker.write_text(check_coverage.coverage_policy(legacy_agent=True))
+        (base / "coverage.xml").write_text('<coverage lines-covered="9" lines-valid="10"/>')
+        assert not ci.compatible_coverage(base)
+        return True
+
+    monkeypatch.setattr(check_coverage, "download_merged_coverage", download)
+    assert check_coverage.merged_pr_coverage("owner/repo", "main", "sha") == 90
 
 
 def test_lock_changes_follow_transitive_old_and_new_consumers():

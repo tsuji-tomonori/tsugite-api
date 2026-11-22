@@ -44,15 +44,14 @@ def test_imported_modules_verify_their_actual_consumers():
     """実装が他の配布単位から読み込むモジュールを解析し、変更時に利用側のテストが選ばれる。"""
     files = {}
     suites = ci.configured_suites()
-    for folder in ("packages", "agent"):
-        for path in project_files(ROOT / folder, ".py"):
-            relative = path.relative_to(ROOT)
-            if "tests" in relative.parts:
-                continue
-            module = source_module(relative).removesuffix(".__init__")
-            files[module] = relative
+    for path in project_files(ROOT / "packages", ".py"):
+        relative = path.relative_to(ROOT)
+        if "tests" in relative.parts:
+            continue
+        module = source_module(relative).removesuffix(".__init__")
+        files[module] = relative
     for module, path in files.items():
-        suite = ci.BACKEND if path.parts[0] == "agent" else f"packages/{path.parts[1]}/tests"
+        suite = f"packages/{path.parts[1]}/tests"
         package = module if path.name == "__init__.py" else module.rpartition(".")[0]
         for line, imported in dependencies(ast.parse((ROOT / path).read_bytes()), package):
             while imported and imported not in files:
@@ -85,12 +84,12 @@ def test_emulator_and_model_manifest_verify_deployment_inputs(tmp_path):
     suites = ci.configured_suites()
     for path in (
         "packages/infra/cdk.json",
-        "agent/models/manifest.json",
+        "packages/agent/src/agent/models/manifest.json",
         "tests/e2e/aws/test_portal.py",
     ):
         plan = ci.select([path], suites, tmp_path)
         assert plan["aws"] and plan["synth"] and plan["chromium"], path
-    assert ci.INFRA in ci.affected("agent/models/manifest.json", suites)
+    assert ci.INFRA in ci.affected("packages/agent/src/agent/models/manifest.json", suites)
 
 
 def test_workflow_runs_expensive_steps_only_for_selected_outputs():
