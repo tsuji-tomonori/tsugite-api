@@ -1,5 +1,6 @@
 from aws_cdk import ArnFormat, Stack
 from aws_cdk import aws_iam as iam
+from aws_cdk import aws_lambda as fn
 from aws_cdk import aws_s3 as s3
 from aws_cdk import aws_secretsmanager as sm
 from constructs import Construct
@@ -8,7 +9,7 @@ from .functions import catalog_function
 
 
 class ApiRuntime(Construct):
-    def __init__(self, scope: Construct, key: str, cluster, param, code):
+    def __init__(self, scope: Construct, key: str, cluster, param, code, dependency_code):
         super().__init__(scope, key)
         secret = sm.Secret(
             self, "OriginKey", generate_secret_string=sm.SecretStringGenerator(exclude_punctuation=True)
@@ -45,9 +46,18 @@ class ApiRuntime(Construct):
             )
         )
 
+        self.dependencies = fn.LayerVersion(
+            self,
+            "Dependencies",
+            code=dependency_code,
+            compatible_runtimes=[fn.Runtime.PYTHON_3_14],
+            compatible_architectures=[fn.Architecture.X86_64],
+        )
         self.role = role
         self.origin_secret = secret
-        self.api = catalog_function(self, "Api", "app.main.handler", runtime_env, code, role)
+        self.api = catalog_function(
+            self, "Api", "app.main.handler", runtime_env, code, self.dependencies, role
+        )
         archive = s3.Bucket(
             self,
             "Specifications",
@@ -61,5 +71,5 @@ class ApiRuntime(Construct):
             iam.PolicyStatement(actions=["s3:PutObject"], resources=[archive.arn_for_objects("specs/*")])
         )
         self.authorizer = catalog_function(
-            self, "Access", "app.authorizer.handler", runtime_env, code, role
+            self, "Access", "app.authorizer.handler", runtime_env, code, self.dependencies, role
         )
