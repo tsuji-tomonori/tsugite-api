@@ -25,6 +25,22 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
+        "frontend",
+        "画面を配布するときにサブディレクトリを省く",
+        "tools/build_frontend.py",
+        'source.rglob("*.py")',
+        'source.glob("*.py")',
+        "packages/frontend/tests/test_screen_registry.py::test_new_screen_is_packaged_loaded_and_rendered",
+    ),
+    Mutation(
+        "frontend",
+        "同じルートを登録した画面で先に登録した画面を上書きする",
+        "packages/frontend/src/web_app/screen_registry.py",
+        "if screen.path in by_path:",
+        "if False:",
+        "packages/frontend/tests/test_screen_registry.py::test_duplicate_screen_path_is_rejected",
+    ),
+    Mutation(
         "lambda-layer",
         "Layerに依存を配置するディレクトリを誤る",
         "tools/build_backend.py",
@@ -35,7 +51,7 @@ MUTATIONS = (
     Mutation(
         "frontend",
         "未取得のメトリクスを描画時に直接参照する",
-        "packages/frontend/src/web_app/app.py",
+        "packages/frontend/src/web_app/portal_pages/dashboard.py",
         'data = ctx.get("home_metrics")',
         'data = ctx["home_metrics"]',
         "packages/frontend/tests/test_dashboard.py::test_dashboard_recovers_from_metrics_failure",
