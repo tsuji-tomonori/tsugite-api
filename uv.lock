@@ -147,6 +147,12 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/a1/47/478e3f25da48c29531702709728e490be331bf24e54fd6a748188465e1ff/aurora_dsql_python_connector-0.2.7-py3-none-any.whl", hash = "sha256:2238e33ea40b26facf42bca4a7eff4ee2416a54650a2e9f84af549da3cafb0ea", size = 21714, upload-time = "2026-05-28T15:44:12.079Z" },
 ]
 
+[package.optional-dependencies]
+psycopg = [
+    { name = "psycopg", extra = ["binary"] },
+    { name = "psycopg-pool" },
+]
+
 [[package]]
 name = "aurora-dsql-sqlalchemy"
 version = "1.3.0"
@@ -1221,6 +1227,18 @@ wheels = [
 ]
 
 [[package]]
+name = "psycopg-pool"
+version = "3.3.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/74/5e/c0664b968b102ff68b811d999c728546c48d5c1eec03e3bbaf88c0cb4472/psycopg_pool-3.3.3.tar.gz", hash = "sha256:df87b5d9d0ad7db37f6cdad4fa8ce113d250f5997f6db38e9a99192fb67f9e1d" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/5d/b4/452c6607a0f479465cd8a9b0d9956919fcb150050c1f83f9f11e6b8ee8dc/psycopg_pool-3.3.3-py3-none-any.whl", hash = "sha256:9b9cd6a4fcec47a410f7e82d408540e7f77b478509e91b44c1a5457a13e5ff37" },
+]
+
+[[package]]
 name = "publication"
 version = "0.0.3"
 source = { registry = "https://pypi.org/simple" }
@@ -1798,6 +1816,7 @@ version = "0.1.0"
 source = { editable = "packages/database" }
 dependencies = [
     { name = "alembic" },
+    { name = "aurora-dsql-python-connector", extra = ["psycopg"] },
     { name = "aurora-dsql-sqlalchemy" },
     { name = "psycopg", extra = ["binary"] },
     { name = "sqlalchemy" },
@@ -1806,6 +1825,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "alembic" },
+    { name = "aurora-dsql-python-connector", extras = ["psycopg"], specifier = ">=0.2.7" },
     { name = "aurora-dsql-sqlalchemy" },
     { name = "psycopg", extras = ["binary"] },
     { name = "sqlalchemy" },
