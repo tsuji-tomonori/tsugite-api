@@ -33,6 +33,14 @@ MUTATIONS = (
         "tools/tests/test_lambda_layer.py::test_layer_rebuild_is_reproducible",
     ),
     Mutation(
+        "frontend",
+        "認証アプリの検証後に古いセッションを再利用する",
+        "packages/frontend/src/web_app/portal_auth.py",
+        'self.session = verified["Session"]',
+        "self.session = self.session",
+        "packages/frontend/tests/test_portal_login.py::test_invitation_and_totp_setup",
+    ),
+    Mutation(
         "ci",
         "ファイル移動時に移動元の変更を見落とす",
         "tools/ci_scope.py",
