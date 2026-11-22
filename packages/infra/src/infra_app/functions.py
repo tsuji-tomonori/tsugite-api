@@ -7,7 +7,7 @@ from aws_cdk import aws_logs as logs
 ROOT = Path(__file__).resolve().parents[4]
 
 
-def catalog_function(scope, name, handler, env, code, execution_role=None):
+def catalog_function(scope, name, handler, env, code, dependencies, execution_role=None):
     group = logs.LogGroup(scope, name + "Logs", retention=logs.RetentionDays.ONE_MONTH)
     f = fn.Function(
         scope,
@@ -15,6 +15,7 @@ def catalog_function(scope, name, handler, env, code, execution_role=None):
         runtime=fn.Runtime.PYTHON_3_14,
         handler=handler,
         code=code,
+        layers=[dependencies],
         environment=env,
         role=execution_role,
         timeout=Duration.seconds(60),
