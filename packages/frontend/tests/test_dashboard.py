@@ -14,6 +14,10 @@ def test_dashboard_recovers_from_metrics_failure(portal_module, monkeypatch):
     """管理者のメトリクス取得が失敗しても件数とログを表示し、再読み込みでグラフが戻る。"""
     client = portal_module("client")
     js = sys.modules["js"]
+    js.document = Document()
+    root = js.document.appendChild(js.document.createElement("main"))
+    root.setAttribute("id", "app")
+    root.setIdAttribute("id")
     js.window.location = SimpleNamespace(hash="")
     js.window.matchMedia = Mock()
     monkeypatch.setitem(sys.modules, "pyodide.ffi.wrappers", SimpleNamespace(add_event_listener=Mock()))
@@ -29,6 +33,7 @@ def test_dashboard_recovers_from_metrics_failure(portal_module, monkeypatch):
     metrics_available = False
 
     async def api(path):
+        assert root.inert and root.getAttribute("aria-busy") == "true"
         if path == "/metrics?minutes=60":
             if not metrics_available:
                 raise ValueError("集計に失敗しました (500)")
@@ -55,11 +60,13 @@ def test_dashboard_recovers_from_metrics_failure(portal_module, monkeypatch):
     with patch.object(Application, "mount"):
         asyncio.run(portal["run"](portal["load"]))
         assert ctx["error"] and "(500)" in ctx["message"]
+        assert not root.inert and not root.hasAttribute("aria-busy")
         failed = markup()
         assert "メトリクスを取得できませんでした" in failed and "利用状況を再読み込み" in failed
         assert "管理対象のAPI" in failed and "GET /stock" in failed
         metrics_available = True
         asyncio.run(portal["run"](portal["load"]))
         assert not ctx["error"]
+        assert not root.inert and not root.hasAttribute("aria-busy")
         recovered = markup()
         assert "time-chart" in recovered and "利用状況を再読み込み" not in recovered
