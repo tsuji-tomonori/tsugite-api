@@ -6,6 +6,8 @@ import sys
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
+from boto3.s3.transfer import TransferConfig
+
 ROOT = Path(__file__).resolve().parents[3]
 LAMBDA_ASSET = ROOT / "build/lambda"
 WAITER = {"Delay": 1, "MaxAttempts": 60}
@@ -28,8 +30,13 @@ def test_deploy_migration_lambda(aws, tmp_path):
     archive = Path(shutil.make_archive(str(tmp_path / "migration"), "zip", LAMBDA_ASSET))
     s3 = aws.client("s3")
     s3.create_bucket(Bucket=bucket)
-    with archive.open("rb") as body:
-        s3.put_object(Bucket=bucket, Key="migration.zip", Body=body)
+    part_size = 5 * 1024 * 1024
+    s3.upload_file(
+        str(archive),
+        bucket,
+        "migration.zip",
+        Config=TransferConfig(multipart_threshold=part_size, multipart_chunksize=part_size),
+    )
     properties["Code"] = {"S3Bucket": bucket, "S3Key": "migration.zip"}
     properties["Environment"]["Variables"]["DSQL_HOST"] = "127.0.0.1"
     function["DependsOn"] = [role]
@@ -60,7 +67,15 @@ def test_run_packaged_migration_on_postgresql(aws):
     with TemporaryDirectory(prefix="tsugite-pg-") as directory:
         data_dir = Path(directory) / "data"
         subprocess.run(
-            [pg_bin / "initdb", "-D", data_dir, "--username=admin", "--auth=trust", "--no-locale"],
+            [
+                pg_bin / "initdb",
+                "-D",
+                data_dir,
+                "--username=admin",
+                "--auth=trust",
+                "--no-locale",
+                "--encoding=UTF8",
+            ],
             check=True,
             timeout=30,
         )
