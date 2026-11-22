@@ -24,6 +24,7 @@ def open_form(page, summary):
 
 
 def test_workspace_key_console(tmp_path, request):
+    """管理者が組織階層と兼務を設定し、リーダーがキー・利用状況・停止と再開を操作する"""
     env = {**os.environ, "TSUGITE_DEMO": "1", "DATABASE_URL": "sqlite:///" + str(tmp_path / "org.db")}
     with (
         serve_portal(env) as url,

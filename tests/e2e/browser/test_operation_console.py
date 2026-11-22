@@ -11,6 +11,7 @@ from tests.support.portal_server import serve_portal
 
 
 def test_person_operation_console(tmp_path, request):
+    """提供者が利用者の操作を選び、送料1,400円のHTTPS応答と権限変更直後の転送停止を照合する"""
     spec = delivery_spec()
     path = "/parcels/{parcel}/estimate"
     item = spec["paths"][path]

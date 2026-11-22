@@ -15,6 +15,7 @@ def product(key, name, summary="", tag="", definition=""):
 
 
 def test_hybrid_retrieval():
+    """語句・意味の両方で業務APIを検索し、同義語を含めて順位付けする"""
     stock = product("b", "倉庫在庫", "棚卸の残数を調べる")
     exact = product("a", "Inventory Ledger", "会計上の棚卸資産")
     other = product("c", "請求照会", "インボイスを照合する")
@@ -29,6 +30,7 @@ def test_hybrid_retrieval():
 
 
 def test_visible_openapi_tags_supply_custom_meaning():
+    """閲覧可能なOpenAPIタグの説明だけを意味検索に使う"""
     glossary = product(
         "a", "炉の管理", tag="heat-treatment", definition="製造工程で金属を焼きなます作業"
     )

@@ -9,6 +9,7 @@ from tests.support.portal_server import serve_portal
 
 
 def test_provider_policy_console(tmp_path, request):
+    """提供者が公開・自動承認・委任の条件を保存し、部署リーダーが個人申請を画面から却下する"""
     env = {**os.environ, "TSUGITE_DEMO": "1", "DATABASE_URL": "sqlite:///" + str(tmp_path / "policy.db")}
     with (
         serve_portal(env) as url,

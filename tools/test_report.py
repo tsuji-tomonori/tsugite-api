@@ -16,65 +16,6 @@ from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "artifacts"
-CASE = {
-    "test_nested_token_lifetime": "提供者・部署・プロジェクトの上限、更新と失効の秒境界、発行後の上限短縮を確認する",
-    "test_persistent_system_and_legacy_expiry": "60日後もシステム資格で再発行でき、古いアクセストークン・従来キーは失効する",
-    "test_credentials_console": "ブラウザーで3方式を発行し、実時計で1分後に更新、シークレット変更・失効まで確認する",
-    "test_person_operation_console": "提供者が利用者の操作を選び、送料1,400円のHTTPS応答と権限変更直後の転送停止を照合する",
-    "test_client_tokens_reach_https": "AWS EmulatorのCognito利用者とシステムのトークンを発行し、HTTPS到達・拒否・秘密更新を確認する",
-    "test_invitation_respects_identity_source": "Cognitoグループの除外が有効で、ポータルで新設したプロジェクトへの招待も反映される",
-    "test_gateway_scoped_key_authorizer": "API Gateway用の認可関数で、本人キー・別ユーザー・失効の判定を確認する",
-    "test_provider_policy_console": "提供者が公開・自動承認・委任の条件を保存し、部署リーダーが個人申請を画面から却下する",
-    "test_hybrid_retrieval": "語句・意味の両方で業務APIを検索し、同義語を含めて順位付けする",
-    "test_visible_openapi_tags_supply_custom_meaning": "閲覧可能なOpenAPIタグの説明だけを意味検索に使う",
-    "test_workspace_key_console": "管理者が組織階層と兼務を設定し、リーダーがキー・利用状況・停止と再開を操作する",
-    "test_scoped_keys_reach_https": "EmulatorのCognitoと共有・本人キーでHTTPS接続先を呼び、別人・範囲外・失効を拒否する",
-    "test_delegation_search_and_personal_isolation": "公開範囲、委任判断、個人・プロジェクト別申請、部署・役職の自動承認を確認する",
-    "test_openapi_key_console": "OpenAPIの型からパス・クエリ・JSONを入力し、選択したキーでHTTPSの送料計算を実行する",
-    "test_governance_console": "3役のホームからユーザー管理・通知・メトリクス・ログ保存・掲載終了を操作する",
-    "test_cognito_member_lifecycle": "AWS EmulatorのCognitoでユーザー追加・所属・削除・既発行トークンの停止を確認する",
-    "test_member_lifecycle": "管理者が追加・削除し、同一メールで再登録しても旧利用権を復活させない",
-    "test_log_download_pages": "同じ時刻の251件を複数ページに分けて全件取得し、重複・欠落と時差を確認する",
-    "test_listing_revisions": "掲載内容の修正と仕様の変更を区別し、競合を検知し、削除後も監査を保持する",
-    "test_alert_window_and_access_logs": "同時実行の上限、通知のみ・停止・解除、次期間の回復、メトリクス集計とログの閲覧範囲を確認する",
-    "test_notification_scope": "管理者・提供者の通知先を制御し、同じプロジェクトでも既読状態を利用者ごとに保持する",
-    "test_console_visual_modes": "11月の外観変更を反映した明暗テーマの文字コントラストとキーボード操作を確認する",
-    "test_report_image_viewer": "実行レポートの画像をオフラインで拡大し、キーボード・タッチ・印刷でも確認できる",
-    "test_large_catalog": "6業務・20拠点の公開120件を全件照合し、PC・スマートフォンの検索とページ送りを確認する",
-    "test_upstream_unavailable": "承認済みのHTTPS接続先が停止したとき、502と監査・アクセスログを同じIDで追跡できる",
-    "test_marketplace_contracts": "6種類を個別に登録・公開・承認して実行し、HTTPSの受信・業務応答・監査記録を照合する",
-    "test_withdrawal_and_audit_visibility": "未申請・取下げ後の権限を拒否し、他プロジェクトに監査記録を開示しない",
-    "test_persistence_has_no_http_dependencies": "DB層はHTTPのルーターに依存しない",
-    "test_published_operations_have_stable_ids": "公開操作のOpenAPI IDと実装が対応する",
-    "test_user_flow": "デモの提供者と利用者が公開・申請・承認・実行・権限取消を画面で完了できる",
-    "test_invalid_token[bad0]": "発行元が違うトークンを401で拒否する",
-    "test_invalid_token[bad1]": "IDトークンをAPIの利用に使用すると401で拒否する",
-    "test_invalid_token[bad2]": "登録されていないクライアントを401で拒否する",
-    "test_invalid_token[bad3]": "期限切れのトークンを401で拒否する",
-    "test_invalid_token[bad4]": "呼び出しスコープのないシステム用トークンを401で拒否する",
-    "test_people_and_machines": "人とシステムを識別し、システムのポータル利用を拒否する",
-    "test_lifecycle": "承認した環境だけで呼び出せ、取消後の拒否を監査できる",
-    "test_reapply": "却下後に再申請でき、古い判断の再適用を拒否する",
-    "test_registration_validation": "外部参照、環境違いの接続先、不正な仕様の登録を拒否する",
-    "test_route_contract": "OpenAPIの固定パスを優先し、許可された操作だけを通す",
-    "test_demo_disabled_on_lambda": "Lambdaではデモ用ログインを無効にする",
-    "test_gateway_authorizer_rechecks_each_invocation": "権限を毎回照合し、取消後は同じトークンでも拒否する",
-    "test_stack_deletion_preserves_database": "スタック削除イベントでDBを削除しない",
-    "test_lambda_adapter": "接続確認の後、呼び出し情報をLambdaへ渡して応答を返す",
-    "test_https_adapter": "クエリと認証情報を保持してHTTPSの接続先に転送する",
-    "test_failed_probe_keeps_draft": "接続確認に失敗したAPIは下書きのまま残る",
-    "test_schema_matches_models_and_replays": "DB定義がモデルと一致し、旧版のデータを移行できる",
-    "test_access_boundaries": "非公開S3、呼び出しの認可、キャッシュと配信の設定が設計どおりである",
-    "test_every_resource_has_ownership[sample]": "標準構成の全リソースでタグと管理情報を照合する",
-    "test_every_resource_has_ownership[custom-project]": "独自プロジェクト構成でも全リソースの管理情報がそろう",
-    "test_existing_resources_keep_their_logical_ids": "既存リソースの論理IDと分割後の所属が対応する",
-    "test_cognito_browser": "Cognitoで識別した2人が画面で承認し、在庫照会・取消・監査まで進める",
-    "test_approved_calls_reach_upstream[cognito-lambda]": "承認した利用者だけがLambdaの在庫を取得できる",
-    "test_approved_calls_reach_upstream[machine-lambda]": "システムも承認した環境だけでLambdaを利用できる",
-    "test_approved_calls_reach_upstream[cognito-https]": "HTTPS APIに接続用トークンが届き、取消後は呼び出しが届かない",
-    "test_deployed_resources": "構築したS3・API Gateway・Lambdaのタグを取得し、在庫APIが商品を返す",
-    "test_create_dsql_cluster": "DSQLクラスターが削除保護付きで稼働状態になる",
-}
 COMPONENTS = {
     "Database": "データベース・移行",
     "Runtime": "API実行",
@@ -375,6 +316,8 @@ def build():
                 dates.append(datetime.fromisoformat(stamp).astimezone(ZoneInfo("Asia/Tokyo")))
         for case in root.iter("testcase"):
             name = case.attrib["name"]
+            description = case.find("./properties/property[@name='case_description']")
+            title = description.attrib["value"] if description is not None else name
             status = result(case)
             counts[status] += 1
             results[name] = status
@@ -401,7 +344,7 @@ def build():
             if readings:
                 findings.append(
                     "<article><h3>"
-                    + escape(CASE.get(name, name))
+                    + escape(title)
                     + "</h3><ul>"
                     + "".join(f"<li>{v}</li>" for v in readings)
                     + "</ul></article>"
@@ -433,7 +376,7 @@ def build():
                 )
             style = "ok" if status == "成功" else "bad"
             rows.append(
-                f"<tr id='case-{escape(name, quote=True)}'><td>{escape(CASE.get(name, name))}<small>{escape(name)}{evidence}</small></td><td class='status {style}'>{status}</td><td>{float(case.get('time', '0')):.2f} 秒</td></tr>"
+                f"<tr id='case-{escape(name, quote=True)}'><td>{escape(title)}<small>{escape(name)}{evidence}</small></td><td class='status {style}'>{status}</td><td>{float(case.get('time', '0')):.2f} 秒</td></tr>"
             )
         tables.append(
             f"<h3>{title} · {len(rows)}件</h3><table><tr><th>テストケースと期待結果</th><th>実行結果</th><th>時間</th></tr>{''.join(rows)}</table>"

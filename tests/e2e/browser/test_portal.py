@@ -18,10 +18,12 @@ def demo_url(tmp_path):
 
 @scenario("提供者の公開から承認・取消までを画面で操作する", tags=["CAT", "AUTH", "AUDIT"])
 def test_user_flow(demo_url, request):
+    """デモの提供者と利用者が公開・申請・承認・実行・権限取消を画面で完了できる"""
     catalog_journey(demo_url, request.node)
 
 
 def test_large_catalog(demo_url, request):
+    """6業務・20拠点の公開120件を全件照合し、PC・スマートフォンの検索とページ送りを確認する"""
     import httpx
     from playwright.sync_api import expect, sync_playwright
 
@@ -92,6 +94,7 @@ def test_large_catalog(demo_url, request):
 
 
 def test_console_visual_modes(demo_url, request):
+    """11月の外観変更を反映した明暗テーマの文字コントラストとキーボード操作を確認する"""
     import httpx
     from playwright.sync_api import expect, sync_playwright
 
@@ -193,6 +196,7 @@ def test_console_visual_modes(demo_url, request):
 
 
 def test_governance_console(demo_url, request):
+    """3役のホームからユーザー管理・通知・メトリクス・ログ保存・掲載終了を操作する"""
     import json
     import re
 

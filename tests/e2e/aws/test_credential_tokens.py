@@ -35,6 +35,7 @@ def stock_and_orders(api, provider, consumer):
 
 
 def test_client_tokens_reach_https(aws, resources, tmp_path, request):
+    """AWS EmulatorのCognito利用者とシステムのトークンを発行し、HTTPS到達・拒否・秘密更新を確認する"""
     with (
         https_stock(aws, tmp_path, os.environ["AWS_CA_BUNDLE"]) as (binding, ca, calls),
         live_portal(aws, resources, tmp_path, "client-token-exchange", binding, ca) as (url, tokens),

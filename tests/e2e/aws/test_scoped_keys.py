@@ -58,6 +58,7 @@ def subscribe(api, product, provider, consumer):
 
 
 def test_scoped_keys_reach_https(aws, resources, tmp_path, request):
+    """EmulatorのCognitoと共有・本人キーでHTTPS接続先を呼び、別人・範囲外・失効を拒否する"""
     with (
         https_stock(aws, tmp_path, os.environ["AWS_CA_BUNDLE"]) as (binding, ca, calls),
         live_portal(aws, resources, tmp_path, "scoped-api-keys", binding, ca) as (url, tokens),

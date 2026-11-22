@@ -127,6 +127,7 @@ def delivery_spec():
 
 
 def test_openapi_key_console(tmp_path, request):
+    """OpenAPIの型からパス・クエリ・JSONを入力し、選択したキーでHTTPSの送料計算を実行する"""
     with delivery_service(tmp_path) as (target, cert, calls):
         config = tmp_path / "settings.json"
         config.write_text(

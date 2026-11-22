@@ -5,6 +5,7 @@ from tsugite_db.session import engine
 
 
 def test_schema_matches_models_and_replays(tmp_path, monkeypatch):
+    """DB定義がモデルと一致し、旧版のデータを移行できる"""
     from tsugite_db.models import Base
 
     cfg = Config("packages/database/alembic.ini")
@@ -44,7 +45,7 @@ def test_schema_matches_models_and_replays(tmp_path, monkeypatch):
     with db.connect() as conn:
         legacy = conn.execute(text("SELECT mode,created,digest FROM api_keys WHERE id='old-key'")).one()
         assert legacy.mode is None and legacy.created > 0 and legacy.digest == "existing-digest"
-        assert conn.scalar(text("select version_num from alembic_version")) == "006"
+        assert conn.scalar(text("select version_num from alembic_version")) == "007"
         assert conn.execute(text("select name,base_path from assets where id='before'")).one() == (
             "旧版",
             None,
