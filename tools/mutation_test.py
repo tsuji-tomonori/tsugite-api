@@ -25,6 +25,14 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
+        "lambda-layer",
+        "Layerに依存を配置するディレクトリを誤る",
+        "tools/build_backend.py",
+        'ZipInfo("python/"',
+        'ZipInfo("wrong/"',
+        "tools/tests/test_lambda_layer.py::test_layer_rebuild_is_reproducible",
+    ),
+    Mutation(
         "coverage",
         "エージェントとモデルの未実行ファイルを分母から除外する",
         "pyproject.toml",

@@ -84,6 +84,7 @@
     "PortalDF61C365": "AWS::CloudFront::Distribution",
     "PortalOrigin1S3OriginAccessControl8908121C": "AWS::CloudFront::OriginAccessControl",
     "PortalSettings3D69E125": "AWS::SSM::Parameter",
+    "RuntimeDependencies72FC0EEE": "AWS::Lambda::LayerVersion",
     "RuntimeRoleDefaultPolicy31263C89": "AWS::IAM::Policy",
     "RuntimeRoleFD8790A4": "AWS::IAM::Role",
     "RuntimeSpecifications07BBFA98": "AWS::S3::Bucket",

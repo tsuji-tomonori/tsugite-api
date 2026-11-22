@@ -12,7 +12,7 @@ from .functions import EVENT_PYTHON, ROOT
 
 
 class PortalChat(Construct):
-    def __init__(self, scope: Construct, key: str, api, cluster, backend_code):
+    def __init__(self, scope: Construct, key: str, api, cluster, backend_code, dependencies):
         super().__init__(scope, key)
         jobs = ddb.Table(
             self,
@@ -44,6 +44,7 @@ class PortalChat(Construct):
             runtime=EVENT_PYTHON,
             handler="agent.jobs.handler",
             code=backend_code,
+            layers=[dependencies],
             role=role,
             log_group=group,
             environment={
