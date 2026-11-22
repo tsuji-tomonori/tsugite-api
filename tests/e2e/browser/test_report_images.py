@@ -6,7 +6,7 @@ import pytest
 from playwright.sync_api import expect, sync_playwright
 
 from tests.support.screenshots import capture_image
-from tools import test_report
+from tools.testing import test_report
 
 
 def test_report_image_viewer(

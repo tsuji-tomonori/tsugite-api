@@ -37,7 +37,7 @@ def test_markdown_documents_have_japanese_titles():
 
 def test_requirements_follow_the_project_vocabulary(tmp_path):
     """全要件のファイル名・要件文・四つの節・共通語彙を索引生成と同じ規則で検査する。"""
-    from tools.requirements import ITEMS, generate
+    from tools.design.requirements import ITEMS, generate
 
     assert generate(ROOT / ITEMS, tmp_path)
 

@@ -33,7 +33,7 @@ jobs:
       - id: invite
         env:
           BOOTSTRAP_ADMIN_EMAIL: ${{ secrets.BOOTSTRAP_ADMIN_EMAIL }}
-        run: python3 tools/bootstrap_admin.py invite
+        run: python3 tools/operations/bootstrap_admin.py invite
 
   grant:
     needs: invite
@@ -56,4 +56,4 @@ jobs:
       - env:
           INVITED_POOL: ${{ needs.invite.outputs.pool }}
           INVITED_SUBJECT: ${{ needs.invite.outputs.subject }}
-        run: python3 tools/bootstrap_admin.py grant
+        run: python3 tools/operations/bootstrap_admin.py grant

@@ -3,7 +3,7 @@ from urllib.parse import unquote
 
 import pytest
 
-from tools.requirements import ITEMS, check_feature, generate
+from tools.design.requirements import ITEMS, check_feature, generate
 
 FIRST = "**利用者**は、**商品**を探すとき、**検索**できる"
 SECOND = "**利用者**は、**商品**を選ぶとき、**検索**できる"

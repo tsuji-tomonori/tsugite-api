@@ -4,7 +4,7 @@ from unittest.mock import Mock, call
 
 import pytest
 
-from tools import bootstrap_admin as bootstrap
+from tools.operations import bootstrap_admin as bootstrap
 
 POOL = "ap-northeast-1_Example"
 SUB = "b7ec89ba-2203-4fae-8a5c-3b7739f5e650"

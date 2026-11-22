@@ -13,6 +13,22 @@ task demo
 
 `http://127.0.0.1:8000` で「提供チーム」を選び、API名と用途を入力します。検証の接続先に `sample-sandbox` を選び、用意されたOpenAPIを使って公開できます。別のタブで「利用チーム」を選ぶと、申請、承認後の呼び出し、取消後の拒否を試せます。
 
+## ファイルの配置
+
+| ディレクトリ | 置くもの |
+| --- | --- |
+| `deploy/config/` | 画面ビルドと CDK が共有する HTTP 設定 |
+| `docs/examples/` | 配備時の接続先の記入例、デモの商品データ、出品用 OpenAPI の例 |
+| `tests/support/` | 全テスト共通の補助コードと pytest プラグイン |
+| `tools/packaging/` | フロントと Lambda の配布物を作るスクリプト |
+| `tools/operations/` | 起動・配備コマンドと初回管理者の登録 |
+| `tools/demo/` | デモ商品の投入 |
+| `tools/design/` | 設計書・要件一覧の生成 |
+| `tools/ci/` | CI の実行対象の選択、カバレッジ・テキスト・インフラの検査 |
+| `tools/testing/` | AWS Emulator、Git フック、ミューテーションテストの実行とテストレポートの生成 |
+| `tools/tests/` | 開発ツール自体の単体テスト |
+| `tools/vendor/` | 同梱する外部ツールとライセンス |
+
 ## コミットとプッシュの前に
 
 `task setup` で、このクローンの Git フックとコミットテンプレートを有効にします。コミットの件名は `fix(api): 利用申請の入力エラーを修正` のように書きます。マージ時にも件名を指定できます（例 `git merge -m "chore: 作業ブランチを統合" <ブランチ名>`）。
@@ -89,7 +105,7 @@ Python CDKでCloudFront、非公開S3、API Gateway、Lambda、Cognito、Aurora 
 
 CDKをブートストラップ済みのAWS環境で `task synth` が構成を合成し、`task deploy` が配備とDB移行を行います。初回は在庫照会Lambdaが検証用の接続先になります。提供者をCognitoの `own-supply`、利用者を `use-finance`、全体監査担当者を `audit` グループに追加してください。
 
-独自の接続先は [設定例](examples/bindings.json) を編集し、`task deploy -- --bindings ファイル名` で指定します。Lambdaは `kind` に `lambda`、`address` に関数ARNを指定します。HTTPSは必要に応じて `secret_arn` に接続用BearerトークンのSecrets Manager ARNを指定し、提供元でも呼び出しを制限します。委任された接続先の配下なら、提供チームが画面でベースパスと [OpenAPI](examples/stock.openapi.json) を登録できます。
+独自の接続先は [設定例](docs/examples/bindings.json) を編集し、`task deploy -- --bindings ファイル名` で指定します。Lambdaは `kind` に `lambda`、`address` に関数ARNを指定します。HTTPSは必要に応じて `secret_arn` に接続用BearerトークンのSecrets Manager ARNを指定し、提供元でも呼び出しを制限します。委任された接続先の配下なら、提供チームが画面でベースパスと [OpenAPI](docs/examples/stock.openapi.json) を登録できます。
 
 システム間連携には、対象プロジェクトのCognitoアプリクライアントで `client_credentials` と `hub/invoke` スコープを使います。承認後、API詳細に表示されるURLへアクセストークンを付けて呼び出します。
 

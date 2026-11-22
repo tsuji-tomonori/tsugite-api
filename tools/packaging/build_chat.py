@@ -8,7 +8,7 @@ import subprocess
 from pathlib import Path
 from zipfile import ZipFile
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 MODELS = ROOT / "packages/agent/src/agent/models"
 BUILD = ROOT / "build"
 LLAMA_RELEASE = "b12246"

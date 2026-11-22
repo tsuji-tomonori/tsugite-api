@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Any
 from xml.etree import ElementTree
 
-from tools import mutation_test
+from tools.testing import mutation_test
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -51,7 +51,7 @@ def test_merge_deploy_workflow() -> None:
         i for i, step in enumerate(steps) if "configure-aws-credentials@" in step.get("uses", "")
     )
     assert steps[auth]["with"]["role-to-assume"] == "${{ vars.AWS_DEPLOY_ROLE_ARN }}"
-    assert any("tools/manage.py deploy" in step.get("run", "") for step in steps[auth + 1 :])
+    assert any("tools.operations.manage deploy" in step.get("run", "") for step in steps[auth + 1 :])
 
 
 def test_mutation_verdict() -> None:

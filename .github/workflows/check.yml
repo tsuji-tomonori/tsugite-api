@@ -23,12 +23,12 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
       - name: 要件別の受入テスト定義を検査
-        run: python3 -m tools.requirement_evidence --check
+        run: python3 -m tools.testing.requirement_evidence --check
       - name: 要件一覧と用語一覧を生成し、feat ブランチの新規要件を検査
         env:
           HEAD_BRANCH: ${{ github.head_ref }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: python3 tools/requirements.py --branch "$HEAD_BRANCH" --base "$BASE_SHA"
+        run: python3 tools/design/requirements.py --branch "$HEAD_BRANCH" --base "$BASE_SHA"
       - uses: actions/upload-artifact@v4
         with:
           name: requirements
@@ -40,7 +40,7 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           BASE_BRANCH: ${{ github.base_ref }}
           GH_TOKEN: ${{ github.token }}
-        run: python3 -m tools.ci_scope --inspect-base "$BASE_SHA"
+        run: python3 -m tools.ci.ci_scope --inspect-base "$BASE_SHA"
       - uses: astral-sh/setup-uv@v6
         if: steps.baseline.outputs.missing != '[]'
       - uses: actions/setup-node@v4
@@ -52,12 +52,12 @@ jobs:
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           MISSING_SUITES: ${{ steps.baseline.outputs.missing }}
-        run: python3 -m tools.ci_scope --measure-base "$BASE_SHA"
+        run: python3 -m tools.ci.ci_scope --measure-base "$BASE_SHA"
       - name: PRで実行するテストと検証手順を決定
         id: scope
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: python3 -m tools.ci_scope --base "$BASE_SHA"
+        run: python3 -m tools.ci.ci_scope --base "$BASE_SHA"
       - name: Markdown文書の表題を検証
         if: steps.scope.outputs.documents == 'true'
         run: python3 -m tests.architecture.test_documents
@@ -65,7 +65,7 @@ jobs:
         if: steps.scope.outputs.full != 'true'
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: python3 tools/check_text.py --base "$BASE_SHA"
+        run: python3 tools/ci/check_text.py --base "$BASE_SHA"
       - uses: actions/setup-node@v4
         if: steps.scope.outputs.synth == 'true' || steps.scope.outputs.types == 'true' || contains(fromJSON(steps.scope.outputs.suites), 'packages/infra/tests')
         with:
@@ -103,12 +103,12 @@ jobs:
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
-          if ! git diff --quiet "$BASE_SHA...HEAD" -- uv.lock tools/build_backend.py tools/build_chat.py; then
+          if ! git diff --quiet "$BASE_SHA...HEAD" -- uv.lock tools/packaging/build_backend.py tools/packaging/build_chat.py; then
             sha256sum build/runtime-layer.zip build/decision-model-layer.zip build/model-sdk-layer.zip > "$RUNNER_TEMP/runtime-layer.sha256"
-            uv run --locked --all-packages python tools/build_backend.py
+            uv run --locked --all-packages python tools/packaging/build_backend.py
             sha256sum --check "$RUNNER_TEMP/runtime-layer.sha256"
           fi
-      - run: uv run --locked --all-packages python tools/build_frontend.py
+      - run: uv run --locked --all-packages python tools/packaging/build_frontend.py
         if: steps.scope.outputs.frontend_build == 'true'
       - run: task docs:infra:render
         if: steps.scope.outputs.synth == 'true'
@@ -119,7 +119,7 @@ jobs:
       - name: 対象テストを実行し、全体カバレッジを集計
         id: suites
         if: steps.scope.outputs.suites != '[]'
-        run: uv run --locked --all-packages python -m tools.ci_scope --run-suites
+        run: uv run --locked --all-packages python -m tools.ci.ci_scope --run-suites
       - run: task test:aws
         if: ${{ !cancelled() && (success() || steps.suites.outcome == 'failure') && steps.scope.outputs.aws == 'true' && steps.scope.outputs.aws_portal_only != 'true' }}
       - run: task test:aws -- -k test_cognito_browser
@@ -130,7 +130,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           BASE_BRANCH: ${{ github.base_ref }}
           BASE_SHA: ${{ steps.scope.outputs.coverage_base }}
-        run: python3 tools/check_coverage.py artifacts/coverage.xml
+        run: python3 tools/ci/check_coverage.py artifacts/coverage.xml
       - name: Save coverage for future pull requests
         if: steps.scope.outputs.coverage == 'true'
         uses: actions/upload-artifact@v4
@@ -152,7 +152,7 @@ jobs:
         if: ${{ !cancelled() }}
         env:
           EVIDENCE_COMMIT: ${{ github.event.pull_request.head.sha }}
-        run: python3 -m tools.requirement_evidence --plan artifacts/ci-plan.json
+        run: python3 -m tools.testing.requirement_evidence --plan artifacts/ci-plan.json
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:

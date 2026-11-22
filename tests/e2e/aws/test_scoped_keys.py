@@ -9,7 +9,7 @@ import jwt
 
 from tests.e2e.aws.https_stock import https_stock
 from tests.e2e.aws.test_portal import live_portal
-from tools.seed_marketplace import CATALOG, offer
+from tools.demo.seed_marketplace import CATALOG, offer
 
 
 def another_finance_user(aws, first_token):

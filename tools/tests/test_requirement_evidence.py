@@ -2,7 +2,7 @@ import base64
 from pathlib import Path
 from xml.etree import ElementTree
 
-from tools.requirement_evidence import BROWSER, ITEMS, Check, catalogue, read_results, render
+from tools.testing.requirement_evidence import BROWSER, ITEMS, Check, catalogue, read_results, render
 
 CASE = "tools/tests/test_example.py::test_policy"
 CHECK = Check(CASE, "tools/tests", "")

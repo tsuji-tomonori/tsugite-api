@@ -6,7 +6,7 @@ from xml.dom.minidom import Document
 import pytest
 from puepy.core import Tag
 
-from tools.build_frontend import bundle_styles, copy_app_modules
+from tools.packaging.build_frontend import bundle_styles, copy_app_modules
 
 
 def test_new_screen_is_packaged_loaded_and_rendered(portal_module, monkeypatch, tmp_path):

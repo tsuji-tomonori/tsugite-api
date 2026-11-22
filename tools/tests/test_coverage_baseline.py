@@ -1,6 +1,6 @@
 import subprocess
 
-from tools import check_coverage as coverage
+from tools.ci import check_coverage as coverage
 
 
 def test_flat_baseline_requires_equivalent_file_selection(tmp_path, monkeypatch):

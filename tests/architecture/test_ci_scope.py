@@ -6,7 +6,7 @@ import tomllib
 import yaml
 from packaging.requirements import Requirement
 
-from tools import ci_scope as ci
+from tools.ci import ci_scope as ci
 
 from .dependencies import dependencies, source_module
 from .project import ROOT, project_files
@@ -104,5 +104,5 @@ def test_workflow_runs_expensive_steps_only_for_selected_outputs():
         "task docs:infra:render": "synth",
     }.items():
         assert steps[command] == f"steps.scope.outputs.{output} == 'true'", command
-    run_suites = "uv run --locked --all-packages python -m tools.ci_scope --run-suites"
+    run_suites = "uv run --locked --all-packages python -m tools.ci.ci_scope --run-suites"
     assert steps[run_suites] == "steps.scope.outputs.suites != '[]'"

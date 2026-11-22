@@ -210,7 +210,7 @@ def test_packaged_model_reports_weight_repair(tmp_path, monkeypatch, capsys):
     import importlib.util
     from pathlib import Path
 
-    from tools import build_chat
+    from tools.packaging import build_chat
 
     monkeypatch.setattr(build_chat, "BUILD", tmp_path)
     build_chat.stage()

@@ -11,13 +11,13 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from xml.etree import ElementTree
 
-from tools.check_coverage import (
+from tools.ci.check_coverage import (
     POLICY_FILE,
     compatible_coverage,
     coverage_policy,
     download_merged_coverage,
 )
-from tools.ci_coverage_parts import ARTIFACTS, PARTS, part_name, run_parts
+from tools.ci.ci_coverage_parts import ARTIFACTS, PARTS, part_name, run_parts
 
 BROWSER = "tests/e2e/browser"
 TOOLS = "tools/tests"
@@ -56,7 +56,7 @@ def affected(path, suites):
         return {DATABASE, AGENT, BACKEND, BROWSER, TOOLS, "types", "design", "aws"}
     if path.endswith(("/web_app/guide_content.py", "/web_app/guide_search.py")):
         return {AGENT, FRONTEND, BROWSER, BACKEND}
-    if path == "tools/build_frontend.py":
+    if path == "tools/packaging/build_frontend.py":
         return {FRONTEND, BROWSER, TOOLS, "aws_portal"}
     if (
         path.startswith("packages/frontend/src/web_app/portal_pages/") and path.endswith(".py")
@@ -81,7 +81,7 @@ def affected(path, suites):
         return {FRONTEND, BROWSER}
     if path.startswith("packages/agent/"):
         return {AGENT, BACKEND, BROWSER, INFRA, "types", "audit", "aws"}
-    if path == "tools/build_chat.py":
+    if path == "tools/packaging/build_chat.py":
         return {AGENT, BACKEND, BROWSER, INFRA, TOOLS, "types", "audit", "aws"}
     if path.startswith("packages/infra/"):
         return {INFRA, "aws", "audit"}
@@ -91,15 +91,17 @@ def affected(path, suites):
         return {TOOLS}
     if path == "tests/e2e/pyproject.toml":
         return {BROWSER, "aws"}
-    if path in {"tools/emulator_e2e.py", "tools/build_backend.py"} or path.startswith("tests/e2e/aws/"):
-        return {"aws", "audit"} if path == "tools/build_backend.py" else {"aws"}
-    if path == "tools/audit_infra.py":
+    if path in {"tools/testing/emulator_e2e.py", "tools/packaging/build_backend.py"} or path.startswith(
+        "tests/e2e/aws/"
+    ):
+        return {"aws", "audit"} if path == "tools/packaging/build_backend.py" else {"aws"}
+    if path == "tools/ci/audit_infra.py":
         return {"audit"}
-    if path == "tools/test_report.py":
+    if path == "tools/testing/test_report.py":
         return {BROWSER, "aws"}
-    if path.startswith("examples/") or path == "tools/seed_marketplace.py":
+    if path.startswith("docs/examples/") or path == "tools/demo/seed_marketplace.py":
         return {BACKEND, BROWSER, INFRA, "aws"}
-    if path.startswith(".githooks/") or path in {".gitmessage.txt", "tools/test_git_hooks.sh"}:
+    if path.startswith(".githooks/") or path in {".gitmessage.txt", "tools/testing/test_git_hooks.sh"}:
         return {"hooks"}
     return FULL
 
@@ -156,7 +158,7 @@ def lock_projects(previous, current):
 
 def select(paths, suites, cached):
     flags = set().union(*(affected(path, suites) for path in paths))
-    with Path(__file__).resolve().parents[1].joinpath("pyproject.toml").open("rb") as file:
+    with Path(__file__).resolve().parents[2].joinpath("pyproject.toml").open("rb") as file:
         roots = tomllib.load(file)["tool"]["coverage"]["run"]["source"]
     measured_changes = {
         path
@@ -193,7 +195,7 @@ def select(paths, suites, cached):
         "types": "types" in flags,
         "design": "design" in flags,
         "audit": "audit" in flags,
-        "hooks": "hooks" in flags and Path("tools/test_git_hooks.sh").exists(),
+        "hooks": "hooks" in flags and Path("tools/testing/test_git_hooks.sh").exists(),
         "synth": synth,
         "frontend_build": bool(selected & {BROWSER, BACKEND, TOOLS}) and not synth,
         "chromium": BROWSER in selected or aws,
@@ -276,9 +278,10 @@ def measure_missing_base_parts(base, missing):
                     check=True,
                 )
             if set(missing) & {BROWSER, BACKEND, TOOLS}:
-                subprocess.run(
-                    [*uv, "python", "tools/build_frontend.py"], cwd=checkout, env=env, check=True
-                )
+                builder = "tools/packaging/build_frontend.py"
+                if not (checkout / builder).is_file():
+                    builder = "tools/build_frontend.py"
+                subprocess.run([*uv, "python", builder], cwd=checkout, env=env, check=True)
             subprocess.run(
                 [
                     *uv,

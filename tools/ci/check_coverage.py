@@ -13,7 +13,7 @@ from urllib.parse import quote
 from xml.etree import ElementTree
 
 BASELINE_ARTIFACT = "line-coverage"
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 POLICY_FILE = Path("coverage-parts/policy.sha256")
 BROWSER_FIXTURE = Path("tests/e2e/browser/conftest.py")
 BROWSER_TRACE = Path("tests/support/pyodide_trace.py")
@@ -171,8 +171,12 @@ def measure_base_coverage(sha):
         subprocess.run(["git", "worktree", "add", "--detach", str(path), sha], check=True, env=env)
         try:
             subprocess.run(["task", "setup", "browser:install"], cwd=path, check=True, env=env)
+            # Older base commits keep the builder directly under tools/.
+            builder = "tools/packaging/build_frontend.py"
+            if not (path / builder).is_file():
+                builder = "tools/build_frontend.py"
             subprocess.run(
-                ["uv", "run", "--locked", "--all-packages", "python", "tools/build_frontend.py"],
+                ["uv", "run", "--locked", "--all-packages", "python", builder],
                 cwd=path,
                 check=True,
                 env=env,

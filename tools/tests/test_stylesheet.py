@@ -1,4 +1,4 @@
-from tools.build_frontend import cloudscape_tokens
+from tools.packaging.build_frontend import cloudscape_tokens
 
 
 def test_stylesheet_uses_only_variable_references():

@@ -6,7 +6,8 @@ from pathlib import Path
 
 import httpx
 
-CATALOG = json.loads((Path(__file__).resolve().parents[1] / "examples/marketplace.json").read_text())
+ROOT = Path(__file__).resolve().parents[2]
+CATALOG = json.loads((ROOT / "docs/examples/marketplace.json").read_text(encoding="utf-8"))
 
 
 def offer(product, edition=None):

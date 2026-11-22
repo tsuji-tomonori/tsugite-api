@@ -1,7 +1,7 @@
 import subprocess
 from pathlib import Path
 
-from tools import ci_scope as ci
+from tools.ci import ci_scope as ci
 
 SUITES = [ci.AGENT, ci.BACKEND, ci.DATABASE, ci.FRONTEND, ci.INFRA, ci.BROWSER, ci.TOOLS]
 
@@ -49,7 +49,7 @@ def test_frontend_builder_runs_stylesheet_and_design_policy_tests(tmp_path):
     cached_report(tmp_path)
     suites = [*SUITES, ci.ARCHITECTURE]
     (tmp_path / "coverage-parts" / ci.part_name(ci.ARCHITECTURE)).touch()
-    plan = ci.select(["tools/build_frontend.py"], suites, tmp_path)
+    plan = ci.select(["tools/packaging/build_frontend.py"], suites, tmp_path)
     assert {ci.ARCHITECTURE, ci.FRONTEND, ci.BROWSER, ci.TOOLS} == set(plan["suites"])
 
 
@@ -90,7 +90,7 @@ def test_unknown_or_shared_input_runs_all_checks(tmp_path):
         "packages/new/code.py",
         "uv.lock",
         ".github/workflows/check.yml",
-        "contracts/http.toml",
+        "deploy/config/http.toml",
     ):
         plan = ci.select([path], SUITES, tmp_path)
         assert plan["full"] and plan["suites"] == SUITES
@@ -138,7 +138,7 @@ def test_coverage_includes_all_runtime_layers_and_unexecuted_files(tmp_path, mon
         file = tmp_path / name
         file.parent.mkdir(parents=True, exist_ok=True)
         file.write_text("def run():\n    return 123\n")
-    config = Path(ci.__file__).resolve().parents[1] / "pyproject.toml"
+    config = Path(ci.__file__).resolve().parents[2] / "pyproject.toml"
     command = [sys.executable, "-m", "coverage"]
     env = {**os.environ, "COVERAGE_FILE": str(tmp_path / ".coverage")}
     subprocess.run(
@@ -187,7 +187,7 @@ def test_cache_requires_same_coverage_policy(tmp_path):
 
 def test_baseline_retry_requires_only_browser_timeouts(tmp_path):
     """比較元でブラウザーのタイムアウトだけが起きた場合に限り再計測する。"""
-    from tools.check_coverage import only_browser_timeouts
+    from tools.ci.check_coverage import only_browser_timeouts
 
     junit = tmp_path / "junit.xml"
     for elements, retry in [
@@ -214,7 +214,7 @@ def test_agent_sources_select_agent_consumers_and_deployment_checks(tmp_path):
 
 def test_moved_agent_reuses_only_aggregate_baseline(monkeypatch):
     """移動前と同じ範囲の総カバレッジを比較に使い、古いパスのスイート別結果は再利用しない。"""
-    from tools import check_coverage
+    from tools.ci import check_coverage
 
     def download(repository, branch, sha, folder):
         base = Path(folder)

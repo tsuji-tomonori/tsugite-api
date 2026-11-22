@@ -26,9 +26,9 @@ def test_boundary_checker_rejects_cross_layer_imports():
         ("packages/agent/src/agent/jobs.py", "from .models import completion", "モデル"),
         ("packages/agent/src/agent/models/completion.py", "from .. import jobs", "エージェント"),
         ("packages/agent/src/agent/retrieval.py", "from web_app import chat_views", "フロント"),
-        ("packages/agent/src/agent/retrieval.py", "import tools.build_chat", "開発ツール"),
+        ("packages/agent/src/agent/retrieval.py", "import tools.packaging.build_chat", "開発ツール"),
         ("packages/agent/src/agent/models/runtime.py", "import aws_cdk", "インフラ"),
-        ("tools/build_chat.py", "from packages.backend.tests import conftest", "テスト"),
+        ("tools/packaging/build_chat.py", "from packages.backend.tests import conftest", "テスト"),
     )
     for path, source, target in cases:
         errors = dependency_violations(Path(path), "\n" + source)

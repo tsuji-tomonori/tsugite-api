@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parents[3]
 def aws():
     endpoint = urlsplit(os.environ.get("AWS_ENDPOINT_URL", ""))
     if (endpoint.scheme, endpoint.hostname) != ("https", "127.0.0.1"):
-        pytest.fail("tools/emulator_e2e.py から実行してください")
+        pytest.fail("tools/testing/emulator_e2e.py から実行してください")
     return boto3.Session()
 
 

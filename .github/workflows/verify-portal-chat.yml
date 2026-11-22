@@ -24,10 +24,10 @@ jobs:
       - if: matrix.suite == 'browser'
         run: |
           uv run --locked playwright install --with-deps chromium --only-shell
-          uv run --locked python tools/build_frontend.py
+          uv run --locked python tools/packaging/build_frontend.py
       - if: matrix.suite == 'api'
         run: |
-          uv run --locked python tools/manage.py contracts
+          uv run --locked python -m tools.operations.manage contracts
           uv run --locked python -m tools.design.generate
           uv run --locked pytest -q packages/agent/tests packages/backend/tests packages/database/tests tools/tests --junitxml=artifacts/api.xml
       - if: matrix.suite == 'browser'
@@ -35,7 +35,7 @@ jobs:
       - if: matrix.suite == 'cdk'
         run: uv run --locked pytest -q packages/infra/tests --junitxml=artifacts/cdk.xml
       - if: matrix.suite == 'synth'
-        run: uv run --locked python tools/manage.py synth --help && uv run --locked python tools/manage.py synth
+        run: uv run --locked python -m tools.operations.manage synth --help && uv run --locked python -m tools.operations.manage synth
       - if: always()
         uses: actions/upload-artifact@v4
         with:
