@@ -30,7 +30,10 @@ def main():
     iam_grants = []
 
     @event.listens_for(database, "before_cursor_execute", retval=True)
-    def replace_iam_grant(_conn, _cursor, statement, parameters, _context, _executemany):
+    def apply_dsql_permissions(_conn, _cursor, statement, parameters, _context, _executemany):
+        sql = " ".join(statement.upper().split())
+        if sql.startswith(("GRANT ", "REVOKE ")) and " ON SCHEMA PUBLIC " in sql:
+            raise psycopg.errors.FeatureNotSupported("feature not supported on system entity")
         if statement.startswith("AWS IAM GRANT "):
             iam_grants.append(statement)
             return "SELECT 1", parameters
@@ -46,8 +49,20 @@ def main():
         assert iam_grants == [f"AWS IAM GRANT tsugite_app TO '{role_arn}'"] * 2
         with database.connect() as connection:
             assert connection.scalar(text("SELECT version_num FROM alembic_version")) == "006"
-            privileges = text("SELECT has_table_privilege('tsugite_app', 'assets', 'INSERT')")
-            assert connection.scalar(privileges)
+            connection.exec_driver_sql("SET ROLE tsugite_app")
+            assert connection.scalar(text("SELECT current_user")) == "tsugite_app"
+            assert connection.scalar(
+                text("SELECT has_schema_privilege(current_user, 'public', 'USAGE')")
+            )
+            assert connection.scalar(
+                text("SELECT has_table_privilege(current_user, 'assets', 'INSERT')")
+            )
+            assert connection.scalar(
+                text("SELECT has_table_privilege(current_user, 'audit_events', 'INSERT')")
+            )
+            assert not connection.scalar(
+                text("SELECT has_table_privilege(current_user, 'audit_events', 'UPDATE')")
+            )
             assert list(connection.execute(text("SELECT base_path, offers FROM assets")).keys()) == [
                 "base_path",
                 "offers",
