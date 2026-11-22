@@ -49,6 +49,14 @@ MUTATIONS = (
         "tools/tests/test_infrastructure_docs.py::test_component_parameter_sheet",
     ),
     Mutation(
+        "stock-lambda",
+        "存在しない商品を成功として返す",
+        "packages/infra/src/infra_app/lambdas/stock/stock.py",
+        "status, result = 404",
+        "status, result = 200",
+        "packages/infra/tests/test_stock_lambda.py::test_stock_response[missing]",
+    ),
+    Mutation(
         "backend",
         "データ修正を要する障害を通常のサーバーエラーと記録する",
         "packages/backend/src/app/core/log_record.py",

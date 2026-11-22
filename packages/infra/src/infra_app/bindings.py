@@ -22,8 +22,11 @@ class UpstreamBindings(Construct):
                     self,
                     name,
                     runtime=fn.Runtime.PYTHON_3_14,
-                    handler="index.handler",
-                    code=fn.Code.from_inline(Path(__file__).with_name("stock_sample.py").read_text()),
+                    handler="stock.handler",
+                    code=fn.Code.from_asset(
+                        str(Path(__file__).parent / "lambdas" / "stock"),
+                        exclude=["__pycache__", "*.pyc"],
+                    ),
                 )
                 NagSuppressions.add_resource_suppressions(
                     sample,
