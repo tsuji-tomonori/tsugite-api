@@ -58,7 +58,7 @@ select = ["E4", "E7", "E9", "F", "I", "F631", "PT011", "PT012"]
 
 [tool.pyright]
 include = ["packages/agent","packages/backend/src/app","packages/database/src/tsugite_db"]
-extraPaths = ["packages/agent/src","packages/agent/src/agent/models","packages/backend/src","packages/database/src"]
+extraPaths = ["packages/agent/src","packages/agent/src/agent/models","packages/backend/src","packages/backend/src/app/core","packages/database/src"]
 pythonVersion = "3.14"
 strict = ["packages/database/src/tsugite_db/models.py", "packages/backend/src/app/apis/schemas.py"]
 
