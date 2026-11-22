@@ -1,0 +1,12 @@
+
+# 1行目に type(scope)!: 変更内容 を書きます。
+# scope は変更範囲、! は互換性を壊す変更を示します。どちらも省略できます。
+# 使用できる type: build, chore, ci, docs, feat, fix, perf, refactor, revert, style, test
+#
+# 例
+# feat(api): API一覧に検索を追加
+# fix: 利用申請の入力エラーを表示
+# feat(api)!: 廃止済みの応答項目を削除
+#
+# 補足が必要な場合は、件名の後に空行を入れて本文を書きます。
+# 互換性を壊す変更は、必要に応じて BREAKING CHANGE: の後に移行方法を書きます。

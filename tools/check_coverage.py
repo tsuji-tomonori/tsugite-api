@@ -35,7 +35,7 @@ def line_coverage(path):
     return Fraction(covered * 100, total)
 
 
-def merged_pr_coverage(repository, branch, sha):
+def download_merged_coverage(repository, branch, sha, folder):
     pulls = github_json(f"repos/{repository}/commits/{sha}/pulls")
     base_tree = github_json(f"repos/{repository}/git/commits/{sha}")["tree"]["sha"]
     for pull in pulls:
@@ -72,23 +72,29 @@ def merged_pr_coverage(repository, branch, sha):
 
             pull_number = pull["number"]
             print(f"Using coverage from merged pull request #{pull_number}, run {run_id}")
-            with TemporaryDirectory() as folder:
-                subprocess.run(
-                    [
-                        "gh",
-                        "run",
-                        "download",
-                        str(run_id),
-                        "--name",
-                        BASELINE_ARTIFACT,
-                        "--dir",
-                        folder,
-                        "--repo",
-                        repository,
-                    ],
-                    check=True,
-                )
-                return line_coverage(Path(folder) / "coverage.xml")
+            subprocess.run(
+                [
+                    "gh",
+                    "run",
+                    "download",
+                    str(run_id),
+                    "--name",
+                    BASELINE_ARTIFACT,
+                    "--dir",
+                    str(folder),
+                    "--repo",
+                    repository,
+                ],
+                check=True,
+            )
+            return True
+    return False
+
+
+def merged_pr_coverage(repository, branch, sha):
+    with TemporaryDirectory() as folder:
+        if download_merged_coverage(repository, branch, sha, folder):
+            return line_coverage(Path(folder) / "coverage.xml")
     return None
 
 
@@ -102,7 +108,15 @@ def measure_base_coverage(sha):
         path = Path(folder) / "base"
         subprocess.run(["git", "worktree", "add", "--detach", str(path), sha], check=True, env=env)
         try:
-            subprocess.run(["task", "setup", "ci"], cwd=path, check=True, env=env)
+            subprocess.run(["task", "setup", "browser:install"], cwd=path, check=True, env=env)
+            subprocess.run(
+                ["uv", "run", "--locked", "--all-packages", "python", "tools/build_frontend.py"],
+                cwd=path,
+                check=True,
+                env=env,
+            )
+            (path / "artifacts").mkdir(exist_ok=True)
+            subprocess.run(["task", "test"], cwd=path, check=True, env=env)
             report = Path("artifacts/coverage.xml")
             command = ["uv", "run", "--locked", "--all-packages", "coverage", "xml", "-o", str(report)]
             subprocess.run(command, cwd=path, check=True, env=env)
