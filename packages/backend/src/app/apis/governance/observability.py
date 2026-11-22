@@ -213,7 +213,8 @@ def metrics(
         )
         for n in range(first, last + 1)
     ]
-    for _, at, status, latency in metric_rows(db, visible(stmt, actor, db, unit)):
+    for row in metric_rows(db, visible(stmt, actor, db, unit)):
+        at, status, latency = row.at, row.status, row.duration_ms
         bucket = buckets[int(at.replace(tzinfo=UTC).timestamp()) // seconds - first]
         bucket["calls"] += 1
         bucket["success"] += int(200 <= status < 300)
