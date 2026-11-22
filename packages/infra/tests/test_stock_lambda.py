@@ -13,7 +13,7 @@ from packages.infra.src.infra_app.lambdas.stock.stock import handler
             200,
             {"items": [{"sku": "TS-01", "stock": 12}]},
             id="list",
-            marks=pytest.mark.case_detail("在庫一覧を返す"),
+            marks=pytest.mark.case_detail("登録されている商品の在庫一覧を返す"),
         ),
         pytest.param(
             "/items/TS-01",
