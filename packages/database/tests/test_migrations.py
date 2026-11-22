@@ -1,5 +1,6 @@
 from alembic import command
 from alembic.config import Config
+from alembic.script import ScriptDirectory
 from sqlalchemy import inspect, text
 from tsugite_db.session import engine
 
@@ -45,7 +46,8 @@ def test_schema_matches_models_and_replays(tmp_path, monkeypatch):
     with db.connect() as conn:
         legacy = conn.execute(text("SELECT mode,created,digest FROM api_keys WHERE id='old-key'")).one()
         assert legacy.mode is None and legacy.created > 0 and legacy.digest == "existing-digest"
-        assert conn.scalar(text("select version_num from alembic_version")) == "006"
+        head = ScriptDirectory.from_config(cfg).get_current_head()
+        assert head and list(conn.scalars(text("select version_num from alembic_version"))) == [head]
         assert conn.execute(text("select name,base_path from assets where id='before'")).one() == (
             "旧版",
             None,

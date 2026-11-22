@@ -5,7 +5,7 @@ from aws_cdk import aws_s3 as s3
 from aws_cdk import aws_secretsmanager as sm
 from constructs import Construct
 
-from .functions import catalog_function
+from .functions import EVENT_PYTHON, catalog_function
 
 
 class ApiRuntime(Construct):
@@ -50,7 +50,7 @@ class ApiRuntime(Construct):
             self,
             "Dependencies",
             code=dependency_code,
-            compatible_runtimes=[fn.Runtime.PYTHON_3_14],
+            compatible_runtimes=[EVENT_PYTHON],
             compatible_architectures=[fn.Architecture.X86_64],
         )
         self.role = role

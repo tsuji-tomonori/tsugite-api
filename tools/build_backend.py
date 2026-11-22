@@ -70,30 +70,40 @@ def sync_layer(requirements, archive, python_version="3.14"):
         os.replace(output, archive)
 
 
+def build_layers():
+    """Export each Lambda's runtime dependencies directly from the shared uv.lock."""
+    build_dir = ROOT / "build"
+    build_dir.mkdir(exist_ok=True)
+    for name, python_version, selection in (
+        ("runtime", "3.15", ["--package", "tsugite-backend", "--no-dev"]),
+        ("decision-model", "3.14", ["--only-group", "decision-model"]),
+        ("model-sdk", "3.14", ["--only-group", "model-sdk"]),
+    ):
+        requirements = build_dir / f"{name}.txt"
+        subprocess.run(
+            [
+                "uv",
+                "export",
+                "--locked",
+                *selection,
+                "--no-emit-workspace",
+                "--no-header",
+                "-o",
+                str(requirements),
+            ],
+            cwd=ROOT,
+            stdout=subprocess.DEVNULL,
+            check=True,
+        )
+        sync_layer(requirements, build_dir / f"{name}-layer.zip", python_version)
+
+
 def build():
+    build_layers()
     dest = ROOT / "build/lambda"
     if dest.exists():
         shutil.rmtree(dest)
     dest.mkdir(parents=True)
-    requirements = ROOT / "build/runtime.txt"
-    subprocess.run(
-        [
-            "uv",
-            "export",
-            "--locked",
-            "--package",
-            "tsugite-backend",
-            "--no-dev",
-            "--no-emit-workspace",
-            "--no-header",
-            "-o",
-            str(requirements),
-        ],
-        cwd=ROOT,
-        stdout=subprocess.DEVNULL,
-        check=True,
-    )
-    sync_layer(requirements, ROOT / "build/runtime-layer.zip")
     shutil.copytree(
         ROOT / "packages/backend/src/app", dest / "app", ignore=shutil.ignore_patterns("__pycache__")
     )
@@ -108,6 +118,15 @@ def build():
         ignore=shutil.ignore_patterns("__pycache__"),
     )
     shutil.copy(ROOT / "packages/database/alembic.ini", dest)
+    shutil.copytree(
+        ROOT / "agent",
+        dest / "agent",
+        ignore=shutil.ignore_patterns("__pycache__", "models", "README.md"),
+    )
+    guide_path = Path("packages/frontend/src/web_app")
+    (dest / guide_path).mkdir(parents=True)
+    for name in ("guide_content.py", "guide_search.py"):
+        shutil.copy(ROOT / guide_path / name, dest / guide_path / name)
     for path in dest.rglob("__pycache__"):
         shutil.rmtree(path)
 

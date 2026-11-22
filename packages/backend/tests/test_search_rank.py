@@ -1,6 +1,6 @@
 import json
 
-from app.apis.catalog.search_rank import rank_assets
+from app.core.catalog_rank import rank_assets
 from tsugite_db.models import Asset
 
 

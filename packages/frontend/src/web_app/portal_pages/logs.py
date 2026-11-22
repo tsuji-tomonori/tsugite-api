@@ -18,13 +18,10 @@ async def download_logs():
     while True:
         res = await pyfetch(
             client.prefix + "/access-logs/download?" + urlencode(params),
-            headers={
-                **client.screen_headers(),
-                "Authorization": "Bearer " + str(client.store.getItem("access")),
-            },
+            headers={"Authorization": "Bearer " + str(client.store.getItem("access"))},
         )
         if not res.ok:
-            raise client.ResponseError("ログを取得できませんでした")
+            raise ValueError("ログを取得できませんでした")
         parts.push(await res.js_response.blob())
         cursor = res.js_response.headers.get("x-next-cursor")
         if not cursor:

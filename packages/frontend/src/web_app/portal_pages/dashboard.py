@@ -82,12 +82,12 @@ async def load_dashboard(_page):
 
 SCREENS = (
     Screen(
-        "home",
-        "ホーム",
+        "dashboard",
+        "利用状況",
         dashboard_view,
         load_dashboard,
         group="ワークスペース",
-        order=10,
+        order=70,
         clear_on_load=("dashboard", "home_metrics", "recent_logs"),
     ),
 )
