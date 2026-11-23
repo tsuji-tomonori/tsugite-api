@@ -1,8 +1,8 @@
 from app.apis.catalog.common import DB, User, event, listing, record
 from app.apis.catalog.releases import record_release
 from app.apis.schemas import Listing
-from app.core.workspace import workspace_targets
 from app.core.diagnostics import asset_object
+from app.core.workspace import workspace_targets
 from app.integrations.upstream import probe
 from fastapi import APIRouter, HTTPException, Request
 

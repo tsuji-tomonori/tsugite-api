@@ -4,6 +4,7 @@ import asyncio
 from urllib.parse import quote
 
 import client
+from inquiry_form import inquiry_form, post_inquiry
 from js import document, window
 from puepy import t
 
@@ -88,9 +89,6 @@ def home(ctx, render):
     def remember_question(event):
         state["question_text"] = str(event.target.value)
 
-    def remember_inquiry(event):
-        state["contact_text"] = str(event.target.value)
-
     def suggestion(question):
         def submit_suggestion(event):
             asyncio.ensure_future(ask(question))
@@ -104,27 +102,23 @@ def home(ctx, render):
             document.getElementById("inquiry-question").focus()
 
     async def send_inquiry(question):
-        if len(question) < 2 or state.get("sending"):
+        if state.get("sending"):
             return
-        if state.get("draft") != question:
-            state.update(draft=question, inquiry_id=uuid())
         state["sending"] = True
         refresh(render, "home")
         try:
-            record = await client.api(
-                "/inquiries", "POST", {"inquiry_id": state["inquiry_id"], "question": question}
-            )
+            receipt = await post_inquiry(state, question)
         except Exception as exc:
             client.report(exc, "send_inquiry", route="/api/inquiries")
             state["inquiry_error"] = str(exc)
         else:
-            state.update(contact=False, draft="", contact_text="", inquiry_id=None, inquiry_error="")
+            state["contact"] = False
             turns.append(
                 {
                     "question": question,
                     "reply": {
                         "kind": "receipt",
-                        "answer": "問い合わせを受け付けました。受付番号 " + record["inquiry_id"],
+                        "answer": "問い合わせを受け付けました。受付番号 " + receipt,
                     },
                 }
             )
@@ -190,25 +184,4 @@ def home(ctx, render):
             )
             t.a("自分の問い合わせ", href="#/inquiries")
         if state["contact"]:
-            with t.form(classes="chat-inquiry", on_submit=submit_inquiry):
-                t.p("内容は運営担当者に送信されます。回答は［自分の問い合わせ］で確認できます。")
-                if error := state.get("inquiry_error"):
-                    t.p(error, role="alert")
-                with t.label(classes="field"):
-                    t.span("問い合わせ内容")
-                    t.textarea(
-                        state.get("contact_text", ""),
-                        id="inquiry-question",
-                        classes="form-control",
-                        minlength=2,
-                        maxlength=2000,
-                        required=True,
-                        disabled=state.get("sending", False),
-                        on_input=remember_inquiry,
-                    )
-                t.button(
-                    "問い合わせを送信",
-                    type="submit",
-                    classes="btn btn-primary",
-                    disabled=state.get("sending", False),
-                )
+            inquiry_form(state, submit_inquiry)

@@ -5,9 +5,8 @@ from app.apis.catalog.common import DB, User, allowed_spec, event, listing, reco
 from app.apis.catalog.offers import configured
 from app.apis.catalog.releases import record_release
 from app.apis.schemas import Listing, NewListing, Offer, Register
-from app.core.workspace import workspace_targets
 from app.core.diagnostics import asset_object
-from app.core.workspace import units
+from app.core.workspace import units, workspace_targets
 from app.integrations.spec_archive import archive_spec, canonical
 from fastapi import APIRouter, HTTPException, Request
 from openapi_spec_validator import validate

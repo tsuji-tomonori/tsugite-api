@@ -1,7 +1,6 @@
 from app.apis import outputs
 from app.apis.catalog.common import DB, User
-from app.core.workspace import workspace_targets
-from app.core.workspace import private_project, units
+from app.core.workspace import private_project, units, workspace_targets
 from fastapi import APIRouter
 
 router = APIRouter()

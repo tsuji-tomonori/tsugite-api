@@ -94,6 +94,8 @@ def test_unit_retirement_actions_are_admin_only(portal_module):
     _, dom = render(page.view)
     html = dom.toxml()
     assert "部署を移管" in html and "部署を削除" in html
-    selector = next(s for s in dom.getElementsByTagName("select") if s.getAttribute("id") == "unit-destination")
+    selector = next(
+        s for s in dom.getElementsByTagName("select") if s.getAttribute("id") == "unit-destination"
+    )
     ids = {option.getAttribute("value") for option in selector.getElementsByTagName("option")}
     assert "d01" in ids and "d00" not in ids and "p" not in ids

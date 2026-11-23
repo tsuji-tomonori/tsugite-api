@@ -11,7 +11,14 @@ from app.core.auth import Actor, check_member
 from app.core.credential_policy import check_operation
 from app.core.diagnostics import OperationalRepair, asset_object, invocation_details
 from app.core.openapi import path_items
-from app.core.workspace import allowed_audience, attribute, private_project, retired_units, stopped, workspace_targets
+from app.core.workspace import (
+    allowed_audience,
+    attribute,
+    private_project,
+    retired_units,
+    stopped,
+    workspace_targets,
+)
 from app.integrations.upstream import MAX_BODY, dispatch
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import select

@@ -211,11 +211,18 @@ def test_consumer_project_directory(tmp_path: Path, request: pytest.FixtureReque
 def test_retire_workspace_units(tmp_path: Path) -> None:
     """管理画面で部署を移管して子部署を引き継ぎ、未使用の子部署を削除できる。"""
     env = {**os.environ, "TSUGITE_DEMO": "1", "DATABASE_URL": "sqlite:///" + str(tmp_path / "retire.db")}
-    with serve_portal(env) as url, httpx.Client(base_url=url, trust_env=False) as api, sync_playwright() as pw:
+    with (
+        serve_portal(env) as url,
+        httpx.Client(base_url=url, trust_env=False) as api,
+        sync_playwright() as pw,
+    ):
         admin = headers(api, "admin")
         for key, parent in (("old", ""), ("new", ""), ("child", "old")):
-            api.put("/api/workspace/units/" + key, headers=admin,
-                    json={"name": key, "kind": "department", "parent": parent}).raise_for_status()
+            api.put(
+                "/api/workspace/units/" + key,
+                headers=admin,
+                json={"name": key, "kind": "department", "parent": parent},
+            ).raise_for_status()
         browser = pw.chromium.launch(executable_path=os.getenv("CHROMIUM_PATH") or None)
         page = browser.new_page()
         page.on("dialog", lambda dialog: dialog.accept())

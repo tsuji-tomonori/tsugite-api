@@ -60,6 +60,38 @@ def test_home_chat_and_inquiry(demo_url: str, request: pytest.FixtureRequest) ->
         browser.close()
 
 
+def test_submit_from_inquiries(demo_url: str, request: pytest.FixtureRequest) -> None:
+    """利用者が問い合わせ画面から送信すると受付番号が表示され、再訪しても回答待ちの履歴を確認できる。"""
+    from playwright.sync_api import expect, sync_playwright
+
+    from tests.support.catalog_journey import navigate
+
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch(executable_path=os.getenv("CHROMIUM_PATH") or None)
+        page = browser.new_page(viewport={"width": 390, "height": 844})
+        page.goto(demo_url)
+        page.get_by_role("button", name="利用チーム", exact=True).click()
+        navigate(page, "問い合わせ")
+        question = "新しいプロジェクトの利用手順を教えてください"
+        field = page.get_by_label("問い合わせ内容")
+        field.fill(question)
+        page.get_by_role("button", name="問い合わせを送信").click()
+        receipt = page.get_by_role("status").filter(has_text="問い合わせを受け付けました。受付番号 ")
+        expect(receipt).to_be_visible()
+        key = receipt.inner_text().split("受付番号 ")[1]
+        ticket = page.get_by_role("article").filter(has_text=question)
+        expect(ticket.get_by_text("受付番号 " + key, exact=True)).to_be_visible()
+        expect(ticket.get_by_text("回答待ち")).to_be_visible()
+        expect(field).to_have_value("")
+        capture_image(
+            request.node, "inquiries", page, "submitted", "問い合わせ画面の受付番号と回答待ちの履歴"
+        )
+        page.reload()
+        expect(ticket.get_by_text("受付番号 " + key, exact=True)).to_be_visible()
+        expect(ticket).to_have_count(1)
+        browser.close()
+
+
 def test_large_catalog(demo_url: str, request: pytest.FixtureRequest) -> None:
     """6業務・20拠点の公開120件を全件照合し、PC・スマートフォンの検索とページ送りを確認する"""
     import httpx

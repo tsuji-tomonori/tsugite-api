@@ -82,7 +82,12 @@ def list_members(
             if not db.get(Member, key)
         ]
         rows.extend(
-            {"subject": m.subject, "username": m.username, "role": m.role, "project": retired.get(m.project, m.project)}
+            {
+                "subject": m.subject,
+                "username": m.username,
+                "role": m.role,
+                "project": retired.get(m.project, m.project),
+            }
             for m in db.scalars(select(Member).where(Member.deleted.is_(False)))
         )
         return {"items": rows, "next": "", "projects": projects(db)}

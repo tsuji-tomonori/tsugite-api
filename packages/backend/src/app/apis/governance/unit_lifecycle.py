@@ -11,7 +11,13 @@ from app.core.workspace import ancestry, configured_projects, project_ids, retir
 from fastapi import APIRouter, HTTPException, Request
 from sqlalchemy import select
 from tsugite_db.models import (
-    Access, Affiliation, AlertRule, Asset, CredentialRule, DirectoryTree, PortalKey,
+    Access,
+    Affiliation,
+    AlertRule,
+    Asset,
+    CredentialRule,
+    DirectoryTree,
+    PortalKey,
 )
 
 router = APIRouter()
@@ -90,11 +96,15 @@ def migrate_references(db, source, target):
         require_destination(target, "利用申請・利用権")
         key = right_id(grant.asset_id, target, grant.environment, grant.subject or "")
         move_record(db, grant, key, id=key, project=target)
-    for rule in db.scalars(select(AlertRule).where(AlertRule.project == source, AlertRule.enabled.is_(True))):
+    for rule in db.scalars(
+        select(AlertRule).where(AlertRule.project == source, AlertRule.enabled.is_(True))
+    ):
         require_destination(target, "監視設定")
         key = right_id(rule.asset_id, target, rule.environment)
         move_record(db, rule, key, id=key, project=target)
-    for key in db.scalars(select(PortalKey).where(PortalKey.project == source, PortalKey.revoked.is_(False))):
+    for key in db.scalars(
+        select(PortalKey).where(PortalKey.project == source, PortalKey.revoked.is_(False))
+    ):
         require_destination(target, "発行済みの認証情報")
         key.project = target
     limit = db.get(CredentialRule, "unit/" + source)
@@ -108,7 +118,6 @@ def migrate_references(db, source, target):
         return
     for row in db.scalars(select(Affiliation).where(Affiliation.unit_id == source)):
         move_record(db, row, (row.subject, target), unit_id=target)
-
 
 
 def retire(key, target, request, actor, db):
@@ -142,8 +151,14 @@ def retire(key, target, request, actor, db):
         row = DirectoryTree(id="retired")
         db.add(row)
     row.units = json.dumps(retired)
-    audit(db, actor, request, "unit.transfer" if target else "unit.delete", key,
-          json.dumps({"name": entry["name"], "destination": target}, ensure_ascii=False))
+    audit(
+        db,
+        actor,
+        request,
+        "unit.transfer" if target else "unit.delete",
+        key,
+        json.dumps({"name": entry["name"], "destination": target}, ensure_ascii=False),
+    )
     save_tree(db, tree)
     db.info["retired_units"] = retired
     return {"removed": True}
@@ -153,7 +168,10 @@ def retire(key, target, request, actor, db):
 @router.delete("/workspace/units/{key}", responses={200: {"model": outputs.Removed}})
 def delete_unit(
     #: 削除する組織の識別子
-    key: str, request: Request, actor: User, db: DB,
+    key: str,
+    request: Request,
+    actor: User,
+    db: DB,
 ):
     return retire(key, "", request, actor, db)
 
@@ -162,7 +180,11 @@ def delete_unit(
 @router.post("/workspace/units/{key}/transfer", responses={200: {"model": outputs.Removed}})
 def transfer_unit(
     #: 移管元の組織の識別子
-    key: str, data: Transfer, request: Request, actor: User, db: DB,
+    key: str,
+    data: Transfer,
+    request: Request,
+    actor: User,
+    db: DB,
 ):
     if not data.destination:
         raise HTTPException(422, "移管先を指定してください")
