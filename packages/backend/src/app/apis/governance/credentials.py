@@ -218,6 +218,7 @@ TOKEN_EXCHANGE = "urn:ietf:params:oauth:grant-type:token-exchange"
     "/credentials/{key_id}/token-exchange",
     responses={200: {"model": outputs.ExchangedToken}},
     openapi_extra={
+        "x-design-auth": "フォームのsubject_tokenにログイン済み利用者のアクセストークンを指定し、本人が利用可能な認証情報に交換します。",
         "requestBody": {
             "required": True,
             "content": {
@@ -226,15 +227,31 @@ TOKEN_EXCHANGE = "urn:ietf:params:oauth:grant-type:token-exchange"
                         "type": "object",
                         "required": ["grant_type", "subject_token_type", "subject_token"],
                         "properties": {
-                            "grant_type": {"type": "string", "enum": [TOKEN_EXCHANGE]},
-                            "subject_token_type": {"type": "string", "enum": [ACCESS_TOKEN_TYPE]},
-                            "subject_token": {"type": "string", "format": "password"},
-                            "requested_token_type": {"type": "string", "enum": [ACCESS_TOKEN_TYPE]},
+                            "grant_type": {
+                                "title": "トークン交換方式",
+                                "type": "string",
+                                "enum": [TOKEN_EXCHANGE],
+                            },
+                            "subject_token_type": {
+                                "title": "交換元のトークン種別",
+                                "type": "string",
+                                "enum": [ACCESS_TOKEN_TYPE],
+                            },
+                            "subject_token": {
+                                "title": "利用者のアクセストークン",
+                                "type": "string",
+                                "format": "password",
+                            },
+                            "requested_token_type": {
+                                "title": "希望するトークン種別",
+                                "type": "string",
+                                "enum": [ACCESS_TOKEN_TYPE],
+                            },
                         },
                     }
                 }
             },
-        }
+        },
     },
 )
 async def oauth_exchange(
