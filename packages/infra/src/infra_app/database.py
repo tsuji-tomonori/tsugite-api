@@ -34,7 +34,7 @@ class CatalogDatabase(Construct):
         for path in sorted((ROOT / "packages/database/migrations").rglob("*.py")):
             digest.update(path.read_bytes())
         digest.update((ROOT / "packages/backend/src/app/migrate.py").read_bytes())
-        CustomResource(
+        return CustomResource(
             self,
             "Schema",
             service_token=provider.service_token,

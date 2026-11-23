@@ -25,6 +25,22 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
+        "infra",
+        "モデル関数のメモリを配備先の上限より大きくする",
+        "packages/infra/src/infra_app/chat.py",
+        "memory_size=3008,",
+        "memory_size=3072,",
+        "packages/infra/tests/test_cost.py::test_chat_uses_separate_on_demand_python_functions",
+    ),
+    Mutation(
+        "infra",
+        "モデル関数の配備を待たずにDB移行を開始する",
+        "packages/infra/src/infra_app/stack.py",
+        "schema.node.add_dependency(chat)",
+        "pass",
+        "packages/infra/tests/test_cdk_regression.py::test_schema_waits_for_chat_models",
+    ),
+    Mutation(
         "ci-scope",
         "データベース変更時にAPIのテストを外す",
         "tools/ci/ci_scope.py",
