@@ -43,13 +43,13 @@ def test_publish_and_apply_from_product_page(tmp_path: Path, request: pytest.Fix
         user.get_by_role("button", name="利用チーム", exact=True).click()
         navigate(user, "APIカタログ")
         user.get_by_role("link", name="在庫", exact=True).click()
-        for title in ("POST /orders", "GET /items"):
-            user.get_by_role("navigation", name="API操作一覧").get_by_role("button", name=title).click()
-            expect(
-                user.locator(".doc-operation[open]")
-                .filter(has_text=title)
-                .get_by_role("heading", name="レスポンス")
-            ).to_be_visible()
+        expect(user.get_by_role("heading", name="API操作一覧")).to_be_visible()
+        orders = user.locator(".doc-operation", has_text="POST /orders")
+        orders.locator("summary").first.click()
+        expect(orders.get_by_role("heading", name="レスポンス")).to_be_visible()
+        expect(orders.get_by_text("呼び出しには利用申請の承認が必要です。")).to_be_visible()
+        expect(orders.get_by_role("button", name="短期認証で呼び出す")).to_have_count(0)
+        assert user.locator("button").filter(has_text="POST /orders").count() == 0
         capture_image(request.node, "publication", user, "operations", "選んだ操作の入力と応答仕様")
         user.get_by_role("link", name="利用申請へ進む").click()
         user.locator("#environment").select_option("staging")
