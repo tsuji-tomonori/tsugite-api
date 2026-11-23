@@ -1,8 +1,8 @@
 [
-  {"name":"倉庫在庫","summary":"SKUごとの在庫数を確認し、棚卸しと引当の差異を調べます。","method":"GET","path":"/items","environment":"production"},
-  {"name":"配送追跡","summary":"送り状番号に対応する荷物の配送状況を照会します。","method":"GET","path":"/parcels/JP17","environment":"sandbox"},
-  {"name":"為替レート","summary":"円換算に使う基準通貨と適用レートを取得します。","method":"GET","path":"/rates/JPY","environment":"production"},
-  {"name":"店舗ディレクトリ","summary":"店舗コード、所在地、営業エリアを一覧で取得します。","method":"GET","path":"/stores","environment":"sandbox"},
-  {"name":"発注受付","summary":"購買依頼を送信し、受け付けた注文の番号を取得します。","method":"POST","path":"/orders","environment":"production"},
-  {"name":"営業日カレンダー","summary":"次の営業日を照会して、出荷予定日を計算します。","method":"GET","path":"/calendar/next","environment":"sandbox"}
+  {"name":"倉庫在庫","slug":"warehouse-stock","summary":"SKUごとの在庫数を確認し、棚卸しと引当の差異を調べます。","method":"GET","path":"/items","environment":"production"},
+  {"name":"配送追跡","slug":"parcel-tracking","summary":"送り状番号に対応する荷物の配送状況を照会します。","method":"GET","path":"/parcels/JP17","environment":"sandbox"},
+  {"name":"為替レート","slug":"exchange-rates","summary":"円換算に使う基準通貨と適用レートを取得します。","method":"GET","path":"/rates/JPY","environment":"production"},
+  {"name":"店舗ディレクトリ","slug":"store-directory","summary":"店舗コード、所在地、営業エリアを一覧で取得します。","method":"GET","path":"/stores","environment":"sandbox"},
+  {"name":"発注受付","slug":"purchase-orders","summary":"購買依頼を送信し、受け付けた注文の番号を取得します。","method":"POST","path":"/orders","environment":"production"},
+  {"name":"営業日カレンダー","slug":"business-calendar","summary":"次の営業日を照会して、出荷予定日を計算します。","method":"GET","path":"/calendar/next","environment":"sandbox"}
 ]

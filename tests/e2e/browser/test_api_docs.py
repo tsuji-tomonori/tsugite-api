@@ -156,6 +156,7 @@ def test_openapi_key_console(tmp_path: Path, request: pytest.FixtureRequest) -> 
                     headers=owner,
                     json={
                         "name": "配送見積API",
+                        "slug": "delivery-estimate",
                         "summary": "梱包数から送料を取得",
                         "owner": "supply",
                         "targets": {"sandbox": "deliver-test"},

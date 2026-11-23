@@ -45,6 +45,7 @@ def test_person_operation_console(tmp_path: Path, request: pytest.FixtureRequest
                     headers=provider,
                     json={
                         "name": "配送見積",
+                        "slug": "delivery-estimate",
                         "summary": "配送する荷物の料金を見積もります。",
                         "owner": "supply",
                         "targets": {"sandbox": "delivery-test"},
@@ -171,7 +172,7 @@ def test_person_operation_console(tmp_path: Path, request: pytest.FixtureRequest
                     == []
                 )
                 denied = api.post(
-                    f"/api/invoke/{asset}/sandbox/finance/parcels/JP17/estimate",
+                    "/api/invoke/delivery-estimate/sandbox/finance/parcels/JP17/estimate",
                     headers={"Authorization": "Bearer " + token.value.json()["access_token"]},
                     json={"packages": 4},
                 )

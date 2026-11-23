@@ -119,7 +119,7 @@ async def invoke(asset):
     }
     if method not in ("GET", "DELETE") and value("trial-body"):
         options["body"] = value("trial-body")
-    url = client.prefix + "/invoke/" + asset["id"] + "/" + env + "/" + project + path
+    url = client.invocation_path(asset, env, project) + path
     result = await pyfetch(url, **options)
     ctx["trace"] = str(result.headers.get("x-request-id") or "")
     ctx["trial"] = f"HTTP {result.status}\n" + (await result.string())[:6000]
@@ -199,7 +199,9 @@ def detail_page():
                 ],
             )
             example = rights[0]
-            root = f"{window.location.origin}{client.prefix}/invoke/{a['id']}/{example['environment']}/{example['project']}"
+            root = str(window.location.origin) + client.invocation_path(
+                a, example["environment"], example["project"]
+            )
             t.p("呼び出し先　" + root, classes="code")
             field(
                 "メソッド",
