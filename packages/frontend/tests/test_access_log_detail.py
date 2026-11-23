@@ -78,3 +78,26 @@ def test_log_page_shows_only_requested_rows(portal_module, monkeypatch):
     logs.ctx.update(log_offset=20, log_rows=[{**ROW, "request_id": "id-20"}])
     xml = table_page().toxml()
     assert "21～21件" in xml and "次へ" not in xml and "前へ" in xml
+
+
+def test_paging_back_keeps_the_time_window(portal_module, monkeypatch):
+    """前のページに戻る間に新しい呼び出しがあっても、検索期間を固定して同じ行を表示する。"""
+    from unittest.mock import Mock
+    from urllib.parse import parse_qs, urlsplit
+
+    logs = portal_module("portal_pages.logs")
+    monkeypatch.setattr(logs, "load_dimensions", AsyncMock())
+    monkeypatch.setattr(logs.client, "api", AsyncMock(return_value=[]))
+    periods = Mock(side_effect=[{"end": "first"}, {"end": "refreshed"}])
+    monkeypatch.setattr(logs, "time_params", periods)
+    asyncio.run(logs.load_logs("logs"))
+    asyncio.run(logs.log_page(20))
+    asyncio.run(logs.log_page(0))
+    asyncio.run(logs.load_logs("logs"))
+    queries = [parse_qs(urlsplit(call.args[0]).query) for call in logs.client.api.await_args_list]
+    assert [(q["offset"][0], q["end"][0]) for q in queries] == [
+        ("0", "first"),
+        ("20", "first"),
+        ("0", "first"),
+        ("0", "refreshed"),
+    ]

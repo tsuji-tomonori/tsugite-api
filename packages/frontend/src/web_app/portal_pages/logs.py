@@ -43,8 +43,7 @@ async def log_lookup():
 
 
 async def log_page(offset):
-    ctx["log_offset"] = offset
-    await load()
+    await fetch_log_rows(ctx["log_period"], offset)
 
 
 def logs_view():
@@ -97,15 +96,19 @@ def detail_path(request_id, unit="", view=""):
 async def load_logs(_page):
     await load_dimensions()
     offset = ctx.get("log_offset", 0)
-    if not offset or not ctx.get("log_period"):
-        ctx["log_period"] = time_params()
+    period = ctx.get("log_period") if offset else None
+    await fetch_log_rows(period or time_params(), offset)
+
+
+async def fetch_log_rows(period, offset):
     params = {
-        **ctx["log_period"],
+        **period,
         "request_id": ctx.get("access_id", ""),
         "offset": offset,
         "limit": PAGE_SIZE + 1,
     }
-    ctx["log_rows"] = await client.api("/access-logs?" + urlencode(params))
+    rows = await client.api("/access-logs?" + urlencode(params))
+    ctx.update(log_rows=rows, log_offset=offset, log_period=period)
 
 
 async def load_detail(page):
