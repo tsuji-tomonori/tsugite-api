@@ -2,6 +2,7 @@ import json
 
 import api_docs
 import client
+import guide_examples as example
 import operation_views
 import product_views
 from js import document, window
@@ -38,10 +39,8 @@ async def save_policy(asset):
     ctx["message"] = "公開範囲と承認ルールを保存しました"
 
 
-def policy_form(asset):
-    rules = ctx["policy"]
-    tree = ctx["policy_directory"]["units"]
-    with t.details(classes="box"):
+def policy_form(asset, rules, tree, *, expanded=False):
+    with t.details(classes="box", open=expanded):
         t.summary("公開範囲と承認ルール")
         field(
             "カタログの公開範囲",
@@ -91,6 +90,18 @@ def download_spec(asset):
     save_blob(window.Blob.new(parts), asset["name"] + ".openapi.json")
 
 
+def publication_actions(a):
+    with t.div(classes="btn-grouping"):
+        btn(
+            "掲載を取り下げる" if a["published"] else "公開する",
+            publication,
+            a,
+            primary=not a["published"],
+        )
+        btn("内容を編集", go, "edit/" + a["id"])
+        btn("APIを削除", delete_listing, a)
+
+
 def detail_page():
     a = ctx["detail"]
     if not a:
@@ -106,16 +117,8 @@ def detail_page():
         )
     t.p(a["owner"] + " · " + ("公開中" if a["published"] else "未掲載"), classes="muted")
     if a["owner"] in ctx["me"]["owners"]:
-        with t.div(classes="btn-grouping"):
-            btn(
-                "掲載を取り下げる" if a["published"] else "公開する",
-                publication,
-                a,
-                primary=not a["published"],
-            )
-            btn("内容を編集", go, "edit/" + a["id"])
-            btn("APIを削除", delete_listing, a)
-        policy_form(a)
+        publication_actions(a)
+        policy_form(a, ctx["policy"], ctx["policy_directory"]["units"])
         operation_views.provider_view(a, ctx, field, btn, load)
     with t.div(classes="btn-grouping docs-actions"):
         if a["published"]:
@@ -140,4 +143,27 @@ def detail_page():
     api_docs.view(a, ctx.get("rights", []), ctx.get("keys", []), subject=ctx["me"]["subject"])
 
 
-SCREENS = (Screen("api/", "APIの詳細", detail_page, load_listing, own_heading=True),)
+SCREENS = (
+    Screen(
+        "api/",
+        "APIの詳細",
+        detail_page,
+        load_listing,
+        own_heading=True,
+        examples={
+            "edit": lambda: publication_actions(example.ASSET),
+            "visibility": lambda: policy_form(
+                example.ASSET, example.POLICY, [example.PROJECT], expanded=True
+            ),
+            "operations": lambda: operation_views.provider_view(
+                example.ASSET, example.OPERATIONS, field, btn, load
+            ),
+            "invoke": lambda: api_docs.view(
+                example.ASSET,
+                [{**example.REQUEST, "status": "approved"}],
+                [example.KEY],
+                subject=example.USER["subject"],
+            ),
+        },
+    ),
+)

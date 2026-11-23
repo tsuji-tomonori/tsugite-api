@@ -51,6 +51,14 @@ MUTATIONS = (
         "test_notification_recipient_dropdown_uses_display_names",
     ),
     Mutation(
+        "frontend",
+        "ガイドの画面例を操作可能にする",
+        "packages/frontend/src/web_app/guide_views.py",
+        'classes="guide-preview", inert=True',
+        'classes="guide-preview", inert=False',
+        "packages/frontend/tests/test_components.py::test_each_guide_renders_inert_example",
+    ),
+    Mutation(
         "api-slug",
         "DBでAPI識別名の重複を許す",
         "packages/database/migrations/versions/v010_asset_routes.py",

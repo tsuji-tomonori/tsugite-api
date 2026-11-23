@@ -1,9 +1,18 @@
 from urllib.parse import urlencode
 
 import client
-from activity_filters import MEASURES, filters_view, graph, inspect_bucket, load_dimensions, time_params
+import guide_examples as example
+from activity_filters import (
+    MEASURES,
+    filter_form,
+    filters_view,
+    graph,
+    inspect_bucket,
+    load_dimensions,
+    time_params,
+)
 from portal_navigation import load
-from portal_ui import btn, ctx
+from portal_ui import INITIAL_STATE, btn, ctx
 from puepy import t
 from screen_registry import Screen
 
@@ -59,6 +68,11 @@ SCREENS = (
         load_metrics,
         group="ガバナンス",
         order=130,
+        examples={
+            "metrics": lambda: filter_form(
+                True, INITIAL_STATE["filters"], [example.DIMENSION], {"units": [], "leads": []}
+            )
+        },
         clear_on_load=("metrics",),
     ),
 )

@@ -43,19 +43,17 @@ async def apply_filters():
 
 
 def filters_view(chart):
-    f = ctx["filters"]
-    dims = ctx["dims"]
+    filter_form(chart, ctx["filters"], ctx["dims"], ctx["workspace"])
+
+
+def filter_form(chart, f, dims, workspace):
 
     def choice(k, title, opts):
         field(title, "f-" + k, options=opts, text=f[k])
 
     with t.div(classes="box"):
         with t.div(classes="filter-grid"):
-            choices = [
-                (u["id"], u["name"])
-                for u in ctx["workspace"]["units"]
-                if u["id"] in ctx["workspace"]["leads"]
-            ]
+            choices = [(u["id"], u["name"]) for u in workspace["units"] if u["id"] in workspace["leads"]]
             if choices:
                 choice("unit", "集計する部署・プロジェクト", [("", "通常の閲覧範囲")] + choices)
             else:
