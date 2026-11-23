@@ -4,6 +4,7 @@ from guide_content import BY_ID, GUIDES, audiences
 from guide_search import search
 from js import document
 from puepy import t
+from screen_registry import guide_examples
 
 ROLES = ("すべて", "利用者", "提供者", "管理者")
 
@@ -99,15 +100,9 @@ def article(key, user, pages, go, btn):
         t.h2("操作後の確認")
         t.p(g.result)
         with t.figure():
-            path = "/guide-images/" + g.id + ".webp"
-            with t.a(
-                href=path,
-                target="_blank",
-                rel="noopener",
-                aria_label="操作画面の画像を拡大（新しいタブ）",
-            ):
-                t.img(src=path, alt=g.caption)
-            t.figcaption(g.caption + "（選択で拡大）")
+            t.figcaption("画面例（閲覧のみ）　" + g.caption)
+            with t.div(classes="guide-preview", inert=True):
+                guide_examples()[g.id]()
         allowed = (
             (g.start != "inventory" or user["owners"])
             and (g.start != "inbox" or user["owners"] or user["leads"])
