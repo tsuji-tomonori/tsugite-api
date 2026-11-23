@@ -17,7 +17,7 @@ async def post_inquiry(state, question: str) -> str:
     return record["inquiry_id"]
 
 
-def inquiry_form(state, on_submit):
+def inquiry_form(state, on_submit, *, max_length=2000):
     def remember(event):
         state["contact_text"] = str(event.target.value)
 
@@ -32,7 +32,7 @@ def inquiry_form(state, on_submit):
                 id="inquiry-question",
                 classes="form-control",
                 minlength=2,
-                maxlength=2000,
+                maxlength=max_length,
                 required=True,
                 disabled=state.get("sending", False),
                 on_input=remember,
