@@ -234,6 +234,14 @@ MUTATIONS = (
     ),
     Mutation(
         "frontend",
+        "モニタリングの所属メンバーを表として表示しない",
+        "packages/frontend/src/web_app/workspace_monitor.py",
+        'with t.table(aria_label="所属メンバー一覧"):',
+        'with t.div(aria_label="所属メンバー一覧"):',
+        "packages/frontend/tests/test_workspace_screens.py::test_project_monitor_shows_members_as_a_table",
+    ),
+    Mutation(
+        "frontend",
         "部署一覧の次ページにも先頭の部署を表示する",
         "packages/frontend/src/web_app/workspace_views.py",
         "start = (number - 1) * PAGE_SIZE",
