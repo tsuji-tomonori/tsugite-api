@@ -186,7 +186,7 @@ def test_operation_location_requires_mandatory_query(portal_module):
 
 
 def test_publication_history_shows_release_changes(portal_module):
-    """公開履歴に版番号と変更された操作を表示し、差分がない種類は省く。"""
+    """公開履歴の表に版番号・公開日・変更された操作を表示し、空の差分は省く。"""
     history = portal_module("product_views").release_history
     _, dom = render(
         history,
@@ -205,12 +205,20 @@ def test_publication_history_shows_release_changes(portal_module):
             ]
         },
     )
-    assert dom.getElementsByTagName("h3")[0].firstChild.data == "第2版 · API 1.1.0 · OpenAPI 3.1.0"
-    assert [p.firstChild.data for p in dom.getElementsByTagName("p")] == [
-        "在庫照会を追加",
-        "追加　GET /stock",
-        "変更　GET /items",
+    details = dom.getElementsByTagName("details")[0]
+    assert not details.hasAttribute("open")
+    row = details.getElementsByTagName("tbody")[0].getElementsByTagName("tr")[0]
+    assert row.getElementsByTagName("th")[0].firstChild.data == "第2版"
+    date, version, openapi, changes, note = row.getElementsByTagName("td")
+    assert date.getElementsByTagName("time")[0].getAttribute("datetime") == "2026-11-22"
+    assert version.firstChild.data == "1.1.0"
+    assert openapi.firstChild.data == "3.1.0"
+    assert [dt.firstChild.data for dt in changes.getElementsByTagName("dt")] == ["追加", "変更"]
+    assert [li.firstChild.data for li in changes.getElementsByTagName("li")] == [
+        "GET /stock",
+        "GET /items",
     ]
+    assert note.firstChild.data == "在庫照会を追加"
 
 
 def test_login_form_uses_native_labels_and_keyboard_submit(portal_module):
