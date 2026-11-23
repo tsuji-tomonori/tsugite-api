@@ -134,7 +134,7 @@ def test_operation_parameter_renders_openapi_default(portal_module):
     spec = {"components": {"schemas": {"Filters": {"type": "array", "default": ["在庫", "受注"]}}}}
     param = {"in": "query", "name": "filters", "schema": {"$ref": "#/components/schemas/Filters"}}
     _, dom = render(api.input_param, spec, param, "filters")
-    assert dom.getElementsByTagName("span")[0].firstChild.data == "filters（query）"
+    assert dom.getElementsByTagName("span")[0].firstChild.data == "filters（query） 任意"
     assert elements(dom)["filters"].getAttribute("placeholder") == '["在庫","受注"]'
 
 
@@ -212,4 +212,34 @@ def test_login_form_uses_native_labels_and_keyboard_submit(portal_module):
     ] == [
         "ユーザー名",
         "パスワード",
+    ]
+
+
+def test_curl_reuses_request_without_exposing_token(portal_module):
+    """送信したURL・形式・本文をシェルで再現し、短期トークンは変数で参照する。"""
+    import shlex
+
+    api = portal_module("api_docs")
+    body = """{"item":"O'Reilly","count":2}"""
+    url = "https://example.test/api/invoke/stock/sandbox/p/items?a=1&b=2"
+    options = {
+        "method": "POST",
+        "headers": {"Authorization": "Bearer secret", "Content-Type": "application/json"},
+        "body": body,
+    }
+    command = api.curl_command(url, options)
+    assert "secret" not in command
+    assert shlex.split(command) == [
+        "curl",
+        "--globoff",
+        "--request",
+        "POST",
+        "--url",
+        url,
+        "--header",
+        "Authorization: Bearer ${ACCESS_TOKEN}",
+        "--header",
+        "Content-Type: application/json",
+        "--data-raw",
+        body,
     ]

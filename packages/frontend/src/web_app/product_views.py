@@ -137,10 +137,10 @@ def requirements(asset, env, field, first):
             t.h3("利用規約")
             t.p(rule["terms"], classes="terms-text")
             with t.label(classes="scope-choice"):
-                t.input(id="agree-" + env, type="checkbox")
-                t.span(ENV[env] + "の利用規約に同意する")
+                t.input(id="agree-" + env, type="checkbox", required=True)
+                t.span(ENV[env] + "の利用規約に同意する（必須）")
         for i, item in enumerate(rule.get("fields", [])):
-            field(item["label"] + ("（必須）" if item["required"] else "（任意）"), f"answer-{env}-{i}")
+            field(item["label"], f"answer-{env}-{i}", required=item["required"])
 
 
 def application_form(asset, field):
@@ -152,8 +152,8 @@ def application_form(asset, field):
             document.getElementById("requirements-" + env).hidden = env != selected
 
     with t.label(classes="field"):
-        t.span("環境")
-        with t.select(id="environment", classes="form-select", on_change=select_env):
+        t.span("環境（必須）")
+        with t.select(id="environment", classes="form-select", required=True, on_change=select_env):
             for env in envs:
                 t.option(ENV[env], value=env)
     for i, env in enumerate(envs):

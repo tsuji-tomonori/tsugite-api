@@ -32,3 +32,16 @@ def approved(api, owner, user, *, slug=FORM["slug"]):
         json={"action": "approve", "revision": right["revision"], "reason": "目的を確認"},
     ).raise_for_status()
     return key, url, f"/api/invoke/{slug}/sandbox/finance/items"
+
+
+def invocation_headers(api, user, project="finance", endpoint="/api/credentials"):
+    issued = (
+        api.post(
+            endpoint,
+            headers=user,
+            json={"project": project, "name": "呼び出し試験", "kind": "personal", "mode": "bearer"},
+        )
+        .raise_for_status()
+        .json()
+    )
+    return {"Authorization": "Bearer " + issued["access_token"]}

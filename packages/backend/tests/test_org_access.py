@@ -1,6 +1,6 @@
 from app.core.auth import DEMO_GROUPS
 
-from tests.support.catalog import FORM, headers
+from tests.support.catalog import FORM, headers, invocation_headers
 
 
 def setup_people(api, monkeypatch):
@@ -68,7 +68,8 @@ def test_delegation_search_and_personal_isolation(portal, monkeypatch):
     assert api.post("/api/requests/" + own["id"], json=decision, headers=neighbor).status_code == 403
     api.post("/api/requests/" + own["id"], json=decision, headers=lead).raise_for_status()
     path = f"/api/invoke/{key}/sandbox/field/items"
-    assert api.get(path, headers=user).is_success and api.get(path, headers=lead).status_code == 403
+    call = invocation_headers(api, user, "field")
+    assert api.get(path, headers=call).is_success and api.get(path, headers=lead).status_code == 403
     shared = api.post(
         "/api/keys",
         headers=user,
@@ -90,7 +91,7 @@ def test_delegation_search_and_personal_isolation(portal, monkeypatch):
     )
     api.put("/api/workspace/units/east/state", json={"stopped": True}, headers=lead).raise_for_status()
     assert api.get(path, headers={"Authorization": "Bearer " + shared["secret"]}).status_code == 403
-    assert api.get(path, headers=user).status_code == 403
+    assert api.get(path, headers=call).status_code == 403
     assert api.get("/api/workspace/units/east/usage", headers=lead).json()["calls"] >= 4
     for endpoint in ("metrics", "access-logs", "access-logs/download", "metric-dimensions"):
         assert api.get("/api/" + endpoint + "?unit=east", headers=neighbor).status_code == 403

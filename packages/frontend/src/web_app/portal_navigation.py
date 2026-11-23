@@ -12,7 +12,6 @@ async def go(page, *, query=None):
     if window.matchMedia("(max-width: 780px)").matches:
         ctx["nav_open"] = False
     window.history.pushState(None, "", "#/" + page)
-    ctx["trial"] = ""
     await load()
 
 

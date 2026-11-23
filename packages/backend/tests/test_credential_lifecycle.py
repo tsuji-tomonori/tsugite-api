@@ -116,3 +116,48 @@ def test_persistent_system_and_legacy_expiry(portal, monkeypatch):
     new = exchange()
     assert new["expires_in"] == 240 and new["access_token"] != token["access_token"]
     assert portal.get(path, headers=bearer(new["access_token"])).is_success
+
+
+def test_interactive_exchange_requires_registered_credential(portal):
+    """本人の認証情報との交換だけを許可し、失効・他人の認証情報・ログイン単独の実行を拒否する。"""
+    from app.apis.governance.credentials import ACCESS_TOKEN_TYPE, TOKEN_EXCHANGE
+
+    owner, user = (headers(portal, who) for who in ("provider", "consumer"))
+    asset, _, path = approved(portal, owner, user)
+    assert portal.get(path, headers=user).status_code == 403
+    key = (
+        portal.post(
+            "/api/credentials",
+            headers=user,
+            json={
+                "name": "ポータル試行",
+                "project": "finance",
+                "kind": "personal",
+                "mode": "app",
+                "api_ids": [asset],
+            },
+        )
+        .raise_for_status()
+        .json()
+    )
+    endpoint = f"/api/credentials/{key['id']}/token-exchange"
+    data = {
+        "grant_type": TOKEN_EXCHANGE,
+        "subject_token_type": ACCESS_TOKEN_TYPE,
+        "subject_token": user["Authorization"].split()[1],
+    }
+    assert portal.post(endpoint, data={**data, "grant_type": "unknown"}).status_code == 400
+    assert (
+        portal.post(
+            endpoint, data={**data, "subject_token": owner["Authorization"].split()[1]}
+        ).status_code
+        == 403
+    )
+    issued = portal.post(endpoint, data=data).raise_for_status()
+    assert issued.headers["cache-control"] == "no-store"
+    assert issued.json()["issued_token_type"] == ACCESS_TOKEN_TYPE
+    token = bearer(issued.json()["access_token"])
+    assert portal.get(path, headers=token).is_success
+    portal.delete("/api/keys/" + key["id"], headers=user).raise_for_status()
+    assert portal.post(endpoint, data=data).status_code == 401
+    assert portal.get(path, headers=token).status_code == 401
