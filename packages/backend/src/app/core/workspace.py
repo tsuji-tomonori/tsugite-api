@@ -4,7 +4,7 @@ import hashlib
 import json
 from dataclasses import replace
 
-from app.core.config import local_demo, settings
+from app.core.config import local_demo, settings, targets
 from sqlalchemy import select
 from tsugite_db.models import Affiliation, DirectoryTree, LogUnit, Member
 
@@ -25,6 +25,27 @@ def configured_projects():
     return ids
 
 
+def retired_units(db):
+    if "retired_units" not in db.info:
+        row = db.get(DirectoryTree, "retired")
+        db.info["retired_units"] = json.loads(row.units) if row else {}
+    return db.info["retired_units"]
+
+
+def project_ids(db, ids):
+    retired = retired_units(db)
+    return frozenset(current for key in ids if (current := retired.get(key, key)))
+
+
+def workspace_targets(db):
+    retired = retired_units(db)
+    return {
+        key: target.model_copy(update={"owner": owner})
+        for key, target in targets().items()
+        if (owner := retired.get(target.owner, target.owner))
+    }
+
+
 def units(db):
     base = {
         k: dict(id=k, name=k, kind="project", parent="", stopped=False) for k in configured_projects()
@@ -34,7 +55,15 @@ def units(db):
     saved = db.info["workspace_tree"]
     if saved:
         base.update(json.loads(saved.units))
-    return base
+    return {k: v for k, v in base.items() if k not in retired_units(db)}
+
+
+def project_label(tree, project):
+    unit = tree.get(project)
+    if not unit or unit["name"] == project:
+        return f"名称未登録（{project}）"
+    parent = tree.get(unit["parent"])
+    return f"{parent['name']} / {unit['name']}" if parent else unit["name"]
 
 
 def ancestry(tree, ids):
@@ -48,6 +77,12 @@ def ancestry(tree, ids):
 
 
 def populate(db, actor):
+    actor = replace(
+        actor,
+        projects=project_ids(db, actor.projects),
+        owners=project_ids(db, actor.owners),
+        base_projects=project_ids(db, actor.base_projects),
+    )
     if actor.machine:
         return actor
     tree = units(db)
@@ -60,9 +95,10 @@ def populate(db, actor):
         and not account.deleted
         and account.project not in configured_projects()
     ):
-        projects.add(account.project)
+        inherited = project_ids(db, [account.project])
+        projects.update(inherited)
         if account.role == "provider":
-            owners.add(account.project)
+            owners.update(inherited)
     departments = set()
     leads = set()
     titles = set()

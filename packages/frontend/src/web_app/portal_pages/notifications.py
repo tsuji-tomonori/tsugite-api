@@ -40,10 +40,11 @@ def notice_form(me, targets, *, expanded=False):
     with t.details(classes="box", open=expanded):
         t.summary("利用者に通知を送る")
         if me["admin"]:
+            names = me.get("known_project_labels", {})
             field(
                 "送信先",
                 "notify-project",
-                options=[("*", "全プロジェクト")] + [(p, p) for p in me["known_projects"]],
+                options=[("*", "全プロジェクト")] + [(p, names.get(p, p)) for p in me["known_projects"]],
             )
         else:
             field("送信先のAPIと利用プロジェクト", "notify-target", options=targets)

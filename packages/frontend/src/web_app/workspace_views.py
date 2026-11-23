@@ -128,3 +128,36 @@ def unit_editor(root, kind, label, by_id, paths, unit=None):
         with t.div(classes="btn-grouping"):
             btn("保存", save, primary=True)
             link("キャンセル", url(root, "detail", unit["id"]) if unit else root, button=True)
+
+
+def retirement_form(root, label, unit, by_id, paths):
+    key = unit["id"]
+    candidates = sorted(
+        (other, paths[other])
+        for other, row in by_id.items()
+        if row["kind"] == unit["kind"] and key not in {u["id"] for u in ancestors(row, by_id)}
+    )
+
+    async def remove():
+        if window.confirm(f"{unit['name']}（{key}）を削除しますか？"):
+            await client.api(endpoint(unit), "DELETE")
+            await navigate(root)
+            ctx["message"] = label + "を削除しました"
+
+    async def transfer():
+        destination = value("unit-destination")
+        if destination not in dict(candidates):
+            raise client.InputError("移管先を選択してください")
+        if window.confirm(f"{paths[key]} を {paths[destination]} へ移管し、移管元を廃止しますか？"):
+            await client.api(endpoint(unit) + "/transfer", "POST", {"destination": destination})
+            await navigate(url(root, "detail", destination))
+            ctx["message"] = label + "を移管しました"
+
+    with t.details(classes="box"):
+        t.summary("移管・削除")
+        t.p("移管すると、所属者・配下の組織・API商品・利用権・認証情報を移管先に引き継ぎます。")
+        t.p("移管先の所属者にも共有の利用権が適用されます。監査履歴には当時の識別子が残ります。")
+        field("移管先", "unit-destination", options=[("", "選択してください"), *candidates])
+        btn(label + "を移管", transfer)
+        t.p("所属者や利用中の設定がない組織は削除できます。廃止した識別子は再使用できません。")
+        btn(label + "を削除", remove)

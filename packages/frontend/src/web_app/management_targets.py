@@ -5,7 +5,7 @@ from portal_ui import ctx
 
 def target_options():
     return [
-        (r["id"], f"{r['name']} · {r['project']} · {LABEL[r['environment']]}")
+        (r["id"], f"{r['name']} · {r.get('project_label', r['project'])} · {LABEL[r['environment']]}")
         for r in ctx.get("targets", [])
     ]
 

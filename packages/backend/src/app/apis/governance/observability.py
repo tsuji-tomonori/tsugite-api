@@ -7,7 +7,7 @@ from app.apis.catalog.common import DB, User
 from app.apis.governance.directory import manages, unit_condition
 from app.apis.governance.notifications import unread
 from app.core.diagnostics import exported_invocation
-from app.core.workspace import allowed_audience, private_project, units
+from app.core.workspace import allowed_audience, private_project, project_label, units
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import Response
 from sqlalchemy import func, or_, select
@@ -95,6 +95,8 @@ def access_logs(
     actor: User,
     db: DB,
     period: Range,
+    #: 一度に取得する履歴の件数
+    limit: int = Query(50, ge=1, le=50),
     #: 先頭から読み飛ばす件数
     offset: int = Query(0, ge=0),
     #: リクエスト識別子
@@ -108,9 +110,33 @@ def access_logs(
     return [
         log_data(r)
         for r in db.scalars(
-            stmt.order_by(AccessLog.at.desc(), AccessLog.request_id).offset(offset).limit(50)
+            stmt.order_by(AccessLog.at.desc(), AccessLog.request_id).offset(offset).limit(limit)
         )
     ]
+
+
+#: リクエスト識別子からAPI呼び出しの詳細を取得する
+@router.get("/access-logs/detail", responses={200: {"model": outputs.AccessLogDetail}})
+def access_log_detail(
+    actor: User,
+    db: DB,
+    #: リクエスト識別子
+    request_id: str,
+    #: 集計対象の部署・プロジェクト識別子
+    unit: str = "",
+):
+    stmt = visible(select(AccessLog), actor, db, unit)
+    row = db.scalar(stmt.where(AccessLog.request_id == request_id))
+    if row is None:
+        raise HTTPException(404, "アクセスログが見つかりません")
+    data = log_data(row)
+    record = exported_invocation(row, data)
+    return {
+        **data,
+        "started_at": record.get("started_at"),
+        "responded_at": record.get("responded_at"),
+        "error_code": record["reason"] if row.status >= 400 else None,
+    }
 
 
 #: API呼び出し履歴をファイルに出力する
@@ -284,12 +310,14 @@ def management_targets(actor: User, db: DB):
     )
     if not actor.admin:
         stmt = stmt.where(Asset.owner.in_(actor.owners))
+    tree = units(db)
     return [
         {
             "id": "/".join((r.asset_id, r.project, r.environment)),
             "asset_id": r.asset_id,
             "name": name,
             "project": r.project,
+            "project_label": project_label(tree, r.project),
             "environment": r.environment,
         }
         for r, name in db.execute(stmt.order_by(Asset.name, Access.project, Access.environment))
