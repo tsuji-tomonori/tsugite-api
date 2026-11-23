@@ -25,6 +25,14 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
+        "backend",
+        "移管元の識別子が組織一覧に復活する",
+        "packages/backend/src/app/core/workspace.py",
+        "return {k: v for k, v in base.items() if k not in retired_units(db)}",
+        "return base",
+        "packages/backend/tests/test_unit_lifecycle.py::test_project_transfer",
+    ),
+    Mutation(
         "frontend",
         "利用状況に業務メニューを表示する",
         "packages/frontend/src/web_app/portal_pages/dashboard.py",
@@ -45,11 +53,37 @@ MUTATIONS = (
     ),
     Mutation(
         "frontend",
+        "管理者の通知先にプロジェクト名を表示しない",
+        "packages/frontend/src/web_app/portal_pages/notifications.py",
+        '[(p, names.get(p, p)) for p in me["known_projects"]]',
+        '[(p, p) for p in me["known_projects"]]',
+        "packages/frontend/tests/test_notification_recipients.py::"
+        "test_notification_recipient_dropdown_uses_display_names",
+    ),
+    Mutation(
+        "frontend",
+        "提供者の通知先にプロジェクト名を表示しない",
+        "packages/frontend/src/web_app/management_targets.py",
+        "r.get('project_label', r['project'])",
+        "r['project']",
+        "packages/frontend/tests/test_notification_recipients.py::"
+        "test_notification_recipient_dropdown_uses_display_names",
+    ),
+    Mutation(
+        "frontend",
         "ガイドの画面例を操作可能にする",
         "packages/frontend/src/web_app/guide_views.py",
         'classes="guide-preview", inert=True',
         'classes="guide-preview", inert=False',
         "packages/frontend/tests/test_components.py::test_each_guide_renders_inert_example",
+    ),
+    Mutation(
+        "access-log",
+        "次ページ確認用の1件を一覧にも表示する",
+        "packages/frontend/src/web_app/portal_pages/logs.py",
+        "for row in rows[:PAGE_SIZE]:",
+        "for row in rows:",
+        "packages/frontend/tests/test_access_log_detail.py::test_log_page_shows_only_requested_rows",
     ),
     Mutation(
         "api-slug",
@@ -250,6 +284,14 @@ MUTATIONS = (
         'module in {"app", "portal_shell"}',
         'module == "app"',
         "tests/architecture/test_frontend_screens.py::test_shared_layout_delegates_route_dispatch",
+    ),
+    Mutation(
+        "frontend",
+        "モニタリングの所属メンバーを表として表示しない",
+        "packages/frontend/src/web_app/workspace_monitor.py",
+        'with t.table(aria_label="所属メンバー一覧"):',
+        'with t.div(aria_label="所属メンバー一覧"):',
+        "packages/frontend/tests/test_workspace_screens.py::test_project_monitor_shows_members_as_a_table",
     ),
     Mutation(
         "frontend",

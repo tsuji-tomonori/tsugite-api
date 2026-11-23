@@ -1,8 +1,8 @@
 from app.apis.catalog.common import DB, User, event, listing, record
 from app.apis.catalog.releases import record_release
 from app.apis.schemas import Listing
-from app.core.config import targets
 from app.core.diagnostics import asset_object
+from app.core.workspace import workspace_targets
 from app.integrations.upstream import probe
 from fastapi import APIRouter, HTTPException, Request
 
@@ -46,7 +46,7 @@ def publish(
         raise HTTPException(403)
     if a.published != published:
         if published:
-            bindings = targets()
+            bindings = workspace_targets(db)
             if any(
                 name not in bindings
                 or (bindings[name].owner, bindings[name].environment) != (a.owner, env)

@@ -40,6 +40,8 @@ class VisibleTarget(TypedDict):
 class Profile(TypedDict):
     #: 管理者が参照できるプロジェクト
     known_projects: list[str]
+    #: 管理者が参照できるプロジェクトの識別子と表示名の対応
+    known_project_labels: NotRequired[dict[str, str]]
     #: 個人用プロジェクトの識別子
     personal_project: str
     #: 管理権限を持つ組織
@@ -311,6 +313,16 @@ class AccessLog(TypedDict):
     duration_ms: int
 
 
+#: 1回のAPI呼び出しの詳細
+class AccessLogDetail(AccessLog):
+    #: 呼び出し処理の開始日時
+    started_at: datetime | None
+    #: 応答結果が確定した日時
+    responded_at: datetime | None
+    #: 記録されたエラー理由のコード
+    error_code: str | None
+
+
 #: 集計区間ごとの呼び出し実績
 class MetricPoint(TypedDict):
     #: 集計区間の開始日時
@@ -371,6 +383,8 @@ class Dimension(TypedDict):
 class ManagementTarget(Dimension):
     #: 監視対象の識別子
     id: str
+    #: 利用プロジェクトの表示名
+    project_label: NotRequired[str]
     #: 提供環境
     environment: str
 
