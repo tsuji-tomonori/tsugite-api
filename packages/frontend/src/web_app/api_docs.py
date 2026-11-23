@@ -181,10 +181,15 @@ def input_param(spec, param, element_id):
 
 
 async def credential_headers(key):
+    token = client.store.getItem("access")
+    if not token:
+        raise client.InputError("ログインしてから実行してください")
     portal_auth = {
         **client.screen_headers(),
-        "Authorization": "Bearer " + str(client.store.getItem("access")),
+        "Authorization": "Bearer " + str(token),
     }
+    if key is None:
+        return portal_auth
     if key.get("mode") not in CREDENTIAL_MODES:
         return {**portal_auth, "X-Tsugite-Key-Id": key["id"]}
     issued = await pyfetch(
@@ -201,9 +206,21 @@ async def credential_headers(key):
     return {**client.screen_headers(), "Authorization": "Bearer " + payload["access_token"]}
 
 
-def try_operation(spec, asset, bindings, method, path, params, body, prefix):
+def try_operation(
+    spec,
+    asset,
+    bindings,
+    method,
+    path,
+    params,
+    body,
+    prefix,
+    *,
+    binding_label="利用するAPIキーと環境",
+    submit_label="選んだキーで実行",
+):
     option_list(
-        "利用するAPIキーと環境",
+        binding_label,
         prefix + "-key",
         [(str(i), b[3]) for i, b in enumerate(bindings)],
     )
@@ -227,7 +244,7 @@ def try_operation(spec, asset, bindings, method, path, params, body, prefix):
             }
             location = build_location(spec, path, params, entered)
             headers = {}
-            opts = {"method": method.upper(), "headers": headers}
+            opts = {"method": method.upper(), "headers": headers, "redirect": "error"}
             if content:
                 text = value(prefix + "-body")
                 if not text and body.get("required"):
@@ -270,7 +287,7 @@ def try_operation(spec, asset, bindings, method, path, params, body, prefix):
         out.textContent = "呼び出し中…"
         asyncio.ensure_future(send(button, out))
 
-    t.button("選んだキーで実行", type="button", classes="btn btn-primary", on_click=submit)
+    t.button(submit_label, type="button", classes="btn btn-primary", on_click=submit)
     t.pre("", id=prefix + "-response", classes="code", aria_live="polite")
 
 

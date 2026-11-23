@@ -254,6 +254,28 @@ def test_openapi_key_console(tmp_path: Path, request: pytest.FixtureRequest) -> 
                         "revoked",
                         "同じ画面のキーを失効させて再実行。HTTP 401で停止し、配送見積への転送は計1回",
                     )
+                    navigate(page, "APIクライアント")
+                    page.get_by_label("API商品", exact=True).select_option(label="配送見積API")
+                    page.get_by_label("parcel（path）").fill("JP18")
+                    page.get_by_label("送信するリクエスト本文").fill('{"packages":2}')
+                    page.get_by_role("button", name="この操作を実行").click()
+                    expect(page.locator("#console-call-response")).to_contain_text('"cost": 700')
+                    assert calls[-1][:3] == ("/parcels/JP18/estimate", {}, {"packages": 2})
+                    capture(page, "console-oauth", "ログイン中の利用者が承認済みの環境で配送見積を取得")
+
+                    url = "https://example.test/status"
+                    page.route(
+                        url,
+                        lambda route: route.fulfill(
+                            status=202, body="accepted", headers={"Access-Control-Allow-Origin": "*"}
+                        ),
+                    )
+                    page.get_by_label("リクエストURL（必須）").fill(url)
+                    with page.expect_request(url) as outgoing:
+                        page.get_by_role("button", name="指定したURLに送信").click()
+                    expect(page.locator("#manual-response")).to_contain_text("HTTP 202")
+                    assert "authorization" not in outgoing.value.all_headers()
+                    capture(page, "console-url", "手入力したURLからの応答とHTTPステータスを表示")
                 browser.close()
             request.node.user_properties.append(
                 (
