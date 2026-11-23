@@ -283,10 +283,7 @@ def try_operation(
             headers.update(await credential_headers(key))
             if not button.isConnected:
                 return
-            segments = [quote(part, safe="") for part in (asset["id"], env, project)]
-            url = (
-                str(window.location.origin) + client.prefix + "/invoke/" + "/".join(segments) + location
-            )
+            url = str(window.location.origin) + client.invocation_path(asset, env, project) + location
             document.getElementById(prefix + "-curl").textContent = curl_command(url, opts)
             document.getElementById(prefix + "-replay").hidden = False
             audit = document.getElementById(prefix + "-audit")

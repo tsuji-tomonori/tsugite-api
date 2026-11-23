@@ -161,7 +161,7 @@ def test_admin_stops_target_after_denial(portal_session: PortalSession) -> None:
     asset, url, path = approved(api, owner, user)
     assert api.put(url + "/suspension?suspended=true", headers=owner).status_code == 403
     call = invocation_headers(api, user)
-    _, _, other_path = approved(api, owner, user)
+    _, _, other_path = approved(api, owner, user, slug="other-stock-lookup")
     assert api.get(path, headers=call).status_code == 200
     assert api.get(other_path, headers=call).status_code == 200
     denied = api.get(path.replace("/sandbox/", "/production/"), headers=call)

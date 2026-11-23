@@ -24,6 +24,20 @@ def elements(dom):
     return {el.getAttribute("id"): el for el in dom.getElementsByTagName("*") if el.hasAttribute("id")}
 
 
+def test_invocation_path_uses_product_slug(portal_module):
+    """呼び出し先にAPI識別名を使い、既存商品で識別名が未設定ならUUIDを使う。"""
+    client = portal_module("client")
+    product = {"id": "52a8193c70c941e894bc12fa4bc92e8a", "slug": "stock-lookup"}
+    assert (
+        client.invocation_path(product, "sandbox", "finance")
+        == "/api/invoke/stock-lookup/sandbox/finance"
+    )
+    product["slug"] = ""
+    assert client.invocation_path(product, "sandbox", "finance") == (
+        "/api/invoke/52a8193c70c941e894bc12fa4bc92e8a/sandbox/finance"
+    )
+
+
 def test_chat_product_and_guide_are_linked(portal_module):
     """チャットの候補と操作手順に、対応する商品・ガイドのリンクが付く。"""
     chat = portal_module("chat_views")

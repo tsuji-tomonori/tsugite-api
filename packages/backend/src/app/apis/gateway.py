@@ -15,8 +15,9 @@ from app.core.openapi import path_items
 from app.core.workspace import allowed_audience, attribute, private_project, stopped
 from app.integrations.upstream import MAX_BODY, dispatch
 from fastapi import APIRouter, Depends, HTTPException, Request
+from sqlalchemy import select
 from starlette.concurrency import run_in_threadpool
-from tsugite_db.models import Access, AccessLog, PortalKey
+from tsugite_db.models import Access, AccessLog, AssetRoute, PortalKey
 
 router = APIRouter()
 
@@ -42,22 +43,26 @@ def allowed_path(spec: dict, method: str, path: str) -> bool:
     return operation_template(spec, method, path) is not None
 
 
-def authorize(db, key, project, environment, actor):
+def invocation_asset(db, key):
+    asset_id = db.scalar(select(AssetRoute.asset_id).where(AssetRoute.slug == key))
+    return record(db, asset_id or key)
+
+
+def authorize(db, asset, project, environment, actor):
     check_member(db, actor)
-    asset = record(db, key)
     if not actor.key_id and not actor.machine:
         raise HTTPException(403, "APIの呼び出しには有効な認証情報が必要です")
     if asset.suspended:
         raise HTTPException(403, "管理者がこのAPIへのアクセスを一時停止しています")
-    grant = db.get(Access, right_id(key, project, environment))
+    grant = db.get(Access, right_id(asset.id, project, environment))
     if actor.key_id:
         k = db.get(PortalKey, actor.key_id)
         scopes = json.loads(k.scopes) if k else []
-        if not k or k.revoked or k.project != project or (scopes and key not in scopes):
+        if not k or k.revoked or k.project != project or (scopes and asset.id not in scopes):
             raise HTTPException(403, "このAPIはキーの対象外です")
     permitted = grant is not None and grant.status == "approved"
     if not permitted and not actor.machine and not actor.key_shared:
-        own = db.get(Access, right_id(key, project, environment, actor.subject))
+        own = db.get(Access, right_id(asset.id, project, environment, actor.subject))
         permitted = own is not None and own.status == "approved"
     if (
         not permitted
@@ -69,7 +74,6 @@ def authorize(db, key, project, environment, actor):
         or stopped(db, actor, project)
     ):
         raise HTTPException(403, "この環境での利用が許可されていません")
-    return asset
 
 
 #: 接続先APIに{method}リクエストを転送する
@@ -100,7 +104,7 @@ def authorize(db, key, project, environment, actor):
     },
 )
 async def invoke(
-    #: 呼び出すAPIの識別子
+    #: 呼び出すAPIの識別名または従来の識別子
     key: str,
     #: 提供環境
     environment: Env,
@@ -113,7 +117,7 @@ async def invoke(
     db: DB,
 ):
     started = monotonic()
-    asset = record(db, key)
+    asset = invocation_asset(db, key)
     member_project = (
         project if project in actor.projects or project == private_project(actor.subject) else ""
     )
@@ -125,7 +129,7 @@ async def invoke(
                 request_id=request.state.request_id,
                 actor=actor.subject,
                 owner=asset.owner,
-                asset_id=key,
+                asset_id=asset.id,
                 project=member_project,
                 environment=environment,
                 key_id=actor.key_id or None,
@@ -140,7 +144,7 @@ async def invoke(
         )
 
     try:
-        authorize(db, key, project, environment, actor)
+        authorize(db, asset, project, environment, actor)
         path = "/" + tail
         request.state.operation = operation_template(asset_object(asset, "spec"), request.method, path)
         if request.state.operation is None:

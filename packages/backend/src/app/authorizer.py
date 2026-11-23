@@ -5,10 +5,10 @@ import secrets
 
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
-from tsugite_db.models import AccessLog, Asset, Event
+from tsugite_db.models import AccessLog, Event
 from tsugite_db.session import engine
 
-from app.apis.gateway import authorize, operation_template
+from app.apis.gateway import authorize, invocation_asset, operation_template
 from app.apis.governance.keys import invocation_actor
 from app.core.credential_policy import check_operation
 from app.core.diagnostics import OperationalRepair, asset_object, emit, invocation_details
@@ -48,7 +48,6 @@ def authorize_event(event, fields):
     if len(parts) < 6 or parts[1:3] != ["api", "invoke"]:
         return {"isAuthorized": False}
     key, environment, project = parts[3:6]
-    fields["asset_id"] = key
     with Session(engine()) as db:
         try:
             actor = invocation_actor(db, token, headers)
@@ -57,8 +56,11 @@ def authorize_event(event, fields):
             if exc.status_code >= 500:
                 fields.update(failed=True, reason="authentication_service_error")
             return {"isAuthorized": False}
+        asset = None
         try:
-            asset = authorize(db, key, project, environment, actor)
+            asset = invocation_asset(db, key)
+            fields["asset_id"] = asset.id
+            authorize(db, asset, project, environment, actor)
             method = event["requestContext"].get("http", {}).get("method", "GET").upper()
             pattern = (
                 operation_template(asset_object(asset, "spec"), method, "/" + parts[6])
@@ -73,12 +75,11 @@ def authorize_event(event, fields):
                 fields.update(exc.fields)
             elif exc.status_code >= 500:
                 fields.update(failed=True, reason="authorization_service_error")
-            asset = db.get(Asset, key)
             if asset:
                 db.add(
                     Event(
                         actor=actor.subject,
-                        asset_id=key,
+                        asset_id=asset.id,
                         owner=asset.owner,
                         project=project if project in actor.projects else "",
                         environment=environment[:16],
@@ -99,7 +100,7 @@ def authorize_event(event, fields):
                         request_id=event["requestContext"]["requestId"],
                         actor=actor.subject,
                         owner=asset.owner,
-                        asset_id=key,
+                        asset_id=asset.id,
                         project=project if project in actor.projects else "",
                         environment=environment[:16],
                         method=event["requestContext"].get("http", {}).get("method", ""),

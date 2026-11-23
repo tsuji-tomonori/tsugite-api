@@ -1,7 +1,9 @@
+import pytest
 from alembic import command
 from alembic.config import Config
 from alembic.script import ScriptDirectory
 from sqlalchemy import inspect, text
+from sqlalchemy.exc import IntegrityError
 from tsugite_db.session import engine
 
 
@@ -52,5 +54,9 @@ def test_schema_matches_models_and_replays(tmp_path, monkeypatch):
             "旧版",
             None,
         )
+    with db.begin() as conn:
+        conn.execute(text("INSERT INTO asset_routes (asset_id, slug) VALUES ('before', 'inventory')"))
+    with db.begin() as conn, pytest.raises(IntegrityError):
+        conn.execute(text("INSERT INTO asset_routes (asset_id, slug) VALUES ('another', 'inventory')"))
     db.dispose()
     engine.cache_clear()

@@ -219,6 +219,7 @@ def test_approved_calls_reach_upstream(
             assert api.get("me", headers=headers("no_scope")).status_code == 401
         data = {
             "name": "在庫",
+            "slug": "stock-lookup",
             "summary": "棚卸し",
             "owner": "supply",
             "targets": {env: "sample-" + env for env in STOCK_FUNCTIONS},

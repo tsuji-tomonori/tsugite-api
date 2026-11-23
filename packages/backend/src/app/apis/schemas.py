@@ -1,8 +1,9 @@
+import re
 from datetime import datetime
 from typing import Annotated, Any, Literal, Self
 
 from app.apis.product_contract import ApplicationEvidence, PublishedOffer, PublishedShape, ReleaseEntry
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field, model_validator
 
 Env = Literal[
     #: 検証環境
@@ -70,8 +71,21 @@ class Offer(Input):
         return self
 
 
-#: APIのカタログ登録内容
-class Register(Input):
+def reject_uuid_slug(value: str) -> str:
+    if re.fullmatch(r"[0-9a-f]{32}", value):
+        raise ValueError("UUIDと同じ形式のAPI識別名は指定できません")
+    return value
+
+
+ApiSlug = Annotated[
+    str,
+    Field(min_length=1, max_length=63, pattern=r"^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"),
+    AfterValidator(reject_uuid_slug),
+]
+
+
+#: APIのカタログ登録と編集に共通する項目
+class ListingInput(Input):
     #: 提供プロジェクトの識別子
     owner: str = Field(min_length=1, max_length=63)
     #: API名
@@ -90,10 +104,24 @@ class Register(Input):
     release_note: str = Field("", max_length=2000)
 
 
+#: カタログに登録済みのAPIを編集する入力
+class Register(ListingInput):
+    #: 呼び出しURLで使うAPI識別名
+    slug: ApiSlug | None = None
+
+
+#: APIをカタログへ新規登録する入力
+class NewListing(ListingInput):
+    #: 呼び出しURLで使う一意なAPI識別名
+    slug: ApiSlug
+
+
 #: カタログ掲載APIの概要
 class Listing(BaseModel):
     #: カタログ掲載APIの識別子
     id: str
+    #: 呼び出しURLで使うAPI識別名
+    slug: str | None = None
     #: API名
     name: str
     #: 提供プロジェクトの識別子

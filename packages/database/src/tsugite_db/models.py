@@ -4,7 +4,7 @@ from typing import Any
 from uuid import uuid4
 
 from sqlalchemy import DateTime, String, Text
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
 class Base(DeclarativeBase):
@@ -45,6 +45,21 @@ class Inquiry(Base):
     __mapper_args__ = {"version_id_col": revision}
 
 
+#: API呼び出し識別名
+class AssetRoute(Base):
+    """呼び出し用API識別名
+
+    掲載APIごとに1件を保存し、掲載終了後も再利用を防ぐために保持します。
+    """
+
+    __tablename__ = "asset_routes"
+
+    #: 掲載APIの識別子
+    asset_id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    #: 呼び出しURLで使う一意なAPI識別名
+    slug: Mapped[str] = mapped_column(String(63), unique=True)
+
+
 #: APIカタログ
 class Asset(Base):
     """掲載API
@@ -56,6 +71,9 @@ class Asset(Base):
 
     #: 掲載APIの識別子
     id: Mapped[str] = mapped_column(String(32), primary_key=True, default=new_id)
+    route: Mapped[AssetRoute | None] = relationship(
+        primaryjoin="Asset.id == foreign(AssetRoute.asset_id)", lazy="joined"
+    )
     #: 提供プロジェクトの識別子
     owner: Mapped[str] = mapped_column(String(64))
     #: API名

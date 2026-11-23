@@ -68,6 +68,7 @@ def catalog_journey(
             navigate(provider, "提供するAPI")
             provider.get_by_role("button", name="APIを登録", exact=True).click()
             provider.get_by_label("API名", exact=True).fill("棚卸API")
+            provider.get_by_label("API識別名", exact=True).fill("stock-lookup")
             provider.get_by_label("用途・説明").fill("倉庫の在庫を照会する")
             provider.get_by_label("検証の接続先").select_option("sample-sandbox")
             provider.get_by_label("本番の接続先", exact=True).select_option("sample-production")
@@ -134,6 +135,9 @@ def catalog_journey(
             consumer.reload()
             consumer.get_by_role("button", name="認証して実行").click()
             expect(consumer.get_by_text("HTTP 200", exact=False)).to_be_visible()
+            expect(consumer.locator("pre").filter(has_text="curl").first).to_contain_text(
+                "/invoke/stock-lookup/sandbox/finance"
+            )
             if tokens:
                 expect(consumer.locator("pre").filter(has_text="HTTP 200")).to_contain_text("TS-01")
             capture(

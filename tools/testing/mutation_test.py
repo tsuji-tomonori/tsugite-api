@@ -25,6 +25,30 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
+        "api-slug",
+        "DBでAPI識別名の重複を許す",
+        "packages/database/migrations/versions/v010_asset_routes.py",
+        'sa.Column("slug", sa.String(63), nullable=False, unique=True)',
+        'sa.Column("slug", sa.String(63), nullable=False)',
+        "packages/database/tests/test_migrations.py::test_schema_matches_models_and_replays",
+    ),
+    Mutation(
+        "api-slug",
+        "呼び出し先のAPI識別名をUUIDに解決しない",
+        "packages/backend/src/app/apis/gateway.py",
+        "return record(db, asset_id or key)",
+        "return record(db, key)",
+        "packages/backend/tests/test_catalog.py::test_existing_api_keeps_grants_when_named",
+    ),
+    Mutation(
+        "api-slug",
+        "画面の呼び出しURLにAPI識別名を使わない",
+        "packages/frontend/src/web_app/client.py",
+        '(asset.get("slug") or asset["id"], environment, project)',
+        '(asset["id"], environment, project)',
+        "packages/frontend/tests/test_components.py::test_invocation_path_uses_product_slug",
+    ),
+    Mutation(
         "frontend",
         "直接指定したURLにブラウザーの認証情報を送る",
         "packages/frontend/src/web_app/manual_request.py",
@@ -332,8 +356,8 @@ MUTATIONS = (
         "backend",
         "チャットの参照ロールに商品の更新権限を加える",
         "packages/backend/src/app/migrate.py",
-        "GRANT SELECT ON assets TO tsugite_chat",
-        "GRANT SELECT, UPDATE ON assets TO tsugite_chat",
+        "GRANT SELECT ON assets, asset_routes TO tsugite_chat",
+        "GRANT SELECT, UPDATE ON assets, asset_routes TO tsugite_chat",
         "packages/backend/tests/test_migrate.py::test_grants_public_tables_without_altering_the_schema[chat]",
     ),
     Mutation(

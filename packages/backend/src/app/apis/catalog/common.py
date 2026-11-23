@@ -38,6 +38,7 @@ def record(db: Session, key: str) -> Asset:
 def listing(row: Asset) -> Listing:
     return Listing(
         id=row.id,
+        slug=row.route.slug if row.route else None,
         owner=row.owner,
         name=row.name,
         summary=row.summary,
