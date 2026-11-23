@@ -25,6 +25,14 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
+        "frontend",
+        "同じ問い合わせを再送するときに受付番号を振り直す",
+        "packages/frontend/src/web_app/inquiry_form.py",
+        'if state.get("draft") != question:',
+        "if True:",
+        "packages/frontend/tests/test_inquiry_form.py::test_retry_reuses_pending_inquiry_id",
+    ),
+    Mutation(
         "api-slug",
         "DBでAPI識別名の重複を許す",
         "packages/database/migrations/versions/v010_asset_routes.py",
