@@ -224,17 +224,25 @@ def baseline_coverage(repository, branch, sha):
     return measure_base_coverage(sha) if coverage is None else coverage
 
 
-def main(report_path):
-    repository = os.environ["GITHUB_REPOSITORY"]
-    branch = os.environ["BASE_BRANCH"]
+def branch_rules(repository, branch):
     branch_ref = quote(branch, safe="")
-    rules = github_json(f"repos/{repository}/rules/branches/{branch_ref}")
+    return github_json(f"repos/{repository}/rules/branches/{branch_ref}")
+
+
+def coverage_limits(rules):
     thresholds = [rule["parameters"] for rule in rules if rule["type"] == "code_coverage"]
     minimum = max((rule.get("minimum_coverage", 0) for rule in thresholds), default=0)
     max_drop = min(
         (drop for rule in thresholds if (drop := rule.get("max_coverage_drop", 0)) > 0),
         default=0,
     )
+    return minimum, max_drop
+
+
+def main(report_path):
+    repository = os.environ["GITHUB_REPOSITORY"]
+    branch = os.environ["BASE_BRANCH"]
+    minimum, max_drop = coverage_limits(branch_rules(repository, branch))
     current = line_coverage(report_path)
     print(f"PR line coverage: {float(current):.2f}%")
     print(

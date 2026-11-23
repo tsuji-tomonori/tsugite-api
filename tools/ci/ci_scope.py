@@ -19,13 +19,21 @@ from tools.ci.check_coverage import (
 )
 from tools.ci.ci_coverage_parts import ARTIFACTS, PARTS, part_name, run_parts
 
+#: ブラウザーE2E
 BROWSER = "tests/e2e/browser"
+#: 開発ツール
 TOOLS = "tools/tests"
+#: アーキテクチャ
 ARCHITECTURE = "tests/architecture"
+#: エージェント・推論モデル
 AGENT = "packages/agent/tests"
+#: バックエンド
 BACKEND = "packages/backend/tests"
+#: データベース
 DATABASE = "packages/database/tests"
+#: フロントエンド
 FRONTEND = "packages/frontend/tests"
+#: インフラ
 INFRA = "packages/infra/tests"
 FULL = {"full"}
 
@@ -191,14 +199,20 @@ def select(paths, suites, cached):
     return {
         "full": full,
         "suites": [suite for suite in suites if suite in selected],
+        #: Ruff（書式・静的解析）
         "lint": full or any(path.endswith((".py", ".pyi")) for path in paths),
+        #: 型検査
         "types": "types" in flags,
+        #: API設計書・契約の生成
         "design": "design" in flags,
+        #: 依存関係・CDK監査
         "audit": "audit" in flags,
         "hooks": "hooks" in flags and Path("tools/testing/test_git_hooks.sh").exists(),
+        #: CDK合成・インフラ文書生成
         "synth": synth,
         "frontend_build": bool(selected & {BROWSER, BACKEND, TOOLS}) and not synth,
         "chromium": BROWSER in selected or aws,
+        #: AWSエミュレーターE2E
         "aws": aws,
         "aws_portal_only": "aws_portal" in flags and "aws" not in flags,
         "report": BROWSER in selected and aws,

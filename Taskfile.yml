@@ -47,6 +47,9 @@ tasks:
     cmds:
       - task: docs:api
       - task: docs:infra
+  docs:quality:
+    desc: PRの検査項目と対象ブランチのカバレッジ基準から完了の定義を生成
+    cmds: ['uv run --locked --only-group quality-docs python -m tools.design.completion {{.CLI_ARGS}}']
   docs:infra:
     desc: CDKを合成し、コンポーネント別のリソース一覧とパラメーターシートを更新
     cmds:

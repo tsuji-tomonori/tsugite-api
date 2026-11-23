@@ -22,8 +22,23 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
           persist-credentials: false
+      - uses: astral-sh/setup-uv@v6
+      #: 分野別のテスト定義と有効なカバレッジ基準から完了の定義を生成できる。
+      - name: 完了の定義を生成
+        env:
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BASE_BRANCH: ${{ github.base_ref }}
+          GH_TOKEN: ${{ github.token }}
+        run: uv run --locked --only-group quality-docs python -m tools.design.completion --artifact
+      - uses: actions/upload-artifact@v4
+        with:
+          name: definition-of-done
+          path: artifacts/definition-of-done.md
+          if-no-files-found: error
+      #: 各要件に実在する受入テストと証跡の取得方法が定義されている。
       - name: 要件別の受入テスト定義を検査
         run: python3 -m tools.testing.requirement_evidence --check
+      #: 要件文・必須の節・共通語彙を検査する。feat ブランチには新しい要件が1件以上ある。
       - name: 要件一覧と用語一覧を生成し、feat ブランチの新規要件を検査
         env:
           HEAD_BRANCH: ${{ github.head_ref }}
@@ -34,6 +49,7 @@ jobs:
           name: requirements
           path: artifacts/requirements/
           if-no-files-found: error
+      # 実行準備
       - name: 差分と比較元カバレッジの有無を確認
         id: baseline
         env:
@@ -41,26 +57,28 @@ jobs:
           BASE_BRANCH: ${{ github.base_ref }}
           GH_TOKEN: ${{ github.token }}
         run: python3 -m tools.ci.ci_scope --inspect-base "$BASE_SHA"
-      - uses: astral-sh/setup-uv@v6
-        if: steps.baseline.outputs.missing != '[]'
       - uses: actions/setup-node@v4
         if: contains(fromJSON(steps.baseline.outputs.missing), 'packages/infra/tests')
         with:
           node-version: "22"
+      # 実行準備
       - name: 保存されていない比較元のカバレッジを補完
         if: steps.baseline.outputs.missing != '[]'
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           MISSING_SUITES: ${{ steps.baseline.outputs.missing }}
         run: python3 -m tools.ci.ci_scope --measure-base "$BASE_SHA"
+      # 実行準備
       - name: PRで実行するテストと検証手順を決定
         id: scope
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: python3 -m tools.ci.ci_scope --base "$BASE_SHA"
+      #: 文書の最初のレベル1見出しに日本語がある。
       - name: Markdown文書の表題を検証
         if: steps.scope.outputs.documents == 'true'
         run: python3 -m tests.architecture.test_documents
+      #: 変更したテキストはUTF-8（BOMなし）・LFで、末尾の改行が1つある。
       - name: 変更ファイルの文字コードと改行を検査
         if: steps.scope.outputs.full != 'true'
         env:
@@ -70,16 +88,16 @@ jobs:
         if: steps.scope.outputs.synth == 'true' || steps.scope.outputs.types == 'true' || contains(fromJSON(steps.scope.outputs.suites), 'packages/infra/tests')
         with:
           node-version: "22"
-      - uses: astral-sh/setup-uv@v6
-        if: steps.scope.outputs.setup == 'true'
-        with:
-          enable-cache: true
+      # 実行準備
       - run: uv tool install go-task-bin==3.54.0
         if: steps.scope.outputs.setup == 'true'
+      # 実行準備
       - run: task setup
         if: steps.scope.outputs.setup == 'true'
+      #: 全体のRuff書式検査・静的解析と、Git管理対象のテキスト検査が通る。
       - run: task lint
         if: steps.scope.outputs.full == 'true'
+      #: 追加・変更したPythonファイルにRuffの書式違反やルール違反がない。
       - name: 変更したPythonファイルの書式と静的検査
         if: steps.scope.outputs.lint == 'true' && steps.scope.outputs.full != 'true'
         env:
@@ -88,16 +106,22 @@ jobs:
           git diff --name-only -z --diff-filter=ACMRT "$BASE_SHA...HEAD" -- '*.py' '*.pyi' > "$RUNNER_TEMP/lint-paths"
           xargs -0 -r -a "$RUNNER_TEMP/lint-paths" uv run --locked ruff format --check --force-exclude --
           xargs -0 -r -a "$RUNNER_TEMP/lint-paths" uv run --locked ruff check --force-exclude --
+      #: 設定対象のPyrightとmypyの型検査がともに通る。
       - run: task types
         if: steps.scope.outputs.types == 'true'
+      #: Gitフックが機密情報を含むコミットや保護対象ブランチへの不正なプッシュを拒否する。
       - run: task test:hooks
         if: steps.scope.outputs.hooks == 'true'
+      # 実行準備
       - run: task browser:install
         if: steps.scope.outputs.chromium == 'true'
+      # 実行準備
       - run: task emulator:install
         if: steps.scope.outputs.aws == 'true'
+      #: 配布物をビルドし、CDKからCloudFormationテンプレートを合成できる。
       - run: task synth
         if: steps.scope.outputs.synth == 'true'
+      #: 依存ロックまたはビルダーの変更時は、再生成した3つのLambda LayerのSHA-256が一致する。
       - name: 同じロックから再ビルドしたLambda LayerのSHA-256を照合
         if: steps.scope.outputs.synth == 'true'
         env:
@@ -108,23 +132,31 @@ jobs:
             uv run --locked --all-packages python tools/packaging/build_backend.py
             sha256sum --check "$RUNNER_TEMP/runtime-layer.sha256"
           fi
+      #: フロントエンドの配布物を生成できる。
       - run: uv run --locked --all-packages python tools/packaging/build_frontend.py
         if: steps.scope.outputs.frontend_build == 'true'
+      #: 合成済みテンプレートからリソース一覧とパラメーターシートを生成できる。
       - run: task docs:infra:render
         if: steps.scope.outputs.synth == 'true'
+      #: OpenAPI・テーブル定義・API設計書を生成できる。
       - run: task contracts docs:api
         if: steps.scope.outputs.design == 'true'
+      #: CDKの監査結果を出力し、Lambda実行時依存に対するpip-auditが通る。
       - run: task audit
         if: steps.scope.outputs.audit == 'true'
+      #: 差分に応じて選ばれたテストが成功し、比較元の計測結果と合わせて全体を集計できる。
       - name: 対象テストを実行し、全体カバレッジを集計
         id: suites
         if: steps.scope.outputs.suites != '[]'
         run: uv run --locked --all-packages python -m tools.ci.ci_scope --run-suites
+      #: AWSエミュレーターで対象のE2Eが成功する。
       - run: task test:aws
         if: ${{ !cancelled() && (success() || steps.suites.outcome == 'failure') && steps.scope.outputs.aws == 'true' && steps.scope.outputs.aws_portal_only != 'true' }}
+      #: ポータルに限定した検証ではCognitoを使うブラウザーテストが成功する。
       - run: task test:aws -- -k test_cognito_browser
         if: ${{ !cancelled() && (success() || steps.suites.outcome == 'failure') && steps.scope.outputs.aws_portal_only == 'true' }}
-      - name: Check line coverage against the ruleset
+      #: 全体の行カバレッジが、対象ブランチの下限と許容低下幅を満たす。
+      - name: 行カバレッジをブランチルールと照合
         if: steps.scope.outputs.coverage == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
@@ -148,6 +180,7 @@ jobs:
           language: Python
           label: code-coverage/pytest
           fail-on-error: false
+      #: 今回の実行対象となった要件について、JUnit結果と指定された証跡から合否を判定できる。
       - name: 今回のJUnit・画面証跡から要件別の合否を判定
         if: ${{ !cancelled() }}
         env:
@@ -163,6 +196,7 @@ jobs:
             evidence/screenshots/
             evidence/items/
           if-no-files-found: error
+      #: JUnit結果とスクリーンショットからレポートを生成できる。
       - name: Build screenshot report
         if: ${{ !cancelled() && steps.scope.outputs.report == 'true' && hashFiles('artifacts/junit.xml') != '' }}
         run: task report

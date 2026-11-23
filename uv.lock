@@ -2313,6 +2313,9 @@ dev = [
 model-sdk = [
     { name = "boto3" },
 ]
+quality-docs = [
+    { name = "pyyaml" },
+]
 
 [package.metadata]
 
@@ -2334,6 +2337,7 @@ dev = [
     { name = "ruff" },
 ]
 model-sdk = [{ name = "boto3" }]
+quality-docs = [{ name = "pyyaml" }]
 
 [[package]]
 name = "tsugite-backend"
