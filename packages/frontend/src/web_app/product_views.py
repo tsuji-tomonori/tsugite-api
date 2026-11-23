@@ -178,13 +178,54 @@ def answers(asset, env, value):
 def release_history(asset):
     if not asset.get("releases"):
         return
-    with t.details(classes="box"):
-        t.summary("公開版の変更履歴")
-        for row in asset["releases"]:
-            t.h3(f"第{row['number']}版 · API {row['api_version']} · OpenAPI {row['openapi']}")
-            t.small(row["published_at"][:10])
-            if row["note"]:
-                t.p(row["note"], classes="terms-text")
-            for key, title in (("added", "追加"), ("changed", "変更"), ("removed", "削除")):
-                if row[key]:
-                    t.p(title + "　" + "、".join(row[key]))
+    with t.details(classes="box release-history"):
+        with t.summary():
+            t.span("公開版の変更履歴", id="release-history-heading")
+        with (
+            t.div(
+                classes="table-scroll release-table",
+                role="region",
+                aria_labelledby="release-history-heading",
+                tabindex="0",
+            ),
+            t.table(aria_labelledby="release-history-heading"),
+        ):
+            with t.thead(), t.tr():
+                for label in (
+                    "公開版",
+                    "公開日",
+                    "APIバージョン",
+                    "OpenAPI",
+                    "変更内容",
+                    "提供者の説明",
+                ):
+                    t.th(label, scope="col")
+            with t.tbody():
+                for row in asset["releases"]:
+                    with t.tr():
+                        t.th(f"第{row['number']}版", scope="row")
+                        published = row["published_at"][:10]
+                        with t.td():
+                            t.time(published, datetime=published)
+                        t.td(row["api_version"])
+                        t.td(row["openapi"])
+                        changes = [
+                            (title, row[key])
+                            for key, title in (
+                                ("added", "追加"),
+                                ("changed", "変更"),
+                                ("removed", "削除"),
+                            )
+                            if row[key]
+                        ]
+                        with t.td():
+                            if changes:
+                                with t.dl():
+                                    for title, items in changes:
+                                        t.dt(title)
+                                        with t.dd(), t.ul():
+                                            for item in items:
+                                                t.li(item)
+                            else:
+                                t.span("—")
+                        t.td(row["note"] or "—", classes="terms-text")

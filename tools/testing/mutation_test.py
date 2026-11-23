@@ -42,6 +42,23 @@ MUTATIONS = (
     ),
     Mutation(
         "frontend",
+        "API Docsで同じ商品の個人認証情報を毎回発行する",
+        "packages/frontend/src/web_app/api_docs.py",
+        "if project not in keys:",
+        "if True:",
+        "packages/frontend/tests/test_api_client.py::"
+        "test_trial_uses_approved_environments_and_reuses_personal_credential",
+    ),
+    Mutation(
+        "frontend",
+        "公開履歴の表で操作の変更を表示しない",
+        "packages/frontend/src/web_app/product_views.py",
+        "if row[key]",
+        'if row[key] and key != "changed"',
+        "packages/frontend/tests/test_components.py::test_publication_history_shows_release_changes",
+    ),
+    Mutation(
+        "frontend",
         "同じ問い合わせを再送するときに受付番号を振り直す",
         "packages/frontend/src/web_app/inquiry_form.py",
         'if state.get("draft") != question:',

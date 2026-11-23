@@ -87,6 +87,50 @@ def available_bindings(asset_id, rights, keys, subject):
     return options
 
 
+def approved_rights(asset, rights, subject):
+    return [
+        grant
+        for grant in rights
+        if grant["asset_id"] == asset["id"]
+        and grant["status"] == "approved"
+        and grant["environment"] in asset["environments"]
+        and grant.get("subject") in (None, "", subject)
+    ]
+
+
+def trial_bindings(rights, personal_project):
+    options = {}
+    for grant in rights:
+        project, env = grant["project"], grant["environment"]
+        label = "個人利用" if project == personal_project else project
+        options[(project, env)] = (None, env, project, f"{label} · {ENVIRONMENTS.get(env, env)}")
+    return list(options.values())
+
+
+def trial_key_issuer(asset):
+    keys = {}
+    lock = asyncio.Lock()
+
+    async def issue(project):
+        async with lock:
+            if project not in keys:
+                keys[project] = await client.api(
+                    "/credentials",
+                    "POST",
+                    {
+                        "name": ("API Docs · " + asset["name"])[:120],
+                        "project": project,
+                        "kind": "personal",
+                        "mode": "bearer",
+                        "api_ids": [asset["id"]],
+                        "ttl_minutes": 1,
+                    },
+                )
+            return keys[project]
+
+    return issue
+
+
 def value(element_id):
     return str(document.getElementById(element_id).value)
 
@@ -238,11 +282,15 @@ def try_operation(
     *,
     binding_label="利用する認証情報と環境（必須）",
     submit_label="認証して実行",
+    issue_key=None,
 ):
+    choices = [(str(i), b[3]) for i, b in enumerate(bindings)]
+    if issue_key and len(choices) > 1:
+        choices.insert(0, ("", "選んでください"))
     option_list(
         binding_label,
         prefix + "-key",
-        [(str(i), b[3]) for i, b in enumerate(bindings)],
+        choices,
     )
     for i, param in enumerate(params):
         if param["in"] in ("query", "path"):
@@ -256,7 +304,10 @@ def try_operation(
 
     async def send(button, out):
         try:
-            key, env, project, _ = bindings[int(value(prefix + "-key"))]
+            selected = value(prefix + "-key")
+            if not selected:
+                raise client.InputError("利用するプロジェクトと環境を選んでください")
+            key, env, project, _ = bindings[int(selected)]
             entered = {
                 i: value(prefix + f"-param-{i}")
                 for i, p in enumerate(params)
@@ -280,6 +331,10 @@ def try_operation(
                             ) from exc
                     headers["Content-Type"] = media
                     opts["body"] = text
+            if issue_key:
+                key = await issue_key(project)
+                if not button.isConnected:
+                    return
             headers.update(await credential_headers(key))
             if not button.isConnected:
                 return
@@ -337,6 +392,7 @@ def try_operation(
         action(trace_lookup, str(event.currentTarget.dataset.trace))(event)
 
     t.button(submit_label, type="button", classes="btn btn-primary", on_click=submit)
+    t.pre("", id=prefix + "-response", classes="code", aria_live="polite")
     with t.section(id=prefix + "-replay", hidden=True):
         t.h4("今回のcurlコマンド")
         t.p("シェル変数 ACCESS_TOKEN に、この認証情報の有効なアクセストークンを設定してください。")
@@ -348,7 +404,6 @@ def try_operation(
             on_click=lambda event: asyncio.ensure_future(copy_and_report()),
         )
         t.span("", role="status", id=prefix + "-copied")
-    t.pre("", id=prefix + "-response", classes="code", aria_live="polite")
     t.button(
         "この実行の業務操作履歴",
         type="button",
@@ -359,19 +414,36 @@ def try_operation(
     )
 
 
-def jump_to(anchor):
-    def jump(event):
-        panel = document.getElementById(anchor)
-        panel.open = True
-        panel.querySelector("summary").focus()
-        panel.scrollIntoView()
+def operation_definition(spec, operation, params, body):
+    if operation.get("description"):
+        t.p(operation["description"])
+    if params:
+        t.h3("パラメータ")
+    for p in params:
+        required = "必須" if p["in"] == "path" or p.get("required") else "任意"
+        t.p(
+            f"{p['name']}（{p['in']} / {type_name(spec, p.get('schema', {}))} / {required}） {p.get('description', '')}"
+        )
+    if body:
+        t.h3("リクエスト本文")
+        if body.get("description"):
+            t.p(body["description"])
+        media_docs(spec, body.get("content", {}))
+    t.h3("レスポンス")
+    for code, raw_response in operation.get("responses", {}).items():
+        if code.startswith("x-"):
+            continue
+        response = resolve(spec, raw_response)
+        t.p(f"{code}　{response.get('description', '')}")
+        media_docs(spec, response.get("content", {}))
 
-    return jump
 
-
-def view(asset, rights, keys, *, subject=""):
+def view(asset, rights, keys, *, subject, personal_project):
     spec = asset["spec"]
+    rights = approved_rights(asset, rights, subject)
     bindings = available_bindings(asset["id"], rights, keys, subject)
+    trial = trial_bindings(rights, personal_project) if not bindings else []
+    issue_key = trial_key_issuer(asset) if trial else None
     with t.section(classes="box api-docs"):
         t.h2("API Docs")
         info = spec.get("info", {})
@@ -380,90 +452,65 @@ def view(asset, rights, keys, *, subject=""):
         )
         if info.get("description"):
             t.p(info["description"])
-        menu = []
-        with t.div(classes="docs-layout"):
-            with t.div(classes="docs-content"):
-                index = 0
-                for path, raw in spec["paths"].items():
-                    item = resolve(spec, raw)
-                    if not isinstance(item, dict):
-                        continue
-                    for method in METHODS:
-                        if method not in item:
-                            continue
-                        name = method.upper() + " " + path
-                        allowed = asset.get("allowed_operations")
-                        if allowed is not None and name not in allowed:
-                            continue
-                        usable = [
-                            entry
-                            for entry in bindings
-                            if asset["id"] not in entry[0].get("operations", {})
-                            or name in entry[0]["operations"][asset["id"]]
-                        ]
-                        if bindings and not usable:
-                            continue
-                        menu.append((f"operation-{index}", name, item[method].get("summary", "")))
-                        operation = item[method]
-                        params = parameters(spec, item, operation)
-                        body = resolve(spec, operation.get("requestBody", {}))
-                        with t.details(
-                            id=f"operation-{index}", classes="doc-operation", open=index == 0
-                        ):
-                            t.summary(
-                                f"{method.upper()} {path}　{operation.get('summary') or operation.get('operationId', '')}"
-                            )
-                            with t.div(classes="operation-columns"):
-                                with t.div(classes="operation-definition"):
-                                    if operation.get("description"):
-                                        t.p(operation["description"])
-                                    if params:
-                                        t.h3("パラメータ")
-                                    for p in params:
-                                        required = (
-                                            "必須" if p["in"] == "path" or p.get("required") else "任意"
-                                        )
-                                        t.p(
-                                            f"{p['name']}（{p['in']} / {type_name(spec, p.get('schema', {}))} / {required}） {p.get('description', '')}"
-                                        )
-                                    if body:
-                                        t.h3("リクエスト本文")
-                                        if body.get("description"):
-                                            t.p(body["description"])
-                                        media_docs(spec, body.get("content", {}))
-                                    t.h3("レスポンス")
-                                    for code, raw_response in operation.get("responses", {}).items():
-                                        if code.startswith("x-"):
-                                            continue
-                                        response = resolve(spec, raw_response)
-                                        t.p(f"{code}　{response.get('description', '')}")
-                                        media_docs(spec, response.get("content", {}))
-                                with t.section(classes="operation-console"):
-                                    t.h3("この操作を呼び出す")
-                                    if usable and method in INVOKABLE:
-                                        try_operation(
-                                            spec,
-                                            asset,
-                                            usable,
-                                            method,
-                                            path,
-                                            params,
-                                            body,
-                                            f"docs-{index}",
-                                        )
-                                    elif method not in INVOKABLE:
-                                        t.p("このメソッドはポータルから実行できません。")
-                                    else:
-                                        t.p(
-                                            "実行には、利用申請の承認と、この環境で利用できる認証情報が必要です。"
-                                        )
-                                        t.a("認証情報を作成・管理する", href="#/keys")
-                            index += 1
-            if menu:
-                with t.nav(classes="docs-menu", aria_label="API操作一覧"):
-                    t.h3("API操作一覧")
-                    for anchor, name, summary in menu:
-                        t.button(name, title=summary or name, type="button", on_click=jump_to(anchor))
+        t.h3("API操作一覧")
+        index = 0
+        for path, raw in spec["paths"].items():
+            item = resolve(spec, raw)
+            if not isinstance(item, dict):
+                continue
+            for method in METHODS:
+                if method not in item:
+                    continue
+                name = method.upper() + " " + path
+                allowed = asset.get("allowed_operations")
+                if allowed is not None and name not in allowed:
+                    continue
+                usable = [
+                    entry
+                    for entry in bindings
+                    if asset["id"] not in entry[0].get("operations", {})
+                    or name in entry[0]["operations"][asset["id"]]
+                ]
+                if bindings and not usable:
+                    continue
+                operation = item[method]
+                params = parameters(spec, item, operation)
+                body = resolve(spec, operation.get("requestBody", {}))
+                with t.details(classes="doc-operation", open=index == 0):
+                    summary = operation.get("summary") or operation.get("operationId", "")
+                    t.summary(f"{name}　{summary}".rstrip())
+                    with t.div(classes="operation-columns"):
+                        with t.div(classes="operation-definition"):
+                            operation_definition(spec, operation, params, body)
+                        with t.section(classes="operation-console"):
+                            t.h3("この操作を呼び出す")
+                            if method not in INVOKABLE:
+                                t.p("このメソッドはポータルから実行できません。")
+                            elif asset.get("suspended"):
+                                t.p("このAPIは一時停止中です。")
+                            elif usable:
+                                try_operation(
+                                    spec, asset, usable, method, path, params, body, f"docs-{index}"
+                                )
+                            elif trial:
+                                t.p("初回の実行時に、このAPI専用の個人認証情報を発行します。")
+                                try_operation(
+                                    spec,
+                                    asset,
+                                    trial,
+                                    method,
+                                    path,
+                                    params,
+                                    body,
+                                    f"docs-{index}",
+                                    binding_label="プロジェクトと利用環境（必須）",
+                                    submit_label="短期認証で呼び出す",
+                                    issue_key=issue_key,
+                                )
+                            else:
+                                t.p("呼び出しには利用申請の承認が必要です。")
+                                t.a("申請の状況を確認する", href="#/mine")
+                index += 1
         if not index:
             t.p("この利用者と認証情報で許可されている操作はありません。")
         if spec.get("components", {}).get("schemas"):

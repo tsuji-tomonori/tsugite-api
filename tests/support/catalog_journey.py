@@ -122,30 +122,29 @@ def catalog_journey(
             navigate(consumer, "自分の申請")
             consumer.get_by_role("button", name="APIを開く").click()
             expect(consumer.get_by_role("heading", name="API Docs")).to_be_visible()
-            expect(consumer.get_by_role("button", name="認証して実行")).to_have_count(0)
-            consumer.get_by_role("link", name="認証情報を作成・管理する").first.click()
-            consumer.get_by_label("発行先プロジェクト").select_option("finance")
-            consumer.get_by_role("button", name="発行条件を確認").click()
-            consumer.get_by_label("認証情報の名前").fill("棚卸の検証")
-            consumer.get_by_role("button", name="認証情報を発行").click()
-            expect(consumer.get_by_text("認証情報を発行しました")).to_be_visible()
-            navigate(consumer, "自分の申請")
-            consumer.get_by_role("button", name="APIを開く").click()
-            expect(consumer.get_by_role("button", name="認証して実行")).to_be_visible()
-            consumer.reload()
-            consumer.get_by_role("button", name="認証して実行").click()
-            expect(consumer.get_by_text("HTTP 200", exact=False)).to_be_visible()
-            expect(consumer.locator("pre").filter(has_text="curl").first).to_contain_text(
-                "/invoke/stock-lookup/sandbox/finance"
+            item = consumer.locator(".doc-operation").filter(
+                has=consumer.locator("summary", has_text="GET /items/{sku}")
             )
-            if tokens:
-                expect(consumer.locator("pre").filter(has_text="HTTP 200")).to_contain_text("TS-01")
+            item.locator("summary").first.click()
+            run = item.get_by_role("button", name="短期認証で呼び出す")
+            run.click()
+            expect(item.get_by_text("sku を入力してください")).to_be_visible()
+            item.get_by_label("sku（path）").fill("TS-01")
+            with consumer.expect_response(
+                lambda r: r.url.endswith("/invoke/stock-lookup/sandbox/finance/items/TS-01")
+            ) as invoked:
+                run.click()
+            assert invoked.value.status == 200
+            output = item.get_by_text("HTTP 200", exact=False)
+            expect(output).to_contain_text("TS-01")
+            expect(item.locator("pre").filter(has_text="curl")).to_contain_text(
+                "/invoke/stock-lookup/sandbox/finance/items/TS-01"
+            )
             capture(
-                consumer.get_by_text("HTTP 200", exact=False),
+                output,
                 "06-invoked",
-                "承認済みの呼び出しが返したHTTPステータスと応答本文",
+                "SKUを指定し、API Docs内で短期認証を発行して得たHTTPステータスと応答本文",
             )
-            output = consumer.get_by_text("HTTP 200", exact=False)
             contrast = output.evaluate(r"""element => {
                 const style = getComputedStyle(element);
                 function luminance(rgb) {
