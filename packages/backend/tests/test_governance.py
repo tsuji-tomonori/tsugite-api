@@ -4,7 +4,7 @@ from copy import deepcopy
 
 from app.core.auth import DEMO_GROUPS
 
-from tests.support.catalog import FORM, approved, headers
+from tests.support.catalog import FORM, approved, headers, invocation_headers
 
 
 def test_member_lifecycle(portal):
@@ -35,6 +35,7 @@ def test_listing_revisions(portal):
     """掲載内容の修正と仕様の変更を区別し、競合を検知し、削除後も監査を保持する"""
     owner, user = (headers(portal, r) for r in ("provider", "consumer"))
     key, url, path = approved(portal, owner, user)
+    call = invocation_headers(portal, user)
     revision = portal.get(url, headers=owner).json()["revision"]
     change = {**FORM, "name": "在庫照会v2"}
     assert portal.put(url, params={"revision": revision}, headers=user, json=change).status_code == 403
@@ -43,7 +44,7 @@ def test_listing_revisions(portal):
         .raise_for_status()
         .json()
     )
-    assert updated["published"] and portal.get(path, headers=user).is_success
+    assert updated["published"] and portal.get(path, headers=call).is_success
     assert portal.put(url, params={"revision": revision}, headers=owner, json=FORM).status_code == 409
     change = deepcopy(change)
     change["spec"]["info"]["version"] = "2.0"
@@ -52,7 +53,7 @@ def test_listing_revisions(portal):
         .raise_for_status()
         .json()
     )
-    assert not updated["published"] and portal.get(path, headers=user).status_code == 403
+    assert not updated["published"] and portal.get(path, headers=call).status_code == 403
     portal.put(url + "/publication?published=true", headers=owner).raise_for_status()
     right = portal.post(
         url + "/requests",
@@ -64,7 +65,7 @@ def test_listing_revisions(portal):
     portal.delete(url, params={"revision": revision}, headers=owner).raise_for_status()
     assert (
         portal.get(url, headers=owner).status_code == 404
-        and portal.get(path, headers=user).status_code == 404
+        and portal.get(path, headers=call).status_code == 404
     )
     assert {"edit", "delete", "reject", "revoke"} <= {
         r["action"] for r in portal.get("/api/audit", headers=owner, params={"asset_id": key}).json()
@@ -108,6 +109,7 @@ def test_alert_window_and_access_logs(portal, monkeypatch, request):
     monkeypatch.setitem(DEMO_GROUPS, "other", ["use-another"])
     owner, user, other, admin = (headers(portal, r) for r in ("provider", "consumer", "other", "admin"))
     key, _, path = approved(portal, owner, user)
+    call = invocation_headers(portal, user)
     rule = {
         "asset_id": key,
         "project": "finance",
@@ -119,7 +121,7 @@ def test_alert_window_and_access_logs(portal, monkeypatch, request):
     assert portal.put("/api/alerts", headers=user, json=rule).status_code == 403
     portal.put("/api/alerts", headers=owner, json=rule).raise_for_status()
     with ThreadPoolExecutor(max_workers=4) as pool:
-        codes = list(pool.map(lambda _: portal.get(path, headers=user).status_code, range(4)))
+        codes = list(pool.map(lambda _: portal.get(path, headers=call).status_code, range(4)))
     assert sorted(codes) == [200, 200, 429, 429]
     assert len(portal.get("/api/audit?action=invoke.start", headers=owner).json()) == 2
     assert portal.get("/api/notifications/count", headers=user).json()["unread"] == 1
@@ -161,14 +163,14 @@ def test_alert_window_and_access_logs(portal, monkeypatch, request):
         ]
     )
     monkeypatch.setattr(alerts, "time", lambda: 660.0)
-    assert portal.get(path, headers=user).status_code == 200
+    assert portal.get(path, headers=call).status_code == 200
     portal.put(
         "/api/alerts", headers=admin, json={**rule, "stop": False, "threshold": 1}
     ).raise_for_status()
-    assert [portal.get(path, headers=user).status_code for _ in range(2)] == [200, 200]
+    assert [portal.get(path, headers=call).status_code for _ in range(2)] == [200, 200]
     assert portal.get("/api/notifications/count", headers=user).json()["unread"] == 2
     portal.put("/api/alerts", headers=admin, json={**rule, "enabled": False}).raise_for_status()
-    assert portal.get(path, headers=user).status_code == 200
+    assert portal.get(path, headers=call).status_code == 200
 
 
 def test_log_download_pages(portal):

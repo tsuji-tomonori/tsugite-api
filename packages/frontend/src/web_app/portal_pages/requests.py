@@ -1,4 +1,5 @@
 import client
+import guide_examples as example
 import product_views
 from portal_labels import ACTIONS, LABEL
 from portal_navigation import go, load
@@ -17,10 +18,10 @@ async def decide(row, decision):
     ctx["message"] = "申請状態を更新しました"
 
 
-def rights_page(incoming):
-    if not ctx["rows"]:
+def rights_page(incoming, rows):
+    if not rows:
         t.p("申請はありません。", classes="muted")
-    for row in ctx["rows"]:
+    for row in rows:
         with t.article(classes="box"):
             t.h2(row.get("asset_name") or row["asset_id"])
             t.p(
@@ -86,8 +87,9 @@ SCREENS = (
     Screen(
         "mine",
         "自分の申請",
-        lambda: rights_page(False),
+        lambda: rights_page(False, ctx["rows"]),
         load_requests,
+        examples={"status": lambda: rights_page(False, [example.REQUEST])},
         group="ワークスペース",
         order=40,
         description="プロジェクトの申請状況と、承認されたAPIを確認できます。",
@@ -95,8 +97,9 @@ SCREENS = (
     Screen(
         "inbox",
         "届いた申請",
-        lambda: rights_page(True),
+        lambda: rights_page(True, ctx["rows"]),
         load_requests,
+        examples={"review": lambda: rights_page(True, [example.REQUEST])},
         group="提供者メニュー",
         order=120,
         visible=lambda user: bool(user["owners"] or user["leads"]),

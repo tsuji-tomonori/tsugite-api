@@ -36,8 +36,6 @@ ctx = {
         "end": "",
     },
     "badge": 0,
-    "trial": "",
-    "trace": "",
     "page": 1,
     "env": "",
     "audit_id": "",
@@ -65,16 +63,20 @@ def render():
 def action(fn, *args):
     def clicked(event):
         event.preventDefault()
-        asyncio.ensure_future(run(fn, *args))
+        trigger = event.currentTarget
+        button = trigger if getattr(trigger, "tagName", None) == "BUTTON" else None
+        asyncio.ensure_future(run(fn, *args, trigger=button))
 
     return clicked
 
 
-async def run(fn, *args):
+async def run(fn, *args, trigger=None):
     if ctx["busy"]:
         return
     ctx.update(busy=True, message="", error=False)
     root = document.getElementById("app")
+    if trigger is not None:
+        trigger.setAttribute("aria-busy", "true")
     root.inert = True
     root.setAttribute("aria-busy", "true")
     try:
@@ -86,6 +88,8 @@ async def run(fn, *args):
             ctx["me"] = None
     finally:
         ctx["busy"] = False
+        if trigger is not None:
+            trigger.removeAttribute("aria-busy")
         root.inert = False
         root.removeAttribute("aria-busy")
         render()
@@ -100,17 +104,29 @@ def btn(label, fn, *args, primary=False):
     )
 
 
-def field(label, name, options=None, textarea=False, text="", placeholder=""):
+def field(label, name, options=None, textarea=False, text="", placeholder="", required=None):
     with t.label(classes="field"):
+        if required is not None:
+            label += "（必須）" if required else "（任意）"
         t.span(label, id=name + "-label")
         if options is not None:
-            with t.select(id=name, aria_labelledby=name + "-label", classes="form-select"):
+            with t.select(
+                id=name, required=bool(required), aria_labelledby=name + "-label", classes="form-select"
+            ):
                 for key, title in options:
                     t.option(title, value=key, selected=(key == text))
         elif textarea:
-            t.textarea(text, id=name, classes="form-control", placeholder=placeholder)
+            t.textarea(
+                text, id=name, classes="form-control", required=bool(required), placeholder=placeholder
+            )
         else:
-            t.input(id=name, value=text, classes="form-control", placeholder=placeholder)
+            t.input(
+                id=name,
+                value=text,
+                classes="form-control",
+                required=bool(required),
+                placeholder=placeholder,
+            )
 
 
 def role_title():

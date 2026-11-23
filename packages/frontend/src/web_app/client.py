@@ -62,7 +62,7 @@ def report(exc, operation, *, route=None, status=None, method=None, request_id=N
         method=method,
         request_id=request_id,
         asset_id=str(window.location.hash).lstrip("#/").partition("/")[2]
-        if screen() in {"api", "edit"}
+        if screen() in {"api", "apply", "edit"}
         else None,
     )
     sink = console.warn if entry["level"] == "WARN" else console.error

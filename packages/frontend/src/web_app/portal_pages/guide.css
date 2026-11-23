@@ -9,8 +9,10 @@
 .guide-article ol { padding-inline-start: 1.7em; }
 .guide-article li { margin-bottom: .7em; }
 .guide-article figure { margin: 18px 0; }
-.guide-article img { display: block; max-width: 100%; height: auto; border: 1px solid var(--line); border-radius: 6px; }
-.guide-article figcaption { margin-top: 6px; color: var(--secondary); }
+.guide-preview { min-width: 0; overflow: auto; padding: var(--section-space); border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
+.guide-preview > :first-child { margin-top: 0; }
+.guide-preview > :last-child { margin-bottom: 0; }
+.guide-article figcaption { margin-bottom: 6px; color: var(--secondary); }
 @media (max-width: 640px) {
   .guide-search { grid-template-columns: 1fr auto; }
   .guide-search .field:first-child { grid-column: 1 / -1; }

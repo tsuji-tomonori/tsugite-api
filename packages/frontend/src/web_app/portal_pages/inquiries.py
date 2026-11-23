@@ -1,8 +1,9 @@
 from urllib.parse import urlencode
 
 import client
+from inquiry_form import inquiry_form, post_inquiry
 from portal_navigation import load
-from portal_ui import btn, ctx, value
+from portal_ui import action, btn, ctx, value
 from puepy import t
 from screen_registry import Screen
 
@@ -10,6 +11,16 @@ from screen_registry import Screen
 async def inquiry_page(incoming, offset):
     ctx.update(inquiry_incoming=incoming, inquiry_offset=offset)
     await load()
+
+
+async def submit_inquiry() -> None:
+    state = ctx["inquiry_form"]
+    state.pop("receipt", None)
+    receipt = await post_inquiry(state, value("inquiry-question"))
+    if ctx.get("inquiry_form") is state:
+        state["receipt"] = receipt
+        ctx["inquiry_offset"] = 0
+        await load_inquiries("inquiries")
 
 
 async def reply_inquiry(key):
@@ -34,6 +45,14 @@ def inquiries():
         with t.div(classes="chat-actions"):
             btn("自分の問い合わせ", inquiry_page, False, 0, primary=not admin_view)
             btn("運営への問い合わせ", inquiry_page, True, 0, primary=admin_view)
+    if not admin_view:
+        state = ctx.setdefault("inquiry_form", {})
+        with t.section(classes="box"):
+            t.h2("新しい問い合わせ")
+            if receipt := state.get("receipt"):
+                t.p("問い合わせを受け付けました。受付番号 " + receipt, role="status")
+            inquiry_form(state, action(submit_inquiry))
+        t.h2("自分の問い合わせ")
     entries = ctx.get("inquiries", [])
     if not entries:
         t.p("問い合わせはありません。", classes="empty")

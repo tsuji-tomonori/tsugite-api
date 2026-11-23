@@ -92,6 +92,18 @@ async def register(publish_now=False):
         )
 
 
+def listing_identity(item):
+    field("API名", "name", text=item.get("name", ""))
+    if item.get("slug"):
+        t.p("API識別名　" + item["slug"])
+    else:
+        field("API識別名", "api-slug", placeholder="stock-lookup")
+        t.small(
+            "呼び出しURLに使います。半角小文字の英字で始め、数字とハイフンも使えます。設定後は変更できません。"
+        )
+    field("用途・説明", "summary", text=item.get("summary", ""))
+
+
 def inventory_form(asset=None):
     item = asset or {}
     t.p(
@@ -99,15 +111,7 @@ def inventory_form(asset=None):
         classes="muted",
     )
     with t.div(classes="box"):
-        field("API名", "name", text=item.get("name", ""))
-        if item.get("slug"):
-            t.p("API識別名　" + item["slug"])
-        else:
-            field("API識別名", "api-slug", placeholder="stock-lookup")
-            t.small(
-                "呼び出しURLに使います。半角小文字の英字で始め、数字とハイフンも使えます。設定後は変更できません。"
-            )
-        field("用途・説明", "summary", text=item.get("summary", ""))
+        listing_identity(item)
         for env in product_views.ENV:
             opts = [("", "指定しない")] + [
                 (k, k + " · " + v["owner"])
@@ -165,6 +169,13 @@ def editor():
 
 
 SCREENS = (
-    Screen("register", "APIを登録", editor, load_directory, parent="inventory"),
+    Screen(
+        "register",
+        "APIを登録",
+        editor,
+        load_directory,
+        parent="inventory",
+        examples={"publish": lambda: listing_identity({})},
+    ),
     Screen("edit/", "掲載内容を編集", editor, load_listing),
 )

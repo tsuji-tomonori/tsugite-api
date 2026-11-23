@@ -46,13 +46,17 @@ async def log_page(offset):
     await fetch_log_rows(ctx["log_period"], offset)
 
 
-def logs_view():
-    filters_view(False)
+def request_lookup(request_id):
     with t.div(classes="box"):
-        field("照合するリクエストID", "access-id", text=ctx.get("access_id", ""))
+        field("照合するリクエストID", "access-id", text=request_id)
         with t.div(classes="btn-grouping"):
             btn("IDで検索", log_lookup)
             btn("アクセスログをダウンロード", download_logs)
+
+
+def logs_view():
+    filters_view(False)
+    request_lookup(ctx.get("access_id", ""))
     rows = ctx.get("log_rows", [])
     if not rows:
         t.p("条件に一致するアクセスログはありません。", classes="empty")
@@ -151,7 +155,15 @@ def detail_view():
 
 
 SCREENS = (
-    Screen("logs", "アクセスログ", logs_view, load_logs, group="ガバナンス", order=140),
+    Screen(
+        "logs",
+        "アクセスログ",
+        logs_view,
+        load_logs,
+        group="ガバナンス",
+        order=140,
+        examples={"logs": lambda: request_lookup("example-request")},
+    ),
     Screen(
         "logs/",
         "アクセスログ詳細",

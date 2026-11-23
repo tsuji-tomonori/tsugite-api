@@ -1,12 +1,23 @@
-.docs-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(11rem, 32%); gap: 1.25rem; align-items: start; }
-.docs-menu { position: sticky; top: 1rem; max-height: 75vh; overflow-y: auto; border-inline-start: 1px solid var(--line); padding-inline-start: 1rem; }
-.docs-menu button { display: block; text-align: start; background: transparent; color: var(--link); border: 0; padding: .55rem .25rem; overflow-wrap: anywhere; }
-.docs-menu button:hover { text-decoration: underline; }
-.doc-operation { scroll-margin-top: 1rem; }
+.docs-actions { margin-block: 1.5rem; }
+.docs-layout { display: flex; flex-direction: column; gap: 1.5rem; }
+.docs-content, .docs-menu { width: 100%; min-width: 0; }
+.docs-menu { order: -1; display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; }
+.docs-menu button { color: var(--ink); background: var(--page); border: 1px solid var(--field-edge); border-radius: 4px; padding: .5rem 1rem; min-height: 44px; }
+.doc-operation { border-block-start: 1px solid var(--line); scroll-margin-top: 1rem; }
+.doc-operation > summary { font-weight: 700; padding-block: 1rem; }
+.operation-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(1.5rem, 3vw, 3rem); align-items: start; padding-block: .5rem 1.5rem; }
+.operation-definition { min-width: 0; }
+.operation-definition h3 { margin: 1.75rem 0 .75rem; }
+.operation-definition h3:first-child { margin-top: .75rem; }
+.operation-definition p { margin: .75rem 0; }
+.operation-console { min-width: 0; padding: clamp(1rem, 2vw, 1.5rem); background: var(--page); border: 1px solid var(--line); border-radius: 6px; }
+.operation-console h3, .operation-console h4 { margin: 0 0 1rem; }
+.operation-console section { margin-top: 1.5rem; }
+.operation-console pre:empty { display: none; }
+.operation-console .btn:disabled { opacity: 1; }
+.operation-console [hidden] { display: none; }
 .offer-editor, .application-field { border-inline-start: 2px solid var(--line); margin-block: .75rem; padding-inline-start: 1rem; }
 .terms-text { white-space: pre-wrap; }
-@media (max-width: 780px) {
-  .docs-layout { display: flex; flex-direction: column; }
-  .docs-menu { order: -1; position: static; max-height: 12rem; width: 100%; }
-  .docs-content { width: 100%; min-width: 0; }
+@media (max-width: 960px) {
+  .operation-columns { grid-template-columns: minmax(0, 1fr); }
 }

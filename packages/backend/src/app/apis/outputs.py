@@ -404,6 +404,12 @@ class Token(TypedDict):
     refresh_at: int
 
 
+#: OAuthトークン交換の応答
+class ExchangedToken(Token):
+    #: 交換して発行したトークンの種類
+    issued_token_type: str
+
+
 #: クライアント認証情報
 class ClientCredential(TypedDict):
     #: クライアント識別子

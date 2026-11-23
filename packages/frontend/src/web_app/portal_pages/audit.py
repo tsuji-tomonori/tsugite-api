@@ -22,17 +22,21 @@ async def audit_page(offset):
     await load()
 
 
-def audit_view():
+def audit_search(request_id, selected_action):
     btn("業務監査をダウンロード", download_audit)
     with t.form(classes="searchbar", on_submit=action(audit_filter)):
-        field("リクエストID", "audit-id", text=ctx["audit_id"], placeholder="実行結果に表示されたID")
+        field("リクエストID", "audit-id", text=request_id, placeholder="実行結果に表示されたID")
         field(
             "操作",
             "audit-action",
             options=[("", "すべての操作"), *ACTIONS.items()],
-            text=ctx["audit_action"],
+            text=selected_action,
         )
         t.button("絞り込む", type="submit", classes="btn btn-primary")
+
+
+def audit_view():
+    audit_search(ctx["audit_id"], ctx["audit_action"])
     if not ctx["rows"]:
         t.p("条件に一致する記録はありません。", classes="empty")
     for row in ctx["rows"][:30]:
@@ -99,6 +103,7 @@ SCREENS = (
         load_audit,
         group="ガバナンス",
         order=160,
+        examples={"audit": lambda: audit_search("", "approve")},
         description="公開、申請、判断、呼び出しの記録を追跡できます。",
     ),
 )

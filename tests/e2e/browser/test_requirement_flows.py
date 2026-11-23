@@ -10,7 +10,7 @@ import httpx
 import pytest
 from playwright.sync_api import Locator, Page, expect, sync_playwright
 
-from tests.support.catalog import FORM, approved, headers
+from tests.support.catalog import FORM, approved, headers, invocation_headers
 from tests.support.catalog_journey import browser_evidence, navigate
 from tests.support.portal_server import serve_portal
 
@@ -139,17 +139,18 @@ def test_ordered_review(portal_session: PortalSession) -> None:
         )
 
     assert decide(owner, row["revision"]).status_code == 403
+    call = invocation_headers(api, user)
     path = f"/api/invoke/{asset['id']}/sandbox/finance/items"
-    assert api.get(path, headers=user).status_code == 403
+    assert api.get(path, headers=call).status_code == 403
     row = decide(headers(api, "lead@example.org"), row["revision"]).raise_for_status().json()
     assert row["stage"] == "provider" and row["status"] == "pending"
-    assert api.get(path, headers=user).status_code == 403
+    assert api.get(path, headers=call).status_code == 403
     open_portal(api, page, "提供チーム")
     navigate(page, "届いた申請")
     page.get_by_label("判断・取下げの理由").fill("本番前確認")
     page.get_by_role("button", name="承認", exact=True).click()
     expect(page.get_by_text("申請状態を更新しました")).to_be_visible()
-    assert api.get(path, headers=user).status_code == 200
+    assert api.get(path, headers=call).status_code == 200
     capture(page, "approved", "部署リーダーに続いて提供者が最終承認した申請")
 
 
@@ -159,10 +160,11 @@ def test_admin_stops_target_after_denial(portal_session: PortalSession) -> None:
     owner, user = (headers(api, role) for role in ("provider", "consumer"))
     asset, url, path = approved(api, owner, user)
     assert api.put(url + "/suspension?suspended=true", headers=owner).status_code == 403
+    call = invocation_headers(api, user)
     _, _, other_path = approved(api, owner, user, slug="other-stock-lookup")
-    assert api.get(path, headers=user).status_code == 200
-    assert api.get(other_path, headers=user).status_code == 200
-    denied = api.get(path.replace("/sandbox/", "/production/"), headers=user)
+    assert api.get(path, headers=call).status_code == 200
+    assert api.get(other_path, headers=call).status_code == 200
+    denied = api.get(path.replace("/sandbox/", "/production/"), headers=call)
     assert denied.status_code == 403
     logs = (
         api.get("/api/access-logs", headers=headers(api, "admin"), params={"asset_id": asset})
@@ -181,12 +183,12 @@ def test_admin_stops_target_after_denial(portal_session: PortalSession) -> None:
     page.on("dialog", lambda dialog: dialog.accept())
     stop.click()
     expect(page.get_by_role("button", name=re.compile("再開"))).to_be_visible()
-    assert api.get(path, headers=user).status_code == 403
-    assert api.get(other_path, headers=user).status_code == 200
+    assert api.get(path, headers=call).status_code == 403
+    assert api.get(other_path, headers=call).status_code == 200
     capture(page, "suspended", "拒否を検知した対象APIの一時停止")
     page.get_by_role("button", name="APIへのアクセスを再開").click()
     expect(stop).to_be_visible()
-    assert api.get(path, headers=user).status_code == 200
+    assert api.get(path, headers=call).status_code == 200
 
 
 def test_access_log_detail_and_support(portal_session: PortalSession) -> None:
@@ -229,7 +231,8 @@ def test_auditor_cross_checks_exports(portal_session: PortalSession) -> None:
     api, page, capture = portal_session
     owner, user = (headers(api, role) for role in ("provider", "consumer"))
     _, _, path = approved(api, owner, user)
-    trace = api.get(path, headers=user).raise_for_status().headers["x-request-id"]
+    call = invocation_headers(api, user)
+    trace = api.get(path, headers=call).raise_for_status().headers["x-request-id"]
     open_portal(api, page, "監査担当")
     navigate(page, "アクセスログ")
     page.get_by_label("照合するリクエストID").fill(trace)

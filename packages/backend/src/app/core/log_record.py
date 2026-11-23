@@ -27,6 +27,7 @@ SCREENS = frozenset(
         "inbox",
         "audit",
         "api",
+        "apply",
         "edit",
         "register",
         "login",

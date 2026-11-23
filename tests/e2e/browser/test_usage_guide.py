@@ -1,4 +1,4 @@
-"""Exercise local hybrid search, role filters, article navigation and image delivery."""
+"""Exercise local hybrid search, role filters, article navigation and read-only component previews."""
 
 import os
 from pathlib import Path
@@ -31,9 +31,26 @@ def test_usage_guide(tmp_path: Path, request: pytest.FixtureRequest) -> None:
             first = page.locator("#guide-grid article:visible a").first
             expect(first).to_have_attribute("href", "#/guide/" + article)
             first.click()
-            image = page.locator(".guide-article img")
-            expect(image).to_be_visible()
-            assert image.evaluate("(el) => el.decode().then(() => el.naturalWidth > 0)")
+            preview = page.locator(".guide-preview")
+            expect(preview).to_be_visible()
+            assert preview.evaluate("el => el.inert")
+            control = preview.locator("input:not([type=hidden]), select").first
+            control.evaluate("el => el.focus()")
+            expect(control).not_to_be_focused()
+            if role == "管理者":
+                email = preview.locator("#member-email")
+                email.click(force=True)
+                page.keyboard.type("sample")
+                expect(email).to_have_value("")
+                pressed = preview.locator("button").first
+                pressed.evaluate("el => el.addEventListener('click', () => el.dataset.clicked = 'yes')")
+                pressed.click(force=True)
+                expect(pressed).not_to_have_attribute("data-clicked", "yes")
+                theme = page.get_by_role("combobox", name="表示モード")
+                theme.select_option("light")
+                light = email.evaluate("el => getComputedStyle(el).backgroundColor")
+                theme.select_option("dark")
+                assert email.evaluate("el => getComputedStyle(el).backgroundColor") != light
             assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
             capture_image(request.node, "guide", page, article, role + "が検索して開いた手順")
             page.go_back()
@@ -45,12 +62,6 @@ def test_usage_guide(tmp_path: Path, request: pytest.FixtureRequest) -> None:
             cards = page.locator("#guide-grid article:visible a")
             expect(cards).to_have_count(20)
             if role == "利用者":
-                for link in cards.all():
-                    href = link.get_attribute("href")
-                    assert href is not None
-                    slug = href.rsplit("/", 1)[-1]
-                    response = page.request.get(f"{url}/guide-images/{slug}.webp")
-                    assert response.ok and response.headers["content-type"] == "image/webp"
                 page.locator('[href="#/guide/member"]').click()
                 expect(page.get_by_role("button", name="「ユーザー管理」を開く")).to_have_count(0)
                 page.get_by_role("link", name="使い方ガイドの一覧に戻る").click()

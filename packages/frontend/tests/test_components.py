@@ -120,12 +120,32 @@ def test_guide_article_shows_admin_navigation_only_to_admins(portal_module):
     pages = {"members": "ユーザー管理"}
     user = {"admin": False, "owners": [], "leads": []}
     _, dom = render(guide.article, "member", user, pages, navigate, button)
-    image = dom.getElementsByTagName("img")[0]
-    assert image.getAttribute("src") == "/guide-images/member.webp"
-    assert image.getAttribute("alt")
+    figure = dom.getElementsByTagName("figure")[0]
+    assert figure.getElementsByTagName("input")[0].getAttribute("id") == "member-email"
+    assert figure.getElementsByTagName("figcaption")[0].firstChild.data
     button.assert_not_called()
     render(guide.article, "member", {**user, "admin": True}, pages, navigate, button)
     button.assert_called_once_with("「ユーザー管理」を開く", navigate, "members", primary=True)
+
+
+def test_each_guide_renders_inert_example(portal_module):
+    """全手順でサンプルデータから実画面の操作部品を描画し、画面例の内側だけを操作不能にする。"""
+    guide = portal_module("guide_views")
+    registry = portal_module("screen_registry")
+    assert set(registry.guide_examples()) == set(guide.BY_ID)
+    pages = {path: screen.title for path, screen in registry.screens().items() if screen.group}
+    admin = {"admin": True, "owners": ["sample-owner"], "leads": []}
+    for key in guide.BY_ID:
+        _, dom = render(guide.article, key, admin, pages, Mock(), portal_module("portal_ui").btn)
+        figure = dom.getElementsByTagName("figure")[0]
+        preview = figure.getElementsByTagName("div")[0]
+        assert preview.hasAttribute("inert"), key
+        assert any(preview.getElementsByTagName(tag) for tag in ("input", "button", "select")), key
+        assert not figure.getElementsByTagName("img"), key
+        assert not figure.hasAttribute("inert") and not figure.parentNode.hasAttribute("inert")
+        assert any(
+            button.firstChild.data.endswith("」を開く") for button in dom.getElementsByTagName("button")
+        ), key
 
 
 def test_operation_parameter_renders_openapi_default(portal_module):
@@ -134,7 +154,7 @@ def test_operation_parameter_renders_openapi_default(portal_module):
     spec = {"components": {"schemas": {"Filters": {"type": "array", "default": ["在庫", "受注"]}}}}
     param = {"in": "query", "name": "filters", "schema": {"$ref": "#/components/schemas/Filters"}}
     _, dom = render(api.input_param, spec, param, "filters")
-    assert dom.getElementsByTagName("span")[0].firstChild.data == "filters（query）"
+    assert dom.getElementsByTagName("span")[0].firstChild.data == "filters（query） 任意"
     assert elements(dom)["filters"].getAttribute("placeholder") == '["在庫","受注"]'
 
 
@@ -212,4 +232,34 @@ def test_login_form_uses_native_labels_and_keyboard_submit(portal_module):
     ] == [
         "ユーザー名",
         "パスワード",
+    ]
+
+
+def test_curl_reuses_request_without_exposing_token(portal_module):
+    """送信したURL・形式・本文をシェルで再現し、短期トークンは変数で参照する。"""
+    import shlex
+
+    api = portal_module("api_docs")
+    body = """{"item":"O'Reilly","count":2}"""
+    url = "https://example.test/api/invoke/stock/sandbox/p/items?a=1&b=2"
+    options = {
+        "method": "POST",
+        "headers": {"Authorization": "Bearer secret", "Content-Type": "application/json"},
+        "body": body,
+    }
+    command = api.curl_command(url, options)
+    assert "secret" not in command
+    assert shlex.split(command) == [
+        "curl",
+        "--globoff",
+        "--request",
+        "POST",
+        "--url",
+        url,
+        "--header",
+        "Authorization: Bearer ${ACCESS_TOKEN}",
+        "--header",
+        "Content-Type: application/json",
+        "--data-raw",
+        body,
     ]

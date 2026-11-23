@@ -11,6 +11,9 @@ import time
 from pathlib import Path
 from urllib.request import urlopen
 
+#: AWSエミュレーターE2E
+AWS_SUITE = "tests/e2e/aws"
+
 
 def main():
     binary = shutil.which(os.getenv("AWS_EMULATOR_BINARY", "aws-emulator"))
@@ -66,7 +69,7 @@ def main():
                 AWS_DEFAULT_REGION="us-east-1",
             )
             return subprocess.call(
-                [sys.executable, "-m", "pytest", "-q", "tests/e2e/aws", *sys.argv[1:]], env=env
+                [sys.executable, "-m", "pytest", "-q", AWS_SUITE, *sys.argv[1:]], env=env
             )
         finally:
             process.terminate()
