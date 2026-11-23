@@ -95,6 +95,8 @@ def access_logs(
     actor: User,
     db: DB,
     period: Range,
+    #: 一度に取得する履歴の件数
+    limit: int = Query(50, ge=1, le=50),
     #: 先頭から読み飛ばす件数
     offset: int = Query(0, ge=0),
     #: リクエスト識別子
@@ -108,9 +110,33 @@ def access_logs(
     return [
         log_data(r)
         for r in db.scalars(
-            stmt.order_by(AccessLog.at.desc(), AccessLog.request_id).offset(offset).limit(50)
+            stmt.order_by(AccessLog.at.desc(), AccessLog.request_id).offset(offset).limit(limit)
         )
     ]
+
+
+#: リクエスト識別子からAPI呼び出しの詳細を取得する
+@router.get("/access-logs/detail", responses={200: {"model": outputs.AccessLogDetail}})
+def access_log_detail(
+    actor: User,
+    db: DB,
+    #: リクエスト識別子
+    request_id: str,
+    #: 集計対象の部署・プロジェクト識別子
+    unit: str = "",
+):
+    stmt = visible(select(AccessLog), actor, db, unit)
+    row = db.scalar(stmt.where(AccessLog.request_id == request_id))
+    if row is None:
+        raise HTTPException(404, "アクセスログが見つかりません")
+    data = log_data(row)
+    record = exported_invocation(row, data)
+    return {
+        **data,
+        "started_at": record.get("started_at"),
+        "responded_at": record.get("responded_at"),
+        "error_code": record["reason"] if row.status >= 400 else None,
+    }
 
 
 #: API呼び出し履歴をファイルに出力する

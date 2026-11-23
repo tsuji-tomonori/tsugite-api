@@ -313,6 +313,16 @@ class AccessLog(TypedDict):
     duration_ms: int
 
 
+#: 1回のAPI呼び出しの詳細
+class AccessLogDetail(AccessLog):
+    #: 呼び出し処理の開始日時
+    started_at: datetime | None
+    #: 応答結果が確定した日時
+    responded_at: datetime | None
+    #: 記録されたエラー理由のコード
+    error_code: str | None
+
+
 #: 集計区間ごとの呼び出し実績
 class MetricPoint(TypedDict):
     #: 集計区間の開始日時

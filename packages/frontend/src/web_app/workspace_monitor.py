@@ -33,6 +33,8 @@ def monitoring_view(unit, paths):
     with t.div(classes="results-head"):
         t.h3("利用状況")
         btn("更新", load)
+    scope = "プロジェクト" if unit["kind"] == "project" else "部署"
+    t.p(f"選択した{scope}の利用実績を集計しています。")
     with t.div(classes="stat-grid"):
         for label, key in (("呼び出し", "calls"), ("エラー", "errors")):
             with t.div(classes="stat"):
@@ -41,19 +43,22 @@ def monitoring_view(unit, paths):
     with t.div(classes="usage-breakdowns"):
         breakdown("プロジェクト別の呼び出し", usage["by_project"])
         breakdown("API別の呼び出し", usage["by_api"])
+    members = usage["members"]
     with t.details(classes="box"):
-        t.summary(f"集計対象メンバー（所属 {len(usage['members'])} 件）")
-        for member in usage["members"]:
-            t.p(
-                " · ".join(
-                    filter(
-                        None,
-                        [
-                            member.get("username") or member["subject"],
-                            paths.get(member["unit_id"], member["unit_id"]),
-                            member.get("title"),
-                            "リーダー" if member.get("leader") else "",
-                        ],
-                    )
-                )
-            )
+        t.summary(f"所属メンバー（{len(members)} 件）")
+        if not members:
+            t.p("所属メンバーはいません。")
+            return
+        with t.div(classes="resource-table"):
+            with t.table(aria_label="所属メンバー一覧"):
+                with t.thead():
+                    with t.tr():
+                        for title in ("ユーザー名", "所属", "役職", "管理権限"):
+                            t.th(title, scope="col")
+                with t.tbody():
+                    for member in members:
+                        with t.tr():
+                            t.th(member.get("username") or member["subject"], scope="row")
+                            t.td(paths.get(member["unit_id"], member["unit_id"]))
+                            t.td(member.get("title") or "—")
+                            t.td("リーダー" if member.get("leader") else "メンバー")

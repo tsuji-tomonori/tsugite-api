@@ -11,7 +11,7 @@ from tsugite_db.session import engine
 from app.apis.gateway import authorize, invocation_asset, operation_template
 from app.apis.governance.keys import invocation_actor
 from app.core.credential_policy import check_operation
-from app.core.diagnostics import OperationalRepair, asset_object, emit, invocation_details
+from app.core.diagnostics import InvocationTimer, OperationalRepair, asset_object, emit
 from app.core.log_record import INVOKE_ROUTE
 from app.core.workspace import attribute, private_project, retired_units
 
@@ -38,6 +38,7 @@ def handler(event, context):
 
 
 def authorize_event(event, fields):
+    timer = InvocationTimer()
     headers = event.get("headers", {})
     if not secrets.compare_digest(headers.get("x-tsugite-origin", ""), os.environ["ORIGIN_SECRET"]):
         return {"isAuthorized": False}
@@ -106,7 +107,7 @@ def authorize_event(event, fields):
                         environment=environment[:16],
                         method=event["requestContext"].get("http", {}).get("method", ""),
                         operation=fields.get("operation") or "",
-                        diagnostics=invocation_details(
+                        **timer.finish(
                             "authorizer",
                             fields["screen"],
                             403,
@@ -115,7 +116,6 @@ def authorize_event(event, fields):
                             failed=fields.get("failed", False),
                         ),
                         status=403,
-                        duration_ms=0,
                     )
                 )
                 db.commit()

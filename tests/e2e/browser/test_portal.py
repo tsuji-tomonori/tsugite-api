@@ -357,16 +357,20 @@ def test_governance_console(demo_url: str, request: pytest.FixtureRequest) -> No
             expect(user.get_by_role("heading", name="拒否件数")).to_be_visible()
             capture(user, "metrics", "利用者の拒否件数。直近1時間を5分間隔で表示")
             user.get_by_role("button", name=re.compile(r"UTC · 1$")).click()
-            expect(user.get_by_text("429　GET /items")).to_be_visible()
+            denied = user.get_by_role("row").filter(has=user.get_by_role("cell", name="429", exact=True))
+            expect(denied).to_contain_text("GET /items")
             capture(user, "access", "グラフから開いた同じ時間帯のアクセスログ")
             with user.expect_download() as saved:
                 user.get_by_role("button", name="アクセスログをダウンロード").click()
             assert sorted(
                 json.loads(line)["status"] for line in saved.value.path().read_text().splitlines()
             ) == [200, 200, 429]
-            user.locator("article").filter(
-                has=user.get_by_text("429　GET /items", exact=True)
-            ).get_by_role("button", name="対応する業務監査").click()
+            trace = denied.get_by_role("link").inner_text()
+            denied.click()
+            expect(user.get_by_role("table", name="呼び出しの詳細")).to_contain_text("http_429")
+            navigate(user, "監査履歴")
+            user.get_by_label("リクエストID", exact=True).fill(trace)
+            user.get_by_role("button", name="絞り込む").click()
             expect(user.get_by_text("呼び出し拒否", exact=True).last).to_be_visible()
             with user.expect_download() as audit_file:
                 user.get_by_role("button", name="業務監査をダウンロード").click()

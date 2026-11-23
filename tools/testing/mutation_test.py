@@ -67,6 +67,14 @@ MUTATIONS = (
         "packages/frontend/tests/test_components.py::test_each_guide_renders_inert_example",
     ),
     Mutation(
+        "access-log",
+        "次ページ確認用の1件を一覧にも表示する",
+        "packages/frontend/src/web_app/portal_pages/logs.py",
+        "for row in rows[:PAGE_SIZE]:",
+        "for row in rows:",
+        "packages/frontend/tests/test_access_log_detail.py::test_log_page_shows_only_requested_rows",
+    ),
+    Mutation(
         "api-slug",
         "DBでAPI識別名の重複を許す",
         "packages/database/migrations/versions/v010_asset_routes.py",
@@ -265,6 +273,14 @@ MUTATIONS = (
         'module in {"app", "portal_shell"}',
         'module == "app"',
         "tests/architecture/test_frontend_screens.py::test_shared_layout_delegates_route_dispatch",
+    ),
+    Mutation(
+        "frontend",
+        "モニタリングの所属メンバーを表として表示しない",
+        "packages/frontend/src/web_app/workspace_monitor.py",
+        'with t.table(aria_label="所属メンバー一覧"):',
+        'with t.div(aria_label="所属メンバー一覧"):',
+        "packages/frontend/tests/test_workspace_screens.py::test_project_monitor_shows_members_as_a_table",
     ),
     Mutation(
         "frontend",
