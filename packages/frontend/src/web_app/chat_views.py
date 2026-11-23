@@ -4,6 +4,7 @@ import asyncio
 from urllib.parse import quote
 
 import client
+from access_log_display import LOG_QUESTIONS, answer_log_question
 from inquiry_form import inquiry_form, post_inquiry
 from js import document, window
 from puepy import t
@@ -54,8 +55,13 @@ def show_result(reply):
             t.a("ガイドで確認", href="#/guide/" + quote(guide["id"], safe=""))
 
 
-def home(ctx, render):
-    state = ctx.setdefault("chat", {"turns": [], "busy": False, "contact": False})
+def home(ctx, render, *, log=None, path="home", inquiry_only=False):
+    state_key = "log_chat" if log else "chat"
+    key = log["request_id"] if log else None
+    if ctx.get(state_key, {}).get("request_id") != key:
+        ctx.pop(state_key, None)
+    state = ctx.setdefault(state_key, {"turns": [], "busy": False, "contact": False, "request_id": key})
+    prefix = f"リクエストID　{key}\n" if log else ""
     turns = state["turns"]
 
     async def ask(question):
@@ -66,20 +72,23 @@ def home(ctx, render):
         turn = {"question": question}
         turns.append(turn)
         del turns[:-12]
-        refresh(render, "home")
-        job_id = uuid()
+        refresh(render, path)
         try:
-            await client.api("/chat", "POST", {"job_id": job_id, "question": question})
-            reply = await wait_for_result(job_id)
+            if log:
+                reply = {"kind": "log", "answer": answer_log_question(log, question)}
+            else:
+                job_id = uuid()
+                await client.api("/chat", "POST", {"job_id": job_id, "question": question})
+                reply = await wait_for_result(job_id)
         except Exception as exc:
             client.report(exc, "ask", route="/api/chat")
             reply = {"kind": "error", "answer": str(exc)}
-        if ctx.get("chat") is state:
+        if ctx.get(state_key) is state:
             turn["reply"] = reply
             state["busy"] = False
             if reply["kind"] == "contact":
                 state["contact"] = True
-            refresh(render, "home")
+            refresh(render, path)
 
     def submit(event):
         event.preventDefault()
@@ -97,7 +106,7 @@ def home(ctx, render):
 
     def contact(event):
         state["contact"] = not state["contact"]
-        refresh(render, "home")
+        refresh(render, path)
         if state["contact"]:
             document.getElementById("inquiry-question").focus()
 
@@ -105,14 +114,14 @@ def home(ctx, render):
         if state.get("sending"):
             return
         state["sending"] = True
-        refresh(render, "home")
+        refresh(render, path)
         try:
-            receipt = await post_inquiry(state, question)
+            receipt = await post_inquiry(state, prefix + question)
         except Exception as exc:
             client.report(exc, "send_inquiry", route="/api/inquiries")
             state["inquiry_error"] = str(exc)
         else:
-            state["contact"] = False
+            state.update(contact=False, receipt=receipt)
             turns.append(
                 {
                     "question": question,
@@ -125,21 +134,35 @@ def home(ctx, render):
             del turns[:-12]
         finally:
             state["sending"] = False
-        if ctx.get("chat") is state:
-            refresh(render, "home")
+        if ctx.get(state_key) is state:
+            refresh(render, path)
 
     def submit_inquiry(event):
         event.preventDefault()
         question = str(document.getElementById("inquiry-question").value).strip()
         asyncio.ensure_future(send_inquiry(question))
 
+    if inquiry_only:
+        with t.section(classes="box"):
+            t.h2("この呼び出しについて問い合わせる")
+            t.p(prefix, classes="mono")
+            if receipt := state.get("receipt"):
+                t.p("受付番号 " + receipt, role="status")
+                t.a("自分の問い合わせ", href="#/inquiries")
+            inquiry_form(state, submit_inquiry, max_length=2000 - len(prefix))
+        return
+
     with t.section(classes="chat box", aria_label="継手APIのチャット"):
+        if log:
+            t.h2("この呼び出しについて質問する")
+            t.p(prefix, classes="mono")
         if not turns:
             with t.div(classes="chat-welcome"):
-                t.h2("どのAPIをお探しですか？")
-                t.p("利用目的からAPIを探したり、使い方ガイドの手順を確認したりできます。")
+                if not log:
+                    t.h2("どのAPIをお探しですか？")
+                    t.p("利用目的からAPIを探したり、使い方ガイドの手順を確認したりできます。")
                 with t.div(classes="chat-actions"):
-                    for question in SUGGESTIONS:
+                    for question in LOG_QUESTIONS if log else SUGGESTIONS:
                         t.button(
                             question,
                             type="button",
@@ -169,7 +192,7 @@ def home(ctx, render):
                     maxlength=400,
                     disabled=state["busy"],
                     classes="form-control",
-                    placeholder="利用目的や操作名を入力",
+                    placeholder="この呼び出しについて質問を入力" if log else "利用目的や操作名を入力",
                     value=state.get("question_text", ""),
                     on_input=remember_question,
                 )
@@ -184,4 +207,4 @@ def home(ctx, render):
             )
             t.a("自分の問い合わせ", href="#/inquiries")
         if state["contact"]:
-            inquiry_form(state, submit_inquiry)
+            inquiry_form(state, submit_inquiry, max_length=2000 - len(prefix))

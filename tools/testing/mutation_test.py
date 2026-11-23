@@ -49,6 +49,14 @@ MUTATIONS = (
         "packages/frontend/tests/test_components.py::test_each_guide_renders_inert_example",
     ),
     Mutation(
+        "access-log",
+        "次ページ確認用の1件を一覧にも表示する",
+        "packages/frontend/src/web_app/portal_pages/logs.py",
+        "for row in rows[:PAGE_SIZE]:",
+        "for row in rows:",
+        "packages/frontend/tests/test_access_log_detail.py::test_log_page_shows_only_requested_rows",
+    ),
+    Mutation(
         "api-slug",
         "DBでAPI識別名の重複を許す",
         "packages/database/migrations/versions/v010_asset_routes.py",
