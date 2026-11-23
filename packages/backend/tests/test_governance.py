@@ -81,6 +81,18 @@ def test_notification_scope(portal, monkeypatch):
         headers(portal, r) for r in ("provider", "consumer", "second", "other", "admin")
     )
     key, _, _ = approved(portal, owner, user)
+    for project, data in (
+        ("sales", {"name": "営業部", "kind": "department"}),
+        ("finance", {"name": "受注から出荷までの納期改善", "kind": "project", "parent": "sales"}),
+    ):
+        portal.put(f"/api/workspace/units/{project}", headers=admin, json=data).raise_for_status()
+    label = "営業部 / 受注から出荷までの納期改善"
+    labels = portal.get("/api/me", headers=admin).raise_for_status().json()["known_project_labels"]
+    assert labels == {"finance": label, "supply": "名称未登録（supply）"}
+    assert portal.get("/api/me", headers=owner).json()["known_project_labels"] == {}
+    targets = portal.get("/api/management-targets", headers=owner).raise_for_status().json()
+    assert [(target["project"], target["project_label"]) for target in targets] == [("finance", label)]
+    assert portal.get("/api/management-targets", headers=user).json() == []
     msg = {
         "project": "finance",
         "asset_id": key,

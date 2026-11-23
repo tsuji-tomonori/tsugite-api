@@ -7,7 +7,7 @@ from app.apis.catalog.common import DB, User
 from app.apis.governance.directory import manages, unit_condition
 from app.apis.governance.notifications import unread
 from app.core.diagnostics import exported_invocation
-from app.core.workspace import allowed_audience, private_project, units
+from app.core.workspace import allowed_audience, private_project, project_label, units
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import Response
 from sqlalchemy import func, or_, select
@@ -284,12 +284,14 @@ def management_targets(actor: User, db: DB):
     )
     if not actor.admin:
         stmt = stmt.where(Asset.owner.in_(actor.owners))
+    tree = units(db)
     return [
         {
             "id": "/".join((r.asset_id, r.project, r.environment)),
             "asset_id": r.asset_id,
             "name": name,
             "project": r.project,
+            "project_label": project_label(tree, r.project),
             "environment": r.environment,
         }
         for r, name in db.execute(stmt.order_by(Asset.name, Access.project, Access.environment))

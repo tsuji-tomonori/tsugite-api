@@ -33,6 +33,24 @@ MUTATIONS = (
         "packages/frontend/tests/test_inquiry_form.py::test_retry_reuses_pending_inquiry_id",
     ),
     Mutation(
+        "frontend",
+        "管理者の通知先にプロジェクト名を表示しない",
+        "packages/frontend/src/web_app/portal_pages/notifications.py",
+        '[(p, names.get(p, p)) for p in me["known_projects"]]',
+        '[(p, p) for p in me["known_projects"]]',
+        "packages/frontend/tests/test_notification_recipients.py::"
+        "test_notification_recipient_dropdown_uses_display_names",
+    ),
+    Mutation(
+        "frontend",
+        "提供者の通知先にプロジェクト名を表示しない",
+        "packages/frontend/src/web_app/management_targets.py",
+        "r.get('project_label', r['project'])",
+        "r['project']",
+        "packages/frontend/tests/test_notification_recipients.py::"
+        "test_notification_recipient_dropdown_uses_display_names",
+    ),
+    Mutation(
         "api-slug",
         "DBでAPI識別名の重複を許す",
         "packages/database/migrations/versions/v010_asset_routes.py",

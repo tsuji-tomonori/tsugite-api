@@ -37,6 +37,14 @@ def units(db):
     return base
 
 
+def project_label(tree, project):
+    unit = tree.get(project)
+    if not unit or unit["name"] == project:
+        return f"名称未登録（{project}）"
+    parent = tree.get(unit["parent"])
+    return f"{parent['name']} / {unit['name']}" if parent else unit["name"]
+
+
 def ancestry(tree, ids):
     found = set()
     for start in ids:
