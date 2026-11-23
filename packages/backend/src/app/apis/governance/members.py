@@ -7,7 +7,7 @@ from app.apis.schemas import Input
 from app.core.auth import DEMO_GROUPS
 from app.core.config import local_demo, settings
 from app.core.diagnostics import OperationalRepair
-from app.core.workspace import configured_projects, units
+from app.core.workspace import configured_projects, retired_units, units
 from botocore.exceptions import BotoCoreError, ClientError
 from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import Field
@@ -74,6 +74,7 @@ def list_members(
     limit: int = Query(40, ge=1, le=60),
 ):
     administrator(actor)
+    retired = retired_units(db)
     if local_demo():
         rows = [
             {"subject": key, "username": key, "role": key}
@@ -81,7 +82,12 @@ def list_members(
             if not db.get(Member, key)
         ]
         rows.extend(
-            {"subject": m.subject, "username": m.username, "role": m.role, "project": m.project}
+            {
+                "subject": m.subject,
+                "username": m.username,
+                "role": m.role,
+                "project": retired.get(m.project, m.project),
+            }
             for m in db.scalars(select(Member).where(Member.deleted.is_(False)))
         )
         return {"items": rows, "next": "", "projects": projects(db)}
@@ -100,7 +106,7 @@ def list_members(
                 "subject": sub,
                 "username": user["Username"],
                 "role": entry.role if entry else "Cognito",
-                "project": entry.project if entry else "",
+                "project": retired.get(entry.project, entry.project) if entry else "",
                 "deleted": bool(entry and entry.deleted),
             }
         )

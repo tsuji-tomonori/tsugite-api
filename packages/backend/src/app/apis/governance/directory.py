@@ -7,7 +7,7 @@ from app.apis.governance.members import administrator, projects
 from app.apis.schemas import Input
 from app.core.auth import DEMO_GROUPS
 from app.core.config import local_demo, settings
-from app.core.workspace import ancestry, units
+from app.core.workspace import ancestry, retired_units, units
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import Field
 from sqlalchemy import func, select
@@ -86,7 +86,11 @@ def roster(db):
                 continue
             members.setdefault(who, who)
             legacy.extend((who, g[4:]) for g in groups if g.startswith(("use-", "own-")))
+    retired = retired_units(db)
     for who, unit in legacy:
+        unit = retired.get(unit, unit)
+        if not unit:
+            continue
         affiliations.setdefault(
             (who, unit), dict(subject=who, unit_id=unit, title="", leader=False, active=True)
         )
@@ -162,6 +166,8 @@ def unit(
     tree = units(db)
     if not re.fullmatch(r"[a-z][a-z0-9-]{0,62}", key) or key.startswith("person-"):
         raise HTTPException(422, "識別子を確認してください")
+    if key in retired_units(db):
+        raise HTTPException(409, "廃止した識別子は再使用できません")
     if data.parent and (
         tree.get(data.parent, {}).get("kind") != "department" or key in ancestry(tree, [data.parent])
     ):
@@ -246,7 +252,11 @@ def federated_members(db, tree, key, known):
     client = boto3.client("cognito-idp")
     seen = {(r["subject"], r["unit_id"]) for r in known}
     added = []
-    for project in projects():
+    retired = retired_units(db)
+    for group_project in projects():
+        project = retired.get(group_project, group_project)
+        if not project:
+            continue
         if key not in ancestry(tree, [project]):
             continue
         for prefix in ("use-", "own-"):
@@ -255,7 +265,7 @@ def federated_members(db, tree, key, known):
                 try:
                     #: 利用者・グループの管理（Cognitoユーザープール） / グループの利用者を一覧
                     page = client.list_users_in_group(
-                        UserPoolId=pool, GroupName=prefix + project, **cursor
+                        UserPoolId=pool, GroupName=prefix + group_project, **cursor
                     )
                 except client.exceptions.ResourceNotFoundException:
                     break
