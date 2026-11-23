@@ -37,7 +37,7 @@ def dashboard_view():
                 graph(data["points"], "calls", data["minutes"])
             btn("メトリクスを開く", go, "metrics")
         with t.section(classes="box"):
-            t.h2("最近の呼び出し")
+            t.h2("自分の最近の呼び出し")
             logs = ctx.get("recent_logs")
             for row in (logs or [])[:4]:
                 with t.div(classes="recent-call"):

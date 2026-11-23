@@ -7,11 +7,13 @@ from app.apis.catalog.common import DB, User
 from app.apis.governance.directory import manages, unit_condition
 from app.apis.governance.notifications import unread
 from app.core.diagnostics import exported_invocation
+from app.core.log_visibility import led_calls
 from app.core.workspace import allowed_audience, private_project, units
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import Response
-from sqlalchemy import func, or_, select
+from sqlalchemy import func, or_, select, true
 from sqlalchemy.orm import load_only
+from sqlalchemy.sql.elements import ColumnElement
 from tsugite_db.models import Access, AccessLog, Asset
 
 router = APIRouter()
@@ -45,6 +47,33 @@ def visible(stmt, actor, db=None, unit=""):
             AccessLog.project.in_(actor.projects | {private_project(actor.subject)}),
         )
     )
+
+
+def log_condition(
+    actor: User,
+    db: DB,
+    #: 本人のアクセスログまたは権限内の監査履歴
+    scope: Literal["personal", "audit"] = "personal",
+    #: 監査対象の部署・プロジェクト識別子
+    unit: str = "",
+):
+    if scope == "personal":
+        if unit:
+            raise HTTPException(403, "部署・プロジェクトの指定には監査履歴を使用してください")
+        return AccessLog.actor == actor.subject
+    global_access = actor.admin or actor.auditor
+    if not global_access and not actor.leads:
+        raise HTTPException(403, "監査履歴を閲覧する権限がありません")
+    tree = units(db)
+    condition = true() if global_access else led_calls(tree, actor.leads)
+    if unit:
+        if unit not in tree or not (global_access or manages(actor, tree, unit)):
+            raise HTTPException(403, "指定された範囲の監査権限がありません")
+        return condition & unit_condition(tree, unit)
+    return condition
+
+
+LogCondition = Annotated[ColumnElement[bool], Depends(log_condition)]
 
 
 def interval(
@@ -92,25 +121,47 @@ def log_data(row):
 #: API呼び出し履歴を検索する
 @router.get("/access-logs", responses={200: {"model": list[outputs.AccessLog]}})
 def access_logs(
-    actor: User,
+    condition: LogCondition,
     db: DB,
     period: Range,
+    #: 一度に取得する履歴の件数
+    limit: int = Query(50, ge=1, le=50),
     #: 先頭から読み飛ばす件数
     offset: int = Query(0, ge=0),
     #: リクエスト識別子
     request_id: str = "",
-    #: 集計対象の部署・プロジェクト識別子
-    unit: str = "",
 ):
-    stmt = visible(period[2], actor, db, unit)
+    stmt = period[2].where(condition)
     if request_id:
         stmt = stmt.where(AccessLog.request_id == request_id)
     return [
         log_data(r)
         for r in db.scalars(
-            stmt.order_by(AccessLog.at.desc(), AccessLog.request_id).offset(offset).limit(50)
+            stmt.order_by(AccessLog.at.desc(), AccessLog.request_id).offset(offset).limit(limit)
         )
     ]
+
+
+#: リクエスト識別子からAPI呼び出しの詳細を取得する
+@router.get("/access-logs/detail", responses={200: {"model": outputs.AccessLogDetail}})
+def access_log_detail(
+    condition: LogCondition,
+    db: DB,
+    #: リクエスト識別子
+    request_id: str,
+):
+    stmt = select(AccessLog).where(condition)
+    row = db.scalar(stmt.where(AccessLog.request_id == request_id))
+    if row is None:
+        raise HTTPException(404, "アクセスログが見つかりません")
+    data = log_data(row)
+    record = exported_invocation(row, data)
+    return {
+        **data,
+        "started_at": record.get("started_at"),
+        "responded_at": record.get("responded_at"),
+        "error_code": record["reason"] if row.status >= 400 else None,
+    }
 
 
 #: API呼び出し履歴をファイルに出力する
@@ -134,17 +185,15 @@ def access_logs(
     },
 )
 def download(
-    actor: User,
+    condition: LogCondition,
     db: DB,
     period: Range,
     #: リクエスト識別子
     request_id: str = "",
     #: 次のページの開始位置
     cursor: str = "",
-    #: 集計対象の部署・プロジェクト識別子
-    unit: str = "",
 ):
-    stmt = visible(period[2], actor, db, unit)
+    stmt = period[2].where(condition)
     if request_id:
         stmt = stmt.where(AccessLog.request_id == request_id)
     if cursor:
@@ -296,6 +345,15 @@ def management_targets(actor: User, db: DB):
     ]
 
 
+def dimension_rows(db, stmt):
+    stmt = (
+        stmt.with_only_columns(AccessLog.asset_id, Asset.name, AccessLog.project)
+        .join(Asset, Asset.id == AccessLog.asset_id)
+        .distinct()
+    )
+    return [{"asset_id": r.asset_id, "name": r.name, "project": r.project} for r in db.execute(stmt)]
+
+
 #: 利用統計を絞り込めるAPIとプロジェクトを一覧する
 @router.get("/metric-dimensions", responses={200: {"model": list[outputs.Dimension]}})
 def dimensions(
@@ -304,12 +362,10 @@ def dimensions(
     #: 集計対象の部署・プロジェクト識別子
     unit: str = "",
 ):
-    stmt = visible(
-        select(AccessLog.asset_id, Asset.name, AccessLog.project).join(
-            Asset, Asset.id == AccessLog.asset_id
-        ),
-        actor,
-        db,
-        unit,
-    ).distinct()
-    return [{"asset_id": r.asset_id, "name": r.name, "project": r.project} for r in db.execute(stmt)]
+    return dimension_rows(db, visible(select(AccessLog), actor, db, unit))
+
+
+#: 閲覧できるアクセスログのAPIと利用プロジェクトを一覧する
+@router.get("/access-logs/dimensions", responses={200: {"model": list[outputs.Dimension]}})
+def log_dimensions(condition: LogCondition, db: DB):
+    return dimension_rows(db, select(AccessLog).where(condition))

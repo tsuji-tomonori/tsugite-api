@@ -247,7 +247,9 @@ def test_approved_calls_reach_upstream(
         rejected = api.get(path, headers=invoker)
         assert rejected.status_code == 403
         denied_id = rejected.headers["x-request-id"]
-        denied = api.get("audit", headers=owner, params={"request_id": denied_id}).json()
+        denied = api.get(
+            "audit", headers=headers("administrator"), params={"request_id": denied_id}
+        ).json()
         assert [(e["action"], e["detail"]) for e in denied] == [("invoke.denied", "403")]
         if calls is not None:
             assert all(method == "HEAD" for method, _ in calls)
@@ -273,7 +275,9 @@ def test_approved_calls_reach_upstream(
             assert missing.status_code == 404
             assert missing.json() == {"message": "商品が見つかりません"}
         audit = api.get(
-            "audit", headers=owner, params={"request_id": call.headers["x-request-id"]}
+            "audit",
+            headers=headers("administrator"),
+            params={"request_id": call.headers["x-request-id"]},
         ).json()
         assert {e["action"] for e in audit} == {"invoke.start", "invoke.end"}
         for e in audit:
@@ -379,7 +383,13 @@ def test_marketplace_contracts(aws, resources, tmp_path, request):
             )
             assert response.raise_for_status().json() == answer
             events = (
-                api.get("audit", headers=owner, params={"asset_id": asset}).raise_for_status().json()
+                api.get(
+                    "audit",
+                    headers={"Authorization": "Bearer " + tokens["administrator"]},
+                    params={"asset_id": asset},
+                )
+                .raise_for_status()
+                .json()
             )
             assert [e["action"] for e in reversed(events)] == [
                 "register",
@@ -438,7 +448,7 @@ def test_upstream_unavailable(aws, resources, tmp_path, request):
         response = api.get(f"invoke/{asset}/production/finance/items", headers=call_headers)
         assert response.status_code == 502
         trace = response.headers["x-request-id"]
-        events = api.get("audit", headers=owner, params={"request_id": trace}).raise_for_status().json()
+        events = api.get("audit", headers=user, params={"request_id": trace}).raise_for_status().json()
         assert [(e["action"], e["detail"]) for e in reversed(events)] == [
             ("invoke.start", "GET"),
             ("invoke.error", "502"),

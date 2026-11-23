@@ -350,7 +350,7 @@ def try_operation(
         t.span("", role="status", id=prefix + "-copied")
     t.pre("", id=prefix + "-response", classes="code", aria_live="polite")
     t.button(
-        "この実行の監査履歴",
+        "この実行の業務操作履歴",
         type="button",
         classes="btn",
         hidden=True,

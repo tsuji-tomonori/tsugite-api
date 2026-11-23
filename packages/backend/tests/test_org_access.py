@@ -94,8 +94,11 @@ def test_delegation_search_and_personal_isolation(portal, monkeypatch):
     assert api.get(path, headers=call).status_code == 403
     assert api.get("/api/workspace/units/east/usage", headers=lead).json()["calls"] >= 4
     for endpoint in ("metrics", "access-logs", "access-logs/download", "metric-dimensions"):
-        assert api.get("/api/" + endpoint + "?unit=east", headers=neighbor).status_code == 403
-        assert api.get("/api/" + endpoint + "?unit=east", headers=lead).is_success
+        params = {"unit": "east"}
+        if endpoint.startswith("access-logs"):
+            params["scope"] = "audit"
+        assert api.get("/api/" + endpoint, params=params, headers=neighbor).status_code == 403
+        assert api.get("/api/" + endpoint, params=params, headers=lead).is_success
     assert (
         sum(b["calls"] for b in api.get("/api/metrics?unit=east", headers=lead).json()["points"])
         == api.get("/api/workspace/units/east/usage", headers=lead).json()["calls"]
@@ -232,3 +235,94 @@ def test_workspace_department_lead_projects(portal, monkeypatch):
         data = portal.get("/api/workspace", headers=people[person]).raise_for_status().json()
         assert {u["id"] for u in data["units"] if u["kind"] == "project"} == expected
         assert "field" not in data["my_units"]
+
+
+def test_access_log_scopes(portal, monkeypatch):
+    """同じ所属でも本人の履歴を分離し、配下の監査・絞り込み・出力と権限解除を検証する。"""
+    import json
+
+    from sqlalchemy.orm import Session
+    from tsugite_db.models import AccessLog, Event, LogUnit
+    from tsugite_db.session import engine
+
+    admin, people = setup_people(portal, monkeypatch)
+    api = portal
+    # ログは呼び出した時点のプロジェクトと部署に帰属する。
+    with Session(engine()) as db:
+        for trace, actor, project, departments in (
+            ("own", "approver", "field", ["east", "corp"]),
+            ("peer", "applicant", "field", ["east", "corp"]),
+            ("child", "applicant", "person-x", ["desk", "east", "corp"]),
+            ("outside", "applicant", "finance", ["west", "corp"]),
+        ):
+            meta = dict(
+                request_id=trace,
+                project=project,
+                actor=actor,
+                owner="supply",
+                asset_id="stock",
+                environment="sandbox",
+            )
+            db.add(AccessLog(**meta, method="GET", operation="/stock", status=200, duration_ms=1))
+            db.add(Event(**meta, action="invoke.end", detail="200"))
+            for unit in departments:
+                db.add(LogUnit(request_id=trace, unit_id=unit))
+        db.commit()
+
+    def ids(actor, **params):
+        rows = api.get("/api/access-logs", headers=actor, params=params).raise_for_status().json()
+        download = api.get("/api/access-logs/download", headers=actor, params=params).raise_for_status()
+        found = {row["request_id"] for row in rows}
+        assert {json.loads(line)["request_id"] for line in download.text.splitlines()} == found
+        return found
+
+    lead, member = people["approver"], people["applicant"]
+    assert ids(lead) == {"own"}
+    assert ids(admin) == set()
+    assert ids(member) == {"peer", "outside", "child"}
+    assert ids(lead, scope="audit") == {"own", "peer", "child"}
+    assert ids(lead, scope="audit", unit="desk") == {"child"}
+    assert ids(lead, scope="audit", unit="field") == {"peer", "own"}
+    assert ids(admin, scope="audit") == {"own", "peer", "child", "outside"}
+    assert ids(admin, scope="audit", unit="west") == {"outside"}
+    for suffix in ("", "/detail", "/download", "/dimensions"):
+        url = "/api/access-logs" + suffix
+        for identity, params in (
+            (member, {"scope": "audit"}),
+            (lead, {"scope": "audit", "unit": "west"}),
+            (lead, {"unit": "field"}),
+        ):
+            assert (
+                api.get(url, headers=identity, params={**params, "request_id": "peer"}).status_code
+                == 403
+            )
+    for identity, scope, trace, status in (
+        (lead, "personal", "peer", 404),
+        (lead, "audit", "peer", 200),
+        (lead, "audit", "outside", 404),
+        (admin, "personal", "peer", 404),
+    ):
+        assert (
+            api.get(
+                "/api/access-logs/detail", headers=identity, params={"scope": scope, "request_id": trace}
+            ).status_code
+            == status
+        )
+    assert {
+        r["request_id"]
+        for r in api.get("/api/audit", headers=lead).json()
+        if r["action"] == "invoke.end"
+    } == {"child", "own", "peer"}
+    for unit in ("east", "field"):
+        api.delete(
+            "/api/workspace/memberships", headers=admin, params={"subject": "approver", "unit_id": unit}
+        ).raise_for_status()
+        if unit == "east":
+            assert ids(lead, scope="audit") == {"own", "peer"}
+    assert (
+        api.get(
+            "/api/access-logs/detail", headers=lead, params={"scope": "audit", "request_id": "peer"}
+        ).status_code
+        == 403
+    )
+    assert ids(lead) == {"own"}

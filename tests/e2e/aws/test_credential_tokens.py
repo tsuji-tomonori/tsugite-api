@@ -101,12 +101,12 @@ def test_client_tokens_reach_https(aws, resources, tmp_path, request):
             assert success.json() == {"items": [{"sku": "TS-01", "stock": 12}]}
             request_id = success.headers["x-request-id"]
             log = (
-                api.get("access-logs", params={"request_id": request_id}, headers=owner)
+                api.get("access-logs", params={"scope": "audit", "request_id": request_id}, headers=user)
                 .raise_for_status()
                 .json()
             )
             events = (
-                api.get("audit", params={"request_id": request_id}, headers=owner)
+                api.get("audit", params={"request_id": request_id}, headers=user)
                 .raise_for_status()
                 .json()
             )

@@ -252,17 +252,17 @@ def test_console_visual_modes(demo_url: str, request: pytest.FixtureRequest) -> 
             expect(link).to_have_css("color", "rgb(239, 238, 235)")
             page.set_viewport_size({"width": 390, "height": 844})
             page.reload()
-            navigate(page, "監査履歴")
+            navigate(page, "業務操作履歴")
             expect(page.locator(".audit-row").first).to_be_visible()
             assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
-            capture(page, "mobile-dark", "端末のダーク設定を引き継いだ390px幅の監査履歴")
+            capture(page, "mobile-dark", "端末のダーク設定を引き継いだ390px幅の業務操作履歴")
             page.emulate_media(forced_colors="active")
             assert page.evaluate("matchMedia('(forced-colors: active)').matches")
             page.get_by_label("操作", exact=True).press("Tab")
             button = page.get_by_role("button", name="絞り込む")
             expect(button).to_be_focused()
             expect(button).to_have_css("outline-style", "solid")
-            capture(page, "forced", "OSの強制カラーで表示した監査履歴とキーボードのフォーカス枠")
+            capture(page, "forced", "OSの強制カラーで表示した業務操作履歴とキーボードのフォーカス枠")
         browser.close()
 
 
@@ -338,16 +338,20 @@ def test_governance_console(demo_url: str, request: pytest.FixtureRequest) -> No
             expect(user.get_by_role("heading", name="拒否件数")).to_be_visible()
             capture(user, "metrics", "利用者の拒否件数。直近1時間を5分間隔で表示")
             user.get_by_role("button", name=re.compile(r"UTC · 1$")).click()
-            expect(user.get_by_text("429　GET /items")).to_be_visible()
+            denied = user.get_by_role("row").filter(has=user.get_by_role("cell", name="429", exact=True))
+            expect(denied).to_contain_text("GET /items")
             capture(user, "access", "グラフから開いた同じ時間帯のアクセスログ")
             with user.expect_download() as saved:
                 user.get_by_role("button", name="アクセスログをダウンロード").click()
             assert sorted(
                 json.loads(line)["status"] for line in saved.value.path().read_text().splitlines()
             ) == [200, 200, 429]
-            user.locator("article").filter(
-                has=user.get_by_text("429　GET /items", exact=True)
-            ).get_by_role("button", name="対応する業務監査").click()
+            trace = denied.get_by_role("link").inner_text()
+            denied.click()
+            expect(user.get_by_role("table", name="呼び出しの詳細")).to_contain_text("http_429")
+            navigate(user, "業務操作履歴")
+            user.get_by_label("リクエストID", exact=True).fill(trace)
+            user.get_by_role("button", name="絞り込む").click()
             expect(user.get_by_text("呼び出し拒否", exact=True).last).to_be_visible()
             with user.expect_download() as audit_file:
                 user.get_by_role("button", name="業務監査をダウンロード").click()
@@ -355,7 +359,7 @@ def test_governance_console(demo_url: str, request: pytest.FixtureRequest) -> No
             capture(user, "audit", "429のリクエストIDで照合した業務監査")
             for view, role in ((admin, "管理者"), (provider, "提供者"), (user, "利用者")):
                 navigate(view, "利用状況")
-                expect(view.locator(".recent-call")).to_have_count(3)
+                expect(view.locator(".recent-call")).to_have_count(3 if role == "利用者" else 0)
                 expect(
                     view.locator(".stat").filter(has_text="直近24時間の呼び出し").locator("strong")
                 ).to_have_text("3")

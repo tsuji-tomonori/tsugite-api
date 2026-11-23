@@ -89,6 +89,7 @@ def test_scoped_keys_reach_https(aws, resources, tmp_path, request):
                 .raise_for_status()
                 .json()
             )
+        admin = {"Authorization": "Bearer " + tokens["administrator"]}
         shared = {"Authorization": "Bearer " + issued["shared"]["secret"]}
         personal = {**consumer, "X-API-Key": issued["personal"]["secret"]}
 
@@ -97,13 +98,11 @@ def test_scoped_keys_reach_https(aws, resources, tmp_path, request):
             assert success.raise_for_status().json() == {"items": [{"sku": "TS-01", "stock": 12}]}
             trace = success.headers["x-request-id"]
             journal = (
-                api.get("audit", headers=provider, params={"request_id": trace})
-                .raise_for_status()
-                .json()
+                api.get("audit", headers=admin, params={"request_id": trace}).raise_for_status().json()
             )
             assert {e["action"] for e in journal} == {"invoke.start", "invoke.end"}
             logs = (
-                api.get("access-logs", headers=provider, params={"request_id": trace})
+                api.get("access-logs", headers=admin, params={"scope": "audit", "request_id": trace})
                 .raise_for_status()
                 .json()
             )

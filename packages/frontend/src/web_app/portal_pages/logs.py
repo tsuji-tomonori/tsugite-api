@@ -1,19 +1,27 @@
-from urllib.parse import urlencode
+from urllib.parse import parse_qs, quote, unquote, urlencode
 
+import chat_views
 import client
+from access_log_display import detail_fields, timestamp
 from activity_filters import filters_view, load_dimensions, time_params
 from audit_navigation import trace_lookup
 from js import window
 from portal_download import save_blob
 from portal_navigation import go, load
-from portal_ui import btn, ctx, field, value
+from portal_ui import action, btn, ctx, field, render, route, value
 from puepy import t
 from pyodide.http import pyfetch
 from screen_registry import Screen
 
+PAGE_SIZE = 20
+
+
+def can_audit(me):
+    return bool(me.get("admin") or me.get("auditor") or me.get("leads"))
+
 
 async def download_logs():
-    params = {**time_params(), "request_id": ctx.get("access_id", "")}
+    params = {**ctx["log_period"], "request_id": ctx.get("access_id", "")}
     parts = window.Array.new()
     while True:
         res = await pyfetch(
@@ -39,8 +47,7 @@ async def log_lookup():
 
 
 async def log_page(offset):
-    ctx["log_offset"] = offset
-    await load()
+    await fetch_log_rows(ctx["log_period"], offset)
 
 
 def request_lookup(request_id):
@@ -51,43 +58,132 @@ def request_lookup(request_id):
             btn("アクセスログをダウンロード", download_logs)
 
 
-def logs_view():
-    filters_view(False)
+def logs_view(scope="personal"):
+    if scope == "audit" and not can_audit(ctx["me"]):
+        t.p("監査履歴を閲覧する権限がありません。")
+        return
+    if "log_rows" not in ctx:
+        t.p("ログを取得できませんでした。")
+        btn("再読み込み", load)
+        return
+    filters_view(False, scope=scope)
     request_lookup(ctx.get("access_id", ""))
     rows = ctx["log_rows"]
     if not rows:
         t.p("条件に一致するアクセスログはありません。", classes="empty")
-    for row in rows:
-        with t.article(classes="audit-row"):
-            t.strong(f"{row['status']}　{row['method']} {row['operation']}")
-            t.p(
-                f"{row['at'][:19]} UTC　{row['actor']}　{row['project']}　{row['environment']}　{row['duration_ms']} ms"
-            )
-            t.small("リクエストID　" + row["request_id"], classes="mono")
-            if row.get("key_id"):
-                t.small("キーID　" + row["key_id"], classes="mono")
-            btn("対応する業務監査", trace_lookup, row["request_id"])
-            if ctx["me"]["admin"]:
-                btn("対象APIを開く", go, "api/" + row["asset_id"])
-    if ctx.get("log_offset", 0):
-        btn("前の50件", log_page, ctx["log_offset"] - 50)
-    if len(rows) == 50:
-        btn("次の50件", log_page, ctx.get("log_offset", 0) + 50)
+        return
+    workspace = ctx.get("workspace", {})
+    names = {u["id"]: u["name"] for u in workspace.get("units", [])}
+    users = {u["subject"]: u["username"] for u in workspace.get("users", [])}
+    with t.div(classes="box table-scroll log-table"):
+        with t.table(aria_label="監査履歴一覧" if scope == "audit" else "アクセスログ一覧"):
+            with t.thead():
+                with t.tr():
+                    for title in (
+                        "リクエストID",
+                        *(("呼び出し主体", "利用プロジェクト") if scope == "audit" else ()),
+                        "記録時刻（UTC）",
+                        "操作",
+                        "HTTPステータス",
+                        "処理時間",
+                    ):
+                        t.th(title, scope="col")
+            with t.tbody():
+                for row in rows[:PAGE_SIZE]:
+                    path = detail_path(row["request_id"], ctx["filters"]["unit"], audit=scope == "audit")
+                    with t.tr(on_click=action(go, path)):
+                        with t.td():
+                            t.a(row["request_id"], href="#/" + path, classes="mono")
+                        if scope == "audit":
+                            t.td(users.get(row["actor"], row["actor"]))
+                            t.td(names.get(row["project"], row["project"]) or "未記録")
+                        t.td(timestamp(row["at"]).removesuffix(" UTC"))
+                        t.td(row["method"] + " " + (row["operation"] or "未記録"))
+                        t.td(str(row["status"]))
+                        t.td(f"{row['duration_ms']} ms")
+    offset = ctx.get("log_offset", 0)
+    with t.nav(classes="pager", aria_label="アクセスログのページ"):
+        if offset:
+            btn("前へ", log_page, max(0, offset - PAGE_SIZE))
+        t.span(f"{offset + 1}～{offset + min(len(rows), PAGE_SIZE)}件", role="status")
+        if len(rows) > PAGE_SIZE:
+            btn("次へ", log_page, offset + PAGE_SIZE)
 
 
-async def load_logs(_page):
-    await load_dimensions()
-    params = time_params()
-    ctx["log_rows"] = await client.api(
-        "/access-logs?"
-        + urlencode(
-            {
-                **params,
-                "request_id": ctx.get("access_id", ""),
-                "offset": ctx.get("log_offset", 0),
-            }
-        )
+def detail_path(request_id, unit="", view="", *, audit=False):
+    params = {k: v for k, v in (("unit", unit), ("view", view)) if v}
+    root = "audit-logs/" if audit else "logs/"
+    return root + quote(request_id, safe="") + ("?" + urlencode(params) if params else "")
+
+
+async def load_logs(page):
+    scope = "audit" if page == "audit-logs" else "personal"
+    if ctx.get("log_scope") != scope:
+        ctx.update(log_offset=0, access_id="", log_scope=scope)
+    if scope == "audit" and not can_audit(ctx["me"]):
+        return
+    await load_dimensions(scope)
+    offset = ctx.get("log_offset", 0)
+    period = ctx.get("log_period") if offset else None
+    await fetch_log_rows(period or {**time_params(), "scope": scope}, offset)
+
+
+async def fetch_log_rows(period, offset):
+    params = {
+        **period,
+        "request_id": ctx.get("access_id", ""),
+        "offset": offset,
+        "limit": PAGE_SIZE + 1,
+    }
+    rows = await client.api("/access-logs?" + urlencode(params))
+    if period["scope"] == ctx.get("log_scope"):
+        ctx.update(log_rows=rows, log_offset=offset, log_period=period)
+
+
+async def load_detail(page):
+    ctx.pop("log_detail", None)
+    root, _, key_query = page.partition("/")
+    key, _, query = key_query.partition("?")
+    params = parse_qs(query)
+    request_id = unquote(key)
+    unit = params.get("unit", [""])[0]
+    scope = "audit" if root == "audit-logs" else "personal"
+    row = await client.api(
+        "/access-logs/detail?" + urlencode({"request_id": request_id, "unit": unit, "scope": scope})
     )
+    if route() == page:
+        ctx["log_detail"] = (page, row, unit, params.get("view", [""])[0])
+
+
+def detail_view():
+    audit = route().startswith("audit-logs/")
+    back = "監査履歴一覧へ戻る" if audit else "アクセスログ一覧へ戻る"
+    listing = "#/audit-logs" if audit else "#/logs"
+    detail = ctx.get("log_detail")
+    if not detail or detail[0] != route():
+        t.a(back, href=listing)
+        return
+    path, row, unit, view = detail
+    key = row["request_id"]
+    if view in ("inquiry", "chat"):
+        t.a("アクセスログの詳細へ戻る", href="#/" + detail_path(key, unit, audit=audit))
+        chat_views.home(ctx, render, log=row, path=path, inquiry_only=view == "inquiry")
+        return
+    t.a(back, href=listing)
+    with t.div(classes="box table-scroll log-detail"):
+        with t.table(aria_label="呼び出しの詳細"):
+            with t.tbody():
+                for label, data in detail_fields(row):
+                    with t.tr():
+                        t.th(label, scope="row")
+                        t.td(data)
+    with t.div(classes="btn-grouping log-links"):
+        for label, target in (("このIDで問い合わせる", "inquiry"), ("このIDでチャットに質問", "chat")):
+            t.a(label, href="#/" + detail_path(key, unit, target, audit=audit))
+        if ctx["me"]["admin"]:
+            btn("対象APIを開く", go, "api/" + row["asset_id"])
+        if can_audit(ctx["me"]):
+            btn("業務操作履歴で照合", trace_lookup, key)
 
 
 SCREENS = (
@@ -98,6 +194,35 @@ SCREENS = (
         load_logs,
         group="ガバナンス",
         order=140,
+        description="自分が呼び出したAPIの記録を確認できます。",
+        clear_on_load=("log_rows", "dims", "workspace"),
         examples={"logs": lambda: request_lookup("example-request")},
+    ),
+    Screen(
+        "audit-logs",
+        "監査履歴",
+        lambda: logs_view("audit"),
+        load_logs,
+        group="ガバナンス",
+        order=145,
+        visible=can_audit,
+        description="担当する部署・プロジェクトのAPI呼び出しを確認できます。管理者と監査担当は全体を確認できます。",
+        clear_on_load=("log_rows", "dims", "workspace"),
+    ),
+    Screen(
+        "audit-logs/",
+        "監査履歴詳細",
+        detail_view,
+        load_detail,
+        parent="audit-logs",
+        clear_on_load=("log_detail",),
+    ),
+    Screen(
+        "logs/",
+        "アクセスログ詳細",
+        detail_view,
+        load_detail,
+        parent="logs",
+        clear_on_load=("log_detail",),
     ),
 )

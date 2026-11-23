@@ -2,10 +2,11 @@ from datetime import UTC, datetime
 
 from app.apis.catalog.common import DB, User
 from app.apis.schemas import Audit
-from app.core.workspace import private_project
+from app.core.log_visibility import led_calls
+from app.core.workspace import private_project, units
 from fastapi import APIRouter, Query
 from sqlalchemy import or_, select
-from tsugite_db.models import AccessLog, Event, LogUnit
+from tsugite_db.models import AccessLog, Event
 
 router = APIRouter()
 
@@ -29,21 +30,17 @@ def audit(
     limit: int = Query(100, ge=1, le=500),
 ):
     stmt = select(Event)
-    led_trace = False
-    if request_id and actor.leads:
-        log = db.get(AccessLog, request_id)
-        if log:
-            scopes = set(db.scalars(select(LogUnit.unit_id).where(LogUnit.request_id == request_id))) | {
-                log.project
-            }
-            led_trace = bool(actor.leads & scopes)
-    if not (actor.auditor or actor.admin or led_trace):
-        stmt = stmt.where(
-            or_(
-                Event.owner.in_(actor.owners),
-                Event.project.in_(actor.projects | {private_project(actor.subject)}),
-            )
+    if not (actor.auditor or actor.admin):
+        business_scope = or_(
+            Event.owner.in_(actor.owners),
+            Event.project.in_(actor.projects | {private_project(actor.subject)}),
         )
+        invocation = Event.action.startswith("invoke.")
+        call_scope = Event.actor == actor.subject
+        if actor.leads:
+            calls = select(AccessLog.request_id).where(led_calls(units(db), actor.leads))
+            call_scope = call_scope | Event.request_id.in_(calls)
+        stmt = stmt.where((~invocation & business_scope) | (invocation & call_scope))
     if until:
         stmt = stmt.where(Event.at <= until.astimezone(UTC))
     if asset_id:

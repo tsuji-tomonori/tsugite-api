@@ -123,7 +123,7 @@ def test_alert_window_and_access_logs(portal, monkeypatch, request):
     with ThreadPoolExecutor(max_workers=4) as pool:
         codes = list(pool.map(lambda _: portal.get(path, headers=call).status_code, range(4)))
     assert sorted(codes) == [200, 200, 429, 429]
-    assert len(portal.get("/api/audit?action=invoke.start", headers=owner).json()) == 2
+    assert len(portal.get("/api/audit?action=invoke.start", headers=user).json()) == 2
     assert portal.get("/api/notifications/count", headers=user).json()["unread"] == 1
     rows = [
         json.loads(line)
@@ -136,6 +136,15 @@ def test_alert_window_and_access_logs(portal, monkeypatch, request):
     assert portal.get("/api/access-logs/download", headers=other).text == ""
     assert sum(p["calls"] for p in portal.get("/api/metrics", headers=other).json()["points"]) == 0
     denied = next(r for r in rows if r["status"] == 429)
+    detail_path = "/api/access-logs/detail"
+    params = {"request_id": denied["request_id"]}
+    detail = portal.get(detail_path, params=params, headers=user).raise_for_status().json()
+    assert detail["started_at"] <= detail["responded_at"]
+    assert detail["error_code"] == "http_429" and detail["request_id"] == denied["request_id"]
+    assert "operator_action" not in detail
+    assert portal.get(detail_path, params=params, headers=other).status_code == 404
+    assert portal.get(detail_path, params={"request_id": "missing"}, headers=user).status_code == 404
+    assert len(portal.get("/api/access-logs?limit=2", headers=user).json()) == 2
     events = portal.get("/api/audit", params={"request_id": denied["request_id"]}, headers=admin).json()
     assert [r["action"] for r in events] == ["invoke.denied"]
     request.node.user_properties.extend(
@@ -192,6 +201,10 @@ def test_log_download_pages(portal):
                 )
             )
         db.commit()
+    legacy = (
+        portal.get("/api/access-logs/detail?request_id=req000", headers=user).raise_for_status().json()
+    )
+    assert legacy["started_at"] is legacy["responded_at"] is legacy["error_code"] is None
     jst = timezone(timedelta(hours=9))
     params = {
         "start": (stamp - timedelta(seconds=1)).astimezone(jst).isoformat(),

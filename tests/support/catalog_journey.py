@@ -186,7 +186,7 @@ def catalog_journey(
             provider.get_by_label("判断・取下げの理由").fill("棚卸し完了")
             provider.get_by_role("button", name="権限を取り消す").click()
             expect(provider.get_by_text("finance · 検証 · 取消済み")).to_be_visible()
-        with then("同じ利用画面からの再実行を拒否し、監査履歴に記録する"):
+        with then("同じ利用画面からの再実行を拒否し、業務操作履歴に記録する"):
             consumer.get_by_role("button", name="認証して実行").click()
             expect(consumer.get_by_text("HTTP 403", exact=False)).to_be_visible()
             capture(
@@ -194,12 +194,13 @@ def catalog_journey(
                 "08-revoked",
                 "権限を取り消した後、同じ利用者の呼び出しを拒否",
             )
-            consumer.get_by_role("button", name="この実行の監査履歴").click()
+            consumer.get_by_role("button", name="この実行の業務操作履歴").click()
             expect(consumer.locator(".audit-row")).to_have_count(1)
             expect(consumer.locator(".audit-row")).to_contain_text("呼び出し拒否")
             capture(consumer, "08b-trace", "取消後の403からリクエストIDで特定した監査記録")
-            navigate(provider, "監査履歴")
-            expect(provider.get_by_text(f"invoke.denied · {consumer_subject}")).to_be_visible()
-            capture(provider, "09-audit", "利用者・操作・リクエストIDを表示した監査履歴")
+            navigate(provider, "業務操作履歴")
+            expect(provider.get_by_text(f"invoke.denied · {consumer_subject}")).to_have_count(0)
+            expect(provider.get_by_text(f"apply · {consumer_subject}").first).to_be_visible()
+            capture(provider, "09-audit", "利用者・操作・リクエストIDを表示した業務操作履歴")
             assert remote_requests == []
         browser.close()

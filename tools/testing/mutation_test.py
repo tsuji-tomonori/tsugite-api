@@ -25,6 +25,14 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
+        "audit-scope",
+        "本人のアクセスログに同じプロジェクトの別人の呼び出しを含める",
+        "packages/backend/src/app/apis/governance/observability.py",
+        "return AccessLog.actor == actor.subject",
+        "return AccessLog.project.in_(actor.projects)",
+        "packages/backend/tests/test_org_access.py::test_access_log_scopes",
+    ),
+    Mutation(
         "backend",
         "移管元の識別子が組織一覧に復活する",
         "packages/backend/src/app/core/workspace.py",
@@ -47,6 +55,14 @@ MUTATIONS = (
         'classes="guide-preview", inert=True',
         'classes="guide-preview", inert=False',
         "packages/frontend/tests/test_components.py::test_each_guide_renders_inert_example",
+    ),
+    Mutation(
+        "access-log",
+        "次ページ確認用の1件を一覧にも表示する",
+        "packages/frontend/src/web_app/portal_pages/logs.py",
+        "for row in rows[:PAGE_SIZE]:",
+        "for row in rows:",
+        "packages/frontend/tests/test_access_log_detail.py::test_log_page_shows_only_requested_rows",
     ),
     Mutation(
         "api-slug",

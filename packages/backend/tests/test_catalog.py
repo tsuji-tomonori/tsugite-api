@@ -61,7 +61,7 @@ def test_existing_api_keeps_grants_when_named(portal):
     named_call.raise_for_status()
     assert named_call.json() == portal.get(legacy_path, headers=call).raise_for_status().json()
     audited = (
-        portal.get("/api/access-logs", headers=owner, params={"asset_id": asset_id})
+        portal.get("/api/access-logs", headers=user, params={"asset_id": asset_id})
         .raise_for_status()
         .json()
     )
@@ -249,10 +249,11 @@ def test_withdrawal_and_audit_visibility(portal, monkeypatch):
     denied = portal.get(path, headers=call)
     assert denied.status_code == 403
     trace = {"request_id": denied.headers["x-request-id"], "action": "invoke.denied"}
-    for allowed in (owner, user, auditor):
+    for allowed in (user, auditor):
         assert [e["detail"] for e in portal.get("/api/audit", params=trace, headers=allowed).json()] == [
             "403"
         ]
-    assert portal.get("/api/audit", params=trace, headers=other).json() == []
+    for denied_actor in (owner, other):
+        assert portal.get("/api/audit", params=trace, headers=denied_actor).json() == []
     assert portal.get("/api/requests", headers=other, params={"asset_id": asset}).json() == []
     assert portal.get("/api/requests", headers=user).json()[0]["decision_reason"] == "依頼中止"
