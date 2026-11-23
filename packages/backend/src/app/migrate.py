@@ -47,11 +47,11 @@ def migrate(event):
             "GRANT SELECT, INSERT, UPDATE ON assets, access_rights, portal_members, alert_rules, directory_tree, affiliations, api_keys, credential_leases, credential_rules, inquiries TO tsugite_app"
         )
         conn.exec_driver_sql(
-            "GRANT SELECT, INSERT ON spec_releases, audit_events, invocation_logs, notices, notice_reads, invocation_units TO tsugite_app"
+            "GRANT SELECT, INSERT ON spec_releases, audit_events, invocation_logs, notices, notice_reads, invocation_units, asset_routes TO tsugite_app"
         )
         if chat_arn:
             if not conn.scalar(text("SELECT 1 FROM pg_roles WHERE rolname='tsugite_chat'")):
                 conn.exec_driver_sql("CREATE ROLE tsugite_chat WITH LOGIN")
             conn.exec_driver_sql(f"AWS IAM GRANT tsugite_chat TO '{chat_arn}'")
-            conn.exec_driver_sql("GRANT SELECT ON assets TO tsugite_chat")
+            conn.exec_driver_sql("GRANT SELECT ON assets, asset_routes TO tsugite_chat")
     return result

@@ -3,7 +3,68 @@ from copy import deepcopy
 from app.apis.gateway import allowed_path, operation_template
 from pytest_given import given, scenario, then, when
 
-from tests.support.catalog import FORM, SPEC, headers
+from tests.support.catalog import FORM, SPEC, approved, headers
+
+
+def test_api_slug_is_unique_and_fixed(portal):
+    """API識別名が必須かつ一意で、登録後に変更や再利用ができない。"""
+    owner = headers(portal, "provider")
+    no_slug = {key: value for key, value in FORM.items() if key != "slug"}
+    assert portal.post("/api/apis", headers=owner, json=no_slug).status_code == 422
+    for invalid in ("Stock-Lookup", "stock/lookup", "a" * 32):
+        assert portal.post("/api/apis", headers=owner, json={**FORM, "slug": invalid}).status_code == 422
+    original = portal.post("/api/apis", headers=owner, json=FORM).raise_for_status().json()
+    assert original["slug"] == "stock-lookup"
+    conflict = portal.post("/api/apis", headers=owner, json={**FORM, "name": "別の商品"})
+    assert conflict.status_code == 409
+    assert "このAPI識別名はすでに使われています" in conflict.text
+    other = portal.post("/api/apis", headers=owner, json={**FORM, "slug": "stock-availability"})
+    assert other.raise_for_status().json()["id"] != original["id"]
+    url = "/api/apis/" + original["id"]
+    params = {"revision": original["revision"]}
+    assert (
+        portal.put(url, headers=owner, params=params, json={**FORM, "slug": "renamed"}).status_code
+        == 409
+    )
+    edited = portal.put(url, headers=owner, params=params, json={**FORM, "name": "在庫照会"}).json()
+    assert edited["slug"] == original["slug"]
+    portal.delete(url, headers=owner, params={"revision": edited["revision"]}).raise_for_status()
+    assert portal.post("/api/apis", headers=owner, json=FORM).status_code == 409
+
+
+def test_existing_api_keeps_grants_when_named(portal):
+    """既存商品に識別名を加えても利用権が残り、識別名と従来のUUIDで同じAPIを呼べる。"""
+    from sqlalchemy.orm import Session
+    from tsugite_db.models import AssetRoute
+    from tsugite_db.session import engine
+
+    owner, user = headers(portal, "provider"), headers(portal, "consumer")
+    asset_id, address, path = approved(portal, owner, user)
+    legacy_path = path.replace(FORM["slug"], asset_id)
+    with Session(engine()) as db:
+        previous = db.get_one(AssetRoute, asset_id)
+        db.delete(previous)
+        db.commit()
+    item = portal.get(address, headers=owner).raise_for_status().json()
+    assert item["slug"] is None
+    assert portal.get(legacy_path, headers=user).status_code == 200
+    assert portal.get(path, headers=user).status_code == 404
+
+    updated = (
+        portal.put(address, headers=owner, params={"revision": item["revision"]}, json=FORM)
+        .raise_for_status()
+        .json()
+    )
+    assert updated["published"] and updated["slug"] == FORM["slug"]
+    named_call = portal.get(path, headers=user)
+    named_call.raise_for_status()
+    assert named_call.json() == portal.get(legacy_path, headers=user).raise_for_status().json()
+    audited = (
+        portal.get("/api/access-logs", headers=owner, params={"asset_id": asset_id})
+        .raise_for_status()
+        .json()
+    )
+    assert any(row["request_id"] == named_call.headers["x-request-id"] for row in audited)
 
 
 @scenario("公開から取消まで、環境ごとの利用権限と監査を追跡する", tags=["CAT", "AUTH", "AUDIT"])

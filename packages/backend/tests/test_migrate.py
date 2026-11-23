@@ -39,5 +39,5 @@ def test_grants_public_tables_without_altering_the_schema(monkeypatch, chat):
     assert any(s.startswith("GRANT SELECT, INSERT, UPDATE ON assets,") for s in statements)
     assert any(s.startswith("GRANT SELECT, INSERT ON spec_releases, audit_events,") for s in statements)
     chat_grants = [s for s in statements if s.startswith("GRANT ") and s.endswith(" TO tsugite_chat")]
-    assert chat_grants == (["GRANT SELECT ON assets TO tsugite_chat"] if chat else [])
+    assert chat_grants == (["GRANT SELECT ON assets, asset_routes TO tsugite_chat"] if chat else [])
     assert (f"AWS IAM GRANT tsugite_chat TO '{chat_arn}'" in statements) == chat

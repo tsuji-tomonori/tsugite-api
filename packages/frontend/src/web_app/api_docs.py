@@ -244,8 +244,7 @@ def try_operation(spec, asset, bindings, method, path, params, body, prefix):
                     headers["Content-Type"] = media
                     opts["body"] = text
             headers.update(await credential_headers(key))
-            segments = [quote(part, safe="") for part in (asset["id"], env, project)]
-            result = await pyfetch(client.prefix + "/invoke/" + "/".join(segments) + location, **opts)
+            result = await pyfetch(client.invocation_path(asset, env, project) + location, **opts)
             trace = result.headers.get("x-request-id", "")
             response = await result.string()
             if len(response) > 12000:

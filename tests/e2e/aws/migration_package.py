@@ -70,6 +70,12 @@ def main():
                 text("SELECT has_table_privilege(current_user, 'assets', 'INSERT')")
             )
             assert connection.scalar(
+                text("SELECT has_table_privilege(current_user, 'asset_routes', 'INSERT')")
+            )
+            assert not connection.scalar(
+                text("SELECT has_table_privilege(current_user, 'asset_routes', 'UPDATE')")
+            )
+            assert connection.scalar(
                 text("SELECT has_table_privilege(current_user, 'audit_events', 'INSERT')")
             )
             assert not connection.scalar(
@@ -83,6 +89,7 @@ def main():
             connection.exec_driver_sql("RESET ROLE")
             connection.exec_driver_sql("SET ROLE tsugite_chat")
             connection.execute(text("SELECT id, name FROM assets LIMIT 0"))
+            connection.execute(text("SELECT asset_id, slug FROM asset_routes LIMIT 0"))
             assert not connection.scalar(
                 text("SELECT has_table_privilege(current_user, 'assets', 'INSERT')")
             )
