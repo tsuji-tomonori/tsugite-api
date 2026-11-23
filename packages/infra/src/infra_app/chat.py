@@ -56,7 +56,6 @@ class PortalChat(Construct):
             },
             memory_size=768,
             timeout=Duration.seconds(145),
-            reserved_concurrent_executions=4,
             retry_attempts=0,
             max_event_age=Duration.minutes(2),
         )
@@ -100,7 +99,6 @@ class PortalChat(Construct):
                 memory_size=3008,  # 配備先アカウントの関数あたりの上限（MB）
                 ephemeral_storage_size=Size.mebibytes(512),
                 timeout=Duration.seconds(timeout),
-                reserved_concurrent_executions=4,
             )
             NagSuppressions.add_resource_suppressions(
                 inference,
