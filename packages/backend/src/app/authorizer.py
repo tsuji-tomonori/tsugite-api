@@ -13,7 +13,7 @@ from app.apis.governance.keys import invocation_actor
 from app.core.credential_policy import check_operation
 from app.core.diagnostics import OperationalRepair, asset_object, emit, invocation_details
 from app.core.log_record import INVOKE_ROUTE
-from app.core.workspace import attribute, private_project
+from app.core.workspace import attribute, private_project, retired_units
 
 
 def handler(event, context):
@@ -56,6 +56,7 @@ def authorize_event(event, fields):
             if exc.status_code >= 500:
                 fields.update(failed=True, reason="authentication_service_error")
             return {"isAuthorized": False}
+        project = retired_units(db).get(project, project)
         asset = None
         try:
             asset = invocation_asset(db, key)

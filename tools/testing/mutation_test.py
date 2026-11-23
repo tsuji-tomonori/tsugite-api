@@ -25,12 +25,28 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
+        "backend",
+        "移管元の識別子が組織一覧に復活する",
+        "packages/backend/src/app/core/workspace.py",
+        "return {k: v for k, v in base.items() if k not in retired_units(db)}",
+        "return base",
+        "packages/backend/tests/test_unit_lifecycle.py::test_project_transfer",
+    ),
+    Mutation(
         "frontend",
         "同じ問い合わせを再送するときに受付番号を振り直す",
         "packages/frontend/src/web_app/inquiry_form.py",
         'if state.get("draft") != question:',
         "if True:",
         "packages/frontend/tests/test_inquiry_form.py::test_retry_reuses_pending_inquiry_id",
+    ),
+    Mutation(
+        "frontend",
+        "ガイドの画面例を操作可能にする",
+        "packages/frontend/src/web_app/guide_views.py",
+        'classes="guide-preview", inert=True',
+        'classes="guide-preview", inert=False',
+        "packages/frontend/tests/test_components.py::test_each_guide_renders_inert_example",
     ),
     Mutation(
         "api-slug",

@@ -10,6 +10,7 @@ from . import (
     notifications,
     observability,
     policies,
+    unit_lifecycle,
 )
 
 router = APIRouter()
@@ -23,5 +24,6 @@ for feature in (
     notifications,
     observability,
     policies,
+    unit_lifecycle,
 ):
     router.include_router(feature.router)

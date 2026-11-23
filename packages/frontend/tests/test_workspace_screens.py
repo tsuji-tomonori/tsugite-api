@@ -86,6 +86,22 @@ def test_scoped_monitor_and_edit_routes(portal_module, monkeypatch):
     assert not dom.getElementsByTagName("table") and not dom.getElementsByTagName("meter")
 
 
+def test_unit_retirement_actions_are_admin_only(portal_module):
+    """管理者にだけ移管・削除を表示し、移管先には同種の別組織だけを提示する。"""
+    data = directory()
+    page = screen(portal_module, "departments/detail/d00", data)
+    assert "部署を削除" not in render(page.view)[1].toxml()
+    data["admin"] = True
+    _, dom = render(page.view)
+    html = dom.toxml()
+    assert "部署を移管" in html and "部署を削除" in html
+    selector = next(
+        s for s in dom.getElementsByTagName("select") if s.getAttribute("id") == "unit-destination"
+    )
+    ids = {option.getAttribute("value") for option in selector.getElementsByTagName("option")}
+    assert "d01" in ids and "d00" not in ids and "p" not in ids
+
+
 def test_project_monitor_shows_members_as_a_table(portal_module, monkeypatch):
     """プロジェクト単位の集計であることを案内し、所属メンバーを4列の表で表示する。"""
     data = directory()
