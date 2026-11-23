@@ -87,9 +87,18 @@ def test_release_history(portal_session: PortalSession) -> None:
     navigate(page, "APIカタログ")
     page.get_by_role("link", name="在庫", exact=True).click()
     history = page.locator("details").filter(has=page.locator("summary", has_text="公開版の変更履歴"))
+    table = history.get_by_role("table", name="公開版の変更履歴")
+    expect(table).to_be_hidden()
     history.locator("summary").click()
-    for expected in ("第1版 · API 1.0", "第2版 · API 2.0", "追加　GET /health", "稼働状況を追加"):
-        expect(history).to_contain_text(expected)
+    expect(table.get_by_role("columnheader")).to_have_text(
+        ["公開版", "公開日", "APIバージョン", "OpenAPI", "変更内容", "提供者の説明"]
+    )
+    first = table.get_by_role("row").filter(has=page.get_by_role("rowheader", name="第1版"))
+    second = table.get_by_role("row").filter(has=page.get_by_role("rowheader", name="第2版"))
+    expect(first.get_by_role("cell", name="1.0", exact=True)).to_be_visible()
+    expect(second.get_by_role("cell", name="2.0", exact=True)).to_be_visible()
+    expect(second.get_by_role("listitem")).to_have_text("GET /health")
+    expect(second.get_by_role("cell", name="稼働状況を追加")).to_be_visible()
     capture(page, "versions", "公開版ごとの仕様と追加された操作")
 
 

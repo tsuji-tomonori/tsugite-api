@@ -79,6 +79,51 @@ def test_identity_and_delegated_token(portal_module, monkeypatch):
     assert token == {"Authorization": "Bearer delegated", "X-Tsugite-Screen": "console"}
 
 
+def test_trial_uses_approved_environments_and_reuses_personal_credential(portal_module, monkeypatch):
+    """承認済み環境だけを表示し、同時実行でも同じ商品の個人認証情報を再利用する。"""
+    docs = portal_module("api_docs")
+    asset = {"id": "stock", "name": "在庫", "environments": ["sandbox", "staging"]}
+    grant = {"asset_id": "stock", "project": "finance", "environment": "sandbox", "status": "approved"}
+    mine = dict(grant, project="personal-alice", environment="staging", subject="alice")
+    rights = docs.approved_rights(
+        asset,
+        [
+            grant,
+            grant,
+            mine,
+            dict(mine, subject="bob"),
+            dict(grant, status="pending"),
+            dict(grant, environment="production"),
+            dict(grant, asset_id="unrelated"),
+        ],
+        "alice",
+    )
+    assert docs.trial_bindings(rights, "personal-alice") == [
+        (None, "sandbox", "finance", "finance · 検証"),
+        (None, "staging", "personal-alice", "個人利用 · 準本番"),
+    ]
+    api = AsyncMock(return_value={"id": "trial", "mode": "bearer"})
+    monkeypatch.setattr(docs.client, "api", api)
+    issue = docs.trial_key_issuer(asset)
+
+    async def call_twice():
+        return await asyncio.gather(issue("finance"), issue("finance"))
+
+    assert asyncio.run(call_twice()) == [{"id": "trial", "mode": "bearer"}] * 2
+    api.assert_awaited_once_with(
+        "/credentials",
+        "POST",
+        {
+            "name": "API Docs · 在庫",
+            "project": "finance",
+            "kind": "personal",
+            "mode": "bearer",
+            "api_ids": ["stock"],
+            "ttl_minutes": 1,
+        },
+    )
+
+
 def test_manual_request_uses_only_entered_headers(portal_module, monkeypatch):
     """URL直接指定では入力したヘッダーと本文だけを使い、Cookieとリダイレクトを無効にする。"""
     manual = portal_module("manual_request")

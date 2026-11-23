@@ -1,10 +1,6 @@
 .docs-actions { margin-block: 1.5rem; }
-.docs-layout { display: flex; flex-direction: column; gap: 1.5rem; }
-.docs-content, .docs-menu { width: 100%; min-width: 0; }
-.docs-menu { order: -1; display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; }
-.docs-menu button { color: var(--ink); background: var(--page); border: 1px solid var(--field-edge); border-radius: 4px; padding: .5rem 1rem; min-height: 44px; }
 .doc-operation { border-block-start: 1px solid var(--line); scroll-margin-top: 1rem; }
-.doc-operation > summary { font-weight: 700; padding-block: 1rem; }
+.doc-operation > summary { font-weight: 700; overflow-wrap: anywhere; padding-block: 1rem; }
 .operation-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(1.5rem, 3vw, 3rem); align-items: start; padding-block: .5rem 1.5rem; }
 .operation-definition { min-width: 0; }
 .operation-definition h3 { margin: 1.75rem 0 .75rem; }
@@ -18,6 +14,16 @@
 .operation-console [hidden] { display: none; }
 .offer-editor, .application-field { border-inline-start: 2px solid var(--line); margin-block: .75rem; padding-inline-start: 1rem; }
 .terms-text { white-space: pre-wrap; }
+.release-history > summary span { padding-inline-start: .5rem; }
+.release-table { margin-block-start: 1rem; max-height: none; }
+.release-table table { min-width: 44rem; }
+.release-table th, .release-table td { vertical-align: top; }
+.release-table th, .release-table time { white-space: nowrap; }
+.release-table dl, .release-table dd, .release-table ul { margin: 0; }
+.release-table dt { font-weight: 700; }
+.release-table dd + dt { margin-block-start: .5rem; }
+.release-table ul { padding-inline-start: 1.25rem; }
+.release-table li, .release-table .terms-text { overflow-wrap: anywhere; }
 @media (max-width: 960px) {
   .operation-columns { grid-template-columns: minmax(0, 1fr); }
 }
