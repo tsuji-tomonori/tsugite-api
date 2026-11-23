@@ -267,7 +267,7 @@ def test_console_visual_modes(demo_url: str, request: pytest.FixtureRequest) -> 
 
 
 def test_governance_console(demo_url: str, request: pytest.FixtureRequest) -> None:
-    """3役で利用状況、ユーザー管理、通知、ログ保存、掲載終了を確認する"""
+    """3役で利用状況、ユーザー管理、名称で選んだ宛先への通知、ログ保存、掲載終了を確認する。"""
     import json
     import re
 
@@ -278,8 +278,16 @@ def test_governance_console(demo_url: str, request: pytest.FixtureRequest) -> No
     from tests.support.catalog_journey import browser_evidence, navigate
 
     with httpx.Client(base_url=demo_url, trust_env=False) as api, sync_playwright() as pw:
-        owner, consumer = (headers(api, r) for r in ("provider", "consumer"))
+        operator, owner, consumer = (headers(api, r) for r in ("admin", "provider", "consumer"))
         key, _, path = approved(api, owner, consumer)
+        api.put(
+            "/api/workspace/units/sales", headers=operator, json={"name": "営業部", "kind": "department"}
+        ).raise_for_status()
+        api.put(
+            "/api/workspace/units/finance",
+            headers=operator,
+            json={"name": "受注から出荷までの納期改善", "kind": "project", "parent": "sales"},
+        ).raise_for_status()
         browser = pw.chromium.launch(executable_path=os.getenv("CHROMIUM_PATH") or None)
         admin, provider, user = (
             browser.new_page(viewport={"width": 1440, "height": 960}) for _ in range(3)
@@ -307,9 +315,20 @@ def test_governance_console(demo_url: str, request: pytest.FixtureRequest) -> No
             capture(admin, "members", "管理者が追加した利用者と所属プロジェクト")
             row.get_by_role("button", name="削除", exact=True).click()
             expect(row).to_have_count(0)
-            for view, label in ((admin, "管理者からのお知らせ"), (provider, "在庫API更新予定")):
+            recipient = "営業部 / 受注から出荷までの納期改善"
+            for view, label, field, option, expected in (
+                (admin, "管理者からのお知らせ", "送信先", recipient, "finance"),
+                (
+                    provider,
+                    "在庫API更新予定",
+                    "送信先のAPIと利用プロジェクト",
+                    f"在庫 · {recipient} · 検証",
+                    f"{key}/finance/sandbox",
+                ),
+            ):
                 view.locator(".bell-button").click()
                 view.get_by_text("利用者に通知を送る").click()
+                assert view.get_by_label(field, exact=True).select_option(label=option) == [expected]
                 view.get_by_label("件名").fill(label)
                 view.get_by_label("お知らせ本文").fill("検証環境の利用時間を変更します。")
                 view.get_by_role("button", name="通知を送信", exact=True).click()

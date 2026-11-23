@@ -42,6 +42,24 @@ MUTATIONS = (
     ),
     Mutation(
         "frontend",
+        "管理者の通知先にプロジェクト名を表示しない",
+        "packages/frontend/src/web_app/portal_pages/notifications.py",
+        '[(p, names.get(p, p)) for p in me["known_projects"]]',
+        '[(p, p) for p in me["known_projects"]]',
+        "packages/frontend/tests/test_notification_recipients.py::"
+        "test_notification_recipient_dropdown_uses_display_names",
+    ),
+    Mutation(
+        "frontend",
+        "提供者の通知先にプロジェクト名を表示しない",
+        "packages/frontend/src/web_app/management_targets.py",
+        "r.get('project_label', r['project'])",
+        "r['project']",
+        "packages/frontend/tests/test_notification_recipients.py::"
+        "test_notification_recipient_dropdown_uses_display_names",
+    ),
+    Mutation(
+        "frontend",
         "ガイドの画面例を操作可能にする",
         "packages/frontend/src/web_app/guide_views.py",
         'classes="guide-preview", inert=True',
