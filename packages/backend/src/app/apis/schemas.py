@@ -84,14 +84,12 @@ ApiSlug = Annotated[
 ]
 
 
-#: APIのカタログ登録内容
-class Register(Input):
+#: APIのカタログ登録と編集に共通する項目
+class ListingInput(Input):
     #: 提供プロジェクトの識別子
     owner: str = Field(min_length=1, max_length=63)
     #: API名
     name: str = Field(min_length=1, max_length=120)
-    #: 呼び出しURLで使うAPI識別名
-    slug: ApiSlug | None = None
     #: APIの用途・概要
     summary: str = Field(min_length=1, max_length=1000)
     #: 環境別の接続先
@@ -106,8 +104,14 @@ class Register(Input):
     release_note: str = Field("", max_length=2000)
 
 
+#: カタログに登録済みのAPIを編集する入力
+class Register(ListingInput):
+    #: 呼び出しURLで使うAPI識別名
+    slug: ApiSlug | None = None
+
+
 #: APIをカタログへ新規登録する入力
-class NewListing(Register):
+class NewListing(ListingInput):
     #: 呼び出しURLで使う一意なAPI識別名
     slug: ApiSlug
 
