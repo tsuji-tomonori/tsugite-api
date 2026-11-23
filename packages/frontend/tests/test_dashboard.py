@@ -11,7 +11,7 @@ from puepy.core import Tag
 
 
 def test_dashboard_recovers_from_metrics_failure(portal_module, monkeypatch):
-    """管理者のメトリクス取得が失敗しても件数とログを表示し、再読み込みでグラフが戻る。"""
+    """メトリクス取得が失敗しても件数とログを表示し、再読み込みで業務メニューのない利用状況が表示される。"""
     client = portal_module("client")
     js = sys.modules["js"]
     js.document = Document()
@@ -68,3 +68,5 @@ def test_dashboard_recovers_from_metrics_failure(portal_module, monkeypatch):
         assert not root.inert and not root.hasAttribute("aria-busy")
         recovered = markup()
         assert "time-chart" in recovered and "利用状況を再読み込み" not in recovered
+        assert "業務メニュー" not in recovered
+        assert "メトリクスを開く" in recovered and "アクセスログを開く" in recovered
