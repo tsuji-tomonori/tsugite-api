@@ -25,6 +25,14 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
+        "backend",
+        "利用者のワークスペースに未所属のプロジェクトを含める",
+        "packages/backend/src/app/apis/governance/directory.py",
+        '"units": visible_units,',
+        '"units": list(tree.values()),',
+        "packages/backend/tests/test_org_access.py::test_workspace_project_visibility",
+    ),
+    Mutation(
         "infra",
         "モデル関数のメモリを配備先の上限より大きくする",
         "packages/infra/src/infra_app/chat.py",

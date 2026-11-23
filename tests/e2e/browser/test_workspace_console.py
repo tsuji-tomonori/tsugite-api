@@ -11,6 +11,7 @@ from playwright.sync_api import Page, expect, sync_playwright
 from tests.support.catalog import approved, headers
 from tests.support.catalog_journey import browser_evidence
 from tests.support.portal_server import serve_portal
+from tests.support.screenshots import capture_image
 
 
 def menu(page: Page, label: str | re.Pattern[str]) -> None:
@@ -179,4 +180,27 @@ def test_workspace_key_console(tmp_path: Path, request: pytest.FixtureRequest) -
             admin.go_back()
             expect(names).to_have_count(10)
             assert names.all_text_contents() == first_page
+        browser.close()
+
+
+def test_consumer_project_directory(tmp_path: Path, request: pytest.FixtureRequest) -> None:
+    """finance の利用者には所属先が1件だけ表示され、未所属の詳細URLを開いても情報は表示されない"""
+    env = {**os.environ, "TSUGITE_DEMO": "1", "DATABASE_URL": "sqlite:///" + str(tmp_path / "org.db")}
+    with serve_portal(env) as url, sync_playwright() as pw:
+        browser = pw.chromium.launch(executable_path=os.getenv("CHROMIUM_PATH") or None)
+        page = browser.new_page()
+        page.goto(url)
+        page.get_by_role("button", name="利用チーム", exact=True).click()
+        expect(page.get_by_role("heading", name="どのAPIをお探しですか？")).to_be_visible()
+        menu(page, "プロジェクト")
+        projects = page.get_by_role("table", name="プロジェクト一覧")
+        expect(projects.locator("tbody tr")).to_have_count(1)
+        own = projects.get_by_role("link", name="finance", exact=True)
+        expect(own).to_be_visible()
+        capture_image(request.node, "workspace", page, "own-projects", "finance だけに所属する利用者の一覧")
+        own.click()
+        expect(page.get_by_role("heading", name="finance", exact=True)).to_be_visible()
+        page.goto(url + "/#/projects/detail/supply")
+        expect(page.get_by_text("対象が見つかりません。", exact=True)).to_be_visible()
+        expect(page.get_by_role("heading", name="supply", exact=True)).to_have_count(0)
         browser.close()

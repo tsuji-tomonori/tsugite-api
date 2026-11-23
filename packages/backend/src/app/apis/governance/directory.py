@@ -110,14 +110,29 @@ def manages(actor, tree, key):
 def workspace(actor: User, db: DB):
     tree = units(db)
     people, rows = roster(db)
-    own = [r for r in rows if r["subject"] == actor.subject]
-    visible = [r for r in rows if r["subject"] == actor.subject or manages(actor, tree, r["unit_id"])]
+    managed = {key for key in tree if manages(actor, tree, key)}
+    visible_units = [
+        unit
+        for key, unit in tree.items()
+        if unit["kind"] == "department" or key in actor.projects or key in managed
+    ]
+    # 招待時のプロジェクト名が名簿に残っていても、現在の所属には加えない。
+    own_units = set(actor.projects) | {
+        r["unit_id"]
+        for r in rows
+        if r["subject"] == actor.subject and r["unit_id"] in actor.departments
+    }
+    visible = [
+        r
+        for r in rows
+        if r["unit_id"] in managed or (r["subject"] == actor.subject and r["unit_id"] in own_units)
+    ]
     people_ids = set(people) if actor.admin else {r["subject"] for r in visible}
     return {
         "admin": actor.admin,
-        "units": list(tree.values()),
-        "leads": sorted(k for k in tree if manages(actor, tree, k)),
-        "my_units": sorted(set(actor.projects) | {r["unit_id"] for r in own}),
+        "units": visible_units,
+        "leads": sorted(managed),
+        "my_units": sorted(own_units),
         "memberships": visible,
         "users": [{"subject": i, "username": people[i]} for i in sorted(people_ids)],
         "titles": sorted({r["title"] for r in visible if r["title"]}),

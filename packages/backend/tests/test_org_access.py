@@ -174,3 +174,60 @@ def test_invitation_respects_identity_source(portal):
             actor = populate(db, Actor(identity, frozenset(), frozenset(), False, False))
             assert (project in actor.owners) == (project == "new-project")
             assert (project in actor.projects) == (project == "new-project")
+
+
+def test_workspace_project_visibility(portal):
+    """利用者には有効な所属先だけを返し、兼務の追加と所属解除を同じセッションに反映する"""
+    admin, user = (headers(portal, role) for role in ("admin", "consumer"))
+
+    def workspace(identity):
+        return portal.get("/api/workspace", headers=identity).raise_for_status().json()
+
+    def project_ids(identity):
+        return {u["id"] for u in workspace(identity)["units"] if u["kind"] == "project"}
+
+    assert project_ids(admin) == {"finance", "supply"}
+    assert project_ids(user) == {"finance"}
+    assert portal.get("/api/workspace/units/supply/usage", headers=user).status_code == 403
+
+    membership = "/api/workspace/memberships"
+    portal.put(
+        membership, headers=admin, json={"subject": "consumer", "unit_id": "supply"}
+    ).raise_for_status()
+    assert project_ids(user) == {"finance", "supply"}
+    for key in ("finance", "supply"):
+        portal.delete(
+            membership, headers=admin, params={"subject": "consumer", "unit_id": key}
+        ).raise_for_status()
+    assert project_ids(user) == set()
+    data = workspace(user)
+    assert data["my_units"] == [] and data["memberships"] == []
+
+
+def test_workspace_honors_current_groups(portal, monkeypatch):
+    """招待時の所属が名簿に残っても、現在のグループから外れたプロジェクトは返さない"""
+    member = (
+        portal.post(
+            "/api/members",
+            headers=headers(portal, "admin"),
+            json={"email": "former@example.org", "role": "consumer", "project": "finance"},
+        )
+        .raise_for_status()
+        .json()
+    )
+    monkeypatch.setitem(DEMO_GROUPS, member["subject"], [])
+    user = headers(portal, member["subject"])
+    data = portal.get("/api/workspace", headers=user).raise_for_status().json()
+    assert data["units"] == [] and data["my_units"] == [] and data["memberships"] == []
+
+
+def test_workspace_department_lead_projects(portal, monkeypatch):
+    """同じ部署の一般メンバーとリーダーで、配下のプロジェクトの閲覧範囲を区別する"""
+    admin, people = setup_people(portal, monkeypatch)
+    portal.delete(
+        "/api/workspace/memberships", headers=admin, params={"subject": "approver", "unit_id": "field"}
+    ).raise_for_status()
+    for person, expected in (("approver", {"field"}), ("neighbor", set())):
+        data = portal.get("/api/workspace", headers=people[person]).raise_for_status().json()
+        assert {u["id"] for u in data["units"] if u["kind"] == "project"} == expected
+        assert "field" not in data["my_units"]
