@@ -22,6 +22,7 @@ def test_publish_and_apply_from_product_page(tmp_path: Path, request: pytest.Fix
         owner.get_by_role("button", name="提供チーム", exact=True).click()
         navigate(owner, "提供するAPI")
         owner.get_by_role("button", name="APIを登録", exact=True).click()
+        owner.get_by_label("API識別名", exact=True).fill("stock-and-orders")
         for name in ("sandbox", "staging", "production"):
             owner.locator("#" + name).select_option("sample-" + name)
         prod = owner.locator(".offer-editor").last
