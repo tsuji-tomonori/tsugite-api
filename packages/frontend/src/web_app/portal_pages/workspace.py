@@ -2,6 +2,7 @@ from urllib.parse import unquote
 
 import client
 import credential_views
+import guide_examples as example
 import workspace_views as directory
 from js import window
 from portal_navigation import load
@@ -50,6 +51,14 @@ async def load_workspace(page):
                 ctx["workspace_usage"] = usage
 
 
+def usage_settings(unit, state):
+    with t.section(classes="box"):
+        t.h3("利用設定")
+        with t.div(classes="btn-grouping"):
+            btn("利用を再開" if unit["stopped"] else "利用を停止", toggle, unit)
+            credential_views.limit_view(state, field, btn, load, kind="units", identifier=unit["id"])
+
+
 def view():
     root, parts = location()
     kind, label = KINDS[root]
@@ -91,13 +100,7 @@ def view():
                 directory.link("モニタリング", directory.url(root, "monitor", unit["id"]), button=True)
         members_view(root, unit, data)
         if managed:
-            with t.section(classes="box"):
-                t.h3("利用設定")
-                with t.div(classes="btn-grouping"):
-                    btn("利用を再開" if unit["stopped"] else "利用を停止", toggle, unit)
-                    credential_views.limit_view(
-                        ctx, field, btn, load, kind="units", identifier=unit["id"]
-                    )
+            usage_settings(unit, ctx)
         if data["admin"]:
             directory.retirement_form(root, label, unit, by_id, paths)
         return
@@ -142,5 +145,18 @@ SCREENS = (
     list_screen("projects", 61),
     Screen("departments/", page_title, view, load_workspace, parent="departments"),
     Screen("projects/", page_title, view, load_workspace, parent="projects"),
-    Screen("workspace", "部署一覧", view, load_workspace, parent="departments"),
+    Screen(
+        "workspace",
+        "部署一覧",
+        view,
+        load_workspace,
+        parent="departments",
+        examples={
+            "limits": lambda: usage_settings(example.PROJECT, example.LIMIT),
+            "suspend": lambda: usage_settings(example.PROJECT, {"me": example.USER}),
+            "organization": lambda: membership_editor(
+                "projects", example.PROJECT, {"users": [example.USER], "memberships": []}, None, draft={}
+            ),
+        },
+    ),
 )

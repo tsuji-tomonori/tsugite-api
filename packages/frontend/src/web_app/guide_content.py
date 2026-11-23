@@ -1,4 +1,4 @@
-"""Task guides for the signed-in portal. Image names match the stable article IDs."""
+"""Task guides for the signed-in portal."""
 
 from dataclasses import dataclass
 

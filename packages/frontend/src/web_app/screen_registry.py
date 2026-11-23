@@ -1,7 +1,7 @@
 """画面モジュールからルートとナビゲーションを組み立てる。"""
 
 from collections.abc import Awaitable, Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from functools import cache
 from importlib import import_module
 from pkgutil import iter_modules
@@ -24,6 +24,8 @@ class Screen:
     own_heading: bool = False
     clear_on_load: tuple[str, ...] = ()
 
+    examples: dict[str, Callable[[], None]] = field(default_factory=dict)
+
     def page_title(self):
         return self.title() if callable(self.title) else self.title
 
@@ -40,6 +42,11 @@ def screens():
                 raise ValueError(f"画面のルートが重複しています: {screen.path}")
             by_path[screen.path] = screen
     return by_path
+
+
+@cache
+def guide_examples():
+    return {key: draw for screen in screens().values() for key, draw in screen.examples.items()}
 
 
 def resolve(path):

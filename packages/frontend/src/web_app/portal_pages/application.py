@@ -1,6 +1,7 @@
 from urllib.parse import quote
 
 import client
+import guide_examples as example
 import product_views
 from portal_navigation import go
 from portal_ui import btn, ctx, field, value
@@ -43,13 +44,16 @@ def application_page():
     if not a["published"]:
         t.p("このAPIは現在、新規の利用申請を受け付けていません。")
         return
+    application_panel(a, ctx["me"])
+
+
+def application_panel(a, me):
     with t.section(classes="box"):
         field(
             "利用プロジェクト",
             "project",
             required=True,
-            options=[(p, p) for p in ctx["me"]["projects"]]
-            + [(ctx["me"]["personal_project"], "個人ワークスペース")],
+            options=[(p, p) for p in me["projects"]] + [(me["personal_project"], "個人ワークスペース")],
         )
         field(
             "申請対象",
@@ -62,4 +66,13 @@ def application_page():
         btn("申請する", apply, a, primary=True)
 
 
-SCREENS = (Screen("apply/", "利用申請", application_page, load_application, own_heading=True),)
+SCREENS = (
+    Screen(
+        "apply/",
+        "利用申請",
+        application_page,
+        load_application,
+        own_heading=True,
+        examples={"apply": lambda: application_panel(example.ASSET, example.USER)},
+    ),
+)
