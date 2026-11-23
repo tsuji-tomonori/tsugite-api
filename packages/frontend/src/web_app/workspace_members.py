@@ -31,15 +31,32 @@ def members_view(root, unit, data):
                 link("メンバーを追加", url(root, "member", key), button=True)
         if not rows:
             t.p("表示できるメンバーはいません。")
-        for row in rows:
-            subject = row["subject"]
-            with t.div(classes="compact-row"):
-                t.strong(row.get("username") or names.get(subject, subject))
-                t.span(row.get("title") or "役職未設定")
-                t.span("リーダー" if row["leader"] else "メンバー")
+            return
+        with (
+            t.div(classes="resource-table membership-table", tabindex="0"),
+            t.table(aria_label="直接の所属メンバー"),
+        ):
+            with t.thead(), t.tr():
+                for label in ("メールアドレス", "名前", "担当ロール"):
+                    t.th(label, scope="col")
                 if data["admin"]:
-                    link("所属を編集", url(root, "member", key, subject), button=True)
-                    btn("所属を解除", remove, row)
+                    t.th("操作", scope="col")
+            with t.tbody():
+                for row in rows:
+                    subject = row["subject"]
+                    username = row.get("username") or names.get(subject, subject)
+                    email, name = (username, "—") if "@" in username else ("—", username)
+                    with t.tr():
+                        t.td(email)
+                        t.td(name)
+                        with t.td():
+                            t.strong("リーダー" if row["leader"] else "メンバー")
+                            if row.get("title"):
+                                t.div(row["title"], classes="muted")
+                        if data["admin"]:
+                            with t.td(), t.div(classes="membership-actions"):
+                                link("所属を編集", url(root, "member", key, subject), button=True)
+                                btn("所属を解除", remove, row)
 
 
 def membership_editor(root, unit, data, subject, *, draft=None):

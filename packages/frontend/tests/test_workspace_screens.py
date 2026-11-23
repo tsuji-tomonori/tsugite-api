@@ -53,6 +53,54 @@ def test_directory_pages_filter_before_paginating(portal_module):
     assert "#/departments/detail/" not in dom.toxml()
 
 
+def test_direct_members_have_aligned_table_columns(portal_module):
+    """直接所属の利用者をメールアドレス・名前・担当ロールに分け、管理者にだけ操作列を表示する。"""
+    data = directory()
+    data["admin"] = True
+    data["users"] = [{"subject": "bob", "username": "bob"}]
+    data["memberships"] = [
+        {
+            "subject": "alice",
+            "username": "long.alias@example.test",
+            "unit_id": "p",
+            "title": "在庫担当",
+            "leader": True,
+        },
+        {"subject": "bob", "unit_id": "p", "leader": False},
+        {"subject": "other", "unit_id": "d00", "leader": False},
+    ]
+    page = screen(portal_module, "projects/detail/p", data)
+    _, dom = render(page.view)
+    table = dom.getElementsByTagName("table")[0]
+    assert table.getAttribute("aria-label") == "直接の所属メンバー"
+    assert [header.firstChild.data for header in table.getElementsByTagName("th")] == [
+        "メールアドレス",
+        "名前",
+        "担当ロール",
+        "操作",
+    ]
+    first, second = table.getElementsByTagName("tbody")[0].getElementsByTagName("tr")
+    for row, email, name, role, subject in (
+        (first, "long.alias@example.test", "—", "リーダー", "alice"),
+        (second, "—", "bob", "メンバー", "bob"),
+    ):
+        cells = row.getElementsByTagName("td")
+        assert len(cells) == 4
+        assert [cell.firstChild.data for cell in cells[:2]] == [email, name]
+        assert cells[2].getElementsByTagName("strong")[0].firstChild.data == role
+        assert cells[3].getElementsByTagName("a")[0].getAttribute("href") == (
+            "#/projects/member/p/" + subject
+        )
+        assert cells[3].getElementsByTagName("button")[0].firstChild.data == "所属を解除"
+    assert "在庫担当" in first.getElementsByTagName("td")[2].toxml()
+
+    data["admin"] = False
+    _, dom = render(page.view)
+    table = dom.getElementsByTagName("table")[0]
+    assert len(table.getElementsByTagName("th")) == 3
+    assert not table.getElementsByTagName("a") and not table.getElementsByTagName("button")
+
+
 def test_scoped_monitor_and_edit_routes(portal_module, monkeypatch):
     """権限と種類が一致する対象だけの利用統計を取得し、管理者専用の編集フォームを分離する。"""
     data = directory()

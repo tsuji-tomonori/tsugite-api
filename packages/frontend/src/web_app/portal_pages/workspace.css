@@ -9,6 +9,8 @@
 }
 .resource-table thead { background: var(--bar); }
 .resource-table tbody th a { display: inline-block; padding-block: 8px; }
+.membership-table th, .membership-actions { white-space: nowrap; }
+.membership-actions { display: inline-flex; gap: var(--action-gap); }
 .field-actions { margin-block: 0 24px; }
 .usage-breakdowns { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); gap: 16px; }
 .usage-bars { margin: 16px 0 0; padding: 0; list-style: none; }

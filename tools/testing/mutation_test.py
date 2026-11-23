@@ -328,6 +328,14 @@ MUTATIONS = (
     ),
     Mutation(
         "frontend",
+        "直接所属のメールアドレスを名前の列に表示する",
+        "packages/frontend/src/web_app/workspace_members.py",
+        'email, name = (username, "—") if "@" in username else ("—", username)',
+        'email, name = "—", username',
+        "packages/frontend/tests/test_workspace_screens.py::test_direct_members_have_aligned_table_columns",
+    ),
+    Mutation(
+        "frontend",
         "画面を配布するときにサブディレクトリを省く",
         "tools/packaging/build_frontend.py",
         'source.rglob("*.py")',
