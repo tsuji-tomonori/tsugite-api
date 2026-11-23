@@ -101,6 +101,8 @@ def view():
         members_view(root, unit, data)
         if managed:
             usage_settings(unit, ctx)
+        if data["admin"]:
+            directory.retirement_form(root, label, unit, by_id, paths)
         return
     directory.link("詳細に戻る", detail)
     if parts[0] == "edit" and len(parts) == 2 and data["admin"]:

@@ -1,7 +1,6 @@
 from app.apis import outputs
 from app.apis.catalog.common import DB, User
-from app.core.config import targets
-from app.core.workspace import private_project, units
+from app.core.workspace import private_project, units, workspace_targets
 from fastapi import APIRouter
 
 router = APIRouter()
@@ -25,7 +24,7 @@ def me(actor: User, db: DB):
         "auditor": actor.auditor,
         "targets": {
             k: {"owner": v.owner, "environment": v.environment}
-            for k, v in targets().items()
+            for k, v in workspace_targets(db).items()
             if v.owner in actor.owners
         },
     }
