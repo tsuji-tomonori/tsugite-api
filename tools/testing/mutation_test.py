@@ -57,6 +57,14 @@ MUTATIONS = (
         "packages/frontend/tests/test_api_client.py::test_manual_request_uses_only_entered_headers",
     ),
     Mutation(
+        "backend",
+        "利用者のワークスペースに未所属のプロジェクトを含める",
+        "packages/backend/src/app/apis/governance/directory.py",
+        '"units": visible_units,',
+        '"units": list(tree.values()),',
+        "packages/backend/tests/test_org_access.py::test_workspace_project_visibility",
+    ),
+    Mutation(
         "frontend",
         "curlコマンドから本文を除く",
         "packages/frontend/src/web_app/api_docs.py",
