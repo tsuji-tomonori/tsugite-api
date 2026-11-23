@@ -3,6 +3,7 @@ import hmac
 import json
 import secrets
 from typing import Literal
+from urllib.parse import parse_qsl
 
 from app.apis import outputs
 from app.apis.catalog.common import DB, User
@@ -15,6 +16,7 @@ from app.core.access_token import encode, machine_actor, may_use
 from app.core.auth import check_member, identify
 from app.core.workspace import populate, private_project, stopped, units
 from fastapi import APIRouter, HTTPException, Request, Response
+from fastapi.responses import JSONResponse
 from pydantic import Field, SecretStr
 from tsugite_db.models import Asset, CredentialLease, PortalKey, new_id
 
@@ -205,6 +207,103 @@ def portal_token(
     audit(db, actor, request, "token.portal", key.project, key.id)
     db.commit()
     return result
+
+
+ACCESS_TOKEN_TYPE = "urn:ietf:params:oauth:token-type:access_token"
+TOKEN_EXCHANGE = "urn:ietf:params:oauth:grant-type:token-exchange"
+
+
+#: 利用者のログイン情報を選択した認証情報の短期トークンに交換する
+@router.post(
+    "/credentials/{key_id}/token-exchange",
+    responses={200: {"model": outputs.ExchangedToken}},
+    openapi_extra={
+        "x-design-auth": "フォームのsubject_tokenにログイン済み利用者のアクセストークンを指定し、本人が利用可能な認証情報に交換します。",
+        "requestBody": {
+            "required": True,
+            "content": {
+                "application/x-www-form-urlencoded": {
+                    "schema": {
+                        "type": "object",
+                        "required": ["grant_type", "subject_token_type", "subject_token"],
+                        "properties": {
+                            "grant_type": {
+                                "title": "トークン交換方式",
+                                "type": "string",
+                                "enum": [TOKEN_EXCHANGE],
+                            },
+                            "subject_token_type": {
+                                "title": "交換元のトークン種別",
+                                "type": "string",
+                                "enum": [ACCESS_TOKEN_TYPE],
+                            },
+                            "subject_token": {
+                                "title": "利用者のアクセストークン",
+                                "type": "string",
+                                "format": "password",
+                            },
+                            "requested_token_type": {
+                                "title": "希望するトークン種別",
+                                "type": "string",
+                                "enum": [ACCESS_TOKEN_TYPE],
+                            },
+                        },
+                    }
+                }
+            },
+        },
+    },
+)
+async def oauth_exchange(
+    #: ポータルで選択した認証情報の識別子
+    key_id: str,
+    request: Request,
+    db: DB,
+    response: Response,
+):
+    cache = {"Cache-Control": "no-store", "Pragma": "no-cache"}
+
+    def error(code, description, status=400):
+        return JSONResponse({"error": code, "error_description": description}, status, headers=cache)
+
+    if (
+        request.headers.get("content-type", "").partition(";")[0].lower()
+        != "application/x-www-form-urlencoded"
+    ):
+        return error("invalid_request", "フォーム形式で送信してください")
+    try:
+        pairs = parse_qsl((await request.body()).decode(), strict_parsing=True, max_num_fields=8)
+    except ValueError:
+        return error("invalid_request", "交換パラメータが不正です")
+    form = dict(pairs)
+    if len(form) != len(pairs) or form.keys() - {
+        "grant_type",
+        "subject_token_type",
+        "subject_token",
+        "requested_token_type",
+    }:
+        return error("invalid_request", "未対応または重複したパラメータです")
+    if form.get("grant_type") != TOKEN_EXCHANGE:
+        return error("unsupported_grant_type", "トークン交換を指定してください")
+    if (
+        form.get("subject_token_type") != ACCESS_TOKEN_TYPE
+        or form.get("requested_token_type", ACCESS_TOKEN_TYPE) != ACCESS_TOKEN_TYPE
+        or not form.get("subject_token")
+    ):
+        return error("invalid_request", "利用者のアクセストークンが必要です")
+    try:
+        actor = populate(db, identify(form["subject_token"]))
+        request.state.actor_id = actor.subject
+        check_member(db, actor)
+        if actor.machine:
+            raise unavailable()
+        issued = portal_token(key_id, actor, db, request, response)
+    except HTTPException as exc:
+        if exc.status_code >= 500:
+            raise
+        return error("invalid_grant", "利用者または認証情報を確認してください", exc.status_code)
+    response.headers.update(cache)
+    return {**issued, "issued_token_type": ACCESS_TOKEN_TYPE}
 
 
 #: クライアント認証情報をアクセストークンに交換する

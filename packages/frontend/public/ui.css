@@ -39,7 +39,7 @@ h1, h2, h3 { font-family: "Amazon Ember Modern Display", var(--portal-type); col
 h1 { font-size: var(--cs-font-size-heading-xl); line-height: var(--cs-line-height-heading-xl); }
 h2 { font-size: var(--cs-font-size-heading-l); line-height: var(--cs-line-height-heading-l); }
 h3 { font-size: var(--cs-font-size-heading-m); line-height: var(--cs-line-height-heading-m); }
-p { margin: 8px 0 12px; }
+p { margin: .75rem 0 1rem; }
 a, summary { color: var(--link); }
 a:hover, summary:hover { color: var(--primary-hover); text-decoration-thickness: 2px; }
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
@@ -111,7 +111,7 @@ a:hover, summary:hover { color: var(--primary-hover); text-decoration-thickness:
 .nav-item + .nav-item { margin-top: 4px; }
 .nav-item:hover { color: var(--link); text-decoration: underline; }
 .nav-item.active { color: var(--ink); font-weight: 700; background: var(--rollover); box-shadow: inset 3px 0 var(--ink); }
-.content { width: 100%; max-width: 1540px; min-width: 0; margin: 0 auto; padding: 24px clamp(20px, 3vw, 48px) 64px; }
+.content { font-size: max(1.0625rem, var(--cs-font-size-body-m)); line-height: 1.65; width: 100%; max-width: 1540px; min-width: 0; margin: 0 auto; padding: 24px clamp(20px, 3vw, 48px) 64px; }
 .page-heading, .results-head, .audit-top, .pager { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .page-heading { margin-bottom: var(--section-space); }
 .subtitle, .muted, .description { color: var(--secondary); }
@@ -204,3 +204,9 @@ textarea.form-control { min-height: 76px; resize: vertical; }
   a { text-decoration: underline; }
   :focus-visible { outline: 2px solid Highlight; }
 }
+
+.btn[aria-busy="true"] { color: var(--primary-ink); background: var(--primary); cursor: progress; }
+.btn-primary[aria-busy="true"] { color: var(--primary); background: var(--primary-ink); border-color: var(--primary); }
+.btn[aria-busy="true"]::after { content: "⌛"; margin-inline-start: .5rem; }
+
+.btn[hidden] { display: none; }

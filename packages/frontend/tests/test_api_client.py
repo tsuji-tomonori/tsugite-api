@@ -1,6 +1,7 @@
 import asyncio
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock
+from urllib.parse import parse_qs
 
 import pytest
 
@@ -51,23 +52,30 @@ def test_only_allowed_operations_and_environments(portal_module):
     )
     assert list(page.operations(asset)) == ["GET /item"]
     options = page.bindings(asset, "GET /item")
-    assert [row[:3] for row in options] == [(None, "sandbox", "finance")]
+    assert options == []
     assert page.bindings(asset, "POST /item")[-1][0] == key
 
 
 def test_identity_and_delegated_token(portal_module, monkeypatch):
-    """本人の認証ではログイントークンを使い、委任認証では本人確認後に短期トークンを取得する。"""
+    """ログインだけの実行を拒否し、選択した委任認証でOAuth交換した短期トークンを送る。"""
     docs = portal_module("api_docs")
     monkeypatch.setattr(docs.client, "screen_headers", lambda: {"X-Tsugite-Screen": "console"})
     monkeypatch.setattr(docs.client, "store", SimpleNamespace(getItem=lambda _: "session"))
     response = SimpleNamespace(ok=True, json=AsyncMock(return_value={"access_token": "delegated"}))
     exchange = AsyncMock(return_value=response)
     monkeypatch.setattr(docs, "pyfetch", exchange)
-    headers = asyncio.run(docs.credential_headers(None))
-    assert headers == {"Authorization": "Bearer session", "X-Tsugite-Screen": "console"}
+    with pytest.raises(docs.client.InputError, match="認証情報"):
+        asyncio.run(docs.credential_headers(None))
     exchange.assert_not_awaited()
     token = asyncio.run(docs.credential_headers({"mode": "app", "id": "mine"}))
-    exchange.assert_awaited_once_with("/api/credentials/mine/token", method="POST", headers=headers)
+    exchange.assert_awaited_once()
+    assert exchange.await_args.args == ("/api/credentials/mine/token-exchange",)
+    assert exchange.await_args.kwargs["method"] == "POST"
+    assert parse_qs(exchange.await_args.kwargs["body"]) == {
+        "grant_type": ["urn:ietf:params:oauth:grant-type:token-exchange"],
+        "subject_token_type": ["urn:ietf:params:oauth:token-type:access_token"],
+        "subject_token": ["session"],
+    }
     assert token == {"Authorization": "Bearer delegated", "X-Tsugite-Screen": "console"}
 
 

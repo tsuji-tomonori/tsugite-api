@@ -74,6 +74,8 @@ async def send(button, output):
         output.textContent = str(exc)
     finally:
         button.disabled = False
+        button.removeAttribute("aria-busy")
+        button.textContent = "指定したURLに送信"
 
 
 def submit(event):
@@ -81,6 +83,8 @@ def submit(event):
     if button.disabled:
         return
     button.disabled = True
+    button.setAttribute("aria-busy", "true")
+    button.textContent = "送信中"
     output = document.getElementById("manual-response")
     output.textContent = "呼び出し中…"
     asyncio.ensure_future(send(button, output))

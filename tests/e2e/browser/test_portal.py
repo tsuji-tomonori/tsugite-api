@@ -8,6 +8,7 @@ import pytest
 from playwright.sync_api import Locator, Route
 from pytest_given import scenario
 
+from tests.support.catalog import invocation_headers
 from tests.support.catalog_journey import catalog_journey
 from tests.support.portal_server import serve_portal
 from tests.support.screenshots import capture_image
@@ -56,6 +57,38 @@ def test_home_chat_and_inquiry(demo_url: str, request: pytest.FixtureRequest) ->
         expect(page.get_by_text("回答待ち", exact=True)).to_be_visible()
         capture_image(request.node, "chat", page, "inquiry", "受付後に確認した自分の問い合わせ")
         assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
+        browser.close()
+
+
+def test_submit_from_inquiries(demo_url: str, request: pytest.FixtureRequest) -> None:
+    """利用者が問い合わせ画面から送信すると受付番号が表示され、再訪しても回答待ちの履歴を確認できる。"""
+    from playwright.sync_api import expect, sync_playwright
+
+    from tests.support.catalog_journey import navigate
+
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch(executable_path=os.getenv("CHROMIUM_PATH") or None)
+        page = browser.new_page(viewport={"width": 390, "height": 844})
+        page.goto(demo_url)
+        page.get_by_role("button", name="利用チーム", exact=True).click()
+        navigate(page, "問い合わせ")
+        question = "新しいプロジェクトの利用手順を教えてください"
+        field = page.get_by_label("問い合わせ内容")
+        field.fill(question)
+        page.get_by_role("button", name="問い合わせを送信").click()
+        receipt = page.get_by_role("status").filter(has_text="問い合わせを受け付けました。受付番号 ")
+        expect(receipt).to_be_visible()
+        key = receipt.inner_text().split("受付番号 ")[1]
+        ticket = page.get_by_role("article").filter(has_text=question)
+        expect(ticket.get_by_text("受付番号 " + key, exact=True)).to_be_visible()
+        expect(ticket.get_by_text("回答待ち")).to_be_visible()
+        expect(field).to_have_value("")
+        capture_image(
+            request.node, "inquiries", page, "submitted", "問い合わせ画面の受付番号と回答待ちの履歴"
+        )
+        page.reload()
+        expect(ticket.get_by_text("受付番号 " + key, exact=True)).to_be_visible()
+        expect(ticket).to_have_count(1)
         browser.close()
 
 
@@ -288,7 +321,8 @@ def test_governance_console(demo_url: str, request: pytest.FixtureRequest) -> No
             provider.get_by_role("button", name="ルールを保存").click()
             expect(provider.get_by_text("アラート設定を保存しました")).to_be_visible()
             capture(provider, "alert", "提供者が設定した検証環境の上限と停止条件")
-            assert [api.get(path, headers=consumer).status_code for _ in range(3)] == [200, 200, 429]
+            call = invocation_headers(api, consumer)
+            assert [api.get(path, headers=call).status_code for _ in range(3)] == [200, 200, 429]
             user.locator(".bell-button").click()
             expect(user.get_by_role("heading", name="利用件数アラート")).to_be_visible()
             notice = user.locator("article").filter(has_text="在庫API更新予定")
@@ -338,7 +372,7 @@ def test_governance_console(demo_url: str, request: pytest.FixtureRequest) -> No
             provider.get_by_role("button", name="APIを削除").click()
             expect(provider.get_by_text("APIを削除しました")).to_be_visible()
             capture(provider, "deleted", "削除操作の結果")
-            assert api.get(path, headers=consumer).status_code == 404
+            assert api.get(path, headers=call).status_code == 404
         browser.close()
 
 

@@ -5,14 +5,13 @@ import client
 import guide_examples as example
 import operation_views
 import product_views
-from audit_navigation import trace_lookup
 from js import document, window
 from listing_data import load_listing, publication
+from portal_download import save_blob
 from portal_labels import LABEL
 from portal_navigation import go, load
 from portal_ui import btn, ctx, field, value
 from puepy import t
-from pyodide.http import pyfetch
 from screen_registry import Screen
 
 
@@ -85,43 +84,10 @@ async def delete_listing(asset):
         ctx["message"] = "APIを削除しました"
 
 
-async def apply(asset):
-    await client.api(
-        "/apis/" + asset["id"] + "/requests",
-        "POST",
-        {
-            "project": value("project"),
-            "personal": value("grant-kind") == "personal"
-            or value("project") == ctx["me"]["personal_project"],
-            "environment": value("environment"),
-            "reason": value("reason"),
-            **product_views.answers(asset, value("environment"), value),
-        },
-    )
-    await go("mine")
-    ctx["message"] = "利用申請を送信しました"
-
-
-async def invoke(asset):
-    env, project = value("trial-grant").split("/")
-    path = value("trial-path")
-    if not path.startswith("/") or "#" in path:
-        raise client.InputError("/ で始まる操作パスを指定してください")
-    method = value("trial-method")
-    options = {
-        "method": method,
-        "headers": {
-            **client.screen_headers(),
-            "Authorization": "Bearer " + str(client.store.getItem("access")),
-            "Content-Type": "application/json",
-        },
-    }
-    if method not in ("GET", "DELETE") and value("trial-body"):
-        options["body"] = value("trial-body")
-    url = client.invocation_path(asset, env, project) + path
-    result = await pyfetch(url, **options)
-    ctx["trace"] = str(result.headers.get("x-request-id") or "")
-    ctx["trial"] = f"HTTP {result.status}\n" + (await result.string())[:6000]
+def download_spec(asset):
+    parts = window.Array.new()
+    parts.push(json.dumps(asset["spec"], ensure_ascii=False, indent=2))
+    save_blob(window.Blob.new(parts), asset["name"] + ".openapi.json")
 
 
 def publication_actions(a):
@@ -134,24 +100,6 @@ def publication_actions(a):
         )
         btn("内容を編集", go, "edit/" + a["id"])
         btn("APIを削除", delete_listing, a)
-
-
-def application_panel(a, me):
-    with t.div(classes="box"):
-        t.h2("利用申請")
-        field(
-            "利用プロジェクト",
-            "project",
-            options=[(p, p) for p in me["projects"]] + [(me["personal_project"], "個人ワークスペース")],
-        )
-        field(
-            "申請対象",
-            "grant-kind",
-            options=[("project", "プロジェクト全員"), ("personal", "自分だけ")],
-        )
-        product_views.application_form(a, field)
-        field("利用目的", "reason", textarea=True)
-        btn("申請する", apply, a, primary=True)
 
 
 def detail_page():
@@ -172,9 +120,15 @@ def detail_page():
         publication_actions(a)
         policy_form(a, ctx["policy"], ctx["policy_directory"]["units"])
         operation_views.provider_view(a, ctx, field, btn, load)
-    with t.details(classes="box"):
-        t.summary("OpenAPI定義を表示")
-        t.pre(json.dumps(a["spec"], ensure_ascii=False, indent=2), classes="code")
+    with t.div(classes="btn-grouping docs-actions"):
+        if a["published"]:
+            t.a("利用申請へ進む", href="#/apply/" + a["id"], classes="btn btn-primary")
+        t.button(
+            "OpenAPI定義をダウンロード（JSON）",
+            type="button",
+            classes="btn",
+            on_click=lambda event: download_spec(a),
+        )
     for row in ctx.get("rights", []):
         with t.div(classes="grant-status"):
             if row.get("subject"):
@@ -187,49 +141,6 @@ def detail_page():
                 t.span("判断理由　" + row["decision_reason"])
     product_views.release_history(a)
     api_docs.view(a, ctx.get("rights", []), ctx.get("keys", []), subject=ctx["me"]["subject"])
-    if a["published"]:
-        application_panel(a, ctx["me"])
-    rights = [r for r in ctx.get("rights", []) if r["asset_id"] == a["id"] and r["status"] == "approved"]
-    if rights:
-        with t.div(classes="box"):
-            t.h2("APIを呼び出す")
-            field(
-                "承認済みの環境とプロジェクト",
-                "trial-grant",
-                options=[
-                    (
-                        r["environment"] + "/" + r["project"],
-                        LABEL[r["environment"]] + " · " + r["project"],
-                    )
-                    for r in rights
-                ],
-            )
-            example = rights[0]
-            root = str(window.location.origin) + client.invocation_path(
-                a, example["environment"], example["project"]
-            )
-            t.p("呼び出し先　" + root, classes="code")
-            field(
-                "メソッド",
-                "trial-method",
-                options=[(m, m) for m in ("GET", "POST", "PUT", "PATCH", "DELETE")],
-                text=next(
-                    (
-                        m.upper()
-                        for m in next(iter(a["spec"]["paths"].values()))
-                        if m in ("get", "post", "put", "patch", "delete")
-                    ),
-                    "GET",
-                ),
-            )
-            field("操作パス", "trial-path", text=next(iter(a["spec"]["paths"])))
-            field("リクエスト本文", "trial-body", textarea=True)
-            btn("実行する", invoke, a, primary=True)
-            if ctx["trial"]:
-                t.pre(ctx["trial"], classes="code")
-                if ctx["trace"]:
-                    t.small("リクエストID　" + ctx["trace"], classes="mono")
-                    btn("この実行の監査履歴", trace_lookup, ctx["trace"])
 
 
 SCREENS = (
@@ -241,7 +152,6 @@ SCREENS = (
         own_heading=True,
         examples={
             "edit": lambda: publication_actions(example.ASSET),
-            "apply": lambda: application_panel(example.ASSET, example.USER),
             "visibility": lambda: policy_form(
                 example.ASSET, example.POLICY, [example.PROJECT], expanded=True
             ),
@@ -253,7 +163,6 @@ SCREENS = (
                 [{**example.REQUEST, "status": "approved"}],
                 [example.KEY],
                 subject=example.USER["subject"],
-                expanded=True,
             ),
         },
     ),

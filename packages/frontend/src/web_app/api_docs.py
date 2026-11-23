@@ -2,11 +2,14 @@
 
 import asyncio
 import json
+import shlex
 from urllib.parse import quote, unquote, urlencode
 
 import client
-from js import document
+from audit_navigation import trace_lookup
+from js import document, window
 from openapi_fields import parameters, resolve
+from portal_ui import action
 from puepy import t
 from pyodide.http import pyfetch
 
@@ -52,6 +55,8 @@ def available_bindings(asset_id, rights, keys, subject):
     options = []
     seen = set()
     for key in keys:
+        if key.get("mode") not in CREDENTIAL_MODES:
+            continue
         if key.get("revoked") or key.get("revoked_at") or not key.get("can_portal_exchange", True):
             continue
         if key.get("api_ids") and asset_id not in key["api_ids"]:
@@ -172,38 +177,53 @@ def input_param(spec, param, element_id):
     if sample is None and isinstance(schema, dict):
         sample = schema.get("example", schema.get("default"))
     with t.label(classes="field"):
-        t.span(param["name"] + "（" + param["in"] + "）")
+        required = param["in"] == "path" or param.get("required", False)
+        t.span(param["name"] + "（" + param["in"] + "）" + (" 必須" if required else " 任意"))
         t.input(
             id=element_id,
             classes="form-control",
+            required=required,
             placeholder=stringify(sample) if sample is not None else type_name(spec, schema),
         )
 
 
 async def credential_headers(key):
-    token = client.store.getItem("access")
-    if not token:
-        raise client.InputError("ログインしてから実行してください")
-    portal_auth = {
-        **client.screen_headers(),
-        "Authorization": "Bearer " + str(token),
-    }
-    if key is None:
-        return portal_auth
-    if key.get("mode") not in CREDENTIAL_MODES:
-        return {**portal_auth, "X-Tsugite-Key-Id": key["id"]}
+    access = client.store.getItem("access")
+    if not access or not key or key.get("mode") not in CREDENTIAL_MODES:
+        raise client.InputError("ログイン状態と選択した認証情報を確認してください")
     issued = await pyfetch(
-        client.prefix + "/credentials/" + quote(key["id"], safe="") + "/token",
+        client.prefix + "/credentials/" + quote(key["id"], safe="") + "/token-exchange",
         method="POST",
-        headers=portal_auth,
+        headers={**client.screen_headers(), "Content-Type": "application/x-www-form-urlencoded"},
+        body=urlencode(
+            {
+                "grant_type": "urn:ietf:params:oauth:grant-type:token-exchange",
+                "subject_token_type": "urn:ietf:params:oauth:token-type:access_token",
+                "subject_token": str(access),
+            }
+        ),
     )
     payload = await issued.json()
     if not issued.ok:
         raise client.ResponseError(
             f"HTTP {issued.status}　"
-            + str(payload.get("detail", "アクセストークンを取得できませんでした"))
+            + str(payload.get("error_description", "アクセストークンを取得できませんでした"))
         )
     return {**client.screen_headers(), "Authorization": "Bearer " + payload["access_token"]}
+
+
+def curl_command(url, options):
+    args = ["curl", "--globoff", "--request", shlex.quote(options["method"]), "--url", shlex.quote(url)]
+    for name, val in options["headers"].items():
+        header = (
+            '"Authorization: Bearer ${ACCESS_TOKEN}"'
+            if name.lower() == "authorization"
+            else shlex.quote(f"{name}: {val}")
+        )
+        args.extend(["--header", header])
+    if "body" in options:
+        args.extend(["--data-raw", shlex.quote(options["body"])])
+    return " ".join(args)
 
 
 def try_operation(
@@ -216,8 +236,8 @@ def try_operation(
     body,
     prefix,
     *,
-    binding_label="利用するAPIキーと環境",
-    submit_label="選んだキーで実行",
+    binding_label="利用する認証情報と環境（必須）",
+    submit_label="認証して実行",
 ):
     option_list(
         binding_label,
@@ -229,10 +249,10 @@ def try_operation(
             input_param(spec, param, prefix + f"-param-{i}")
     content = body.get("content", {})
     if content:
-        option_list("本文の形式", prefix + "-media", [(k, k) for k in content])
+        option_list("本文の形式（本文送信時は必須）", prefix + "-media", [(k, k) for k in content])
         with t.label(classes="field"):
-            t.span("送信するリクエスト本文")
-            t.textarea(id=prefix + "-body", classes="form-control")
+            t.span("送信するリクエスト本文" + ("（必須）" if body.get("required") else "（任意）"))
+            t.textarea(id=prefix + "-body", classes="form-control", required=bool(body.get("required")))
 
     async def send(button, out):
         try:
@@ -261,8 +281,17 @@ def try_operation(
                     headers["Content-Type"] = media
                     opts["body"] = text
             headers.update(await credential_headers(key))
-            result = await pyfetch(client.invocation_path(asset, env, project) + location, **opts)
+            if not button.isConnected:
+                return
+            url = str(window.location.origin) + client.invocation_path(asset, env, project) + location
+            document.getElementById(prefix + "-curl").textContent = curl_command(url, opts)
+            document.getElementById(prefix + "-replay").hidden = False
+            audit = document.getElementById(prefix + "-audit")
+            result = await pyfetch(url, **opts)
             trace = result.headers.get("x-request-id", "")
+            if trace:
+                audit.dataset.trace = trace
+                audit.hidden = False
             response = await result.string()
             if len(response) > 12000:
                 response = response[:12000] + "\n（先頭12,000文字まで表示）"
@@ -276,18 +305,58 @@ def try_operation(
             out.textContent = str(exc)
         finally:
             button.disabled = False
+            button.removeAttribute("aria-busy")
+            button.textContent = submit_label
 
     def submit(event):
         button = event.currentTarget
         if button.disabled:
             return
         button.disabled = True
+        button.setAttribute("aria-busy", "true")
+        button.textContent = "実行中"
+        document.getElementById(prefix + "-audit").hidden = True
+        document.getElementById(prefix + "-replay").hidden = True
+        document.getElementById(prefix + "-copied").textContent = ""
         out = document.getElementById(prefix + "-response")
         out.textContent = "呼び出し中…"
         asyncio.ensure_future(send(button, out))
 
+    async def copy_and_report():
+        try:
+            await window.navigator.clipboard.writeText(
+                document.getElementById(prefix + "-curl").textContent
+            )
+            document.getElementById(prefix + "-copied").textContent = "コピーしました"
+        except Exception:
+            document.getElementById(
+                prefix + "-copied"
+            ).textContent = "コマンドを選択してコピーしてください"
+
+    def audit_lookup(event):
+        action(trace_lookup, str(event.currentTarget.dataset.trace))(event)
+
     t.button(submit_label, type="button", classes="btn btn-primary", on_click=submit)
+    with t.section(id=prefix + "-replay", hidden=True):
+        t.h4("今回のcurlコマンド")
+        t.p("シェル変数 ACCESS_TOKEN に、この認証情報の有効なアクセストークンを設定してください。")
+        t.pre("", id=prefix + "-curl", classes="code")
+        t.button(
+            "コマンドをコピー",
+            type="button",
+            classes="btn",
+            on_click=lambda event: asyncio.ensure_future(copy_and_report()),
+        )
+        t.span("", role="status", id=prefix + "-copied")
     t.pre("", id=prefix + "-response", classes="code", aria_live="polite")
+    t.button(
+        "この実行の監査履歴",
+        type="button",
+        classes="btn",
+        hidden=True,
+        id=prefix + "-audit",
+        on_click=audit_lookup,
+    )
 
 
 def jump_to(anchor):
@@ -300,10 +369,10 @@ def jump_to(anchor):
     return jump
 
 
-def view(asset, rights, keys, *, subject="", expanded=False):
+def view(asset, rights, keys, *, subject=""):
     spec = asset["spec"]
     bindings = available_bindings(asset["id"], rights, keys, subject)
-    with t.section(classes="box"):
+    with t.section(classes="box api-docs"):
         t.h2("API Docs")
         info = spec.get("info", {})
         t.p(
@@ -339,39 +408,56 @@ def view(asset, rights, keys, *, subject="", expanded=False):
                         params = parameters(spec, item, operation)
                         body = resolve(spec, operation.get("requestBody", {}))
                         with t.details(
-                            id=f"operation-{index}",
-                            classes="doc-operation",
-                            open=expanded and index == 0,
+                            id=f"operation-{index}", classes="doc-operation", open=index == 0
                         ):
                             t.summary(
                                 f"{method.upper()} {path}　{operation.get('summary') or operation.get('operationId', '')}"
                             )
-                            if operation.get("description"):
-                                t.p(operation["description"])
-                            if params:
-                                t.h3("パラメータ")
-                            for p in params:
-                                required = "必須" if p["in"] == "path" or p.get("required") else "任意"
-                                t.p(
-                                    f"{p['name']}（{p['in']} / {type_name(spec, p.get('schema', {}))} / {required}） {p.get('description', '')}"
-                                )
-                            if body:
-                                t.h3("リクエスト本文")
-                                if body.get("description"):
-                                    t.p(body["description"])
-                                media_docs(spec, body.get("content", {}))
-                            t.h3("レスポンス")
-                            for code, raw_response in operation.get("responses", {}).items():
-                                if code.startswith("x-"):
-                                    continue
-                                response = resolve(spec, raw_response)
-                                t.p(f"{code}　{response.get('description', '')}")
-                                media_docs(spec, response.get("content", {}))
-                            if usable and method in INVOKABLE:
-                                t.h3("この操作を呼び出す")
-                                try_operation(
-                                    spec, asset, usable, method, path, params, body, f"docs-{index}"
-                                )
+                            with t.div(classes="operation-columns"):
+                                with t.div(classes="operation-definition"):
+                                    if operation.get("description"):
+                                        t.p(operation["description"])
+                                    if params:
+                                        t.h3("パラメータ")
+                                    for p in params:
+                                        required = (
+                                            "必須" if p["in"] == "path" or p.get("required") else "任意"
+                                        )
+                                        t.p(
+                                            f"{p['name']}（{p['in']} / {type_name(spec, p.get('schema', {}))} / {required}） {p.get('description', '')}"
+                                        )
+                                    if body:
+                                        t.h3("リクエスト本文")
+                                        if body.get("description"):
+                                            t.p(body["description"])
+                                        media_docs(spec, body.get("content", {}))
+                                    t.h3("レスポンス")
+                                    for code, raw_response in operation.get("responses", {}).items():
+                                        if code.startswith("x-"):
+                                            continue
+                                        response = resolve(spec, raw_response)
+                                        t.p(f"{code}　{response.get('description', '')}")
+                                        media_docs(spec, response.get("content", {}))
+                                with t.section(classes="operation-console"):
+                                    t.h3("この操作を呼び出す")
+                                    if usable and method in INVOKABLE:
+                                        try_operation(
+                                            spec,
+                                            asset,
+                                            usable,
+                                            method,
+                                            path,
+                                            params,
+                                            body,
+                                            f"docs-{index}",
+                                        )
+                                    elif method not in INVOKABLE:
+                                        t.p("このメソッドはポータルから実行できません。")
+                                    else:
+                                        t.p(
+                                            "実行には、利用申請の承認と、この環境で利用できる認証情報が必要です。"
+                                        )
+                                        t.a("認証情報を作成・管理する", href="#/keys")
                             index += 1
             if menu:
                 with t.nav(classes="docs-menu", aria_label="API操作一覧"):
@@ -386,9 +472,3 @@ def view(asset, rights, keys, *, subject="", expanded=False):
                 for name, raw in spec["components"]["schemas"].items():
                     t.h3(name)
                     t.pre(json.dumps(resolve(spec, raw), ensure_ascii=False, indent=2), classes="code")
-        if not bindings:
-            t.p(
-                "呼び出すには、承認済みの環境と、このAPIを利用できる有効なAPIキーが必要です。",
-                classes="muted",
-            )
-            t.a("APIキーの作成・管理を開く", href="#/keys")

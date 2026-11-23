@@ -12,7 +12,7 @@ from urllib.parse import parse_qs, urlsplit
 
 import httpx
 import pytest
-from playwright.sync_api import expect, sync_playwright
+from playwright.sync_api import Route, expect, sync_playwright
 
 from tests.support.catalog import headers
 from tests.support.catalog_journey import browser_evidence, navigate
@@ -184,12 +184,13 @@ def test_openapi_key_console(tmp_path: Path, request: pytest.FixtureRequest) -> 
             ).raise_for_status()
             key = (
                 api.post(
-                    "/api/keys",
+                    "/api/credentials",
                     headers=consumer,
                     json={
                         "project": "finance",
                         "name": "配送の検証",
                         "kind": "personal",
+                        "mode": "bearer",
                         "api_ids": [asset],
                     },
                 )
@@ -206,7 +207,28 @@ def test_openapi_key_console(tmp_path: Path, request: pytest.FixtureRequest) -> 
                     navigate(page, "APIカタログ")
                     page.get_by_role("link", name="配送見積API").click()
                     docs = page.get_by_role("heading", name="API Docs", exact=True).locator("..")
-                    docs.get_by_text("POST /parcels/{parcel}/estimate　配送料を計算", exact=True).click()
+                    with page.expect_download() as spec_file:
+                        page.get_by_role("button", name="OpenAPI定義をダウンロード").click()
+                    assert (
+                        json.loads(spec_file.value.path().read_text(encoding="utf8")) == delivery_spec()
+                    )
+                    expect(page.get_by_label("利用目的")).to_have_count(0)
+                    # 画面幅の変更に伴うスクロールの影響を避け、両方の座標を同時に読む。
+                    check_layout = """stacked => {
+                        const columns = document.querySelector(".api-docs .operation-columns");
+                        const definition = columns.querySelector(".operation-definition")
+                            .getBoundingClientRect();
+                        const consoleBox = columns.querySelector(".operation-console")
+                            .getBoundingClientRect();
+                        return definition.width > 0 && definition.height > 0
+                            && consoleBox.width > 0 && consoleBox.height > 0
+                            && (stacked ? definition.bottom <= consoleBox.top
+                                        : definition.right <= consoleBox.left);
+                    }"""
+                    page.wait_for_function(check_layout, arg=False)
+                    page.set_viewport_size({"width": 390, "height": 844})
+                    page.wait_for_function(check_layout, arg=True)
+                    page.set_viewport_size({"width": 1280, "height": 1000})
                     schemas = docs.get_by_text("application/json のスキーマ", exact=True)
                     schemas.first.click()
                     expect(docs.locator("pre").filter(has_text='"packages"').first).to_be_visible()
@@ -220,16 +242,34 @@ def test_openapi_key_console(tmp_path: Path, request: pytest.FixtureRequest) -> 
                     )
                     schemas.first.click()
                     schemas.nth(1).click()
-                    docs.get_by_label("利用するAPIキーと環境").select_option(
-                        label="配送の検証（個人） · finance · 検証"
+                    docs.get_by_label("利用する認証情報と環境").select_option(
+                        label="配送の検証（個人） · finance · 検証 · 短期Bearer"
                     )
                     docs.get_by_label("parcel（path）").fill("JP17")
                     docs.get_by_label("details（query）").fill('["price","arrival"]')
                     docs.get_by_label("送信するリクエスト本文").fill('{"packages":3}')
-                    run = docs.get_by_role("button", name="選んだキーで実行")
-                    with page.expect_response(lambda r: "/invoke/" in r.url) as invocation:
+                    run = docs.get_by_role("button", name="認証して実行")
+                    held: list[Route] = []
+                    page.route("**/token-exchange", lambda route: held.append(route))
+                    with page.expect_request(lambda req: req.url.endswith("/token-exchange")):
                         run.click()
+                    busy = docs.locator('button[aria-busy="true"]')
+                    expect(busy).to_be_disabled()
+                    expect(busy).to_contain_text("実行中")
+                    with page.expect_response(lambda r: "/invoke/" in r.url) as invocation:
+                        held[0].continue_()
+                    page.unroute("**/token-exchange")
+                    expect(run).to_be_enabled()
                     assert invocation.value.status == 200
+                    cmd = docs.locator('[id$="-curl"]')
+                    expect(cmd).to_contain_text(invocation.value.url)
+                    expect(cmd).to_contain_text("${ACCESS_TOKEN}")
+                    expect(cmd).to_contain_text('{"packages":3}')
+                    assert "tst_" not in cmd.inner_text()
+                    page.context.grant_permissions(["clipboard-read", "clipboard-write"])
+                    docs.get_by_role("button", name="コマンドをコピー").click()
+                    expect(docs.get_by_role("status")).to_have_text("コピーしました")
+                    assert page.evaluate("navigator.clipboard.readText()") == cmd.inner_text()
                     trace = invocation.value.headers["x-request-id"]
                     expect(docs.locator('pre[aria-live="polite"]')).to_contain_text(trace)
                     expect(docs.locator('pre[aria-live="polite"]')).to_contain_text('"cost": 1050')
@@ -256,6 +296,20 @@ def test_openapi_key_console(tmp_path: Path, request: pytest.FixtureRequest) -> 
                         "同じ画面のキーを失効させて再実行。HTTP 401で停止し、配送見積への転送は計1回",
                     )
                     navigate(page, "APIクライアント")
+                    page.get_by_label("API商品", exact=True).select_option(label="配送見積API")
+                    expect(page.get_by_role("button", name="この操作を実行")).to_have_count(0)
+                    api.post(
+                        "/api/credentials",
+                        headers=consumer,
+                        json={
+                            "project": "finance",
+                            "name": "配送アプリ",
+                            "kind": "personal",
+                            "mode": "app",
+                            "api_ids": [asset],
+                        },
+                    ).raise_for_status()
+                    page.reload()
                     page.get_by_label("API商品", exact=True).select_option(label="配送見積API")
                     page.get_by_label("parcel（path）").fill("JP18")
                     page.get_by_label("送信するリクエスト本文").fill('{"packages":2}')
