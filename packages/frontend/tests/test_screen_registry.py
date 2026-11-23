@@ -69,6 +69,7 @@ def test_existing_routes_and_role_menus(portal_module):
     assert [s.path for s in menus["ワークスペース"]] == [
         "home",
         "catalog",
+        "console",
         "keys",
         "mine",
         "notifications",

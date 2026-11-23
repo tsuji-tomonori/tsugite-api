@@ -1,5 +1,5 @@
 import json
-from urllib.parse import parse_qs, urlencode
+from urllib.parse import parse_qs, quote, urlencode
 
 from js import window
 from log_record import SCREENS, log_record
@@ -7,6 +7,11 @@ from pyodide.http import pyfetch
 
 store = window.sessionStorage
 prefix = "/api"
+
+
+def invocation_path(asset, environment, project):
+    segments = (asset.get("slug") or asset["id"], environment, project)
+    return prefix + "/invoke/" + "/".join(quote(part, safe="") for part in segments)
 
 
 class InputError(ValueError):

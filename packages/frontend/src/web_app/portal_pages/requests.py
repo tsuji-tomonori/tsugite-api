@@ -75,6 +75,7 @@ def rights_page(incoming):
                         btn(title, decide, row, op, primary=op == "approve")
             if not incoming and row["status"] == "approved":
                 btn("APIを開く", go, "api/" + row["asset_id"])
+                btn("APIクライアントで開く", go, "console/" + row["asset_id"])
 
 
 async def load_requests(page):
