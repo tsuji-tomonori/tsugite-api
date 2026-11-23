@@ -36,6 +36,12 @@ def test_workspace_key_console(tmp_path: Path, request: pytest.FixtureRequest) -
     ):
         owner, user = (headers(api, r) for r in ("provider", "consumer"))
         asset, _, path = approved(api, owner, user)
+        email = "finance.member.with.a.long.address@example.test"
+        api.post(
+            "/api/members",
+            headers=headers(api, "admin"),
+            json={"email": email, "project": "finance", "role": "consumer"},
+        ).raise_for_status()
         browser = pw.chromium.launch(executable_path=os.getenv("CHROMIUM_PATH") or None)
         admin, leader = (browser.new_page(viewport={"width": 1440, "height": 960}) for _ in range(2))
         for page in (admin, leader):
@@ -76,10 +82,30 @@ def test_workspace_key_console(tmp_path: Path, request: pytest.FixtureRequest) -
             for unit, title in (("business", "本部長"), ("audit-office", "兼務"), ("finance", "課長")):
                 menu(admin, "プロジェクト" if unit == "finance" else "部署")
                 admin.locator(f'a[href$="/detail/{unit}"]').click()
+                members = admin.get_by_role("table", name="直接の所属メンバー")
+                membership = members.get_by_role("row").filter(has_text="consumer")
                 if unit == "finance":
-                    admin.locator(".compact-row").filter(has_text="consumer").get_by_role(
-                        "link", name="所属を編集"
-                    ).click()
+                    invited = members.get_by_role("row").filter(has_text=email)
+                    for role, label in (("link", "所属を編集"), ("button", "所属を解除")):
+                        existing_action = membership.get_by_role(role, name=label).bounding_box()
+                        invited_action = invited.get_by_role(role, name=label).bounding_box()
+                        assert existing_action and invited_action
+                        assert existing_action["x"] == invited_action["x"]
+                    capture(
+                        admin,
+                        "direct-members",
+                        "氏名とメールアドレスの長さが違う行で、所属の操作位置を確認",
+                    )
+                    admin.set_viewport_size({"width": 390, "height": 844})
+                    assert admin.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
+                    with admin.expect_response(
+                        lambda r: "/workspace/memberships?" in r.url and r.request.method == "DELETE"
+                    ) as removed:
+                        invited.get_by_role("button", name="所属を解除").click()
+                    assert removed.value.ok
+                    expect(invited).to_have_count(0)
+                    admin.set_viewport_size({"width": 1440, "height": 960})
+                    membership.get_by_role("link", name="所属を編集").click()
                 else:
                     admin.get_by_role("link", name="メンバーを追加").click()
                     admin.get_by_label("ユーザー", exact=True).select_option("consumer")
@@ -90,10 +116,8 @@ def test_workspace_key_console(tmp_path: Path, request: pytest.FixtureRequest) -
                 ) as saved:
                     admin.get_by_role("button", name="所属を保存").click()
                 assert saved.value.ok
-                membership = (
-                    admin.locator(".compact-row").filter(has_text="consumer").filter(has_text=title)
-                )
                 expect(membership.get_by_text("リーダー")).to_be_visible()
+                expect(membership.get_by_text(title)).to_be_visible()
                 expect(admin.get_by_text("所属と役職を保存しました")).to_be_visible()
 
             menu(admin, "プロジェクト")
