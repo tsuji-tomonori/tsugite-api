@@ -41,6 +41,22 @@ MUTATIONS = (
         "packages/infra/tests/test_cdk_regression.py::test_schema_waits_for_chat_models",
     ),
     Mutation(
+        "infra",
+        "チャットのワーカー関数に同時実行枠を予約する",
+        "packages/infra/src/infra_app/chat.py",
+        "timeout=Duration.seconds(145),",
+        "timeout=Duration.seconds(145), reserved_concurrent_executions=4,",
+        "packages/infra/tests/test_cost.py::test_chat_uses_separate_on_demand_python_functions",
+    ),
+    Mutation(
+        "infra",
+        "チャットのモデル関数に同時実行枠を予約する",
+        "packages/infra/src/infra_app/chat.py",
+        "timeout=Duration.seconds(timeout),",
+        "timeout=Duration.seconds(timeout), reserved_concurrent_executions=4,",
+        "packages/infra/tests/test_cost.py::test_chat_uses_separate_on_demand_python_functions",
+    ),
+    Mutation(
         "ci-scope",
         "データベース変更時にAPIのテストを外す",
         "tools/ci/ci_scope.py",

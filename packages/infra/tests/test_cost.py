@@ -6,7 +6,7 @@ from src.infra_app.stack import CatalogStack
 
 
 def test_cost_drivers_are_bounded(tmp_path):
-    """常時稼働の構成を置かず、Lambdaの実行枠とログ保存期間を制限する。"""
+    """常時稼働の構成を置かず、Lambdaのメモリ・タイムアウトとログ保存期間を制限する。"""
     stack = CatalogStack(
         App(outdir=str(tmp_path / "out")),
         "TsugiteApi",
@@ -30,20 +30,24 @@ def test_cost_drivers_are_bounded(tmp_path):
 
 
 def test_chat_uses_separate_on_demand_python_functions(tmp_path):
-    """チャット処理と3モデルを分離し、従量課金、実行枠、作業領域を制限する。"""
+    """チャット処理と3モデルを分離し、予約枠を要求せず所定のメモリと作業領域で実行する。"""
     template = Template.from_stack(CatalogStack(App(outdir=str(tmp_path)), "TsugiteApi"))
     template.has_resource_properties(
         "AWS::Lambda::Function", {"Handler": "app.main.handler", "Runtime": "python3.15"}
     )
     template.has_resource_properties(
         "AWS::Lambda::Function",
-        {"Handler": "agent.jobs.handler", "Runtime": "python3.15", "ReservedConcurrentExecutions": 4},
+        {
+            "Handler": "agent.jobs.handler",
+            "Runtime": "python3.15",
+            "ReservedConcurrentExecutions": Match.absent(),
+        },
     )
     template.resource_properties_count_is(
         "AWS::Lambda::Function",
         {
             "Runtime": "python3.14",
-            "ReservedConcurrentExecutions": 4,
+            "ReservedConcurrentExecutions": Match.absent(),
             "MemorySize": 3008,
             "EphemeralStorage": {"Size": 512},
             "Environment": {"Variables": {"MODEL_ROLE": Match.any_value()}},
