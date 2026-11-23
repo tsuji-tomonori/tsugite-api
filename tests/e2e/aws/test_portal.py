@@ -102,6 +102,7 @@ def machine_tokens(folder):
                 {
                     "owner": token("owner", "portal", ["own-supply"], "openid"),
                     "user": token("user", "portal", ["use-finance"], "openid"),
+                    "administrator": token("administrator", "portal", ["admin"], "openid"),
                     "machine": token("batch", "batch", [], "hub/invoke"),
                     "no_scope": token("batch", "batch", [], "openid"),
                 },
