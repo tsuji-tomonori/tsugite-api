@@ -12,7 +12,7 @@ from urllib.parse import parse_qs, urlsplit
 
 import httpx
 import pytest
-from playwright.sync_api import expect, sync_playwright
+from playwright.sync_api import Route, expect, sync_playwright
 
 from tests.support.catalog import headers
 from tests.support.catalog_journey import browser_evidence, navigate
@@ -212,6 +212,14 @@ def test_openapi_key_console(tmp_path: Path, request: pytest.FixtureRequest) -> 
                         json.loads(spec_file.value.path().read_text(encoding="utf8")) == delivery_spec()
                     )
                     expect(page.get_by_label("利用目的")).to_have_count(0)
+                    definition = docs.locator(".operation-definition")
+                    console = docs.locator(".operation-console")
+                    left, right = definition.bounding_box(), console.bounding_box()
+                    assert left and right and left["x"] + left["width"] <= right["x"]
+                    page.set_viewport_size({"width": 390, "height": 844})
+                    top, bottom = definition.bounding_box(), console.bounding_box()
+                    assert top and bottom and top["y"] + top["height"] <= bottom["y"]
+                    page.set_viewport_size({"width": 1280, "height": 1000})
                     schemas = docs.get_by_text("application/json のスキーマ", exact=True)
                     schemas.first.click()
                     expect(docs.locator("pre").filter(has_text='"packages"').first).to_be_visible()
@@ -232,14 +240,27 @@ def test_openapi_key_console(tmp_path: Path, request: pytest.FixtureRequest) -> 
                     docs.get_by_label("details（query）").fill('["price","arrival"]')
                     docs.get_by_label("送信するリクエスト本文").fill('{"packages":3}')
                     run = docs.get_by_role("button", name="認証して実行")
-                    with page.expect_response(lambda r: "/invoke/" in r.url) as invocation:
+                    held: list[Route] = []
+                    page.route("**/token-exchange", lambda route: held.append(route))
+                    with page.expect_request(lambda req: req.url.endswith("/token-exchange")):
                         run.click()
+                    busy = docs.locator('button[aria-busy="true"]')
+                    expect(busy).to_be_disabled()
+                    expect(busy).to_contain_text("実行中")
+                    with page.expect_response(lambda r: "/invoke/" in r.url) as invocation:
+                        held[0].continue_()
+                    page.unroute("**/token-exchange")
+                    expect(run).to_be_enabled()
                     assert invocation.value.status == 200
                     cmd = docs.locator('[id$="-curl"]')
                     expect(cmd).to_contain_text(invocation.value.url)
                     expect(cmd).to_contain_text("${ACCESS_TOKEN}")
                     expect(cmd).to_contain_text('{"packages":3}')
                     assert "tst_" not in cmd.inner_text()
+                    page.context.grant_permissions(["clipboard-read", "clipboard-write"])
+                    docs.get_by_role("button", name="コマンドをコピー").click()
+                    expect(docs.get_by_role("status")).to_have_text("コピーしました")
+                    assert page.evaluate("navigator.clipboard.readText()") == cmd.inner_text()
                     trace = invocation.value.headers["x-request-id"]
                     expect(docs.locator('pre[aria-live="polite"]')).to_contain_text(trace)
                     expect(docs.locator('pre[aria-live="polite"]')).to_contain_text('"cost": 1050')
