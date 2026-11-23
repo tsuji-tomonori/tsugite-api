@@ -196,7 +196,8 @@ def test_access_log_detail_and_support(portal_session: PortalSession) -> None:
     api, page, capture = portal_session
     owner, user = (headers(api, role) for role in ("provider", "consumer"))
     _, _, path = approved(api, owner, user)
-    ids = [api.get(path, headers=user).raise_for_status().headers["x-request-id"] for _ in range(21)]
+    call = invocation_headers(api, user)
+    ids = [api.get(path, headers=call).raise_for_status().headers["x-request-id"] for _ in range(21)]
     open_portal(api, page, "利用チーム")
     navigate(page, "アクセスログ")
     listing = page.get_by_role("table", name="アクセスログ一覧")
