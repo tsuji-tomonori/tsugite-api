@@ -21,6 +21,7 @@ SCREENS = frozenset(
         "notifications",
         "alerts",
         "catalog",
+        "console",
         "mine",
         "inventory",
         "inbox",

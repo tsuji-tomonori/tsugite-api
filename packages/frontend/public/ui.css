@@ -208,3 +208,5 @@ textarea.form-control { min-height: 76px; resize: vertical; }
 .btn[aria-busy="true"] { color: var(--primary-ink); background: var(--primary); cursor: progress; }
 .btn-primary[aria-busy="true"] { color: var(--primary); background: var(--primary-ink); border-color: var(--primary); }
 .btn[aria-busy="true"]::after { content: "⌛"; margin-inline-start: .5rem; }
+
+.btn[hidden] { display: none; }

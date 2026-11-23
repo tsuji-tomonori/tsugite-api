@@ -189,7 +189,7 @@ def input_param(spec, param, element_id):
 
 async def credential_headers(key):
     access = client.store.getItem("access")
-    if not access or key.get("mode") not in CREDENTIAL_MODES:
+    if not access or not key or key.get("mode") not in CREDENTIAL_MODES:
         raise client.InputError("ログイン状態と選択した認証情報を確認してください")
     issued = await pyfetch(
         client.prefix + "/credentials/" + quote(key["id"], safe="") + "/token-exchange",
@@ -226,9 +226,21 @@ def curl_command(url, options):
     return " ".join(args)
 
 
-def try_operation(spec, asset, bindings, method, path, params, body, prefix):
+def try_operation(
+    spec,
+    asset,
+    bindings,
+    method,
+    path,
+    params,
+    body,
+    prefix,
+    *,
+    binding_label="利用する認証情報と環境（必須）",
+    submit_label="認証して実行",
+):
     option_list(
-        "利用する認証情報と環境（必須）",
+        binding_label,
         prefix + "-key",
         [(str(i), b[3]) for i, b in enumerate(bindings)],
     )
@@ -252,7 +264,7 @@ def try_operation(spec, asset, bindings, method, path, params, body, prefix):
             }
             location = build_location(spec, path, params, entered)
             headers = {}
-            opts = {"method": method.upper(), "headers": headers}
+            opts = {"method": method.upper(), "headers": headers, "redirect": "error"}
             if content:
                 text = value(prefix + "-body")
                 if not text and body.get("required"):
@@ -297,7 +309,7 @@ def try_operation(spec, asset, bindings, method, path, params, body, prefix):
         finally:
             button.disabled = False
             button.removeAttribute("aria-busy")
-            button.textContent = "認証して実行"
+            button.textContent = submit_label
 
     def submit(event):
         button = event.currentTarget
@@ -327,7 +339,7 @@ def try_operation(spec, asset, bindings, method, path, params, body, prefix):
     def audit_lookup(event):
         action(trace_lookup, str(event.currentTarget.dataset.trace))(event)
 
-    t.button("認証して実行", type="button", classes="btn btn-primary", on_click=submit)
+    t.button(submit_label, type="button", classes="btn btn-primary", on_click=submit)
     with t.section(id=prefix + "-replay", hidden=True):
         t.h4("今回のcurlコマンド")
         t.p("シェル変数 ACCESS_TOKEN に、この認証情報の有効なアクセストークンを設定してください。")

@@ -26,6 +26,14 @@ class Mutation:
 MUTATIONS = (
     Mutation(
         "frontend",
+        "直接指定したURLにブラウザーの認証情報を送る",
+        "packages/frontend/src/web_app/manual_request.py",
+        '"credentials": "omit"',
+        '"credentials": "include"',
+        "packages/frontend/tests/test_api_client.py::test_manual_request_uses_only_entered_headers",
+    ),
+    Mutation(
+        "frontend",
         "curlコマンドから本文を除く",
         "packages/frontend/src/web_app/api_docs.py",
         'if "body" in options:',
