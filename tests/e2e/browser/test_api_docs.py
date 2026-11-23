@@ -213,13 +213,21 @@ def test_openapi_key_console(tmp_path: Path, request: pytest.FixtureRequest) -> 
                         json.loads(spec_file.value.path().read_text(encoding="utf8")) == delivery_spec()
                     )
                     expect(page.get_by_label("利用目的")).to_have_count(0)
-                    definition = docs.locator(".operation-definition")
-                    console = docs.locator(".operation-console")
-                    left, right = definition.bounding_box(), console.bounding_box()
-                    assert left and right and left["x"] + left["width"] <= right["x"]
+                    # 画面幅の変更に伴うスクロールの影響を避け、両方の座標を同時に読む。
+                    check_layout = """stacked => {
+                        const columns = document.querySelector(".api-docs .operation-columns");
+                        const definition = columns.querySelector(".operation-definition")
+                            .getBoundingClientRect();
+                        const consoleBox = columns.querySelector(".operation-console")
+                            .getBoundingClientRect();
+                        return definition.width > 0 && definition.height > 0
+                            && consoleBox.width > 0 && consoleBox.height > 0
+                            && (stacked ? definition.bottom <= consoleBox.top
+                                        : definition.right <= consoleBox.left);
+                    }"""
+                    page.wait_for_function(check_layout, arg=False)
                     page.set_viewport_size({"width": 390, "height": 844})
-                    top, bottom = definition.bounding_box(), console.bounding_box()
-                    assert top and bottom and top["y"] + top["height"] <= bottom["y"]
+                    page.wait_for_function(check_layout, arg=True)
                     page.set_viewport_size({"width": 1280, "height": 1000})
                     schemas = docs.get_by_text("application/json のスキーマ", exact=True)
                     schemas.first.click()
