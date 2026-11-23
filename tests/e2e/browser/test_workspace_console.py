@@ -197,7 +197,9 @@ def test_consumer_project_directory(tmp_path: Path, request: pytest.FixtureReque
         expect(projects.locator("tbody tr")).to_have_count(1)
         own = projects.get_by_role("link", name="finance", exact=True)
         expect(own).to_be_visible()
-        capture_image(request.node, "workspace", page, "own-projects", "finance だけに所属する利用者の一覧")
+        capture_image(
+            request.node, "workspace", page, "own-projects", "finance だけに所属する利用者の一覧"
+        )
         own.click()
         expect(page.get_by_role("heading", name="finance", exact=True)).to_be_visible()
         page.goto(url + "/#/projects/detail/supply")

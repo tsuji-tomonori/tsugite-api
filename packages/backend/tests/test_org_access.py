@@ -222,7 +222,7 @@ def test_workspace_honors_current_groups(portal, monkeypatch):
 
 
 def test_workspace_department_lead_projects(portal, monkeypatch):
-    """同じ部署の一般メンバーとリーダーで、配下のプロジェクトの閲覧範囲を区別する"""
+    """部署に所属する利用者のうち、担当リーダーだけが管理対象のプロジェクトも参照できる"""
     admin, people = setup_people(portal, monkeypatch)
     portal.delete(
         "/api/workspace/memberships", headers=admin, params={"subject": "approver", "unit_id": "field"}

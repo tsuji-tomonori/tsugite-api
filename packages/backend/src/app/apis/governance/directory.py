@@ -118,9 +118,7 @@ def workspace(actor: User, db: DB):
     ]
     # 招待時のプロジェクト名が名簿に残っていても、現在の所属には加えない。
     own_units = set(actor.projects) | {
-        r["unit_id"]
-        for r in rows
-        if r["subject"] == actor.subject and r["unit_id"] in actor.departments
+        r["unit_id"] for r in rows if r["subject"] == actor.subject and r["unit_id"] in actor.departments
     }
     visible = [
         r
