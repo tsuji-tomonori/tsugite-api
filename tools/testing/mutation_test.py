@@ -49,6 +49,14 @@ MUTATIONS = (
         "packages/frontend/tests/test_components.py::test_invocation_path_uses_product_slug",
     ),
     Mutation(
+        "completion",
+        "ワークフローの実行条件をすべてのPRとして掲載する",
+        "tools/design/completion.py",
+        'condition = fields["if"].value if "if" in fields else ""',
+        'condition = ""',
+        "tools/tests/test_completion.py::test_workflow_comments_follow_steps",
+    ),
+    Mutation(
         "frontend",
         "直接指定したURLにブラウザーの認証情報を送る",
         "packages/frontend/src/web_app/manual_request.py",
