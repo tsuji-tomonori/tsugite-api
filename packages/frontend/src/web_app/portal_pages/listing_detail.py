@@ -140,7 +140,13 @@ def detail_page():
             if row.get("decision_reason"):
                 t.span("判断理由　" + row["decision_reason"])
     product_views.release_history(a)
-    api_docs.view(a, ctx.get("rights", []), ctx.get("keys", []), subject=ctx["me"]["subject"])
+    api_docs.view(
+        a,
+        ctx.get("rights", []),
+        ctx.get("keys", []),
+        subject=ctx["me"]["subject"],
+        personal_project=ctx["me"]["personal_project"],
+    )
 
 
 SCREENS = (
@@ -163,6 +169,7 @@ SCREENS = (
                 [{**example.REQUEST, "status": "approved"}],
                 [example.KEY],
                 subject=example.USER["subject"],
+                personal_project=example.USER["personal_project"],
             ),
         },
     ),

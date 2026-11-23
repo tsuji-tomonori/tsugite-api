@@ -119,6 +119,7 @@ def test_scoped_monitor_and_edit_routes(portal_module, monkeypatch):
     _, dom = render(page.view)
     assert [m.getAttribute("value") for m in dom.getElementsByTagName("meter")] == ["4", "4"]
     assert "4 件" in dom.toxml() and "1 件" in dom.toxml()
+    assert "所属メンバーはいません。" in dom.toxml()
     for path in ("departments/monitor/d01", "projects/monitor/d00"):
         screen(portal_module, path, data)
         asyncio.run(page.load_workspace(path))
@@ -131,3 +132,55 @@ def test_scoped_monitor_and_edit_routes(portal_module, monkeypatch):
     _, dom = render(page.view)
     assert dom.getElementsByTagName("input")[0].getAttribute("value") == "部署00"
     assert not dom.getElementsByTagName("table") and not dom.getElementsByTagName("meter")
+
+
+def test_unit_retirement_actions_are_admin_only(portal_module):
+    """管理者にだけ移管・削除を表示し、移管先には同種の別組織だけを提示する。"""
+    data = directory()
+    page = screen(portal_module, "departments/detail/d00", data)
+    assert "部署を削除" not in render(page.view)[1].toxml()
+    data["admin"] = True
+    _, dom = render(page.view)
+    html = dom.toxml()
+    assert "部署を移管" in html and "部署を削除" in html
+    selector = next(
+        s for s in dom.getElementsByTagName("select") if s.getAttribute("id") == "unit-destination"
+    )
+    ids = {option.getAttribute("value") for option in selector.getElementsByTagName("option")}
+    assert "d01" in ids and "d00" not in ids and "p" not in ids
+
+
+def test_project_monitor_shows_members_as_a_table(portal_module, monkeypatch):
+    """プロジェクト単位の集計であることを案内し、所属メンバーを4列の表で表示する。"""
+    data = directory()
+    data["admin"] = True
+    path = "projects/monitor/p"
+    page = screen(portal_module, path, data)
+    usage = {
+        "unit_id": "p",
+        "calls": 4,
+        "errors": 1,
+        "members": [
+            {"subject": "alice", "username": "田中", "unit_id": "p", "title": "係長", "leader": True},
+            {"subject": "bob", "unit_id": "p", "title": "", "leader": False},
+        ],
+        "by_api": [],
+        "by_project": [{"project": "p", "calls": 4}],
+    }
+    api = AsyncMock(side_effect=[data, usage])
+    monkeypatch.setattr(page.client, "api", api)
+    asyncio.run(page.load_workspace(path))
+
+    _, dom = render(page.view)
+    assert api.await_args.args == ("/workspace/units/p/usage",)
+    assert "選択したプロジェクトの利用実績を集計しています。" in dom.toxml()
+    details = dom.getElementsByTagName("details")[0]
+    assert details.getElementsByTagName("summary")[0].firstChild.data == "所属メンバー（2 件）"
+    table = details.getElementsByTagName("table")[0]
+    header = table.getElementsByTagName("thead")[0].getElementsByTagName("th")
+    assert [cell.firstChild.data for cell in header] == ["ユーザー名", "所属", "役職", "管理権限"]
+    rows = table.getElementsByTagName("tbody")[0].getElementsByTagName("tr")
+    assert [
+        [cell.firstChild.data for cell in row.childNodes if cell.nodeType == row.ELEMENT_NODE]
+        for row in rows
+    ] == [["田中", "部署00 / 計画", "係長", "リーダー"], ["bob", "部署00 / 計画", "—", "メンバー"]]

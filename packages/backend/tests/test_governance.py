@@ -81,6 +81,18 @@ def test_notification_scope(portal, monkeypatch):
         headers(portal, r) for r in ("provider", "consumer", "second", "other", "admin")
     )
     key, _, _ = approved(portal, owner, user)
+    for project, data in (
+        ("sales", {"name": "営業部", "kind": "department"}),
+        ("finance", {"name": "受注から出荷までの納期改善", "kind": "project", "parent": "sales"}),
+    ):
+        portal.put(f"/api/workspace/units/{project}", headers=admin, json=data).raise_for_status()
+    label = "営業部 / 受注から出荷までの納期改善"
+    labels = portal.get("/api/me", headers=admin).raise_for_status().json()["known_project_labels"]
+    assert labels == {"finance": label, "supply": "名称未登録（supply）"}
+    assert portal.get("/api/me", headers=owner).json()["known_project_labels"] == {}
+    targets = portal.get("/api/management-targets", headers=owner).raise_for_status().json()
+    assert [(target["project"], target["project_label"]) for target in targets] == [("finance", label)]
+    assert portal.get("/api/management-targets", headers=user).json() == []
     msg = {
         "project": "finance",
         "asset_id": key,
@@ -136,6 +148,15 @@ def test_alert_window_and_access_logs(portal, monkeypatch, request):
     assert portal.get("/api/access-logs/download", headers=other).text == ""
     assert sum(p["calls"] for p in portal.get("/api/metrics", headers=other).json()["points"]) == 0
     denied = next(r for r in rows if r["status"] == 429)
+    detail_path = "/api/access-logs/detail"
+    params = {"request_id": denied["request_id"]}
+    detail = portal.get(detail_path, params=params, headers=user).raise_for_status().json()
+    assert detail["started_at"] <= detail["responded_at"]
+    assert detail["error_code"] == "http_429" and detail["request_id"] == denied["request_id"]
+    assert "operator_action" not in detail
+    assert portal.get(detail_path, params=params, headers=other).status_code == 404
+    assert portal.get(detail_path, params={"request_id": "missing"}, headers=user).status_code == 404
+    assert len(portal.get("/api/access-logs?limit=2", headers=user).json()) == 2
     events = portal.get("/api/audit", params={"request_id": denied["request_id"]}, headers=admin).json()
     assert [r["action"] for r in events] == ["invoke.denied"]
     request.node.user_properties.extend(
@@ -192,6 +213,10 @@ def test_log_download_pages(portal):
                 )
             )
         db.commit()
+    legacy = (
+        portal.get("/api/access-logs/detail?request_id=req000", headers=user).raise_for_status().json()
+    )
+    assert legacy["started_at"] is legacy["responded_at"] is legacy["error_code"] is None
     jst = timezone(timedelta(hours=9))
     params = {
         "start": (stamp - timedelta(seconds=1)).astimezone(jst).isoformat(),

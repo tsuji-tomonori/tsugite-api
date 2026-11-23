@@ -5,9 +5,8 @@ from app.apis.catalog.common import DB, User, allowed_spec, event, listing, reco
 from app.apis.catalog.offers import configured
 from app.apis.catalog.releases import record_release
 from app.apis.schemas import Listing, NewListing, Offer, Register
-from app.core.config import targets
 from app.core.diagnostics import asset_object
-from app.core.workspace import units
+from app.core.workspace import units, workspace_targets
 from app.integrations.spec_archive import archive_spec, canonical
 from fastapi import APIRouter, HTTPException, Request
 from openapi_spec_validator import validate
@@ -40,7 +39,7 @@ def validated_spec(data, db):
             raise HTTPException(422, "利用条件には出品する環境を指定してください")
         if len(canonical(data.model_dump()["offers"])) > 120000:
             raise HTTPException(422, "環境ごとの申請条件は合計120KB以内で指定してください")
-    bindings = targets()
+    bindings = workspace_targets(db)
     for env, key in data.targets.items():
         target = bindings.get(key)
         if not target or target.owner != data.owner or target.environment != env:
