@@ -1,0 +1,80 @@
+import asyncio
+from unittest.mock import AsyncMock
+
+from puepy import Page
+
+ROW = {
+    "at": "2026-11-23T09:57:09.010+00:00",
+    "started_at": None,
+    "responded_at": None,
+    "duration_ms": 357,
+    "status": 429,
+    "error_code": "rate_limited",
+    "request_id": "id+/=",
+    "method": "GET",
+    "operation": "/items",
+    "actor": "consumer",
+    "owner": "supply",
+    "project": "finance",
+    "asset_id": "inventory",
+    "environment": "sandbox",
+    "key_id": None,
+}
+
+
+def test_detail_timestamps_and_answers(portal_module):
+    """過去分の推定時刻と実測時刻を区別し、質問には選んだ記録の結果と識別子で答える。"""
+    display = portal_module("access_log_display")
+    fields = dict(display.detail_fields(ROW))
+    assert fields["呼び出し開始"] == "2026-11-23 09:57:08.653 UTC（推定）"
+    assert fields["応答"].endswith("09.010 UTC（記録時刻から推定）")
+    assert fields["処理時間"] == "357 ms" and fields["キーID"] == "なし"
+    assert "rate_limited" in display.answer_log_question(ROW, "エラーの原因は？")
+    assert "357 ms" in display.answer_log_question(ROW, "何秒？")
+    assert "consumer" in display.answer_log_question(ROW, "誰が呼んだ？")
+    assert "判断できません" in display.answer_log_question(ROW, "天気は？")
+    measured = {**ROW, "status": 200, "started_at": ROW["at"], "responded_at": ROW["at"]}
+    assert "推定" not in str(display.timing(measured))
+    assert "エラーコード" not in dict(display.detail_fields(measured))
+
+
+def test_detail_link_preserves_scope_and_id(portal_module, monkeypatch):
+    """共有用URLから記号を含む元のIDと閲覧範囲を復元し、1件だけを読み込む。"""
+    logs = portal_module("portal_pages.logs")
+    api = AsyncMock(return_value=ROW)
+    monkeypatch.setattr(logs.client, "api", api)
+    page = logs.detail_path("id+/=", "team", "chat")
+    monkeypatch.setattr(logs, "route", lambda: page)
+    asyncio.run(logs.load_detail(page))
+    api.assert_awaited_once_with("/access-logs/detail?request_id=id%2B%2F%3D&unit=team")
+    assert logs.ctx["log_detail"] == (page, ROW, "team", "chat")
+
+
+def test_log_page_shows_only_requested_rows(portal_module, monkeypatch):
+    """次ページ確認用の21件目を表に出さず、最終ページで次への案内を消す。"""
+    from unittest.mock import patch
+    from xml.dom.minidom import Document
+
+    from puepy.core import Tag
+
+    logs = portal_module("portal_pages.logs")
+    monkeypatch.setattr(logs, "filters_view", lambda _: None)
+    logs.ctx["log_rows"] = [{**ROW, "request_id": f"id-{n}"} for n in range(21)]
+
+    class ListPage(Page):
+        def populate(self):
+            logs.logs_view()
+
+    def table_page():
+        page = ListPage()
+        with page:
+            page.generate_children()
+        with patch.object(Tag, "document", Document()):
+            return page.render()
+
+    dom = table_page()
+    assert len(dom.getElementsByTagName("tr")) == 21
+    assert "id-20" not in dom.toxml() and "次へ" in dom.toxml()
+    logs.ctx.update(log_offset=20, log_rows=[{**ROW, "request_id": "id-20"}])
+    xml = table_page().toxml()
+    assert "21～21件" in xml and "次へ" not in xml and "前へ" in xml

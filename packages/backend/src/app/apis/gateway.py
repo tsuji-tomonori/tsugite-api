@@ -1,6 +1,5 @@
 import json
 import re
-from time import monotonic
 from typing import Annotated
 
 from app.apis.catalog.common import DB, event, record, right_id
@@ -10,7 +9,7 @@ from app.apis.schemas import Env
 from app.core.auth import Actor, check_member
 from app.core.config import targets
 from app.core.credential_policy import check_operation
-from app.core.diagnostics import OperationalRepair, asset_object, invocation_details
+from app.core.diagnostics import InvocationTimer, OperationalRepair, asset_object
 from app.core.openapi import path_items
 from app.core.workspace import allowed_audience, attribute, private_project, stopped
 from app.integrations.upstream import MAX_BODY, dispatch
@@ -114,7 +113,7 @@ async def invoke(
     actor: Annotated[Actor, Depends(invoker)],
     db: DB,
 ):
-    started = monotonic()
+    timer = InvocationTimer()
     asset = invocation_asset(db, key)
     member_project = (
         project if project in actor.projects or project == private_project(actor.subject) else ""
@@ -134,10 +133,7 @@ async def invoke(
                 method=request.method,
                 operation=getattr(request.state, "operation", "") or "",
                 status=status,
-                diagnostics=invocation_details(
-                    "api", request.headers.get("x-tsugite-screen"), status, **fields
-                ),
-                duration_ms=round((monotonic() - started) * 1000),
+                **timer.finish("api", request.headers.get("x-tsugite-screen"), status, **fields),
             )
         )
 
