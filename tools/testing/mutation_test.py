@@ -51,6 +51,17 @@ MUTATIONS = (
     ),
     Mutation(
         "frontend",
+        "利用状況に業務メニューを表示する",
+        "packages/frontend/src/web_app/portal_pages/dashboard.py",
+        '        btn("利用状況を再読み込み", load)',
+        '        btn("利用状況を再読み込み", load)\n'
+        '    with t.div(classes="box"):\n'
+        '        t.h2("業務メニュー")\n'
+        '        btn("APIを探す", go, "catalog", primary=True)',
+        "packages/frontend/tests/test_dashboard.py::test_dashboard_recovers_from_metrics_failure",
+    ),
+    Mutation(
+        "frontend",
         "同じ問い合わせを再送するときに受付番号を振り直す",
         "packages/frontend/src/web_app/inquiry_form.py",
         'if state.get("draft") != question:',

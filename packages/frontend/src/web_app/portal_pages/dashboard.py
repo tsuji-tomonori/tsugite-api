@@ -51,18 +51,6 @@ def dashboard_view():
             btn("アクセスログを開く", go, "logs")
     if summary is None or data is None or logs is None:
         btn("利用状況を再読み込み", load)
-    with t.div(classes="box"):
-        t.h2("業務メニュー")
-        with t.div(classes="btn-grouping"):
-            btn("APIを探す", go, "catalog", primary=True)
-            if ctx["me"]["owners"]:
-                btn("新しいAPIを登録", go, "register")
-                btn("届いた申請を確認", go, "inbox")
-            if ctx["me"]["admin"]:
-                btn("ユーザーを管理", go, "members")
-            if ctx["me"]["admin"] or ctx["me"]["owners"]:
-                btn("利用者へのお知らせ", go, "notifications")
-            btn("メトリクスを分析", go, "metrics")
 
 
 async def load_dashboard(_page):
