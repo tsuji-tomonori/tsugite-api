@@ -25,6 +25,14 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
+        "backend",
+        "移管元の識別子が組織一覧に復活する",
+        "packages/backend/src/app/core/workspace.py",
+        "return {k: v for k, v in base.items() if k not in retired_units(db)}",
+        "return base",
+        "packages/backend/tests/test_unit_lifecycle.py::test_project_transfer",
+    ),
+    Mutation(
         "api-slug",
         "DBでAPI識別名の重複を許す",
         "packages/database/migrations/versions/v010_asset_routes.py",

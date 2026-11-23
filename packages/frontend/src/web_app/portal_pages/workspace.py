@@ -98,6 +98,8 @@ def view():
                     credential_views.limit_view(
                         ctx, field, btn, load, kind="units", identifier=unit["id"]
                     )
+        if data["admin"]:
+            directory.retirement_form(root, label, unit, by_id, paths)
         return
     directory.link("詳細に戻る", detail)
     if parts[0] == "edit" and len(parts) == 2 and data["admin"]:

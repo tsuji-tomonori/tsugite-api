@@ -8,11 +8,10 @@ from app.apis.governance.alerts import admit
 from app.apis.governance.keys import invoker
 from app.apis.schemas import Env
 from app.core.auth import Actor, check_member
-from app.core.config import targets
 from app.core.credential_policy import check_operation
 from app.core.diagnostics import OperationalRepair, asset_object, invocation_details
 from app.core.openapi import path_items
-from app.core.workspace import allowed_audience, attribute, private_project, stopped
+from app.core.workspace import allowed_audience, attribute, private_project, retired_units, stopped, workspace_targets
 from app.integrations.upstream import MAX_BODY, dispatch
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import select
@@ -118,6 +117,7 @@ async def invoke(
 ):
     started = monotonic()
     asset = invocation_asset(db, key)
+    project = retired_units(db).get(project, project)
     member_project = (
         project if project in actor.projects or project == private_project(actor.subject) else ""
     )
@@ -151,7 +151,7 @@ async def invoke(
             raise HTTPException(404, "OpenAPIに定義されていない操作です")
         check_operation(db, asset, actor, request.method + " " + request.state.operation, project)
         target_name = asset_object(asset, "targets").get(environment)
-        binding = targets().get(target_name) if isinstance(target_name, str) else None
+        binding = workspace_targets(db).get(target_name) if isinstance(target_name, str) else None
         if not binding or (binding.owner, binding.environment) != (asset.owner, environment):
             raise OperationalRepair(
                 "invalid_target_binding",
