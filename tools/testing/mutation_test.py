@@ -25,6 +25,14 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
+        "backend",
+        "移管元の識別子が組織一覧に復活する",
+        "packages/backend/src/app/core/workspace.py",
+        "return {k: v for k, v in base.items() if k not in retired_units(db)}",
+        "return base",
+        "packages/backend/tests/test_unit_lifecycle.py::test_project_transfer",
+    ),
+    Mutation(
         "frontend",
         "同じ問い合わせを再送するときに受付番号を振り直す",
         "packages/frontend/src/web_app/inquiry_form.py",

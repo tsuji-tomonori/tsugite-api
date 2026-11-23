@@ -206,3 +206,39 @@ def test_consumer_project_directory(tmp_path: Path, request: pytest.FixtureReque
         expect(page.get_by_text("対象が見つかりません。", exact=True)).to_be_visible()
         expect(page.get_by_role("heading", name="supply", exact=True)).to_have_count(0)
         browser.close()
+
+
+def test_retire_workspace_units(tmp_path: Path) -> None:
+    """管理画面で部署を移管して子部署を引き継ぎ、未使用の子部署を削除できる。"""
+    env = {**os.environ, "TSUGITE_DEMO": "1", "DATABASE_URL": "sqlite:///" + str(tmp_path / "retire.db")}
+    with (
+        serve_portal(env) as url,
+        httpx.Client(base_url=url, trust_env=False) as api,
+        sync_playwright() as pw,
+    ):
+        admin = headers(api, "admin")
+        for key, parent in (("old", ""), ("new", ""), ("child", "old")):
+            api.put(
+                "/api/workspace/units/" + key,
+                headers=admin,
+                json={"name": key, "kind": "department", "parent": parent},
+            ).raise_for_status()
+        browser = pw.chromium.launch(executable_path=os.getenv("CHROMIUM_PATH") or None)
+        page = browser.new_page()
+        page.on("dialog", lambda dialog: dialog.accept())
+        page.goto(url)
+        page.get_by_role("button", name="管理者", exact=True).click()
+        menu(page, "部署")
+        page.get_by_role("link", name="old", exact=True).click()
+        open_form(page, "移管・削除")
+        page.get_by_label("移管先", exact=True).select_option("new")
+        page.get_by_role("button", name="部署を移管", exact=True).click()
+        expect(page.get_by_role("heading", name="new", exact=True)).to_be_visible()
+        menu(page, "部署")
+        page.get_by_role("link", name="child", exact=True).click()
+        expect(page.get_by_role("heading", name="new / child", exact=True)).to_be_visible()
+        open_form(page, "移管・削除")
+        page.get_by_role("button", name="部署を削除", exact=True).click()
+        expect(page.get_by_role("table", name="部署一覧")).to_be_visible()
+        expect(page.get_by_role("link", name="child", exact=True)).to_have_count(0)
+        browser.close()
