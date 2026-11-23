@@ -82,7 +82,9 @@ def test_submit_from_inquiries(demo_url: str, request: pytest.FixtureRequest) ->
         expect(ticket.get_by_text("受付番号 " + key, exact=True)).to_be_visible()
         expect(ticket.get_by_text("回答待ち")).to_be_visible()
         expect(field).to_have_value("")
-        capture_image(request.node, "inquiries", page, "submitted", "問い合わせ画面の受付番号と回答待ちの履歴")
+        capture_image(
+            request.node, "inquiries", page, "submitted", "問い合わせ画面の受付番号と回答待ちの履歴"
+        )
         page.reload()
         expect(ticket.get_by_text("受付番号 " + key, exact=True)).to_be_visible()
         expect(ticket).to_have_count(1)
