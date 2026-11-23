@@ -25,6 +25,22 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
+        "frontend",
+        "curlコマンドから本文を除く",
+        "packages/frontend/src/web_app/api_docs.py",
+        'if "body" in options:',
+        "if False:",
+        "packages/frontend/tests/test_components.py::test_curl_reuses_request_without_exposing_token",
+    ),
+    Mutation(
+        "backend",
+        "ポータルのログインだけで転送を許可する",
+        "packages/backend/src/app/apis/gateway.py",
+        "if not actor.key_id and not actor.machine:",
+        "if False:",
+        "packages/backend/tests/test_catalog.py::test_lifecycle",
+    ),
+    Mutation(
         "infra",
         "モデル関数のメモリを配備先の上限より大きくする",
         "packages/infra/src/infra_app/chat.py",

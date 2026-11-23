@@ -45,6 +45,8 @@ def allowed_path(spec: dict, method: str, path: str) -> bool:
 def authorize(db, key, project, environment, actor):
     check_member(db, actor)
     asset = record(db, key)
+    if not actor.key_id and not actor.machine:
+        raise HTTPException(403, "APIの呼び出しには有効な認証情報が必要です")
     if asset.suspended:
         raise HTTPException(403, "管理者がこのAPIへのアクセスを一時停止しています")
     grant = db.get(Access, right_id(key, project, environment))
@@ -77,7 +79,7 @@ def authorize(db, key, project, environment, actor):
     include_in_schema=False,
     openapi_extra={
         "x-design-proxy": True,
-        "description": "転送先に登録されたOpenAPIの操作に従います。短期アクセストークン（tst_）、共有キー、またはCognitoアクセストークンをBearerで渡します。短期トークンには追加のキーヘッダーを併用できません。本人限定キーを使う場合は本人のトークンとX-API-Key、ポータルで選択したキーを使う場合は本人のトークンとX-Tsugite-Key-Idを渡します。",
+        "description": "転送先に登録されたOpenAPIの操作に従います。短期アクセストークン（tst_）、共有キー、または登録済みマシンクライアントのCognitoアクセストークンをBearerで渡します。短期トークンには追加のキーヘッダーを併用できません。本人限定キーを使う場合は本人のトークンとX-API-Key、ポータルで選択したキーを使う場合は本人のトークンとX-Tsugite-Key-Idを渡します。",
         "parameters": [
             {
                 "in": "header",

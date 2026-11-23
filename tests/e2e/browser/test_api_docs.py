@@ -183,12 +183,13 @@ def test_openapi_key_console(tmp_path: Path, request: pytest.FixtureRequest) -> 
             ).raise_for_status()
             key = (
                 api.post(
-                    "/api/keys",
+                    "/api/credentials",
                     headers=consumer,
                     json={
                         "project": "finance",
                         "name": "配送の検証",
                         "kind": "personal",
+                        "mode": "bearer",
                         "api_ids": [asset],
                     },
                 )
@@ -205,7 +206,12 @@ def test_openapi_key_console(tmp_path: Path, request: pytest.FixtureRequest) -> 
                     navigate(page, "APIカタログ")
                     page.get_by_role("link", name="配送見積API").click()
                     docs = page.get_by_role("heading", name="API Docs", exact=True).locator("..")
-                    docs.get_by_text("POST /parcels/{parcel}/estimate　配送料を計算", exact=True).click()
+                    with page.expect_download() as spec_file:
+                        page.get_by_role("button", name="OpenAPI定義をダウンロード").click()
+                    assert (
+                        json.loads(spec_file.value.path().read_text(encoding="utf8")) == delivery_spec()
+                    )
+                    expect(page.get_by_label("利用目的")).to_have_count(0)
                     schemas = docs.get_by_text("application/json のスキーマ", exact=True)
                     schemas.first.click()
                     expect(docs.locator("pre").filter(has_text='"packages"').first).to_be_visible()
@@ -219,16 +225,21 @@ def test_openapi_key_console(tmp_path: Path, request: pytest.FixtureRequest) -> 
                     )
                     schemas.first.click()
                     schemas.nth(1).click()
-                    docs.get_by_label("利用するAPIキーと環境").select_option(
-                        label="配送の検証（個人） · finance · 検証"
+                    docs.get_by_label("利用する認証情報と環境").select_option(
+                        label="配送の検証（個人） · finance · 検証 · 短期Bearer"
                     )
                     docs.get_by_label("parcel（path）").fill("JP17")
                     docs.get_by_label("details（query）").fill('["price","arrival"]')
                     docs.get_by_label("送信するリクエスト本文").fill('{"packages":3}')
-                    run = docs.get_by_role("button", name="選んだキーで実行")
+                    run = docs.get_by_role("button", name="認証して実行")
                     with page.expect_response(lambda r: "/invoke/" in r.url) as invocation:
                         run.click()
                     assert invocation.value.status == 200
+                    cmd = docs.locator('[id$="-curl"]')
+                    expect(cmd).to_contain_text(invocation.value.url)
+                    expect(cmd).to_contain_text("${ACCESS_TOKEN}")
+                    expect(cmd).to_contain_text('{"packages":3}')
+                    assert "tst_" not in cmd.inner_text()
                     trace = invocation.value.headers["x-request-id"]
                     expect(docs.locator('pre[aria-live="polite"]')).to_contain_text(trace)
                     expect(docs.locator('pre[aria-live="polite"]')).to_contain_text('"cost": 1050')

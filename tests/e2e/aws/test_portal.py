@@ -16,6 +16,7 @@ from pytest_given import scenario
 
 from tests.e2e.aws.https_stock import https_stock
 from tests.e2e.aws.stock_functions import STOCK_FUNCTIONS
+from tests.support.catalog import invocation_headers
 from tests.support.catalog_journey import catalog_journey
 from tests.support.portal_server import ROOT, serve_portal
 
@@ -235,6 +236,8 @@ def test_approved_calls_reach_upstream(
         result = api.post(asset + "/requests", headers=user, json=form)
         assert result.status_code == 201, result.text
         right = result.json()
+        if identity != "machine":
+            invoker = invocation_headers(api, user, endpoint="credentials")
         path = f"invoke/{key}/{environment}/finance/items"
         assert api.get(path, headers=invoker).status_code == 403
         decide = "requests/" + right["id"]
@@ -352,6 +355,7 @@ def test_marketplace_contracts(aws, resources, tmp_path, request):
         httpx.Client(base_url=url + "/api/", trust_env=False) as api,
     ):
         owner, user = ({"Authorization": "Bearer " + tokens[k]} for k in ("owner", "user"))
+        call_headers = invocation_headers(api, user, endpoint="credentials")
         for product, answer in zip(CATALOG, expected, strict=True):
             data = {**offer(product), "base_path": "/v1"}
             asset = api.post("apis", headers=owner, json=data).raise_for_status().json()["id"]
@@ -369,7 +373,7 @@ def test_marketplace_contracts(aws, resources, tmp_path, request):
             response = api.request(
                 product["method"],
                 f"invoke/{asset}/{env}/finance" + product["path"],
-                headers=user,
+                headers=call_headers,
                 json={"units": 3} if product["method"] == "POST" else None,
             )
             assert response.raise_for_status().json() == answer
@@ -429,7 +433,8 @@ def test_upstream_unavailable(aws, resources, tmp_path, request):
                 headers=owner,
                 json={"action": "approve", "revision": right["revision"], "reason": "用途を確認"},
             ).raise_for_status()
-        response = api.get(f"invoke/{asset}/production/finance/items", headers=user)
+        call_headers = invocation_headers(api, user, endpoint="credentials")
+        response = api.get(f"invoke/{asset}/production/finance/items", headers=call_headers)
         assert response.status_code == 502
         trace = response.headers["x-request-id"]
         events = api.get("audit", headers=owner, params={"request_id": trace}).raise_for_status().json()

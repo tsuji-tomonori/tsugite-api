@@ -3,7 +3,7 @@ from copy import deepcopy
 from app.apis.gateway import allowed_path, operation_template
 from pytest_given import given, scenario, then, when
 
-from tests.support.catalog import FORM, SPEC, headers
+from tests.support.catalog import FORM, SPEC, headers, invocation_headers
 
 
 @scenario("公開から取消まで、環境ごとの利用権限と監査を追跡する", tags=["CAT", "AUTH", "AUDIT"])
@@ -37,20 +37,22 @@ def test_lifecycle(portal):
         assert api.post(url + "/requests", headers=u, json=apply).status_code == 409
         endpoint = "/api/requests/" + res.json()["id"]
         approval = {"action": "approve", "revision": res.json()["revision"], "reason": "用途を確認"}
-        assert api.get(path, headers=u).status_code == 403
+        call = invocation_headers(api, u)
+        assert api.get(path, headers=call).status_code == 403
         assert api.post(endpoint, headers=u, json=approval).status_code == 403
         active = api.post(endpoint, headers=p, json=approval)
         assert active.status_code == 200
     with then("承認した環境だけ呼べ、掲載の取り下げ後も既存の利用者は使える"):
         assert api.post(endpoint, headers=p, json=approval).status_code == 409
-        assert api.get(path, headers=u).json()["project"] == "finance"
-        assert api.get(path.replace("sandbox", "production"), headers=u).status_code == 403
-        assert api.post(path, headers=u).status_code == 404
-        assert api.get(path + "/unknown", headers=u).status_code == 404
+        assert api.get(path, headers=u).status_code == 403
+        assert api.get(path, headers=call).json()["project"] == "finance"
+        assert api.get(path.replace("sandbox", "production"), headers=call).status_code == 403
+        assert api.post(path, headers=call).status_code == 404
+        assert api.get(path + "/unknown", headers=call).status_code == 404
         assert api.put(url + "/publication?published=false", headers=p).status_code == 200
         assert api.get("/api/apis", headers=u).json() == []
         assert api.get(url, headers=u).status_code == 200
-        assert api.get(path, headers=u).status_code == 200
+        assert api.get(path, headers=call).status_code == 200
         assert (
             api.post(
                 url + "/requests", headers=u, json={**apply, "environment": "production"}
@@ -60,7 +62,7 @@ def test_lifecycle(portal):
     with when("提供チームが利用権限を取り消す"):
         revoke = {"action": "revoke", "revision": active.json()["revision"], "reason": "棚卸し終了"}
         assert api.post(endpoint, headers=p, json=revoke).status_code == 200
-        denied = api.get(path, headers=u)
+        denied = api.get(path, headers=call)
     with then("同じトークンの再利用を拒否し、申請から実行結果まで追跡できる"):
         assert denied.status_code == 403
         assert api.get(url, headers=u).status_code == 404
@@ -172,7 +174,8 @@ def test_withdrawal_and_audit_visibility(portal, monkeypatch):
     url = f"/api/apis/{asset}"
     portal.put(url + "/publication?published=true", headers=owner).raise_for_status()
     path = f"/api/invoke/{asset}/sandbox/finance/items"
-    assert portal.get(path, headers=user).status_code == 403
+    call = invocation_headers(portal, user)
+    assert portal.get(path, headers=call).status_code == 403
     right = portal.post(
         url + "/requests",
         headers=user,
@@ -181,7 +184,7 @@ def test_withdrawal_and_audit_visibility(portal, monkeypatch):
     decision = {"action": "withdraw", "revision": right["revision"], "reason": "依頼中止"}
     assert portal.post("/api/requests/" + right["id"], headers=other, json=decision).status_code == 403
     portal.post("/api/requests/" + right["id"], headers=user, json=decision).raise_for_status()
-    denied = portal.get(path, headers=user)
+    denied = portal.get(path, headers=call)
     assert denied.status_code == 403
     trace = {"request_id": denied.headers["x-request-id"], "action": "invoke.denied"}
     for allowed in (owner, user, auditor):

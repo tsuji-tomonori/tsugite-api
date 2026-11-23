@@ -50,6 +50,7 @@ def test_publish_and_apply_from_product_page(tmp_path: Path, request: pytest.Fix
                 .get_by_role("heading", name="レスポンス")
             ).to_be_visible()
         capture_image(request.node, "publication", user, "operations", "選んだ操作の入力と応答仕様")
+        user.get_by_role("link", name="利用申請へ進む").click()
         user.locator("#environment").select_option("staging")
         expect(user.get_by_label("本番の利用規約に同意する")).to_be_hidden()
         user.locator("#environment").select_option("production")

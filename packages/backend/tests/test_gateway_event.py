@@ -1,6 +1,6 @@
 from app.authorizer import handler
 
-from tests.support.catalog import FORM, headers
+from tests.support.catalog import FORM, headers, invocation_headers
 
 
 def test_gateway_authorizer_rechecks_each_invocation(portal, monkeypatch):
@@ -16,8 +16,9 @@ def test_gateway_authorizer_rechecks_each_invocation(portal, monkeypatch):
         headers=user,
         json={"project": "finance", "environment": "sandbox", "reason": "棚卸"},
     ).json()
+    call = invocation_headers(portal, user)
     incoming = {
-        "headers": {"authorization": user["Authorization"], "x-tsugite-origin": "test-origin"},
+        "headers": {"authorization": call["Authorization"], "x-tsugite-origin": "test-origin"},
         "rawPath": f"/api/invoke/{key}/sandbox/finance/items",
         "requestContext": {"requestId": "gateway-test"},
     }
