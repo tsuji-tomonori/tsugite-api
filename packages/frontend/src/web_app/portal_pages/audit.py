@@ -98,7 +98,7 @@ async def load_audit(_page):
 SCREENS = (
     Screen(
         "audit",
-        "監査履歴",
+        "業務操作履歴",
         audit_view,
         load_audit,
         group="ガバナンス",

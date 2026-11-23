@@ -135,7 +135,7 @@ def test_alert_window_and_access_logs(portal, monkeypatch, request):
     with ThreadPoolExecutor(max_workers=4) as pool:
         codes = list(pool.map(lambda _: portal.get(path, headers=call).status_code, range(4)))
     assert sorted(codes) == [200, 200, 429, 429]
-    assert len(portal.get("/api/audit?action=invoke.start", headers=owner).json()) == 2
+    assert len(portal.get("/api/audit?action=invoke.start", headers=user).json()) == 2
     assert portal.get("/api/notifications/count", headers=user).json()["unread"] == 1
     rows = [
         json.loads(line)

@@ -43,10 +43,10 @@ def test_detail_link_preserves_scope_and_id(portal_module, monkeypatch):
     logs = portal_module("portal_pages.logs")
     api = AsyncMock(return_value=ROW)
     monkeypatch.setattr(logs.client, "api", api)
-    page = logs.detail_path("id+/=", "team", "chat")
+    page = logs.detail_path("id+/=", "team", "chat", audit=True)
     monkeypatch.setattr(logs, "route", lambda: page)
     asyncio.run(logs.load_detail(page))
-    api.assert_awaited_once_with("/access-logs/detail?request_id=id%2B%2F%3D&unit=team")
+    api.assert_awaited_once_with("/access-logs/detail?request_id=id%2B%2F%3D&unit=team&scope=audit")
     assert logs.ctx["log_detail"] == (page, ROW, "team", "chat")
 
 
@@ -58,7 +58,7 @@ def test_log_page_shows_only_requested_rows(portal_module, monkeypatch):
     from puepy.core import Tag
 
     logs = portal_module("portal_pages.logs")
-    monkeypatch.setattr(logs, "filters_view", lambda _: None)
+    monkeypatch.setattr(logs, "filters_view", lambda _, **kwargs: None)
     logs.ctx["log_rows"] = [{**ROW, "request_id": f"id-{n}"} for n in range(21)]
 
     class ListPage(Page):

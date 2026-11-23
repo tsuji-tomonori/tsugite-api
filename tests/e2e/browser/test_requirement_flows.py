@@ -176,7 +176,11 @@ def test_admin_stops_target_after_denial(portal_session: PortalSession) -> None:
     denied = api.get(path.replace("/sandbox/", "/production/"), headers=call)
     assert denied.status_code == 403
     logs = (
-        api.get("/api/access-logs", headers=headers(api, "admin"), params={"asset_id": asset})
+        api.get(
+            "/api/access-logs",
+            headers=headers(api, "admin"),
+            params={"scope": "audit", "asset_id": asset},
+        )
         .raise_for_status()
         .json()
     )
@@ -185,6 +189,8 @@ def test_admin_stops_target_after_denial(portal_session: PortalSession) -> None:
     )
     open_portal(api, page, "管理者")
     navigate(page, "アクセスログ")
+    expect(page.get_by_text("条件に一致するアクセスログはありません。")).to_be_visible()
+    navigate(page, "監査履歴")
     page.get_by_role("row").filter(has_text=denied.headers["x-request-id"]).click()
     page.get_by_role("button", name="対象APIを開く").click()
     stop = page.get_by_role("button", name=re.compile(r"API.*一時停止|全アクセス.*停止"))
@@ -236,6 +242,45 @@ def test_access_log_detail_and_support(portal_session: PortalSession) -> None:
     )
 
 
+def test_lead_access_audit(portal_session: PortalSession) -> None:
+    """部署リーダーが配下の別人の呼び出しを監査し、リーダー解除後は詳細を再表示できない。"""
+    api, page, capture = portal_session
+    admin, owner, user = (headers(api, role) for role in ("admin", "provider", "consumer"))
+    for unit, kind, parent in (("sales", "department", ""), ("finance", "project", "sales")):
+        api.put(
+            "/api/workspace/units/" + unit,
+            headers=admin,
+            json={"kind": kind, "parent": parent, "name": unit},
+        ).raise_for_status()
+    api.put(
+        "/api/workspace/memberships",
+        headers=admin,
+        json={"subject": "provider", "unit_id": "sales", "leader": True},
+    ).raise_for_status()
+    _, _, path = approved(api, owner, user)
+    trace = (
+        api.get(path, headers=invocation_headers(api, user)).raise_for_status().headers["x-request-id"]
+    )
+    open_portal(api, page, "提供チーム")
+    navigate(page, "アクセスログ")
+    expect(page.get_by_text("条件に一致するアクセスログはありません。")).to_be_visible()
+    navigate(page, "監査履歴")
+    page.get_by_label("集計する部署・プロジェクト").select_option("sales")
+    page.get_by_role("button", name="条件を適用").click()
+    table = page.get_by_role("table", name="監査履歴一覧")
+    expect(table.get_by_role("row").filter(has_text=trace)).to_contain_text("consumer")
+    capture(page, "department-audit", "部署リーダーが配下のプロジェクトの呼び出しを監査")
+    table.get_by_role("link", name=trace).click()
+    expect(page.get_by_role("table", name="呼び出しの詳細")).to_contain_text(trace)
+    api.delete(
+        "/api/workspace/memberships", headers=admin, params={"subject": "provider", "unit_id": "sales"}
+    ).raise_for_status()
+    page.reload()
+    expect(page.get_by_role("alert")).to_contain_text("403")
+    expect(page.get_by_role("table", name="呼び出しの詳細")).to_have_count(0)
+    expect(page.get_by_role("button", name="監査履歴", exact=True)).to_have_count(0)
+
+
 def test_auditor_cross_checks_exports(portal_session: PortalSession) -> None:
     """監査担当が他の利用者のアクセスと業務監査を同じIDで照合し、両方の記録を保存できる。"""
     api, page, capture = portal_session
@@ -244,7 +289,7 @@ def test_auditor_cross_checks_exports(portal_session: PortalSession) -> None:
     call = invocation_headers(api, user)
     trace = api.get(path, headers=call).raise_for_status().headers["x-request-id"]
     open_portal(api, page, "監査担当")
-    navigate(page, "アクセスログ")
+    navigate(page, "監査履歴")
     page.get_by_label("照合するリクエストID").fill(trace)
     page.get_by_role("button", name="IDで検索").click()
     row = page.get_by_role("row").filter(has_text=trace)
@@ -258,7 +303,7 @@ def test_auditor_cross_checks_exports(portal_session: PortalSession) -> None:
     capture(page, "access-export", "監査担当が保存したアクセス記録")
     row.click()
     expect(page.get_by_role("table", name="呼び出しの詳細")).to_contain_text("consumer")
-    page.get_by_role("button", name="監査履歴で照合").click()
+    page.get_by_role("button", name="業務操作履歴で照合").click()
     expect(page.get_by_label("リクエストID", exact=True)).to_have_value(trace)
     with page.expect_download() as audit_file:
         page.get_by_role("button", name="業務監査をダウンロード").click()
