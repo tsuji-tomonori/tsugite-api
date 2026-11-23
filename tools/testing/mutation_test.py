@@ -25,6 +25,14 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
+        "audit-scope",
+        "本人のアクセスログに同じプロジェクトの別人の呼び出しを含める",
+        "packages/backend/src/app/apis/governance/observability.py",
+        "return AccessLog.actor == actor.subject",
+        "return AccessLog.project.in_(actor.projects)",
+        "packages/backend/tests/test_org_access.py::test_access_log_scopes",
+    ),
+    Mutation(
         "backend",
         "移管元の識別子が組織一覧に復活する",
         "packages/backend/src/app/core/workspace.py",

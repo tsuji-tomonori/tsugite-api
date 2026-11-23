@@ -55,7 +55,7 @@ def test_gateway_authorizer_rechecks_each_invocation(portal, monkeypatch):
     assert handler({**incoming, "requestContext": {"requestId": "after-revoke"}}, None) == {
         "isAuthorized": False
     }
-    logs = portal.get("/api/audit?action=invoke.denied", headers=owner).json()
+    logs = portal.get("/api/audit?action=invoke.denied", headers=user).json()
     assert len(logs) == 3 and all(e["action"] == "invoke.denied" for e in logs)
 
 

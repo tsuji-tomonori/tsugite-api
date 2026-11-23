@@ -42,20 +42,25 @@ async def apply_filters():
     await load()
 
 
-def filters_view(chart):
-    filter_form(chart, ctx["filters"], ctx["dims"], ctx["workspace"])
+def filters_view(chart, *, scope="metrics"):
+    filter_form(chart, ctx["filters"], ctx.get("dims", []), ctx.get("workspace", {}), scope=scope)
 
 
-def filter_form(chart, f, dims, workspace):
+def filter_form(chart, f, dims, workspace, *, scope="metrics"):
 
     def choice(k, title, opts):
         field(title, "f-" + k, options=opts, text=f[k])
 
     with t.div(classes="box"):
         with t.div(classes="filter-grid"):
-            choices = [(u["id"], u["name"]) for u in workspace["units"] if u["id"] in workspace["leads"]]
-            if choices:
-                choice("unit", "集計する部署・プロジェクト", [("", "通常の閲覧範囲")] + choices)
+            choices = [
+                (u["id"], u["name"])
+                for u in workspace.get("units", [])
+                if u["id"] in workspace.get("leads", [])
+                or (scope == "audit" and ctx["me"].get("auditor"))
+            ]
+            if choices and scope != "personal":
+                choice("unit", "集計する部署・プロジェクト", [("", "閲覧できる全範囲")] + choices)
             else:
                 t.input(type="hidden", id="f-unit", value="")
             choice(
@@ -94,7 +99,8 @@ async def inspect_bucket(at, minutes):
     begin = datetime.fromisoformat(at)
     ctx["filters"].update(start=begin.isoformat(), end=(begin + timedelta(minutes=minutes)).isoformat())
     ctx["log_offset"] = 0
-    await go("logs")
+    me = ctx["me"]
+    await go("audit-logs" if me.get("leads") or me["admin"] or me.get("auditor") else "logs")
 
 
 def graph(pts, key, minutes):
@@ -117,8 +123,16 @@ def graph(pts, key, minutes):
             t.span(p["at"][5:16].replace("T", " "))
 
 
-async def load_dimensions():
+async def load_dimensions(scope="metrics"):
     ctx["workspace"] = await client.api("/workspace")
-    if ctx["filters"]["unit"] not in ctx["workspace"]["leads"]:
+    allowed = ctx["workspace"]["leads"]
+    if scope == "audit" and ctx["me"].get("auditor"):
+        allowed = [u["id"] for u in ctx["workspace"]["units"]]
+    if scope == "personal" or ctx["filters"]["unit"] not in allowed:
         ctx["filters"]["unit"] = ""
-    ctx["dims"] = await client.api("/metric-dimensions?" + urlencode({"unit": ctx["filters"]["unit"]}))
+    params = {"unit": ctx["filters"]["unit"]}
+    path = "/metric-dimensions"
+    if scope != "metrics":
+        path = "/access-logs/dimensions"
+        params["scope"] = scope
+    ctx["dims"] = await client.api(path + "?" + urlencode(params))
