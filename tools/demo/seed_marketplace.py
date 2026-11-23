@@ -39,8 +39,10 @@ def offer(product, edition=None):
         office = (edition - 1) // len(areas) + 1
         name = f"{region}{office if office > 1 else ''}｜{name}"
     env = product["environment"]
+    slug = product["slug"] + (f"-{edition}" if edition else "")
     return {
         "name": name,
+        "slug": slug,
         "owner": "supply",
         "summary": product["summary"],
         "targets": {env: "sample-" + env},

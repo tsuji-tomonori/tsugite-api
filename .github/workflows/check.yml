@@ -13,7 +13,6 @@ jobs:
       contents: read
       actions: read
       pull-requests: read
-      code-quality: write
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -164,6 +163,7 @@ jobs:
           BASE_SHA: ${{ steps.scope.outputs.coverage_base }}
         run: python3 tools/ci/check_coverage.py artifacts/coverage.xml
       - name: Save coverage for future pull requests
+        id: coverage_artifact
         if: steps.scope.outputs.coverage == 'true'
         uses: actions/upload-artifact@v4
         with:
@@ -172,14 +172,15 @@ jobs:
             artifacts/coverage.xml
             artifacts/coverage-parts/
           if-no-files-found: error
-      - name: Upload coverage to GitHub Code Quality
-        if: steps.scope.outputs.coverage == 'true' && github.event.pull_request.head.repo.full_name == github.repository
-        uses: actions/upload-code-coverage@2b21a77928be8d5168c2b9581a67f2adbebacc52 # v1
-        with:
-          file: artifacts/coverage.xml
-          language: Python
-          label: code-coverage/pytest
-          fail-on-error: false
+      #: 行カバレッジとXML成果物へのリンクをCIの概要で確認できる。
+      - name: カバレッジと成果物へのリンクをCIの概要に表示
+        if: steps.coverage_artifact.outcome == 'success'
+        env:
+          COVERAGE_ARTIFACT_URL: ${{ steps.coverage_artifact.outputs.artifact-url }}
+        run: |
+          coverage=$(python3 -c 'import sys; from tools.ci.check_coverage import line_coverage; print(format(float(line_coverage(sys.argv[1])), ".2f"))' artifacts/coverage.xml)
+          printf '## 行カバレッジ\n\n**%s%%**\n\n[カバレッジXMLを含む成果物](%s)\n' \
+            "$coverage" "${COVERAGE_ARTIFACT_URL:?}" >> "$GITHUB_STEP_SUMMARY"
       #: 今回の実行対象となった要件について、JUnit結果と指定された証跡から合否を判定できる。
       - name: 今回のJUnit・画面証跡から要件別の合否を判定
         if: ${{ !cancelled() }}

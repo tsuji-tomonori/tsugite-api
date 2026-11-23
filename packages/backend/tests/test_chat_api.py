@@ -17,7 +17,9 @@ def test_chat_only_returns_currently_visible_products(portal):
     provider = headers(portal, "provider")
     consumer = headers(portal, "consumer")
     public = portal.post("/api/apis", headers=provider, json=FORM).json()["id"]
-    portal.post("/api/apis", headers=provider, json={**FORM, "name": "在庫の下書き"})
+    portal.post(
+        "/api/apis", headers=provider, json={**FORM, "name": "在庫の下書き", "slug": "stock-draft"}
+    ).raise_for_status()
     endpoint = f"/api/apis/{public}/publication"
     assert portal.put(endpoint, headers=provider, params={"published": True}).status_code == 200
     job, result = ask(portal, consumer, "在庫を確認できるAPIを探して")

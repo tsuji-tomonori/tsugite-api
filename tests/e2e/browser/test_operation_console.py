@@ -45,6 +45,7 @@ def test_person_operation_console(tmp_path: Path, request: pytest.FixtureRequest
                     headers=provider,
                     json={
                         "name": "配送見積",
+                        "slug": "delivery-estimate",
                         "summary": "配送する荷物の料金を見積もります。",
                         "owner": "supply",
                         "targets": {"sandbox": "delivery-test"},
@@ -130,13 +131,12 @@ def test_person_operation_console(tmp_path: Path, request: pytest.FixtureRequest
                 docs = user.get_by_role("heading", name="API Docs", exact=True).locator("..")
                 expect(docs.locator("summary").filter(has_text="GET " + path)).to_have_count(0)
                 expect(docs.locator("summary").filter(has_text="DELETE " + path)).to_have_count(0)
-                docs.get_by_text("POST " + path + "　配送料を計算", exact=True).click()
                 docs.get_by_label("parcel（path）").fill("JP17")
                 docs.get_by_label("送信するリクエスト本文").fill('{"packages":4}')
-                run = docs.get_by_role("button", name="選んだキーで実行")
+                run = docs.get_by_role("button", name="認証して実行")
                 with (
                     user.expect_response(
-                        lambda r: "/credentials/" + credential["id"] + "/token" in r.url
+                        lambda r: "/credentials/" + credential["id"] + "/token-exchange" in r.url
                     ) as token,
                     user.expect_response(lambda r: "/invoke/" in r.url) as invocation,
                 ):
@@ -171,7 +171,7 @@ def test_person_operation_console(tmp_path: Path, request: pytest.FixtureRequest
                     == []
                 )
                 denied = api.post(
-                    f"/api/invoke/{asset}/sandbox/finance/parcels/JP17/estimate",
+                    "/api/invoke/delivery-estimate/sandbox/finance/parcels/JP17/estimate",
                     headers={"Authorization": "Bearer " + token.value.json()["access_token"]},
                     json={"packages": 4},
                 )

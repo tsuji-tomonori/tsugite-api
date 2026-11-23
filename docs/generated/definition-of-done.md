@@ -31,27 +31,28 @@
 
 | 検査 | 確認内容 | 実行条件 |
 | --- | --- | --- |
-| [完了の定義を生成](../../.github/workflows/check.yml#L27) | 分野別のテスト定義と有効なカバレッジ基準から完了の定義を生成できる。 | すべてのPR |
-| [要件別の受入テスト定義を検査](../../.github/workflows/check.yml#L39) | 各要件に実在する受入テストと証跡の取得方法が定義されている。 | すべてのPR |
-| [要件一覧と用語一覧を生成し、feat ブランチの新規要件を検査](../../.github/workflows/check.yml#L42) | 要件文・必須の節・共通語彙を検査する。feat ブランチには新しい要件が1件以上ある。 | すべてのPR |
-| [Markdown文書の表題を検証](../../.github/workflows/check.yml#L78) | 文書の最初のレベル1見出しに日本語がある。 | `steps.scope.outputs.documents == 'true'` |
-| [変更ファイルの文字コードと改行を検査](../../.github/workflows/check.yml#L82) | 変更したテキストはUTF-8（BOMなし）・LFで、末尾の改行が1つある。 | `steps.scope.outputs.full != 'true'` |
-| [task lint](../../.github/workflows/check.yml#L98) | 全体のRuff書式検査・静的解析と、Git管理対象のテキスト検査が通る。 | `steps.scope.outputs.full == 'true'` |
-| [変更したPythonファイルの書式と静的検査](../../.github/workflows/check.yml#L101) | 追加・変更したPythonファイルにRuffの書式違反やルール違反がない。 | `steps.scope.outputs.lint == 'true' && steps.scope.outputs.full != 'true'` |
-| [task types](../../.github/workflows/check.yml#L110) | 設定対象のPyrightとmypyの型検査がともに通る。 | `steps.scope.outputs.types == 'true'` |
-| [task test:hooks](../../.github/workflows/check.yml#L113) | Gitフックが機密情報を含むコミットや保護対象ブランチへの不正なプッシュを拒否する。 | `steps.scope.outputs.hooks == 'true'` |
-| [task synth](../../.github/workflows/check.yml#L122) | 配布物をビルドし、CDKからCloudFormationテンプレートを合成できる。 | `steps.scope.outputs.synth == 'true'` |
-| [同じロックから再ビルドしたLambda LayerのSHA-256を照合](../../.github/workflows/check.yml#L125) | 依存ロックまたはビルダーの変更時は、再生成した3つのLambda LayerのSHA-256が一致する。 | `steps.scope.outputs.synth == 'true'` |
-| [uv run --locked --all-packages python tools/packaging/build_frontend.py](../../.github/workflows/check.yml#L136) | フロントエンドの配布物を生成できる。 | `steps.scope.outputs.frontend_build == 'true'` |
-| [task docs:infra:render](../../.github/workflows/check.yml#L139) | 合成済みテンプレートからリソース一覧とパラメーターシートを生成できる。 | `steps.scope.outputs.synth == 'true'` |
-| [task contracts docs:api](../../.github/workflows/check.yml#L142) | OpenAPI・テーブル定義・API設計書を生成できる。 | `steps.scope.outputs.design == 'true'` |
-| [task audit](../../.github/workflows/check.yml#L145) | CDKの監査結果を出力し、Lambda実行時依存に対するpip-auditが通る。 | `steps.scope.outputs.audit == 'true'` |
-| [対象テストを実行し、全体カバレッジを集計](../../.github/workflows/check.yml#L148) | 差分に応じて選ばれたテストが成功し、比較元の計測結果と合わせて全体を集計できる。 | `steps.scope.outputs.suites != '[]'` |
-| [task test:aws](../../.github/workflows/check.yml#L153) | AWSエミュレーターで対象のE2Eが成功する。 | `${{ !cancelled() && (success() \|\| steps.suites.outcome == 'failure') && steps.scope.outputs.aws == 'true' && steps.scope.outputs.aws_portal_only != 'true' }}` |
-| [task test:aws -- -k test_cognito_browser](../../.github/workflows/check.yml#L156) | ポータルに限定した検証ではCognitoを使うブラウザーテストが成功する。 | `${{ !cancelled() && (success() \|\| steps.suites.outcome == 'failure') && steps.scope.outputs.aws_portal_only == 'true' }}` |
-| [行カバレッジをブランチルールと照合](../../.github/workflows/check.yml#L159) | 全体の行カバレッジが、対象ブランチの下限と許容低下幅を満たす。 | `steps.scope.outputs.coverage == 'true'` |
-| [今回のJUnit・画面証跡から要件別の合否を判定](../../.github/workflows/check.yml#L184) | 今回の実行対象となった要件について、JUnit結果と指定された証跡から合否を判定できる。 | `${{ !cancelled() }}` |
-| [Build screenshot report](../../.github/workflows/check.yml#L200) | JUnit結果とスクリーンショットからレポートを生成できる。 | `${{ !cancelled() && steps.scope.outputs.report == 'true' && hashFiles('artifacts/junit.xml') != '' }}` |
+| [完了の定義を生成](../../.github/workflows/check.yml#L26) | 分野別のテスト定義と有効なカバレッジ基準から完了の定義を生成できる。 | すべてのPR |
+| [要件別の受入テスト定義を検査](../../.github/workflows/check.yml#L38) | 各要件に実在する受入テストと証跡の取得方法が定義されている。 | すべてのPR |
+| [要件一覧と用語一覧を生成し、feat ブランチの新規要件を検査](../../.github/workflows/check.yml#L41) | 要件文・必須の節・共通語彙を検査する。feat ブランチには新しい要件が1件以上ある。 | すべてのPR |
+| [Markdown文書の表題を検証](../../.github/workflows/check.yml#L77) | 文書の最初のレベル1見出しに日本語がある。 | `steps.scope.outputs.documents == 'true'` |
+| [変更ファイルの文字コードと改行を検査](../../.github/workflows/check.yml#L81) | 変更したテキストはUTF-8（BOMなし）・LFで、末尾の改行が1つある。 | `steps.scope.outputs.full != 'true'` |
+| [task lint](../../.github/workflows/check.yml#L97) | 全体のRuff書式検査・静的解析と、Git管理対象のテキスト検査が通る。 | `steps.scope.outputs.full == 'true'` |
+| [変更したPythonファイルの書式と静的検査](../../.github/workflows/check.yml#L100) | 追加・変更したPythonファイルにRuffの書式違反やルール違反がない。 | `steps.scope.outputs.lint == 'true' && steps.scope.outputs.full != 'true'` |
+| [task types](../../.github/workflows/check.yml#L109) | 設定対象のPyrightとmypyの型検査がともに通る。 | `steps.scope.outputs.types == 'true'` |
+| [task test:hooks](../../.github/workflows/check.yml#L112) | Gitフックが機密情報を含むコミットや保護対象ブランチへの不正なプッシュを拒否する。 | `steps.scope.outputs.hooks == 'true'` |
+| [task synth](../../.github/workflows/check.yml#L121) | 配布物をビルドし、CDKからCloudFormationテンプレートを合成できる。 | `steps.scope.outputs.synth == 'true'` |
+| [同じロックから再ビルドしたLambda LayerのSHA-256を照合](../../.github/workflows/check.yml#L124) | 依存ロックまたはビルダーの変更時は、再生成した3つのLambda LayerのSHA-256が一致する。 | `steps.scope.outputs.synth == 'true'` |
+| [uv run --locked --all-packages python tools/packaging/build_frontend.py](../../.github/workflows/check.yml#L135) | フロントエンドの配布物を生成できる。 | `steps.scope.outputs.frontend_build == 'true'` |
+| [task docs:infra:render](../../.github/workflows/check.yml#L138) | 合成済みテンプレートからリソース一覧とパラメーターシートを生成できる。 | `steps.scope.outputs.synth == 'true'` |
+| [task contracts docs:api](../../.github/workflows/check.yml#L141) | OpenAPI・テーブル定義・API設計書を生成できる。 | `steps.scope.outputs.design == 'true'` |
+| [task audit](../../.github/workflows/check.yml#L144) | CDKの監査結果を出力し、Lambda実行時依存に対するpip-auditが通る。 | `steps.scope.outputs.audit == 'true'` |
+| [対象テストを実行し、全体カバレッジを集計](../../.github/workflows/check.yml#L147) | 差分に応じて選ばれたテストが成功し、比較元の計測結果と合わせて全体を集計できる。 | `steps.scope.outputs.suites != '[]'` |
+| [task test:aws](../../.github/workflows/check.yml#L152) | AWSエミュレーターで対象のE2Eが成功する。 | `${{ !cancelled() && (success() \|\| steps.suites.outcome == 'failure') && steps.scope.outputs.aws == 'true' && steps.scope.outputs.aws_portal_only != 'true' }}` |
+| [task test:aws -- -k test_cognito_browser](../../.github/workflows/check.yml#L155) | ポータルに限定した検証ではCognitoを使うブラウザーテストが成功する。 | `${{ !cancelled() && (success() \|\| steps.suites.outcome == 'failure') && steps.scope.outputs.aws_portal_only == 'true' }}` |
+| [行カバレッジをブランチルールと照合](../../.github/workflows/check.yml#L158) | 全体の行カバレッジが、対象ブランチの下限と許容低下幅を満たす。 | `steps.scope.outputs.coverage == 'true'` |
+| [カバレッジと成果物へのリンクをCIの概要に表示](../../.github/workflows/check.yml#L176) | 行カバレッジとXML成果物へのリンクをCIの概要で確認できる。 | `steps.coverage_artifact.outcome == 'success'` |
+| [今回のJUnit・画面証跡から要件別の合否を判定](../../.github/workflows/check.yml#L185) | 今回の実行対象となった要件について、JUnit結果と指定された証跡から合否を判定できる。 | `${{ !cancelled() }}` |
+| [Build screenshot report](../../.github/workflows/check.yml#L201) | JUnit結果とスクリーンショットからレポートを生成できる。 | `${{ !cancelled() && steps.scope.outputs.report == 'true' && hashFiles('artifacts/junit.xml') != '' }}` |
 
 ### 静的解析の設定
 
@@ -125,34 +126,37 @@
 | 正常な説明を受け付け、英語だけの説明・複数行・短すぎる説明を検出する。 | — | [test_case_explanation_requires_one_japanese_sentence](../../tests/architecture/test_rule_checks.py#L96) |
 | 三つの役割がそろった配布物は通過し、一つでも定義が欠けると失敗する。 | — | [test_model_distribution_requires_all_three_roles](../../tests/architecture/test_rule_checks.py#L103) |
 
-### バックエンド（43項目）
+### バックエンド（49項目）
 
 | 確認内容 | 条件別の確認内容 | テスト定義 |
 | --- | --- | --- |
 | 条件を満たさないアクセストークンを401で拒否する | 発行元が設定値と異なる<br>IDトークンを送った場合<br>未登録クライアントから送信<br>有効期限を過ぎている<br>システム用トークンに呼び出しスコープがない | [test_invalid_token](../../packages/backend/tests/test_auth.py#L70) |
 | 人とシステムを識別し、システムのポータル利用を拒否する | — | [test_people_and_machines](../../packages/backend/tests/test_auth.py#L77) |
-| 承認した環境だけで呼び出せ、取消後の拒否を監査できる | — | [test_lifecycle](../../packages/backend/tests/test_catalog.py#L10) |
-| 却下後に再申請でき、古い判断の再適用を拒否する | — | [test_reapply](../../packages/backend/tests/test_catalog.py#L88) |
-| 外部参照、環境違いの接続先、不正な仕様の登録を拒否する | — | [test_registration_validation](../../packages/backend/tests/test_catalog.py#L123) |
-| OpenAPIの固定パスを優先し、許可された操作だけを通す | — | [test_route_contract](../../packages/backend/tests/test_catalog.py#L140) |
-| Lambdaではデモ用ログインを無効にする | — | [test_demo_disabled_on_lambda](../../packages/backend/tests/test_catalog.py#L149) |
-| 未申請・取下げ後の権限を拒否し、他プロジェクトに監査記録を開示しない | — | [test_withdrawal_and_audit_visibility](../../packages/backend/tests/test_catalog.py#L162) |
+| API識別名が必須かつ一意で、登録後に変更や再利用ができない。 | — | [test_api_slug_is_unique_and_fixed](../../packages/backend/tests/test_catalog.py#L9) |
+| 既存商品に識別名を加えても利用権が残り、識別名と従来のUUIDで同じAPIを呼べる。 | — | [test_existing_api_keeps_grants_when_named](../../packages/backend/tests/test_catalog.py#L35) |
+| 承認した環境だけで呼び出せ、取消後の拒否を監査できる | — | [test_lifecycle](../../packages/backend/tests/test_catalog.py#L72) |
+| 却下後に再申請でき、古い判断の再適用を拒否する | — | [test_reapply](../../packages/backend/tests/test_catalog.py#L152) |
+| 外部参照、環境違いの接続先、不正な仕様の登録を拒否する | — | [test_registration_validation](../../packages/backend/tests/test_catalog.py#L187) |
+| OpenAPIの固定パスを優先し、許可された操作だけを通す | — | [test_route_contract](../../packages/backend/tests/test_catalog.py#L204) |
+| Lambdaではデモ用ログインを無効にする | — | [test_demo_disabled_on_lambda](../../packages/backend/tests/test_catalog.py#L213) |
+| 未申請・取下げ後の権限を拒否し、他プロジェクトに監査記録を開示しない | — | [test_withdrawal_and_audit_visibility](../../packages/backend/tests/test_catalog.py#L226) |
 | チャットが公開中の商品だけを勧め、別の利用者や取り下げ後の閲覧を拒む。 | — | [test_chat_only_returns_currently_visible_products](../../packages/backend/tests/test_chat_api.py#L15) |
-| 操作の質問に実際の手順を返し、使い方ガイドを参照できる。 | — | [test_chat_cites_authored_guide_steps](../../packages/backend/tests/test_chat_api.py#L31) |
-| ワーカーの手順番号が文字列でも、閲覧できるガイドの最初の手順を案内する。 | — | [test_invalid_worker_step_returns_first_visible_guide_step](../../packages/backend/tests/test_chat_api.py#L40) |
-| 問い合わせの案内だけでは未送信で、送信後の回答は本人と管理者にだけ表示する。 | — | [test_inquiry_requires_explicit_submission_and_private_reply](../../packages/backend/tests/test_chat_api.py#L55) |
-| APIが受け付けた質問をワーカーがDBで検索し、本人の受付番号で公開商品を取得できる。 | — | [test_async_chat_resolves_public_product_through_worker](../../packages/backend/tests/test_chat_api.py#L78) |
+| 操作の質問に実際の手順を返し、使い方ガイドを参照できる。 | — | [test_chat_cites_authored_guide_steps](../../packages/backend/tests/test_chat_api.py#L33) |
+| ワーカーの手順番号が文字列でも、閲覧できるガイドの最初の手順を案内する。 | — | [test_invalid_worker_step_returns_first_visible_guide_step](../../packages/backend/tests/test_chat_api.py#L42) |
+| 問い合わせの案内だけでは未送信で、送信後の回答は本人と管理者にだけ表示する。 | — | [test_inquiry_requires_explicit_submission_and_private_reply](../../packages/backend/tests/test_chat_api.py#L57) |
+| APIが受け付けた質問をワーカーがDBで検索し、本人の受付番号で公開商品を取得できる。 | — | [test_async_chat_resolves_public_product_through_worker](../../packages/backend/tests/test_chat_api.py#L80) |
 | 提供者・部署・プロジェクトの上限、更新と失効の秒境界、発行後の上限短縮を確認する | — | [test_nested_token_lifetime](../../packages/backend/tests/test_credential_lifecycle.py#L12) |
 | 60日後もシステム資格で再発行でき、古いアクセストークン・従来キーは失効する | — | [test_persistent_system_and_legacy_expiry](../../packages/backend/tests/test_credential_lifecycle.py#L84) |
+| 本人の認証情報との交換だけを許可し、失効・他人の認証情報・ログイン単独の実行を拒否する。 | — | [test_interactive_exchange_requires_registered_credential](../../packages/backend/tests/test_credential_lifecycle.py#L121) |
 | 権限を毎回照合し、取消後は同じトークンでも拒否する | — | [test_gateway_authorizer_rechecks_each_invocation](../../packages/backend/tests/test_gateway_event.py#L6) |
-| スタック削除イベントでDBを削除しない | — | [test_stack_deletion_preserves_database](../../packages/backend/tests/test_gateway_event.py#L61) |
-| API Gateway用の認可関数で、本人キー・別ユーザー・失効の判定を確認する | — | [test_gateway_scoped_key_authorizer](../../packages/backend/tests/test_gateway_event.py#L68) |
+| スタック削除イベントでDBを削除しない | — | [test_stack_deletion_preserves_database](../../packages/backend/tests/test_gateway_event.py#L62) |
+| API Gateway用の認可関数で、本人キー・別ユーザー・失効の判定を確認する | — | [test_gateway_scoped_key_authorizer](../../packages/backend/tests/test_gateway_event.py#L69) |
 | 管理者が追加・削除し、同一メールで再登録しても旧利用権を復活させない | — | [test_member_lifecycle](../../packages/backend/tests/test_governance.py#L10) |
 | 掲載内容の修正と仕様の変更を区別し、競合を検知し、削除後も監査を保持する | — | [test_listing_revisions](../../packages/backend/tests/test_governance.py#L34) |
-| 管理者・提供者の通知先を制御し、同じプロジェクトでも既読状態を利用者ごとに保持する | — | [test_notification_scope](../../packages/backend/tests/test_governance.py#L75) |
-| 同時実行の上限、通知のみ・停止・解除、次期間の回復、メトリクス集計とログの閲覧範囲を確認する | — | [test_alert_window_and_access_logs](../../packages/backend/tests/test_governance.py#L103) |
-| 同じ時刻の251件を複数ページに分けて全件取得し、重複・欠落と時差を確認する | — | [test_log_download_pages](../../packages/backend/tests/test_governance.py#L165) |
-| 管理者が同時刻の501件をカーソル非対応のDBで集計しても、失敗や二重計上が起きない。 | — | [test_admin_metrics_across_pages](../../packages/backend/tests/test_governance.py#L210) |
+| 管理者・提供者の通知先を制御し、同じプロジェクトでも既読状態を利用者ごとに保持する | — | [test_notification_scope](../../packages/backend/tests/test_governance.py#L76) |
+| 同時実行の上限、通知のみ・停止・解除、次期間の回復、メトリクス集計とログの閲覧範囲を確認する | — | [test_alert_window_and_access_logs](../../packages/backend/tests/test_governance.py#L104) |
+| 同じ時刻の251件を複数ページに分けて全件取得し、重複・欠落と時差を確認する | — | [test_log_download_pages](../../packages/backend/tests/test_governance.py#L167) |
+| 管理者が同時刻の501件をカーソル非対応のDBで集計しても、失敗や二重計上が起きない。 | — | [test_admin_metrics_across_pages](../../packages/backend/tests/test_governance.py#L212) |
 | 接続確認の後、呼び出し情報をLambdaへ渡して応答を返す | — | [test_lambda_adapter](../../packages/backend/tests/test_integrations.py#L11) |
 | クエリと認証情報を保持してHTTPSの接続先に転送する | — | [test_https_adapter](../../packages/backend/tests/test_integrations.py#L38) |
 | 接続確認に失敗したAPIは下書きのまま残る | — | [test_failed_probe_keeps_draft](../../packages/backend/tests/test_integrations.py#L71) |
@@ -160,10 +164,13 @@
 | 内部参照の連鎖とJSON Pointerのエスケープを解決し、パス順を保つ。 | — | [test_resolves_path_item_references_in_order](../../packages/backend/tests/test_openapi.py#L5) |
 | 解決できないパスと拡張項目を飛ばし、有効なパスを返す。 | 自分自身を参照している<br>参照先が存在しない<br>外部ドキュメントを参照している<br>パス項目が配列になっている | [test_skips_invalid_path_item_without_losing_valid_paths](../../packages/backend/tests/test_openapi.py#L33) |
 | 公開範囲、委任判断、個人・プロジェクト別申請、部署・役職の自動承認を確認する | — | [test_delegation_search_and_personal_isolation](../../packages/backend/tests/test_org_access.py#L39) |
-| Cognitoグループの除外が有効で、ポータルで新設したプロジェクトへの招待も反映される | — | [test_invitation_respects_identity_source](../../packages/backend/tests/test_org_access.py#L151) |
+| Cognitoグループの除外が有効で、ポータルで新設したプロジェクトへの招待も反映される | — | [test_invitation_respects_identity_source](../../packages/backend/tests/test_org_access.py#L152) |
+| 利用者には有効な所属先だけを返し、兼務の追加と所属解除を同じセッションに反映する | — | [test_workspace_project_visibility](../../packages/backend/tests/test_org_access.py#L180) |
+| 招待時の所属が名簿に残っても、現在のグループから外れたプロジェクトは返さない | — | [test_workspace_honors_current_groups](../../packages/backend/tests/test_org_access.py#L208) |
+| 部署に所属する利用者のうち、担当リーダーだけが管理対象のプロジェクトも参照できる | — | [test_workspace_department_lead_projects](../../packages/backend/tests/test_org_access.py#L225) |
 | 環境別の承認条件を守り、複数の承認を指定の順序で行う | — | [test_three_environments_and_ordered_reviews](../../packages/backend/tests/test_product_offers.py#L7) |
-| 公開仕様の履歴を保持し、保管に失敗した公開を確定しない | — | [test_publication_history_and_archive_failures](../../packages/backend/tests/test_product_offers.py#L83) |
-| 同じ内部参照を使う複数のOpenAPIパスで操作を解決できる | — | [test_internal_path_item_reference_is_invokable](../../packages/backend/tests/test_product_offers.py#L139) |
+| 公開仕様の履歴を保持し、保管に失敗した公開を確定しない | — | [test_publication_history_and_archive_failures](../../packages/backend/tests/test_product_offers.py#L84) |
+| 同じ内部参照を使う複数のOpenAPIパスで操作を解決できる | — | [test_internal_path_item_reference_is_invokable](../../packages/backend/tests/test_product_offers.py#L140) |
 | HTTPの結果と原因から重要度を決め、対象APIと画面を安全に記録する。 | 正常に応答した呼び出しを記録する<br>権限不足の呼び出しを利用者起因に分類する<br>未処理例外をサーバー障害に分類する<br>保存仕様が壊れたときにデータ修正の手順を残す<br>入力値の型が違うときに利用者起因に分類する | [test_http_log](../../packages/backend/tests/test_request_logs.py#L69) |
 | 入口で拒否しても追跡IDを返し、未検証の利用者や画面を記録しない。 | — | [test_origin_denial](../../packages/backend/tests/test_request_logs.py#L96) |
 | 履歴の出力時にも記録時点の復旧手順を保ち、旧形式の行も読み出せる。 | — | [test_export_preserves_repair](../../packages/backend/tests/test_request_logs.py#L109) |
@@ -173,25 +180,27 @@
 | 語句・意味の両方で業務APIを検索し、同義語を含めて順位付けする | — | [test_hybrid_retrieval](../../packages/backend/tests/test_search_rank.py#L17) |
 | 閲覧可能なOpenAPIタグの説明だけを意味検索に使う | — | [test_visible_openapi_tags_supply_custom_meaning](../../packages/backend/tests/test_search_rank.py#L32) |
 
-### フロントエンド（28項目）
+### フロントエンド（30項目）
 
 | 確認内容 | 条件別の確認内容 | テスト定義 |
 | --- | --- | --- |
 | ログ取得に失敗したときも認証ヘッダーを送り、ダウンロードを中止して理由を表示する。 | — | [test_failed_log_download_reports_error](../../packages/frontend/tests/test_access_log_download.py#L8) |
-| 承認済みの申請だけを候補にし、失効した商品の直接指定では仕様を取得しない。 | — | [test_console_reads_only_approved_spec](../../packages/frontend/tests/test_api_client.py#L8) |
-| 本人に許可された操作と承認環境を選べ、操作制限のある委任認証は候補から外れる。 | — | [test_only_allowed_operations_and_environments](../../packages/frontend/tests/test_api_client.py#L27) |
-| 本人の認証ではログイントークンを使い、委任認証では本人確認後に短期トークンを取得する。 | — | [test_identity_and_delegated_token](../../packages/frontend/tests/test_api_client.py#L58) |
-| URL直接指定では入力したヘッダーと本文だけを使い、Cookieとリダイレクトを無効にする。 | — | [test_manual_request_uses_only_entered_headers](../../packages/frontend/tests/test_api_client.py#L74) |
-| 送信先やヘッダーの形式が不正な場合やGETに本文がある場合は送信前にエラーになる。 | — | [test_invalid_manual_requests_are_rejected](../../packages/frontend/tests/test_api_client.py#L103) |
-| チャットの候補と操作手順に、対応する商品・ガイドのリンクが付く。 | — | [test_chat_product_and_guide_are_linked](../../packages/frontend/tests/test_components.py#L27) |
-| 提供者の検索結果で一致したガイドを先頭に表示し、件数を読み上げる。 | — | [test_guide_results_render_matching_cards_only](../../packages/frontend/tests/test_components.py#L54) |
-| ガイドの条件をクリアすると全件に戻り、検索欄にフォーカスする。 | — | [test_guide_reset_restores_role_and_keyboard_focus](../../packages/frontend/tests/test_components.py#L68) |
-| ユーザー管理の手順は閲覧でき、管理画面へのボタンは管理者にだけ表示する。 | — | [test_guide_article_shows_admin_navigation_only_to_admins](../../packages/frontend/tests/test_components.py#L102) |
-| OpenAPIの型定義を参照し、クエリ入力欄に既定値の例を表示する。 | — | [test_operation_parameter_renders_openapi_default](../../packages/frontend/tests/test_components.py#L117) |
-| パスの予約文字をエンコードし、配列とオブジェクトを指定形式で送る。 | — | [test_operation_location_encodes_path_and_query_values](../../packages/frontend/tests/test_components.py#L127) |
-| 必須のクエリ入力が空なら、入力項目名を示して送信を止める。 | — | [test_operation_location_requires_mandatory_query](../../packages/frontend/tests/test_components.py#L147) |
-| 公開履歴に版番号と変更された操作を表示し、差分がない種類は省く。 | — | [test_publication_history_shows_release_changes](../../packages/frontend/tests/test_components.py#L154) |
-| ログインフォームに入力ラベルと自動入力の用途を示し、Enterで送信できる。 | — | [test_login_form_uses_native_labels_and_keyboard_submit](../../packages/frontend/tests/test_components.py#L182) |
+| 承認済みの申請だけを候補にし、失効した商品の直接指定では仕様を取得しない。 | — | [test_console_reads_only_approved_spec](../../packages/frontend/tests/test_api_client.py#L9) |
+| 本人に許可された操作と承認環境を選べ、操作制限のある委任認証は候補から外れる。 | — | [test_only_allowed_operations_and_environments](../../packages/frontend/tests/test_api_client.py#L28) |
+| ログインだけの実行を拒否し、選択した委任認証でOAuth交換した短期トークンを送る。 | — | [test_identity_and_delegated_token](../../packages/frontend/tests/test_api_client.py#L59) |
+| URL直接指定では入力したヘッダーと本文だけを使い、Cookieとリダイレクトを無効にする。 | — | [test_manual_request_uses_only_entered_headers](../../packages/frontend/tests/test_api_client.py#L82) |
+| 送信先やヘッダーの形式が不正な場合やGETに本文がある場合は送信前にエラーになる。 | — | [test_invalid_manual_requests_are_rejected](../../packages/frontend/tests/test_api_client.py#L111) |
+| 呼び出し先にAPI識別名を使い、既存商品で識別名が未設定ならUUIDを使う。 | — | [test_invocation_path_uses_product_slug](../../packages/frontend/tests/test_components.py#L27) |
+| チャットの候補と操作手順に、対応する商品・ガイドのリンクが付く。 | — | [test_chat_product_and_guide_are_linked](../../packages/frontend/tests/test_components.py#L41) |
+| 提供者の検索結果で一致したガイドを先頭に表示し、件数を読み上げる。 | — | [test_guide_results_render_matching_cards_only](../../packages/frontend/tests/test_components.py#L68) |
+| ガイドの条件をクリアすると全件に戻り、検索欄にフォーカスする。 | — | [test_guide_reset_restores_role_and_keyboard_focus](../../packages/frontend/tests/test_components.py#L82) |
+| ユーザー管理の手順は閲覧でき、管理画面へのボタンは管理者にだけ表示する。 | — | [test_guide_article_shows_admin_navigation_only_to_admins](../../packages/frontend/tests/test_components.py#L116) |
+| OpenAPIの型定義を参照し、クエリ入力欄に既定値の例を表示する。 | — | [test_operation_parameter_renders_openapi_default](../../packages/frontend/tests/test_components.py#L131) |
+| パスの予約文字をエンコードし、配列とオブジェクトを指定形式で送る。 | — | [test_operation_location_encodes_path_and_query_values](../../packages/frontend/tests/test_components.py#L141) |
+| 必須のクエリ入力が空なら、入力項目名を示して送信を止める。 | — | [test_operation_location_requires_mandatory_query](../../packages/frontend/tests/test_components.py#L161) |
+| 公開履歴に版番号と変更された操作を表示し、差分がない種類は省く。 | — | [test_publication_history_shows_release_changes](../../packages/frontend/tests/test_components.py#L168) |
+| ログインフォームに入力ラベルと自動入力の用途を示し、Enterで送信できる。 | — | [test_login_form_uses_native_labels_and_keyboard_submit](../../packages/frontend/tests/test_components.py#L196) |
+| 送信したURL・形式・本文をシェルで再現し、短期トークンは変数で参照する。 | — | [test_curl_reuses_request_without_exposing_token](../../packages/frontend/tests/test_components.py#L218) |
 | 管理者のメトリクス取得が失敗しても件数とログを表示し、再読み込みでグラフが戻る。 | — | [test_dashboard_recovers_from_metrics_failure](../../packages/frontend/tests/test_dashboard.py#L13) |
 | JSON Pointerを解決し、同名のパス共通パラメーターを操作側で上書きする | — | [test_operation_overrides_path_parameter_and_resolves_pointer](../../packages/frontend/tests/test_openapi_fields.py#L4) |
 | 初回パスワードの変更から認証アプリ登録まで、各応答のセッションを次の処理に渡す。 | — | [test_invitation_and_totp_setup](../../packages/frontend/tests/test_portal_login.py#L13) |
@@ -227,10 +236,10 @@
 | 確認内容 | 条件別の確認内容 | テスト定義 |
 | --- | --- | --- |
 | Aurora DSQL では公開スキーマの現行カラム名をシステムカタログから取得する | — | [test_dsql_column_names_use_the_system_catalog](../../packages/database/tests/test_migration_columns.py#L6) |
-| DB定義がモデルと一致し、旧版のデータを移行できる | — | [test_schema_matches_models_and_replays](../../packages/database/tests/test_migrations.py#L8) |
+| DB定義がモデルと一致し、旧版のデータを移行できる | — | [test_schema_matches_models_and_replays](../../packages/database/tests/test_migrations.py#L10) |
 | Aurora DSQL 接続では Amazon ルート CA を含むバンドルで証明書とホスト名を検証する。 | — | [test_dsql_uses_a_bundled_ca_for_full_tls_verification](../../packages/database/tests/test_session.py#L8) |
 
-### ブラウザーE2E（20項目）
+### ブラウザーE2E（21項目）
 
 | 確認内容 | 条件別の確認内容 | テスト定義 |
 | --- | --- | --- |
@@ -238,22 +247,23 @@
 | ブラウザーで3方式を発行し、実時計で1分後に更新、シークレット変更・失効まで確認する | — | [test_credentials_console](../../tests/e2e/browser/test_credentials_console.py#L17) |
 | 提供者が公開・自動承認・委任の条件を保存し、部署リーダーが個人申請を画面から却下する | — | [test_provider_policy_console](../../tests/e2e/browser/test_delegation_console.py#L13) |
 | 提供者が利用者の操作を選び、送料1,400円のHTTPS応答と権限変更直後の転送停止を照合する | — | [test_person_operation_console](../../tests/e2e/browser/test_operation_console.py#L15) |
-| デモの提供者と利用者が公開・申請・承認・実行・権限取消を画面で完了できる | — | [test_user_flow](../../tests/e2e/browser/test_portal.py#L24) |
-| ホームで商品と手順を調べ、運営への問い合わせを明示的に送信できる。 | — | [test_home_chat_and_inquiry](../../tests/e2e/browser/test_portal.py#L29) |
-| 6業務・20拠点の公開120件を全件照合し、PC・スマートフォンの検索とページ送りを確認する | — | [test_large_catalog](../../tests/e2e/browser/test_portal.py#L62) |
-| 11月の外観変更を反映した明暗テーマの文字コントラストとキーボード操作を確認する | — | [test_console_visual_modes](../../tests/e2e/browser/test_portal.py#L133) |
-| 3役で利用状況、ユーザー管理、通知、ログ保存、掲載終了を確認する | — | [test_governance_console](../../tests/e2e/browser/test_portal.py#L236) |
-| スマートフォンでログインし、確認コードを入力して元のカタログへ戻れる。 | — | [test_portal_login_on_mobile](../../tests/e2e/browser/test_portal.py#L345) |
+| デモの提供者と利用者が公開・申請・承認・実行・権限取消を画面で完了できる | — | [test_user_flow](../../tests/e2e/browser/test_portal.py#L25) |
+| ホームで商品と手順を調べ、運営への問い合わせを明示的に送信できる。 | — | [test_home_chat_and_inquiry](../../tests/e2e/browser/test_portal.py#L30) |
+| 6業務・20拠点の公開120件を全件照合し、PC・スマートフォンの検索とページ送りを確認する | — | [test_large_catalog](../../tests/e2e/browser/test_portal.py#L63) |
+| 11月の外観変更を反映した明暗テーマの文字コントラストとキーボード操作を確認する | — | [test_console_visual_modes](../../tests/e2e/browser/test_portal.py#L134) |
+| 3役で利用状況、ユーザー管理、通知、ログ保存、掲載終了を確認する | — | [test_governance_console](../../tests/e2e/browser/test_portal.py#L237) |
+| スマートフォンでログインし、確認コードを入力して元のカタログへ戻れる。 | — | [test_portal_login_on_mobile](../../tests/e2e/browser/test_portal.py#L347) |
 | 商品を公開し、利用者が商品詳細から利用申請できる | — | [test_publish_and_apply_from_product_page](../../tests/e2e/browser/test_product_publication.py#L15) |
 | 実行レポートの画像をオフラインで拡大し、キーボード・タッチ・印刷でも確認できる | — | [test_report_image_viewer](../../tests/e2e/browser/test_report_images.py#L12) |
 | 利用者が承認待ちの申請を取り下げると画面に反映され、同じ環境に再申請できる。 | — | [test_withdraw_pending](../../tests/e2e/browser/test_requirement_flows.py#L49) |
 | 利用者が商品画面で旧版と新版の版番号、追加された操作と提供者の説明を確認できる。 | — | [test_release_history](../../tests/e2e/browser/test_requirement_flows.py#L71) |
 | 部署リーダーの判断が済むまで提供者は承認できず、最終承認後に呼び出しが成功する。 | — | [test_ordered_review](../../tests/e2e/browser/test_requirement_flows.py#L96) |
-| 拒否を記録した対象APIを管理者が一時停止し、許可済みの呼び出しだけを対象別に止められる。 | — | [test_admin_stops_target_after_denial](../../tests/e2e/browser/test_requirement_flows.py#L156) |
-| 監査担当が他の利用者のアクセスと業務監査を同じIDで照合し、両方の記録を保存できる。 | — | [test_auditor_cross_checks_exports](../../tests/e2e/browser/test_requirement_flows.py#L192) |
-| 提供者が商品ごとのトークンの上限を短縮すると、利用者による上限超過の発行を拒否する。 | — | [test_provider_shortens_token_lifetime](../../tests/e2e/browser/test_requirement_flows.py#L224) |
+| 拒否を記録した対象APIを管理者が一時停止し、許可済みの呼び出しだけを対象別に止められる。 | — | [test_admin_stops_target_after_denial](../../tests/e2e/browser/test_requirement_flows.py#L157) |
+| 監査担当が他の利用者のアクセスと業務監査を同じIDで照合し、両方の記録を保存できる。 | — | [test_auditor_cross_checks_exports](../../tests/e2e/browser/test_requirement_flows.py#L194) |
+| 提供者が商品ごとのトークンの上限を短縮すると、利用者による上限超過の発行を拒否する。 | — | [test_provider_shortens_token_lifetime](../../tests/e2e/browser/test_requirement_flows.py#L227) |
 | 役割と検索語で使い方を絞り込み、手順から対象画面を開ける | — | [test_usage_guide](../../tests/e2e/browser/test_usage_guide.py#L13) |
-| 管理者が組織階層と兼務を設定し、リーダーがキー・利用状況・停止と再開を操作する | — | [test_workspace_key_console](../../tests/e2e/browser/test_workspace_console.py#L28) |
+| 管理者が組織階層と兼務を設定し、リーダーがキー・利用状況・停止と再開を操作する | — | [test_workspace_key_console](../../tests/e2e/browser/test_workspace_console.py#L29) |
+| finance の利用者には所属先が1件だけ表示され、未所属の詳細URLを開いても情報は表示されない | — | [test_consumer_project_directory](../../tests/e2e/browser/test_workspace_console.py#L186) |
 
 ### 開発ツール（55項目）
 
@@ -324,11 +334,11 @@
 | 配布する関数 ZIP と依存 Layer の組み合わせで移行処理が DSQL 方言で全リビジョンを適用し、再実行できる | — | [test_run_packaged_migration_on_postgresql](../../tests/e2e/aws/test_migration_deployment.py#L78) |
 | 配備用コードとLayerだけでモデルを読み込み、外部パッケージの読み込み元を確認する。 | 判定用の依存からネイティブ推論ライブラリを読み込む<br>生成用の依存からモデル取得用SDKを読み込む | [test_model_imports_from_deployment_packages](../../tests/e2e/aws/test_model_packages.py#L28) |
 | 配備用コードとLayerだけでワーカーを読み込み、同梱ガイドを使って回答を生成できる。 | — | [test_agent_imports_from_worker_deployment_package](../../tests/e2e/aws/test_model_packages.py#L59) |
-| Cognitoで識別した2人が画面で承認し、在庫照会・取消・監査まで進める | — | [test_cognito_browser](../../tests/e2e/aws/test_portal.py#L144) |
-| 承認した呼び出しを接続先へ転送し、権限取消後は遮断する | 検証環境の在庫を照会する<br>本番環境の在庫を照会する<br>利用者がLambdaへ接続する<br>システムがLambdaへ接続する<br>利用者がHTTPS先へ接続する | [test_approved_calls_reach_upstream](../../tests/e2e/aws/test_portal.py#L192) |
-| 6種類を個別に登録・公開・承認して実行し、HTTPSの受信・業務応答・監査記録を照合する | — | [test_marketplace_contracts](../../tests/e2e/aws/test_portal.py#L337) |
-| 承認済みのHTTPS接続先が停止したとき、502と監査・アクセスログを同じIDで追跡できる | — | [test_upstream_unavailable](../../tests/e2e/aws/test_portal.py#L399) |
-| AWS EmulatorのCognitoでユーザー追加・所属・削除・既発行トークンの停止を確認する | — | [test_cognito_member_lifecycle](../../tests/e2e/aws/test_portal.py#L452) |
+| Cognitoで識別した2人が画面で承認し、在庫照会・取消・監査まで進める | — | [test_cognito_browser](../../tests/e2e/aws/test_portal.py#L145) |
+| 承認した呼び出しを接続先へ転送し、権限取消後は遮断する | 検証環境の在庫を照会する<br>本番環境の在庫を照会する<br>利用者がLambdaへ接続する<br>システムがLambdaへ接続する<br>利用者がHTTPS先へ接続する | [test_approved_calls_reach_upstream](../../tests/e2e/aws/test_portal.py#L193) |
+| 6種類を個別に登録・公開・承認して実行し、HTTPSの受信・業務応答・監査記録を照合する | — | [test_marketplace_contracts](../../tests/e2e/aws/test_portal.py#L341) |
+| 承認済みのHTTPS接続先が停止したとき、502と監査・アクセスログを同じIDで追跡できる | — | [test_upstream_unavailable](../../tests/e2e/aws/test_portal.py#L404) |
+| AWS EmulatorのCognitoでユーザー追加・所属・削除・既発行トークンの停止を確認する | — | [test_cognito_member_lifecycle](../../tests/e2e/aws/test_portal.py#L458) |
 | 構築したS3・API Gateway・Lambdaのタグを取得し、在庫APIが商品を返す | — | [test_deployed_resources](../../tests/e2e/aws/test_resources.py#L9) |
 | DSQLクラスターが削除保護付きで稼働状態になる | — | [test_create_dsql_cluster](../../tests/e2e/aws/test_resources.py#L67) |
 | 公開時にOpenAPI仕様の世代をS3に個別保存する | — | [test_openapi_archive_versions](../../tests/e2e/aws/test_resources.py#L80) |

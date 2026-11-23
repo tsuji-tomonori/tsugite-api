@@ -4,7 +4,7 @@ from app.apis import outputs
 from app.apis.catalog.common import DB, User, allowed_spec, event, listing, record
 from app.apis.catalog.offers import configured
 from app.apis.catalog.releases import record_release
-from app.apis.schemas import Listing, Offer, Register
+from app.apis.schemas import Listing, NewListing, Offer, Register
 from app.core.config import targets
 from app.core.diagnostics import asset_object
 from app.core.workspace import units
@@ -12,9 +12,19 @@ from app.integrations.spec_archive import archive_spec, canonical
 from fastapi import APIRouter, HTTPException, Request
 from openapi_spec_validator import validate
 from sqlalchemy import select
-from tsugite_db.models import Access, Asset, new_id, now
+from tsugite_db.models import Access, Asset, AssetRoute, new_id, now
 
 router = APIRouter()
+
+
+def assign_slug(db, asset: Asset, slug: str) -> None:
+    if asset.route:
+        if asset.route.slug != slug:
+            raise HTTPException(409, "設定済みのAPI識別名は変更できません")
+        return
+    if db.scalar(select(AssetRoute.asset_id).where(AssetRoute.slug == slug)) is not None:
+        raise HTTPException(409, "このAPI識別名はすでに使われています")
+    asset.route = AssetRoute(slug=slug)
 
 
 def validated_spec(data, db):
@@ -49,7 +59,7 @@ def validated_spec(data, db):
 
 #: APIをカタログに登録する
 @router.post("/apis", response_model=Listing, status_code=201, operation_id="register")
-def register(data: Register, request: Request, actor: User, db: DB):
+def register(data: NewListing, request: Request, actor: User, db: DB):
     if data.owner not in actor.owners:
         raise HTTPException(403, "提供プロジェクトの権限が必要です")
     spec = validated_spec(data, db)
@@ -65,8 +75,10 @@ def register(data: Register, request: Request, actor: User, db: DB):
         release_note=data.release_note,
         published=False,
     )
-    archive_spec(row.id, data.spec)
+    assign_slug(db, row, data.slug)
     db.add(row)
+    db.flush()
+    archive_spec(row.id, data.spec)
     event(db, request, actor, row, "register", row.owner)
     db.commit()
     return listing(row)
@@ -90,6 +102,9 @@ def edit(
     if row.revision != revision:
         raise HTTPException(409, "別の変更が入りました")
     spec = validated_spec(data, db)
+    if data.slug is not None:
+        assign_slug(db, row, data.slug)
+        db.flush()
     structural = (asset_object(row, "spec"), asset_object(row, "targets"), row.base_path or "") != (
         data.spec,
         data.targets,

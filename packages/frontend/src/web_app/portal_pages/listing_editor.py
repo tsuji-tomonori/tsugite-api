@@ -40,6 +40,12 @@ SAMPLE = {
 
 
 async def register(publish_now=False):
+    editing = route().startswith("edit/")
+    slug = ctx["detail"].get("slug") if editing else None
+    if not slug:
+        slug = value("api-slug").strip()
+    if not editing and not slug:
+        raise client.InputError("API識別名を入力してください")
     chosen = [value(k) for k in product_views.ENV if value(k)]
     if not chosen:
         raise client.InputError("接続先を一つ以上選んでください")
@@ -64,12 +70,13 @@ async def register(publish_now=False):
         },
         "base_path": value("base-path"),
         "name": value("name") or info.get("title", ""),
+        "slug": slug or None,
         "summary": value("summary") or info.get("description") or info.get("title", ""),
         "owner": bindings[chosen[0]]["owner"],
         "targets": {bindings[k]["environment"]: k for k in chosen},
         "spec": spec,
     }
-    if route().startswith("edit/"):
+    if editing:
         row = ctx["detail"]
         asset = await client.api("/apis/" + row["id"] + "?revision=" + str(row["revision"]), "PUT", data)
     else:
@@ -93,6 +100,13 @@ def inventory_form(asset=None):
     )
     with t.div(classes="box"):
         field("API名", "name", text=item.get("name", ""))
+        if item.get("slug"):
+            t.p("API識別名　" + item["slug"])
+        else:
+            field("API識別名", "api-slug", placeholder="stock-lookup")
+            t.small(
+                "呼び出しURLに使います。半角小文字の英字で始め、数字とハイフンも使えます。設定後は変更できません。"
+            )
         field("用途・説明", "summary", text=item.get("summary", ""))
         for env in product_views.ENV:
             opts = [("", "指定しない")] + [
