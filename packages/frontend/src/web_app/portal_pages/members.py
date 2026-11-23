@@ -1,6 +1,7 @@
 from urllib.parse import quote, urlencode
 
 import client
+import guide_examples as example
 from js import window
 from portal_labels import ROLE_LABELS
 from portal_navigation import load
@@ -39,14 +40,18 @@ async def member_page(cursor):
     await load()
 
 
-def members_view():
-    data = ctx["members"]
+def invite_form(projects):
     with t.div(classes="box"):
         t.h2("ユーザーを追加")
         field("メールアドレス", "member-email")
         field("役割", "member-role", options=[("consumer", "利用者"), ("provider", "提供者")])
-        field("所属プロジェクト", "member-project", options=[(p, p) for p in data["projects"]])
+        field("所属プロジェクト", "member-project", options=[(p, p) for p in projects])
         btn("追加する", member_add, primary=True)
+
+
+def members_view():
+    data = ctx["members"]
+    invite_form(data["projects"])
     t.h2("登録ユーザー")
     for row in data["items"]:
         with t.div(classes="compact-row"):
@@ -80,6 +85,7 @@ SCREENS = (
         load_members,
         group="管理",
         order=100,
+        examples={"member": lambda: invite_form([example.PROJECT["id"]])},
         visible=lambda user: user["admin"],
     ),
 )

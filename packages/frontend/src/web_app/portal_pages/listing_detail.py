@@ -2,6 +2,7 @@ import json
 
 import api_docs
 import client
+import guide_examples as example
 import operation_views
 import product_views
 from audit_navigation import trace_lookup
@@ -39,10 +40,8 @@ async def save_policy(asset):
     ctx["message"] = "公開範囲と承認ルールを保存しました"
 
 
-def policy_form(asset):
-    rules = ctx["policy"]
-    tree = ctx["policy_directory"]["units"]
-    with t.details(classes="box"):
+def policy_form(asset, rules, tree, *, expanded=False):
+    with t.details(classes="box", open=expanded):
         t.summary("公開範囲と承認ルール")
         field(
             "カタログの公開範囲",
@@ -125,6 +124,36 @@ async def invoke(asset):
     ctx["trial"] = f"HTTP {result.status}\n" + (await result.string())[:6000]
 
 
+def publication_actions(a):
+    with t.div(classes="btn-grouping"):
+        btn(
+            "掲載を取り下げる" if a["published"] else "公開する",
+            publication,
+            a,
+            primary=not a["published"],
+        )
+        btn("内容を編集", go, "edit/" + a["id"])
+        btn("APIを削除", delete_listing, a)
+
+
+def application_panel(a, me):
+    with t.div(classes="box"):
+        t.h2("利用申請")
+        field(
+            "利用プロジェクト",
+            "project",
+            options=[(p, p) for p in me["projects"]] + [(me["personal_project"], "個人ワークスペース")],
+        )
+        field(
+            "申請対象",
+            "grant-kind",
+            options=[("project", "プロジェクト全員"), ("personal", "自分だけ")],
+        )
+        product_views.application_form(a, field)
+        field("利用目的", "reason", textarea=True)
+        btn("申請する", apply, a, primary=True)
+
+
 def detail_page():
     a = ctx["detail"]
     if not a:
@@ -140,16 +169,8 @@ def detail_page():
         )
     t.p(a["owner"] + " · " + ("公開中" if a["published"] else "未掲載"), classes="muted")
     if a["owner"] in ctx["me"]["owners"]:
-        with t.div(classes="btn-grouping"):
-            btn(
-                "掲載を取り下げる" if a["published"] else "公開する",
-                publication,
-                a,
-                primary=not a["published"],
-            )
-            btn("内容を編集", go, "edit/" + a["id"])
-            btn("APIを削除", delete_listing, a)
-        policy_form(a)
+        publication_actions(a)
+        policy_form(a, ctx["policy"], ctx["policy_directory"]["units"])
         operation_views.provider_view(a, ctx, field, btn, load)
     with t.details(classes="box"):
         t.summary("OpenAPI定義を表示")
@@ -167,22 +188,7 @@ def detail_page():
     product_views.release_history(a)
     api_docs.view(a, ctx.get("rights", []), ctx.get("keys", []), subject=ctx["me"]["subject"])
     if a["published"]:
-        with t.div(classes="box"):
-            t.h2("利用申請")
-            field(
-                "利用プロジェクト",
-                "project",
-                options=[(p, p) for p in ctx["me"]["projects"]]
-                + [(ctx["me"]["personal_project"], "個人ワークスペース")],
-            )
-            field(
-                "申請対象",
-                "grant-kind",
-                options=[("project", "プロジェクト全員"), ("personal", "自分だけ")],
-            )
-            product_views.application_form(a, field)
-            field("利用目的", "reason", textarea=True)
-            btn("申請する", apply, a, primary=True)
+        application_panel(a, ctx["me"])
     rights = [r for r in ctx.get("rights", []) if r["asset_id"] == a["id"] and r["status"] == "approved"]
     if rights:
         with t.div(classes="box"):
@@ -226,4 +232,29 @@ def detail_page():
                     btn("この実行の監査履歴", trace_lookup, ctx["trace"])
 
 
-SCREENS = (Screen("api/", "APIの詳細", detail_page, load_listing, own_heading=True),)
+SCREENS = (
+    Screen(
+        "api/",
+        "APIの詳細",
+        detail_page,
+        load_listing,
+        own_heading=True,
+        examples={
+            "edit": lambda: publication_actions(example.ASSET),
+            "apply": lambda: application_panel(example.ASSET, example.USER),
+            "visibility": lambda: policy_form(
+                example.ASSET, example.POLICY, [example.PROJECT], expanded=True
+            ),
+            "operations": lambda: operation_views.provider_view(
+                example.ASSET, example.OPERATIONS, field, btn, load
+            ),
+            "invoke": lambda: api_docs.view(
+                example.ASSET,
+                [{**example.REQUEST, "status": "approved"}],
+                [example.KEY],
+                subject=example.USER["subject"],
+                expanded=True,
+            ),
+        },
+    ),
+)

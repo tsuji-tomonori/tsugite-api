@@ -300,7 +300,7 @@ def jump_to(anchor):
     return jump
 
 
-def view(asset, rights, keys, *, subject=""):
+def view(asset, rights, keys, *, subject="", expanded=False):
     spec = asset["spec"]
     bindings = available_bindings(asset["id"], rights, keys, subject)
     with t.section(classes="box"):
@@ -338,7 +338,11 @@ def view(asset, rights, keys, *, subject=""):
                         operation = item[method]
                         params = parameters(spec, item, operation)
                         body = resolve(spec, operation.get("requestBody", {}))
-                        with t.details(id=f"operation-{index}", classes="doc-operation"):
+                        with t.details(
+                            id=f"operation-{index}",
+                            classes="doc-operation",
+                            open=expanded and index == 0,
+                        ):
                             t.summary(
                                 f"{method.upper()} {path}　{operation.get('summary') or operation.get('operationId', '')}"
                             )

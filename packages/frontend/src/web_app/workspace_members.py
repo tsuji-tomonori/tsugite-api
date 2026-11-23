@@ -42,14 +42,15 @@ def members_view(root, unit, data):
                     btn("所属を解除", remove, row)
 
 
-def membership_editor(root, unit, data, subject):
+def membership_editor(root, unit, data, subject, *, draft=None):
     key = unit["id"]
     members = {r["subject"]: r for r in data["memberships"] if r["unit_id"] == key}
     if subject is not None and subject not in members:
         t.p("所属が見つかりません。")
         return
     row = members.get(subject, {})
-    draft = ctx.get("member_form", {})
+    if draft is None:
+        draft = ctx.get("member_form", {})
     names = {u["subject"]: u["username"] for u in data["users"]}
     names.update(draft.get("names", {}))
     detail = url(root, "detail", key)

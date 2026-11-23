@@ -1,4 +1,5 @@
 import client
+import guide_examples as example
 from management_targets import load_targets, target_options
 from portal_navigation import load
 from portal_ui import btn, ctx, field, value
@@ -35,23 +36,27 @@ async def more_notices(offset):
     await load()
 
 
+def notice_form(me, targets, *, expanded=False):
+    with t.details(classes="box", open=expanded):
+        t.summary("利用者に通知を送る")
+        if me["admin"]:
+            field(
+                "送信先",
+                "notify-project",
+                options=[("*", "全プロジェクト")] + [(p, p) for p in me["known_projects"]],
+            )
+        else:
+            field("送信先のAPIと利用プロジェクト", "notify-target", options=targets)
+        field("件名", "notify-title")
+        field("お知らせ本文", "notify-body", textarea=True)
+        btn("通知を送信", send_notice, primary=True)
+
+
 def notices_view():
     me = ctx["me"]
     rows = ctx["notices"]["items"]
     if me["admin"] or me["owners"] and ctx.get("targets"):
-        with t.details(classes="box"):
-            t.summary("利用者に通知を送る")
-            if me["admin"]:
-                field(
-                    "送信先",
-                    "notify-project",
-                    options=[("*", "全プロジェクト")] + [(p, p) for p in me["known_projects"]],
-                )
-            else:
-                field("送信先のAPIと利用プロジェクト", "notify-target", options=target_options())
-            field("件名", "notify-title")
-            field("お知らせ本文", "notify-body", textarea=True)
-            btn("通知を送信", send_notice, primary=True)
+        notice_form(me, target_options())
     if not rows:
         t.p("届いている通知はありません。", classes="empty")
     for n in rows:
@@ -77,5 +82,13 @@ async def load_notifications(_page):
 
 
 SCREENS = (
-    Screen("notifications", "通知", notices_view, load_notifications, group="ワークスペース", order=50),
+    Screen(
+        "notifications",
+        "通知",
+        notices_view,
+        load_notifications,
+        group="ワークスペース",
+        order=50,
+        examples={"notice": lambda: notice_form(example.USER, example.TARGETS, expanded=True)},
+    ),
 )

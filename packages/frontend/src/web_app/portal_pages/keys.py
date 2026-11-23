@@ -3,6 +3,7 @@ from urllib.parse import quote
 
 import client
 import credential_views
+import guide_examples as example
 from js import document, window
 from portal_navigation import load
 from portal_ui import btn, ctx, field, value
@@ -17,6 +18,38 @@ async def load_keys(_page):
 
 def _show_scope_options(event):
     document.getElementById("key-asset-list").hidden = str(event.target.value) != "selected"
+
+
+def key_form(projects, assets, create_key, *, expanded=False):
+    with t.details(classes="box", open=expanded):
+        t.summary("APIキーを作成")
+        field("キー名", "key-name", placeholder="例　棚卸バッチ")
+        field("プロジェクト", "key-project", options=projects)
+        field(
+            "キーの種類",
+            "key-kind",
+            options=[("personal", "本人専用"), ("shared", "プロジェクト共有")],
+        )
+        with t.label(classes="field"):
+            t.span("APIの範囲", id="key-scope-label")
+            with t.select(
+                id="key-scope",
+                aria_labelledby="key-scope-label",
+                classes="form-select",
+                on_change=_show_scope_options,
+            ):
+                t.option("利用を承認されたすべてのAPI", value="all")
+                t.option("指定したAPIのみ", value="selected")
+        with t.div(id="key-asset-list", hidden=True):
+            with t.details():
+                t.summary("対象APIを選ぶ")
+                for asset in assets:
+                    with t.label(classes="compact-row"):
+                        t.input(type="checkbox", id="key-asset-" + asset["id"])
+                        t.span(asset["name"])
+                if not assets:
+                    t.p("選択できるAPIはありません。", classes="muted")
+        btn("キーを発行", create_key, primary=True)
 
 
 def keys_view():
@@ -79,35 +112,7 @@ def keys_view():
                 btn("キーをコピー", copy_secret, primary=True)
                 btn("表示を閉じる", hide_secret)
     if projects:
-        with t.details(classes="box"):
-            t.summary("APIキーを作成")
-            field("キー名", "key-name", placeholder="例　棚卸バッチ")
-            field("プロジェクト", "key-project", options=projects)
-            field(
-                "キーの種類",
-                "key-kind",
-                options=[("personal", "本人専用"), ("shared", "プロジェクト共有")],
-            )
-            with t.label(classes="field"):
-                t.span("APIの範囲", id="key-scope-label")
-                with t.select(
-                    id="key-scope",
-                    aria_labelledby="key-scope-label",
-                    classes="form-select",
-                    on_change=_show_scope_options,
-                ):
-                    t.option("利用を承認されたすべてのAPI", value="all")
-                    t.option("指定したAPIのみ", value="selected")
-            with t.div(id="key-asset-list", hidden=True):
-                with t.details():
-                    t.summary("対象APIを選ぶ")
-                    for asset in assets:
-                        with t.label(classes="compact-row"):
-                            t.input(type="checkbox", id="key-asset-" + asset["id"])
-                            t.span(asset["name"])
-                    if not assets:
-                        t.p("選択できるAPIはありません。", classes="muted")
-            btn("キーを発行", create_key, primary=True)
+        key_form(projects, assets, create_key)
     t.h2("APIキー一覧")
     if not legacy:
         t.p("表示できるキーはありません。", classes="empty")
@@ -156,4 +161,26 @@ def keys_view():
                     btn("キーを失効", revoke_key, row)
 
 
-SCREENS = (Screen("keys", "APIキー", keys_view, load_keys, group="ワークスペース", order=30),)
+SCREENS = (
+    Screen(
+        "keys",
+        "APIキー",
+        keys_view,
+        load_keys,
+        group="ワークスペース",
+        order=30,
+        examples={
+            "keys": lambda: key_form(example.PROJECTS, [example.ASSET], None, expanded=True),
+            "credential": lambda: credential_views.render_form(
+                {"me": example.USER}, example.PROJECT["id"], example.OPTIONS, field, btn, load
+            ),
+            "rotate": lambda: credential_views.credentials_view(
+                {"me": example.USER, "workspace": {"admin": False, "leads": []}, "keys": [example.KEY]},
+                field,
+                btn,
+                load,
+                [],
+            ),
+        },
+    ),
+)
