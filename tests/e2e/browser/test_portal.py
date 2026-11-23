@@ -8,6 +8,7 @@ import pytest
 from playwright.sync_api import Locator, Route
 from pytest_given import scenario
 
+from tests.support.catalog import invocation_headers
 from tests.support.catalog_journey import catalog_journey
 from tests.support.portal_server import serve_portal
 from tests.support.screenshots import capture_image
@@ -320,7 +321,8 @@ def test_governance_console(demo_url: str, request: pytest.FixtureRequest) -> No
             provider.get_by_role("button", name="ルールを保存").click()
             expect(provider.get_by_text("アラート設定を保存しました")).to_be_visible()
             capture(provider, "alert", "提供者が設定した検証環境の上限と停止条件")
-            assert [api.get(path, headers=consumer).status_code for _ in range(3)] == [200, 200, 429]
+            call = invocation_headers(api, consumer)
+            assert [api.get(path, headers=call).status_code for _ in range(3)] == [200, 200, 429]
             user.locator(".bell-button").click()
             expect(user.get_by_role("heading", name="利用件数アラート")).to_be_visible()
             notice = user.locator("article").filter(has_text="在庫API更新予定")
@@ -370,7 +372,7 @@ def test_governance_console(demo_url: str, request: pytest.FixtureRequest) -> No
             provider.get_by_role("button", name="APIを削除").click()
             expect(provider.get_by_text("APIを削除しました")).to_be_visible()
             capture(provider, "deleted", "削除操作の結果")
-            assert api.get(path, headers=consumer).status_code == 404
+            assert api.get(path, headers=call).status_code == 404
         browser.close()
 
 

@@ -1,6 +1,6 @@
 from app.core.auth import DEMO_GROUPS
 
-from tests.support.catalog import FORM, headers
+from tests.support.catalog import FORM, headers, invocation_headers
 
 
 def setup_people(api, monkeypatch):
@@ -68,7 +68,8 @@ def test_delegation_search_and_personal_isolation(portal, monkeypatch):
     assert api.post("/api/requests/" + own["id"], json=decision, headers=neighbor).status_code == 403
     api.post("/api/requests/" + own["id"], json=decision, headers=lead).raise_for_status()
     path = f"/api/invoke/{key}/sandbox/field/items"
-    assert api.get(path, headers=user).is_success and api.get(path, headers=lead).status_code == 403
+    call = invocation_headers(api, user, "field")
+    assert api.get(path, headers=call).is_success and api.get(path, headers=lead).status_code == 403
     shared = api.post(
         "/api/keys",
         headers=user,
@@ -90,7 +91,7 @@ def test_delegation_search_and_personal_isolation(portal, monkeypatch):
     )
     api.put("/api/workspace/units/east/state", json={"stopped": True}, headers=lead).raise_for_status()
     assert api.get(path, headers={"Authorization": "Bearer " + shared["secret"]}).status_code == 403
-    assert api.get(path, headers=user).status_code == 403
+    assert api.get(path, headers=call).status_code == 403
     assert api.get("/api/workspace/units/east/usage", headers=lead).json()["calls"] >= 4
     for endpoint in ("metrics", "access-logs", "access-logs/download", "metric-dimensions"):
         assert api.get("/api/" + endpoint + "?unit=east", headers=neighbor).status_code == 403
@@ -174,3 +175,60 @@ def test_invitation_respects_identity_source(portal):
             actor = populate(db, Actor(identity, frozenset(), frozenset(), False, False))
             assert (project in actor.owners) == (project == "new-project")
             assert (project in actor.projects) == (project == "new-project")
+
+
+def test_workspace_project_visibility(portal):
+    """利用者には有効な所属先だけを返し、兼務の追加と所属解除を同じセッションに反映する"""
+    admin, user = (headers(portal, role) for role in ("admin", "consumer"))
+
+    def workspace(identity):
+        return portal.get("/api/workspace", headers=identity).raise_for_status().json()
+
+    def project_ids(identity):
+        return {u["id"] for u in workspace(identity)["units"] if u["kind"] == "project"}
+
+    assert project_ids(admin) == {"finance", "supply"}
+    assert project_ids(user) == {"finance"}
+    assert portal.get("/api/workspace/units/supply/usage", headers=user).status_code == 403
+
+    membership = "/api/workspace/memberships"
+    portal.put(
+        membership, headers=admin, json={"subject": "consumer", "unit_id": "supply"}
+    ).raise_for_status()
+    assert project_ids(user) == {"finance", "supply"}
+    for key in ("finance", "supply"):
+        portal.delete(
+            membership, headers=admin, params={"subject": "consumer", "unit_id": key}
+        ).raise_for_status()
+    assert project_ids(user) == set()
+    data = workspace(user)
+    assert data["my_units"] == [] and data["memberships"] == []
+
+
+def test_workspace_honors_current_groups(portal, monkeypatch):
+    """招待時の所属が名簿に残っても、現在のグループから外れたプロジェクトは返さない"""
+    member = (
+        portal.post(
+            "/api/members",
+            headers=headers(portal, "admin"),
+            json={"email": "former@example.org", "role": "consumer", "project": "finance"},
+        )
+        .raise_for_status()
+        .json()
+    )
+    monkeypatch.setitem(DEMO_GROUPS, member["subject"], [])
+    user = headers(portal, member["subject"])
+    data = portal.get("/api/workspace", headers=user).raise_for_status().json()
+    assert data["units"] == [] and data["my_units"] == [] and data["memberships"] == []
+
+
+def test_workspace_department_lead_projects(portal, monkeypatch):
+    """部署に所属する利用者のうち、担当リーダーだけが管理対象のプロジェクトも参照できる"""
+    admin, people = setup_people(portal, monkeypatch)
+    portal.delete(
+        "/api/workspace/memberships", headers=admin, params={"subject": "approver", "unit_id": "field"}
+    ).raise_for_status()
+    for person, expected in (("approver", {"field"}), ("neighbor", set())):
+        data = portal.get("/api/workspace", headers=people[person]).raise_for_status().json()
+        assert {u["id"] for u in data["units"] if u["kind"] == "project"} == expected
+        assert "field" not in data["my_units"]

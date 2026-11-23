@@ -15,8 +15,6 @@ async def publication(asset):
 
 
 async def load_listing(page):
-    if (ctx["detail"] or {}).get("id") != page.split("/", 1)[1]:
-        ctx.update(trial="", trace="")
     ctx["detail"] = None
     ctx["detail"] = await client.api("/apis/" + quote(page.split("/", 1)[1], safe=""))
     ctx["keys"] = await client.api("/keys")

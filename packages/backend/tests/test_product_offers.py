@@ -1,7 +1,7 @@
 from copy import deepcopy
 
 from packages.backend.tests.test_org_access import setup_people
-from tests.support.catalog import FORM, headers
+from tests.support.catalog import FORM, headers, invocation_headers
 
 
 def test_three_environments_and_ordered_reviews(portal, monkeypatch):
@@ -55,6 +55,7 @@ def test_three_environments_and_ordered_reviews(portal, monkeypatch):
             json={"revision": revision, "reason": "確認済み", "action": "approve"},
         )
 
+    call = invocation_headers(portal, applicant, "field")
     path = f"/api/invoke/{asset}/production/field/items"
     assert row["stage"] == "department" and row["status"] == "pending"
     assert decide(owner, row["revision"]).status_code == 403
@@ -63,21 +64,21 @@ def test_three_environments_and_ordered_reviews(portal, monkeypatch):
         r["id"] == row["id"] for r in portal.get("/api/requests?incoming=true", headers=owner).json()
     )
     for expected in ("unit/east", "provider"):
-        assert portal.get(path, headers=applicant).status_code == 403
+        assert portal.get(path, headers=call).status_code == 403
         row = decide(lead, row["revision"]).raise_for_status().json()
         assert row["stage"] == expected and row["status"] == "pending"
     assert decide(lead, row["revision"]).status_code == 403
-    assert portal.get(path, headers=applicant).status_code == 403
+    assert portal.get(path, headers=call).status_code == 403
     approved = decide(owner, row["revision"]).raise_for_status().json()
     assert approved["status"] == "approved" and len(approved["application"]["decisions"]) == 3
-    assert portal.get(path, headers=applicant).status_code == 200
-    assert portal.get(path.replace("production", "staging"), headers=applicant).status_code == 403
+    assert portal.get(path, headers=call).status_code == 200
+    assert portal.get(path.replace("production", "staging"), headers=call).status_code == 403
     form["offers"]["production"]["terms"] = "利用規約2版"
     portal.put(
         url, params={"revision": detail.json()["revision"]}, headers=owner, json=form
     ).raise_for_status()
-    assert portal.get(path, headers=applicant).status_code == 403
-    assert portal.get(path.replace("production", "sandbox"), headers=applicant).status_code == 200
+    assert portal.get(path, headers=call).status_code == 403
+    assert portal.get(path.replace("production", "sandbox"), headers=call).status_code == 200
 
 
 def test_publication_history_and_archive_failures(portal, monkeypatch):

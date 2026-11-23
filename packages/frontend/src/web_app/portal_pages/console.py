@@ -65,11 +65,7 @@ def bindings(asset, name):
         for r in ctx["console_rights"]
         if r["asset_id"] == asset["id"] and r["environment"] in asset["environments"]
     ]
-    scopes = dict.fromkeys((r["environment"], r["project"]) for r in rights)
-    result = [
-        (None, env, project, f"ログイン中の本人 · {project} · {api_docs.ENVIRONMENTS[env]}")
-        for env, project in scopes
-    ]
+    result = []
     for entry in api_docs.available_bindings(
         asset["id"], rights, ctx["console_keys"], ctx["me"]["subject"]
     ):
@@ -114,7 +110,8 @@ def approved_view():
     method, path, op, params = choices[name]
     options = bindings(asset, name)
     if not options:
-        t.p("現在利用できる環境がありません。")
+        t.p("この操作を実行できる認証情報がありません。")
+        t.a("認証情報を作成・管理する", href="#/keys")
         return
     if op.get("description"):
         t.p(op["description"])
@@ -128,7 +125,7 @@ def approved_view():
         params,
         body,
         "console-call",
-        binding_label="認証情報・プロジェクト・環境",
+        binding_label="認証情報・プロジェクト・環境（必須）",
         submit_label="この操作を実行",
     )
 
