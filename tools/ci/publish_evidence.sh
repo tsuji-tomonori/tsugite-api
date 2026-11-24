@@ -35,6 +35,23 @@ for merge in $merges; do
   grep -Fxq "対象コミット　\`$head\`" "$snapshot/report.md"
   test -s "$snapshot/requirements.xml"
   test -d "$snapshot/items"
+  # Git にはテスト結果を保存する。監査・アクセスログの原文は Verify 成果物で参照する。
+  python3 - "$snapshot/items" <<'PYTHON'
+from pathlib import Path
+import sys
+from xml.etree import ElementTree
+
+for path in Path(sys.argv[1]).glob("*.xml"):
+    xml = ElementTree.parse(path)
+    changed = False
+    for properties in xml.iter("properties"):
+        for prop in properties.findall("property"):
+            if prop.get("name") in {"trace_sample", "access_sample"}:
+                properties.remove(prop)
+                changed = True
+    if changed:
+        xml.write(path, encoding="utf-8", xml_declaration=True)
+PYTHON
 
   # 対象外となった要件の旧画像などが今回の証跡に混ざらないよう、毎回入れ替える。
   rm -rf -- "$archive/evidence"
