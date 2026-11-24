@@ -1,7 +1,7 @@
 # アクセスログと監査履歴の一覧・詳細を表示する。
 from __future__ import annotations
 
-from actions.logs import PAGE_SIZE, can_audit, detail_path, download_logs, log_lookup, log_page
+from actions.logs import PAGE_SIZE, can_audit, detail_path, download_logs, log_page
 from content.access_log_display import detail_fields, timestamp
 from puepy import t
 from routing.audit_navigation import trace_lookup
@@ -10,16 +10,8 @@ from runtime.portal_ui import action, ctx, render, route
 
 from components import chat_views
 from components.activity_filters import filters_view
-from components.controls import btn, field
-
-
-def request_lookup(request_id: str) -> None:
-    """リクエストIDの検索と出力操作を描画する。"""
-    with t.div(classes="box"):
-        field("照合するリクエストID", "access-id", text=request_id)
-        with t.div(classes="btn-grouping"):
-            btn("IDで検索", log_lookup)
-            btn("アクセスログをダウンロード", download_logs)
+from components.controls import btn
+from components.list_layout import download_button
 
 
 def logs_view(scope: str = "personal") -> None:
@@ -31,8 +23,9 @@ def logs_view(scope: str = "personal") -> None:
         t.p("ログを取得できませんでした。")
         btn("再読み込み", load)
         return
-    filters_view(False, scope=scope)
-    request_lookup(ctx.get("access_id", ""))
+    with t.div(classes="list-tools"):
+        filters_view(False, scope=scope)
+        download_button("アクセスログをダウンロード", action(download_logs))
     rows = ctx["log_rows"]
     if not rows:
         t.p("条件に一致するアクセスログはありません。", classes="empty")
@@ -40,8 +33,11 @@ def logs_view(scope: str = "personal") -> None:
     workspace = ctx.get("workspace", {})
     names = {u["id"]: u["name"] for u in workspace.get("units", [])}
     users = {u["subject"]: u["username"] for u in workspace.get("users", [])}
-    with t.div(classes="box table-scroll log-table"):
-        with t.table(aria_label="監査履歴一覧" if scope == "audit" else "アクセスログ一覧"):
+    label = "監査履歴一覧" if scope == "audit" else "アクセスログ一覧"
+    with t.div(
+        classes="resource-table result-table log-table", tabindex="0", role="region", aria_label=label
+    ):
+        with t.table(aria_label=label):
             with t.thead():
                 with t.tr():
                     for title in (

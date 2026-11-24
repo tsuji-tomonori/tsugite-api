@@ -12,7 +12,6 @@ SCREENS = (
         group="ガバナンス",
         order=145,
         visible=can_audit,
-        description="担当する部署・プロジェクトのAPI呼び出しを確認できます。管理者と監査担当は全体を確認できます。",
         clear_on_load=("log_rows", "dims", "workspace"),
     ),
 )

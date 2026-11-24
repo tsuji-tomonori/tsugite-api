@@ -43,3 +43,8 @@ async def load_inquiries(_page: str) -> None:
         "offset": ctx.get("inquiry_offset", 0),
     }
     ctx["inquiries"] = await messages_api.inquiries(params)
+
+
+async def change_scope() -> None:
+    """表示対象を切り替え、先頭の問い合わせから取得する。"""
+    await inquiry_page(value("inquiry-scope") == "incoming", 0)

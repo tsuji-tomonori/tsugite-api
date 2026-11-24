@@ -25,6 +25,14 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
+        "generated-docs",
+        "API一覧のリンクが操作別の設計書に届かない",
+        "tools/design/generate.py",
+        'f"[{operation_label}]({filename})"',
+        'f"[{operation_label}]({dest})"',
+        "tools/tests/test_design.py::test_all_routes_inputs_outputs_and_cleanup",
+    ),
+    Mutation(
         "frontend",
         "ページからPuePyを直接使う変更を見逃す",
         "tests/architecture/frontend_screens.py",
@@ -665,6 +673,14 @@ MUTATIONS = (
         "for source in (operation, item):",
         "packages/frontend/tests/test_openapi_fields.py::"
         "test_operation_overrides_path_parameter_and_resolves_pointer",
+    ),
+    Mutation(
+        "frontend",
+        "一覧の検索条件を常に展開する",
+        "packages/frontend/src/web_app/components/list_layout.py",
+        'with t.details(classes="list-disclosure", open=expanded):',
+        'with t.details(classes="list-disclosure", open=True):',
+        "packages/frontend/tests/test_components.py::test_log_search_starts_collapsed_and_shows_active_conditions",
     ),
     Mutation(
         "frontend",

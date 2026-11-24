@@ -11,12 +11,12 @@ from routing.portal_navigation import go
 from runtime.portal_ui import ctx
 
 from components.controls import btn, field
+from components.list_layout import disclosure, result_table
 
 
-def invite_form(projects: Sequence[str]) -> None:
+def invite_form(projects: Sequence[str], *, expanded: bool = False) -> None:
     """利用者の招待フォームを描画する。"""
-    with t.div(classes="box"):
-        t.h2("ユーザーを追加")
+    with disclosure("ユーザーを追加", expanded=expanded):
         field("メールアドレス", "member-email")
         field("氏名", "member-full-name", required=False)
         field("表示名", "member-display-name", required=False)
@@ -28,20 +28,26 @@ def invite_form(projects: Sequence[str]) -> None:
 def members_view() -> None:
     """利用者の一覧と管理操作を描画する。"""
     data = ctx["members"]
-    invite_form(data["projects"])
-    t.h2("登録ユーザー")
-    for row in data["items"]:
-        with t.div(classes="compact-row"):
-            t.strong(row.get("display_name") or row.get("full_name") or row["username"])
-            if row.get("display_name") and row.get("full_name") not in (None, row["display_name"]):
-                t.span(row["full_name"])
-            if row.get("email"):
-                t.span(row["email"])
-            t.span(ROLE_LABELS.get(row["role"], row["role"]) + "　" + row.get("project", ""))
-            if not row.get("deleted"):
-                btn("プロフィールを編集", go, "member-profile/" + quote(row["subject"], safe=""))
-            if row["subject"] != ctx["me"]["subject"]:
-                btn("削除", member_remove, row)
+    with t.div(classes="list-tools"):
+        invite_form(data["projects"])
+    with result_table("登録ユーザー", ("名前", "メールアドレス", "役割", "所属プロジェクト", "操作")):
+        for row in data["items"]:
+            with t.tr():
+                with t.th(scope="row"):
+                    t.span(row.get("display_name") or row.get("full_name") or row["username"])
+                    if row.get("display_name") and row.get("full_name") not in (
+                        None,
+                        row["display_name"],
+                    ):
+                        t.div(row["full_name"])
+                t.td(row.get("email") or "—")
+                t.td(ROLE_LABELS.get(row["role"], row["role"]))
+                t.td(row.get("project") or "—")
+                with t.td(), t.div(classes="btn-grouping"):
+                    if not row.get("deleted"):
+                        btn("プロフィールを編集", go, "member-profile/" + quote(row["subject"], safe=""))
+                    if row["subject"] != ctx["me"]["subject"]:
+                        btn("削除", member_remove, row)
     if data["next"]:
         btn("次のユーザー", member_page, data["next"])
     if ctx.get("member_cursor"):

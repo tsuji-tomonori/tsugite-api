@@ -6,9 +6,8 @@ from urllib.parse import parse_qs, quote, unquote, urlencode
 
 from apis import activity as activity_api
 from js import window
-from routing.portal_navigation import load
 from runtime.portal_download import save_blob
-from runtime.portal_ui import ctx, route, value
+from runtime.portal_ui import ctx, route
 
 from actions.activity import load_dimensions, time_params
 
@@ -34,12 +33,6 @@ async def download_logs() -> None:
             break
         params["cursor"] = str(cursor)
     save_blob(window.Blob.new(parts), "access-log.jsonl")
-
-
-async def log_lookup() -> None:
-    """入力されたリクエストIDを検索する。"""
-    ctx.update(access_id=value("access-id"), log_offset=0)
-    await load()
 
 
 async def log_page(offset: int) -> None:

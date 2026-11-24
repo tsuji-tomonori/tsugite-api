@@ -14,7 +14,6 @@ SCREENS = (
         group="提供者メニュー",
         order=110,
         visible=lambda user: bool(user["owners"]),
-        description="チームの下書きと公開中のAPIを管理します。",
         heading_action=lambda: btn("APIを登録", go, "register", primary=True),
     ),
 )

@@ -13,6 +13,7 @@ from routing.portal_navigation import go
 from runtime.portal_ui import action, ctx, value
 
 from components.controls import btn, field
+from components.list_layout import result_table
 
 PAGE_SIZE = 10
 
@@ -27,16 +28,10 @@ def endpoint(unit: dict[str, Any]) -> str:
     return "/workspace/units/" + quote(unit["id"], safe="")
 
 
-async def navigate(path: str) -> None:
-    """遷移後に画面の先頭に移動する。"""
-    await go(path)
-    window.scrollTo(0, 0)
-
-
 def link(label: str, path: str, *, button: bool = False) -> None:
     """組織画面へのリンクを描画する。"""
     attrs = {"classes": "btn btn-outline-secondary"} if button else {}
-    t.a(label, href="#/" + path, on_click=action(navigate, path), **attrs)
+    t.a(label, href="#/" + path, on_click=action(go, path), **attrs)
 
 
 def ancestors(unit: dict[str, Any] | None, by_id: dict[str, dict[str, Any]]) -> Iterator[dict[str, Any]]:
@@ -81,37 +76,30 @@ def list_view(
     number = max(1, min(pages, number))
     start = (number - 1) * PAGE_SIZE
     own = set(data["my_units"])
-    with t.section(classes="box"):
-        with t.div(classes="results-head"):
-            t.strong(f"{len(rows)} 件")
-            if data["admin"]:
-                link(label + "を作成", root + "/create", button=True)
-        if not rows:
-            t.p(label + "は登録されていません。")
-            return
-        with t.div(classes="resource-table", tabindex="0", role="region", aria_label=label + "一覧"):
-            with t.table(aria_label=label + "一覧"):
-                with t.thead():
-                    with t.tr():
-                        for title in ("名称", "識別子", "親部署", "利用状態", "自分の所属"):
-                            t.th(title, scope="col")
-                with t.tbody():
-                    for row in rows[start : start + PAGE_SIZE]:
-                        with t.tr():
-                            with t.th(scope="row"):
-                                link(row["name"], url(root, "detail", row["id"]))
-                            t.td(row["id"], classes="mono")
-                            t.td(paths.get(row.get("parent") or "", "—"))
-                            t.td(unit_state(row, by_id))
-                            t.td("所属" if row["id"] in own else "—")
-        with t.nav(classes="pager", aria_label=label + "一覧のページ"):
-            if number > 1:
-                link("前へ", url(root, "page", number - 1), button=True)
-            t.span(
-                f"{start + 1}–{min(start + PAGE_SIZE, len(rows))} 件 / 全 {len(rows)} 件（{number} / {pages} ページ）"
-            )
-            if number < pages:
-                link("次へ", url(root, "page", number + 1), button=True)
+    with t.div(classes="list-tools"):
+        t.strong(f"{len(rows)} 件")
+        if data["admin"]:
+            link(label + "を作成", root + "/create", button=True)
+    if not rows:
+        t.p(label + "は登録されていません。")
+        return
+    with result_table(label + "一覧", ("名称", "識別子", "親部署", "利用状態", "自分の所属")):
+        for row in rows[start : start + PAGE_SIZE]:
+            with t.tr():
+                with t.th(scope="row"):
+                    link(row["name"], url(root, "detail", row["id"]))
+                t.td(row["id"], classes="mono")
+                t.td(paths.get(row.get("parent") or "", "—"))
+                t.td(unit_state(row, by_id))
+                t.td("所属" if row["id"] in own else "—")
+    with t.nav(classes="pager", aria_label=label + "一覧のページ"):
+        if number > 1:
+            link("前へ", url(root, "page", number - 1), button=True)
+        t.span(
+            f"{start + 1}–{min(start + PAGE_SIZE, len(rows))} 件 / 全 {len(rows)} 件（{number} / {pages} ページ）"
+        )
+        if number < pages:
+            link("次へ", url(root, "page", number + 1), button=True)
 
 
 def unit_editor(
@@ -134,7 +122,7 @@ def unit_editor(
         await organization_api.save_unit(
             key, {"name": value("org-unit-name"), "kind": kind, "parent": value("org-parent")}
         )
-        await navigate(url(root, "detail", key))
+        await go(url(root, "detail", key))
         ctx["message"] = label + "を保存しました"
 
     with t.section(classes="box"):
@@ -172,7 +160,7 @@ def retirement_form(
     async def remove() -> None:
         if window.confirm(f"{unit['name']}（{key}）を削除しますか？"):
             await organization_api.delete_unit(endpoint(unit))
-            await navigate(root)
+            await go(root)
             ctx["message"] = label + "を削除しました"
 
     async def transfer() -> None:
@@ -181,7 +169,7 @@ def retirement_form(
             raise client.InputError("移管先を選択してください")
         if window.confirm(f"{paths[key]} を {paths[destination]} へ移管し、移管元を廃止しますか？"):
             await organization_api.transfer_unit(endpoint(unit), {"destination": destination})
-            await navigate(url(root, "detail", destination))
+            await go(url(root, "detail", destination))
             ctx["message"] = label + "を移管しました"
 
     with t.details(classes="box"):

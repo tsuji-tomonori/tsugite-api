@@ -13,6 +13,5 @@ SCREENS = (
         group="ガバナンス",
         order=160,
         examples={"audit": lambda: audit_search("", "approve")},
-        description="公開、申請、判断、呼び出しの記録を追跡できます。",
     ),
 )

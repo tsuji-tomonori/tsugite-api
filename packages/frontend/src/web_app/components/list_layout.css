@@ -1,0 +1,71 @@
+/* 一覧の表と折りたたみ式の検索条件を配置する。 */
+/* 閉じている操作は1行にまとめ、展開したフォームには本文の幅を使う。 */
+.list-tools {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px var(--action-gap);
+  margin-bottom: 8px;
+}
+.list-tools > .list-disclosure[open] { flex-basis: 100%; }
+.list-disclosure { min-width: 0; }
+.list-disclosure > summary {
+  width: fit-content;
+  max-width: 100%;
+  padding: 10px 12px;
+  min-height: var(--control-height);
+  border: 1px solid var(--field-edge);
+  border-radius: 4px;
+  background: var(--surface);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.list-disclosure > summary small { margin-inline-start: 8px; font-weight: 400; }
+.disclosure-body {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  margin-block: 8px;
+  padding: var(--section-space);
+}
+.disclosure-body .filter-grid { margin-top: 0; gap: 16px; }
+.disclosure-body .filter-grid .field { margin: 0; }
+.disclosure-body details + button { margin-top: 16px; }
+.result-table { border: 1px solid var(--line); border-radius: 4px; background: var(--surface); }
+.result-table table:has(th:nth-child(4)) { min-width: 42rem; }
+.result-table th, .result-table td { vertical-align: top; overflow-wrap: anywhere; }
+.list-count { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+
+.result-table thead th { white-space: nowrap; }
+.result-table .btn { white-space: nowrap; }
+.content:has(> :is(.list-tools, .result-table)) { padding-top: 6px; }
+.content:has(> :is(.list-tools, .result-table)) > .page-heading { margin-bottom: 4px; }
+@media (max-width: 780px) {
+  /* 狭い画面の横断検索と所属名はナビゲーションを開いたときに表示する。 */
+  #app:has(.workspace[data-nav="closed"]) .mast :is(.global-search, .project) { display: none; }
+  .mast .btn { min-height: 44px; padding-block: 6px; }
+  .console-tools { padding-block: 0; }
+  .mast .project {
+    order: 6;
+    max-width: 35%;
+    overflow-wrap: anywhere;
+  }
+  .mast .global-search { width: auto; flex: 1 0 55%; }
+  .mast:has(.global-search) .identity { flex-grow: 1; }
+  .content:has(> .list-tools) > .page-heading .btn { padding-inline: 12px; }
+}
+.list-tools > .form-select { width: auto; max-width: 100%; }
+.list-tools > .btn { padding-inline: 12px; }
+.result-table td > p:first-child { margin-top: 0; }
+.result-table td > p:last-child { margin-bottom: 0; }
+
+.download-short { display: none; }
+@media (max-width: 400px) {
+  #app:has(.workspace[data-nav="closed"]) .mast > .btn { display: none; }
+  #app:has(.workspace[data-nav="closed"] .content > :is(.list-tools, .result-table)) .crumb { display: none; }
+  .mast { padding-block: 2px; }
+  .content:has(> :is(.list-tools, .result-table)) { padding-top: 4px; }
+  .list-tools { column-gap: 8px; margin-bottom: 6px; }
+  .download-short { display: inline; }
+  .download-label { display: none; }
+}

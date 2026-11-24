@@ -11,6 +11,5 @@ SCREENS = (
         load_catalog,
         group="ワークスペース",
         order=20,
-        description="公開されたAPIを探し、プロジェクトでの利用を申請できます。",
     ),
 )

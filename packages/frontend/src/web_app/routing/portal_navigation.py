@@ -19,6 +19,7 @@ async def go(page: str, *, query: str | None = None) -> None:
         ctx["nav_open"] = False
     window.history.pushState(None, "", "#/" + page)
     await load()
+    window.scrollTo(0, 0)
 
 
 async def load() -> None:

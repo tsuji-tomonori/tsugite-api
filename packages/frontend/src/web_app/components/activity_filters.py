@@ -7,9 +7,10 @@ from typing import Any
 
 from puepy import t
 from routing.portal_navigation import go, load
-from runtime.portal_ui import action, ctx, value
+from runtime.portal_ui import INITIAL_STATE, action, ctx, value
 
-from components.controls import btn, field
+from components.controls import field
+from components.list_layout import disclosure
 
 MEASURES = {
     "calls": "呼び出し件数",
@@ -21,9 +22,14 @@ MEASURES = {
 }
 
 
-async def apply_filters() -> None:
+PERIODS = {"1": "過去1時間", "24": "過去24時間", "168": "過去7日", "720": "過去30日"}
+
+
+async def apply_filters(chart: bool) -> None:
     """入力条件を適用して再読み込みする。"""
     f = {k: value("f-" + k) for k in ctx["filters"]}
+    if not chart:
+        ctx["access_id"] = value("access-id")
     ctx["filters"] = f
     ctx["log_offset"] = 0
     await load()
@@ -31,7 +37,20 @@ async def apply_filters() -> None:
 
 def filters_view(chart: bool, *, scope: str = "metrics") -> None:
     """現在の絞り込み条件を表示する。"""
-    filter_form(chart, ctx["filters"], ctx.get("dims", []), ctx.get("workspace", {}), scope=scope)
+    f = ctx["filters"]
+    keys = f if chart else [k for k in f if k not in ("minutes", "measure")]
+    count = sum(f[k] != INITIAL_STATE["filters"][k] for k in keys)
+    request_id = "" if chart else ctx.get("access_id", "")
+    period = "日時指定" if f["start"] or f["end"] else PERIODS[f["hours"]]
+    status = "・".join(filter(None, (period, "絞り込み中" if count or request_id else "")))
+    with disclosure("検索条件", status=status):
+        if scope == "audit":
+            t.p(
+                "担当する部署・プロジェクトの呼び出しを確認できます。管理者と監査担当は全体を確認できます。"
+            )
+        filter_form(
+            chart, f, ctx.get("dims", []), ctx.get("workspace", {}), scope=scope, request_id=request_id
+        )
 
 
 def filter_form(
@@ -41,14 +60,17 @@ def filter_form(
     workspace: dict[str, Any],
     *,
     scope: str = "metrics",
+    request_id: str = "",
 ) -> None:
     """集計範囲を入力するフォームを描画する。"""
 
     def choice(k: str, title: str, opts: Sequence[tuple[str, str]]) -> None:
         field(title, "f-" + k, options=opts, text=f[k])
 
-    with t.div(classes="box"):
+    with t.form(on_submit=action(apply_filters, chart)):
         with t.div(classes="filter-grid"):
+            if not chart:
+                field("照合するリクエストID", "access-id", text=request_id)
             choices = [
                 (u["id"], u["name"])
                 for u in workspace.get("units", [])
@@ -62,7 +84,7 @@ def filter_form(
             choice(
                 "hours",
                 "期間",
-                [("1", "過去1時間"), ("24", "過去24時間"), ("168", "過去7日"), ("720", "過去30日")],
+                list(PERIODS.items()),
             )
             choice(
                 "asset", "対象API", [("", "すべて")] + sorted({(v["asset_id"], v["name"]) for v in dims})
@@ -88,7 +110,7 @@ def filter_form(
             t.summary("日時を指定（UTC）")
             field("開始日時", "f-start", text=f["start"], placeholder="2026-11-21T00:00:00Z")
             field("終了日時", "f-end", text=f["end"], placeholder="2026-11-21T01:00:00Z")
-        btn("条件を適用", apply_filters, primary=True)
+        t.button("条件を適用", type="submit", classes="btn btn-primary")
 
 
 async def inspect_bucket(at: str, minutes: int) -> None:

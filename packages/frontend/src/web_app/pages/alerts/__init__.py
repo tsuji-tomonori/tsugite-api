@@ -13,6 +13,6 @@ SCREENS = (
         load_alerts,
         group="ガバナンス",
         order=150,
-        examples={"alerts": lambda: rule_form(example.TARGETS)},
+        examples={"alerts": lambda: rule_form(example.TARGETS, expanded=True)},
     ),
 )

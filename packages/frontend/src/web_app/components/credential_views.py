@@ -11,6 +11,8 @@ from apis import client
 from js import document, window
 from puepy import t
 
+from components.list_layout import disclosure, result_table
+
 MODES = {
     "bearer": "短期Bearer",
     "app": "アプリ（ユーザー委任）",
@@ -369,24 +371,25 @@ def credentials_view(
         ctx["credential_options"] = {"owner": owner, "project": selected, "data": response}
         ctx.pop("issued_key", None)
 
-    if projects:
-        with t.section(classes="box"):
-            t.h2("認証情報を作成")
-            field(
-                "発行先プロジェクト",
-                "credential-project",
-                options=projects,
-                text=opts["project"] if loaded else "",
-            )
-            btn("発行条件を確認", prepare)
-            if loaded:
-                t.p("発行先　" + named[opts["project"]], classes="muted")
-                render_form(ctx, opts["project"], opts["data"], field, btn, reload)
-
     modern = [r for r in ctx.get("keys", []) if r.get("mode") in MODES]
+    with t.div(classes="list-tools"):
+        if modern:
+            t.h2("認証情報一覧")
+        if projects:
+            with disclosure("認証情報を作成", expanded=loaded):
+                field(
+                    "発行先プロジェクト",
+                    "credential-project",
+                    options=projects,
+                    text=opts["project"] if loaded else "",
+                )
+                btn("発行条件を確認", prepare)
+                if loaded:
+                    t.p("発行先　" + named[opts["project"]], classes="muted")
+                    render_form(ctx, opts["project"], opts["data"], field, btn, reload)
+
     if not modern:
         return
-    t.h2("認証情報一覧")
     directory = ctx["workspace"]
     names = {a["id"]: a["name"] for a in ctx.get("key_assets", [])}
 
@@ -409,84 +412,93 @@ def credentials_view(
             ctx["message"] = "認証情報を失効しました"
 
     users = {u["subject"]: u["username"] for u in directory.get("users", [])}
-    for row in modern:
-        with t.article(classes="box"):
-            t.h3(row["name"])
-            t.p(
-                MODES[row["mode"]]
-                + " · "
-                + named.get(row["project"], row["project"])
-                + " · "
-                + ("本人" if row["kind"] == "personal" else "プロジェクト共有")
-                + " · "
-                + ("失効済み" if row["revoked"] else "有効")
-            )
-            t.p(f"トークン有効期限 {row['ttl_minutes']}分　更新開始 {row['refresh_minutes']}分後")
-            for asset in row["api_ids"]:
-                ops = row.get("operations", {}).get(asset)
-                scope = "すべての操作" if ops is None else ("、".join(ops) or "許可された操作なし")
-                t.p(names.get(asset, asset) + "　" + scope)
-            if not row["api_ids"]:
-                t.p("利用を承認されたすべてのAPI")
-            if row["mode"] in ("system", "app"):
-                t.p("クライアントID　" + (row.get("client_id") or row["id"]), classes="mono")
-            if row.get("users"):
-                t.p("利用者　" + "、".join(users.get(s, s) for s in row["users"]))
-            manager = (
-                directory["admin"]
-                or row["creator"] == owner
-                or row["kind"] == "shared"
-                and row["project"] in directory["leads"]
-            )
-            if not row["revoked"]:
-                with t.details():
-                    t.summary("トークンの取得と呼び出し方")
-                    if row["mode"] == "bearer":
-                        t.p(
-                            "取得・更新ボタンでトークンを取得できます。外部から更新する場合は、本人のログイントークンをヘッダーに指定します。"
-                        )
-                        t.pre(
-                            f"POST {client.prefix}/credentials/{row['id']}/token\nAuthorization: Bearer <ログイントークン>",
-                            classes="code",
-                        )
-                    else:
-                        t.p("アプリまたはジョブのサーバーからトークン発行先に送信します。")
-                        request_headers = "Content-Type: application/json"
-                        if row["mode"] == "app":
-                            request_headers += "\nAuthorization: Bearer <利用者のログイントークン>"
-                        payload = {
-                            "client_id": row.get("client_id") or row["id"],
-                            "client_secret": "<保管したクライアントシークレット>",
-                        }
-                        t.pre(
-                            f"POST {client.prefix}/auth/token\n{request_headers}\n\n"
-                            + json.dumps(payload, ensure_ascii=False, indent=2),
-                            classes="code",
-                        )
-                    t.p("APIを呼び出す際は、取得したアクセストークンを指定します。")
-                    t.pre("Authorization: Bearer <アクセストークン>", classes="code")
-                with t.div(classes="btn-grouping"):
-                    if (
-                        (
-                            row["project"] in ctx["me"]["projects"]
-                            or row["project"] == ctx["me"].get("personal_project")
-                        )
-                        and (row["kind"] == "shared" or row["creator"] == owner)
-                        and (not row.get("users") or owner in row["users"])
-                        and (
-                            row["mode"] != "system"
-                            or directory["admin"]
-                            or row["project"] in directory["leads"]
-                        )
-                    ):
-                        btn("アクセストークンを取得・更新", obtain, row)
-                    leader = directory["admin"] or row["project"] in directory["leads"]
-                    creator_can_rotate = (
-                        row["mode"] == "app"
-                        and row["creator"] == owner
-                        and (not row.get("users") or owner in row["users"])
+    with result_table("認証情報一覧", ("名前", "認証方式・所有者・状態", "有効期限・利用範囲", "操作")):
+        for row in modern:
+            with t.tr():
+                t.th(row["name"], scope="row")
+                t.td(
+                    MODES[row["mode"]]
+                    + " · "
+                    + named.get(row["project"], row["project"])
+                    + " · "
+                    + ("本人" if row["kind"] == "personal" else "プロジェクト共有")
+                    + " · "
+                    + ("失効済み" if row["revoked"] else "有効")
+                )
+                with t.td():
+                    t.p(
+                        f"トークン有効期限 {row['ttl_minutes']}分　更新開始 {row['refresh_minutes']}分後"
                     )
-                    if row["mode"] in ("app", "system") and (leader or creator_can_rotate):
-                        btn("シークレットを更新", rotate, row)
-                    if manager:
-                        btn("認証情報を失効", revoke, row)
+                    for asset in row["api_ids"]:
+                        ops = row.get("operations", {}).get(asset)
+                        scope = (
+                            "すべての操作" if ops is None else ("、".join(ops) or "許可された操作なし")
+                        )
+                        t.p(names.get(asset, asset) + "　" + scope)
+                    if not row["api_ids"]:
+                        t.p("利用を承認されたすべてのAPI")
+                    if row["mode"] in ("system", "app"):
+                        t.p("クライアントID　" + (row.get("client_id") or row["id"]), classes="mono")
+                    if row.get("users"):
+                        t.p("利用者　" + "、".join(users.get(s, s) for s in row["users"]))
+                with t.td():
+                    manager = (
+                        directory["admin"]
+                        or row["creator"] == owner
+                        or row["kind"] == "shared"
+                        and row["project"] in directory["leads"]
+                    )
+                    if not row["revoked"]:
+                        with t.details():
+                            t.summary("トークンの取得と呼び出し方")
+                            if row["mode"] == "bearer":
+                                t.p(
+                                    "取得・更新ボタンでトークンを取得できます。外部から更新する場合は、本人のログイントークンをヘッダーに指定します。"
+                                )
+                                t.pre(
+                                    f"POST {client.prefix}/credentials/{row['id']}/token\nAuthorization: Bearer <ログイントークン>",
+                                    classes="code",
+                                )
+                            else:
+                                t.p("アプリまたはジョブのサーバーからトークン発行先に送信します。")
+                                request_headers = "Content-Type: application/json"
+                                if row["mode"] == "app":
+                                    request_headers += (
+                                        "\nAuthorization: Bearer <利用者のログイントークン>"
+                                    )
+                                payload = {
+                                    "client_id": row.get("client_id") or row["id"],
+                                    "client_secret": "<保管したクライアントシークレット>",
+                                }
+                                t.pre(
+                                    f"POST {client.prefix}/auth/token\n{request_headers}\n\n"
+                                    + json.dumps(payload, ensure_ascii=False, indent=2),
+                                    classes="code",
+                                )
+                            t.p("APIを呼び出す際は、取得したアクセストークンを指定します。")
+                            t.pre("Authorization: Bearer <アクセストークン>", classes="code")
+                        with t.div(classes="btn-grouping"):
+                            if (
+                                (
+                                    row["project"] in ctx["me"]["projects"]
+                                    or row["project"] == ctx["me"].get("personal_project")
+                                )
+                                and (row["kind"] == "shared" or row["creator"] == owner)
+                                and (not row.get("users") or owner in row["users"])
+                                and (
+                                    row["mode"] != "system"
+                                    or directory["admin"]
+                                    or row["project"] in directory["leads"]
+                                )
+                            ):
+                                btn("アクセストークンを取得・更新", obtain, row)
+                            leader = directory["admin"] or row["project"] in directory["leads"]
+                            creator_can_rotate = (
+                                row["mode"] == "app"
+                                and row["creator"] == owner
+                                and (not row.get("users") or owner in row["users"])
+                            )
+                            if row["mode"] in ("app", "system") and (leader or creator_can_rotate):
+                                btn("シークレットを更新", rotate, row)
+                            if manager:
+                                btn("認証情報を失効", revoke, row)

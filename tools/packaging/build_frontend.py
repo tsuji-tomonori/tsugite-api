@@ -77,7 +77,14 @@ def write_theme(definitions: dict[str, Any]) -> None:
 def bundle_styles(source: Path, dist: Path) -> None:
     with (dist / "ui.css").open("a", encoding="utf-8") as bundle:
         # 既存シートのカスケードを保ち、追加シートはパス順に連結する。
-        order = ("login.css", "guide.css", "listing_detail.css", "logs.css", "workspace.css")
+        order = (
+            "login.css",
+            "guide.css",
+            "list_layout.css",
+            "listing_detail.css",
+            "logs.css",
+            "workspace.css",
+        )
         rank = {name: index for index, name in enumerate(order)}
         for css in sorted(
             source.rglob("*.css"), key=lambda path: (rank.get(path.name, len(rank)), path)

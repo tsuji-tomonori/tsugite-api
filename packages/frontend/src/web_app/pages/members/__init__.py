@@ -23,7 +23,7 @@ SCREENS = (
         load_members,
         group="管理",
         order=100,
-        examples={"member": lambda: invite_form([example.PROJECT["id"]])},
+        examples={"member": lambda: invite_form([example.PROJECT["id"]], expanded=True)},
         visible=lambda user: user["admin"],
     ),
 )

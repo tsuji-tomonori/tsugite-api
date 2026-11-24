@@ -4,9 +4,9 @@
 
 POST `/api/credentials`
 
-[API一覧](../README.md) · [CRUD一覧](../crud.md)
+[API一覧](README.md) · [CRUD一覧](../db/crud.md)
 
-共通 · `issue_api_credentials_post` · [issue:132](../../../packages/backend/src/app/apis/governance/credentials.py#L132)
+共通 · `issue_api_credentials_post` · [issue:134](../../../packages/backend/src/app/apis/governance/credentials.py#L134)
 
 ## 入力
 
@@ -20,7 +20,7 @@ POST `/api/credentials`
 
 | Content-Type | スキーマ |
 | --- | --- |
-| application/json | [認証情報の発行条件（Issue）](../schemas.md#issue) |
+| application/json | [認証情報の発行条件（Issue）](../db/schemas.md#issue) |
 
 #### application/json の項目
 
@@ -40,8 +40,8 @@ POST `/api/credentials`
 
 | ステータス | 説明 | 形式・条件 | スキーマ |
 | --- | --- | --- | --- |
-| 201 | 正常に処理できました | application/json | [発行した認証情報と短期トークン（IssuedBearer）](../schemas.md#issuedbearer) または [発行した認証情報とクライアントシークレット（IssuedClient）](../schemas.md#issuedclient) |
-| 422 | 入力内容が条件を満たしていません | application/json | [リクエスト入力エラー（HTTPValidationError）](../schemas.md#httpvalidationerror) |
+| 201 | 正常に処理できました | application/json | [発行した認証情報と短期トークン（IssuedBearer）](../db/schemas.md#issuedbearer) または [発行した認証情報とクライアントシークレット（IssuedClient）](../db/schemas.md#issuedclient) |
+| 422 | 入力内容が条件を満たしていません | application/json | [リクエスト入力エラー（HTTPValidationError）](../db/schemas.md#httpvalidationerror) |
 
 ### 201 application/json の項目
 
@@ -86,14 +86,14 @@ POST `/api/credentials`
 
 | 項目の和名 | 物理名 | 指定 | 型・制約 |
 | --- | --- | --- | --- |
-| 入力エラーの明細一覧 | detail | 任意 | 配列 / [入力エラーの項目別明細（ValidationError）](../schemas.md#validationerror) |
+| 入力エラーの明細一覧 | detail | 任意 | 配列 / [入力エラーの項目別明細（ValidationError）](../db/schemas.md#validationerror) |
 | 入力エラーの発生箇所 | detail[].loc | 必須 | 配列 / 文字列 または 整数 |
 | 入力エラーの説明 | detail[].msg | 必須 | 文字列 |
 | 入力エラーの分類コード | detail[].type | 必須 | 文字列 |
 | エラーになった入力値 | detail[].input | 任意 | 任意の型 |
 | 入力エラーの補足情報 | detail[].ctx | 任意 | オブジェクト |
 
-実装・認証依存で送出し得るHTTPエラー（エラーの詳細を示す `detail` を含むJSON）　401, 403, 422。
+実装・認証依存で送出し得るHTTPエラー（エラーの詳細を示す `detail` を含むJSON）　401, 403, 422, 503。
 
 AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugite-Origin` を付与します。共通ミドルウェアは通常のAPI応答にリクエスト識別子 `X-Request-ID` とキャッシュへの保存を禁止する `Cache-Control: no-store` を付けます。Lambdaのオリジン検証に失敗すると403、DBの競合は409、DB操作エラーは409または503です。
 
@@ -103,37 +103,38 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| [API利用申請・利用権](../database.md#access_rights) | access_rights | R | 検索 | select | [key_assets:80](../../../packages/backend/src/app/apis/governance/keys.py#L80) |
-| [API利用申請・利用権](../database.md#access_rights) | access_rights | R | 検索 | select | [approved_assets:49](../../../packages/backend/src/app/core/credential_policy.py#L49) |
-| [利用者の組織所属](../database.md#affiliations) | affiliations | R | 主キーで取得 | db.get | [federated_members:250](../../../packages/backend/src/app/apis/governance/directory.py#L250) |
-| [利用者の組織所属](../database.md#affiliations) | affiliations | R | 検索 | select | [roster:75](../../../packages/backend/src/app/apis/governance/directory.py#L75) |
-| [利用者の組織所属](../database.md#affiliations) | affiliations | R | 検索 | select | [populate:69](../../../packages/backend/src/app/core/workspace.py#L69) |
-| [API認証情報](../database.md#api_keys) | api_keys | C | レコードを追加 | db.add | [issue:182](../../../packages/backend/src/app/apis/governance/credentials.py#L182) |
-| [APIカタログ](../database.md#assets) | assets | R | 主キーで取得 | db.get | [issue:157](../../../packages/backend/src/app/apis/governance/credentials.py#L157) |
-| [APIカタログ](../database.md#assets) | assets | R | 検索 | select | [key_assets:88](../../../packages/backend/src/app/apis/governance/keys.py#L88) |
-| [監査履歴](../database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [audit:53](../../../packages/backend/src/app/apis/governance/directory.py#L53) |
-| [短期トークンの発行状態](../database.md#credential_leases) | credential_leases | C | レコードを追加 | db.add | [mint:96](../../../packages/backend/src/app/apis/governance/credentials.py#L96) |
-| [短期トークンの発行状態](../database.md#credential_leases) | credential_leases | R | 主キーで取得 | db.get | [mint:84](../../../packages/backend/src/app/apis/governance/credentials.py#L84) |
-| [短期トークンの発行状態](../database.md#credential_leases) | credential_leases | U | トークン有効期限（UNIX秒）を設定 | expires に代入 | [mint:97](../../../packages/backend/src/app/apis/governance/credentials.py#L97) |
-| [短期トークンの発行状態](../database.md#credential_leases) | credential_leases | U | 発行時の認証情報の版番号を設定 | generation に代入 | [mint:97](../../../packages/backend/src/app/apis/governance/credentials.py#L97) |
-| [短期トークンの発行状態](../database.md#credential_leases) | credential_leases | U | トークン発行時刻（UNIX秒）を設定 | issued に代入 | [mint:97](../../../packages/backend/src/app/apis/governance/credentials.py#L97) |
-| [短期トークンの発行状態](../database.md#credential_leases) | credential_leases | U | 発行したトークンを区別する一意値を設定 | nonce に代入 | [mint:97](../../../packages/backend/src/app/apis/governance/credentials.py#L97) |
-| [短期トークンの発行状態](../database.md#credential_leases) | credential_leases | U | トークンを更新できる時刻（UNIX秒）を設定 | refresh_at に代入 | [mint:97](../../../packages/backend/src/app/apis/governance/credentials.py#L97) |
-| [認証情報の利用制限](../database.md#credential_rules) | credential_rules | R | 主キーで取得 | db.get | [minutes:33](../../../packages/backend/src/app/core/credential_policy.py#L33) |
-| [組織階層](../database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
-| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [federated_members:252](../../../packages/backend/src/app/apis/governance/directory.py#L252) |
-| [ポータル利用者](../database.md#portal_members) | portal_members | R | 検索 | select | [roster:69](../../../packages/backend/src/app/apis/governance/directory.py#L69) |
-| [ポータル利用者](../database.md#portal_members) | portal_members | R | 検索 | select | [roster:79](../../../packages/backend/src/app/apis/governance/directory.py#L79) |
-| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [roster:84](../../../packages/backend/src/app/apis/governance/directory.py#L84) |
-| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [roster:96](../../../packages/backend/src/app/apis/governance/directory.py#L96) |
-| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:121](../../../packages/backend/src/app/core/auth.py#L121) |
-| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:56](../../../packages/backend/src/app/core/workspace.py#L56) |
+| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | R | 検索 | select | [key_assets:80](../../../packages/backend/src/app/apis/governance/keys.py#L80) |
+| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | R | 検索 | select | [approved_assets:50](../../../packages/backend/src/app/core/credential_policy.py#L50) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 主キーで取得 | db.get | [federated_members:280](../../../packages/backend/src/app/apis/governance/directory.py#L280) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [roster:76](../../../packages/backend/src/app/apis/governance/directory.py#L76) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:105](../../../packages/backend/src/app/core/workspace.py#L105) |
+| [API認証情報](../db/database.md#api_keys) | api_keys | C | レコードを追加 | db.add | [issue:184](../../../packages/backend/src/app/apis/governance/credentials.py#L184) |
+| [APIカタログ](../db/database.md#assets) | assets | R | 主キーで取得 | db.get | [issue:159](../../../packages/backend/src/app/apis/governance/credentials.py#L159) |
+| [APIカタログ](../db/database.md#assets) | assets | R | 検索 | select | [key_assets:88](../../../packages/backend/src/app/apis/governance/keys.py#L88) |
+| [監査履歴](../db/database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [audit:54](../../../packages/backend/src/app/apis/governance/directory.py#L54) |
+| [短期トークンの発行状態](../db/database.md#credential_leases) | credential_leases | C | レコードを追加 | db.add | [mint:98](../../../packages/backend/src/app/apis/governance/credentials.py#L98) |
+| [短期トークンの発行状態](../db/database.md#credential_leases) | credential_leases | R | 主キーで取得 | db.get | [mint:86](../../../packages/backend/src/app/apis/governance/credentials.py#L86) |
+| [短期トークンの発行状態](../db/database.md#credential_leases) | credential_leases | U | トークン有効期限（UNIX秒）を設定 | expires に代入 | [mint:99](../../../packages/backend/src/app/apis/governance/credentials.py#L99) |
+| [短期トークンの発行状態](../db/database.md#credential_leases) | credential_leases | U | 発行時の認証情報の版番号を設定 | generation に代入 | [mint:99](../../../packages/backend/src/app/apis/governance/credentials.py#L99) |
+| [短期トークンの発行状態](../db/database.md#credential_leases) | credential_leases | U | トークン発行時刻（UNIX秒）を設定 | issued に代入 | [mint:99](../../../packages/backend/src/app/apis/governance/credentials.py#L99) |
+| [短期トークンの発行状態](../db/database.md#credential_leases) | credential_leases | U | 発行したトークンを区別する一意値を設定 | nonce に代入 | [mint:99](../../../packages/backend/src/app/apis/governance/credentials.py#L99) |
+| [短期トークンの発行状態](../db/database.md#credential_leases) | credential_leases | U | トークンを更新できる時刻（UNIX秒）を設定 | refresh_at に代入 | [mint:99](../../../packages/backend/src/app/apis/governance/credentials.py#L99) |
+| [認証情報の利用制限](../db/database.md#credential_rules) | credential_rules | R | 主キーで取得 | db.get | [minutes:34](../../../packages/backend/src/app/core/credential_policy.py#L34) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:30](../../../packages/backend/src/app/core/workspace.py#L30) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:54](../../../packages/backend/src/app/core/workspace.py#L54) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [federated_members:282](../../../packages/backend/src/app/apis/governance/directory.py#L282) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 検索 | select | [roster:70](../../../packages/backend/src/app/apis/governance/directory.py#L70) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 検索 | select | [roster:80](../../../packages/backend/src/app/apis/governance/directory.py#L80) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [roster:85](../../../packages/backend/src/app/apis/governance/directory.py#L85) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [roster:101](../../../packages/backend/src/app/apis/governance/directory.py#L101) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:123](../../../packages/backend/src/app/core/auth.py#L123) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:91](../../../packages/backend/src/app/core/workspace.py#L91) |
 
 ### AWSサービス
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| 利用者・グループの管理（Cognitoユーザープール） | cognito-idp | R | グループの利用者を一覧 | list_users_in_group | [federated_members:243](../../../packages/backend/src/app/apis/governance/directory.py#L243) |
+| 利用者・グループの管理（Cognitoユーザープール） | cognito-idp | R | グループの利用者を一覧 | list_users_in_group | [federated_members:273](../../../packages/backend/src/app/apis/governance/directory.py#L273) |
 | 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:53](../../../packages/backend/src/app/core/config.py#L53) |
 
 <details><summary>解析した関数・依存</summary>
@@ -167,6 +168,7 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 - `app.core.credential_policy.minutes`
 - `app.core.credential_policy.operations`
 - `app.core.credential_policy.unit_bounds`
+- `app.core.diagnostics.asset_object`
 - `app.core.openapi.path_items`
 - `app.core.workspace.allowed_audience`
 - `app.core.workspace.ancestry`
@@ -174,6 +176,8 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 - `app.core.workspace.policy`
 - `app.core.workspace.populate`
 - `app.core.workspace.private_project`
+- `app.core.workspace.project_ids`
+- `app.core.workspace.retired_units`
 - `app.core.workspace.stopped`
 - `app.core.workspace.units`
 - `tsugite_db.models.new_id`

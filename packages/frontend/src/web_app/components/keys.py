@@ -13,6 +13,7 @@ from runtime.portal_ui import ctx, value
 
 from components import credential_views
 from components.controls import btn, field
+from components.list_layout import disclosure, result_table
 
 
 def _show_scope_options(event: Any) -> None:
@@ -28,8 +29,7 @@ def key_form(
     expanded: bool = False,
 ) -> None:
     """発行するキーの対象と種類を入力する欄を作る。"""
-    with t.details(classes="box", open=expanded):
-        t.summary("APIキーを作成")
+    with disclosure("APIキーを作成", expanded=expanded):
         field("キー名", "key-name", placeholder="例　棚卸バッチ")
         field("プロジェクト", "key-project", options=projects)
         field(
@@ -107,7 +107,6 @@ def keys_view() -> None:
 
     credential_views.credentials_view(ctx, field, btn, load, projects)
     legacy = [k for k in ctx["keys"] if k.get("mode") not in credential_views.MODES]
-    t.h2("従来のAPIキー")
     secret = ctx.get("issued_key") or {}
     if secret.get("subject") == me["subject"] and not secret.get("mode"):
         with t.section(classes="box"):
@@ -117,51 +116,58 @@ def keys_view() -> None:
             with t.div(classes="btn-grouping"):
                 btn("キーをコピー", copy_secret, primary=True)
                 btn("表示を閉じる", hide_secret)
-    if projects:
-        key_form(projects, assets, create_key)
-    t.h2("APIキー一覧")
+    with t.div(classes="list-tools"):
+        t.h2("従来のAPIキー")
+        if projects:
+            key_form(projects, assets, create_key)
     if not legacy:
         t.p("表示できるキーはありません。", classes="empty")
-    for row in legacy:
-        with t.article(classes="box"):
-            t.h3(row["name"])
-            kind = "本人専用" if row["kind"] == "personal" else "プロジェクト共有"
-            project_name = (
-                "本人の利用申請"
-                if row["project"] == personal
-                else names.get(row["project"], row["project"])
-            )
-            t.p(kind + " · " + project_name + " · " + ("失効済み" if row["revoked"] else "有効"))
-            scopes = row["api_ids"]
-            t.p(
-                "対象API　"
-                + (
-                    "、".join(asset_names.get(i, i) for i in scopes)
-                    if scopes
-                    else "利用を承認されたすべてのAPI"
+        return
+    with result_table("APIキー一覧", ("名前", "所有者・状態", "対象API・キーID", "操作")):
+        for row in legacy:
+            with t.tr():
+                t.th(row["name"], scope="row")
+                kind = "本人専用" if row["kind"] == "personal" else "プロジェクト共有"
+                project_name = (
+                    "本人の利用申請"
+                    if row["project"] == personal
+                    else names.get(row["project"], row["project"])
                 )
-            )
-            t.small("キーID　" + row["id"], classes="mono")
-            if not row["revoked"]:
-                with t.details():
-                    t.summary("外部からの呼び出し方")
-                    if row["kind"] == "shared":
-                        t.p("リクエストの認証ヘッダーに、発行時に保存した共有キーを設定します。")
-                        t.pre("Authorization: Bearer <共有キー>", classes="code")
-                    else:
-                        t.p("発行した本人のアクセストークンと、保存した本人専用キーを両方設定します。")
-                        t.pre(
-                            "Authorization: Bearer <本人のアクセストークン>\nX-API-Key: <本人専用キー>",
-                            classes="code",
+                t.td(kind + " · " + project_name + " · " + ("失効済み" if row["revoked"] else "有効"))
+                with t.td():
+                    scopes = row["api_ids"]
+                    t.p(
+                        "対象API　"
+                        + (
+                            "、".join(asset_names.get(i, i) for i in scopes)
+                            if scopes
+                            else "利用を承認されたすべてのAPI"
                         )
-                    t.p("ポータルから試す場合は、API詳細のAPI Docsでこのキーを選びます。")
+                    )
+                    t.small("キーID　" + row["id"], classes="mono")
+                with t.td():
+                    if not row["revoked"]:
+                        with t.details():
+                            t.summary("外部からの呼び出し方")
+                            if row["kind"] == "shared":
+                                t.p("リクエストの認証ヘッダーに、発行時に保存した共有キーを設定します。")
+                                t.pre("Authorization: Bearer <共有キー>", classes="code")
+                            else:
+                                t.p(
+                                    "発行した本人のアクセストークンと、保存した本人専用キーを両方設定します。"
+                                )
+                                t.pre(
+                                    "Authorization: Bearer <本人のアクセストークン>\nX-API-Key: <本人専用キー>",
+                                    classes="code",
+                                )
+                            t.p("ポータルから試す場合は、API詳細のAPI Docsでこのキーを選びます。")
 
-            can_revoke = (
-                directory["admin"]
-                or row["creator"] == me["subject"]
-                or row["kind"] == "shared"
-                and row["project"] in directory["leads"]
-            )
-            if not row["revoked"] and can_revoke:
-                with t.div(classes="btn-grouping"):
-                    btn("キーを失効", revoke_key, row)
+                    can_revoke = (
+                        directory["admin"]
+                        or row["creator"] == me["subject"]
+                        or row["kind"] == "shared"
+                        and row["project"] in directory["leads"]
+                    )
+                    if not row["revoked"] and can_revoke:
+                        with t.div(classes="btn-grouping"):
+                            btn("キーを失効", revoke_key, row)

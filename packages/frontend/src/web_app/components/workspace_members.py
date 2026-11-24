@@ -8,11 +8,11 @@ from apis import client
 from apis import organization as organization_api
 from js import window
 from puepy import t
-from routing.portal_navigation import load
+from routing.portal_navigation import go, load
 from runtime.portal_ui import ctx, value
 
 from components.controls import btn, field
-from components.workspace_views import link, navigate, url
+from components.workspace_views import link, url
 
 
 def person_label(person: dict[str, Any]) -> str:
@@ -127,7 +127,7 @@ def membership_editor(
                 "leader": value("org-leader") == "yes",
             }
         )
-        await navigate(detail)
+        await go(detail)
         ctx["message"] = "所属と役職を保存しました"
 
     with t.section(classes="box"):

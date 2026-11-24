@@ -10,14 +10,14 @@ from puepy import t
 from runtime.portal_ui import ctx
 
 from components.controls import btn, field
+from components.list_layout import disclosure, result_table
 
 
 def notice_form(
     me: dict[str, Any], targets: Sequence[tuple[str, str]], *, expanded: bool = False
 ) -> None:
     """閲覧者に応じた送信先の選択欄を描画する。"""
-    with t.details(classes="box", open=expanded):
-        t.summary("利用者に通知を送る")
+    with disclosure("利用者に通知を送る", expanded=expanded):
         if me["admin"]:
             names = me.get("known_project_labels", {})
             field(
@@ -37,20 +37,26 @@ def notices_view() -> None:
     me = ctx["me"]
     rows = ctx["notices"]["items"]
     if me["admin"] or me["owners"] and ctx.get("targets"):
-        notice_form(me, target_options())
+        with t.div(classes="list-tools"):
+            notice_form(me, target_options())
     if not rows:
         t.p("届いている通知はありません。", classes="empty")
-    for n in rows:
-        with t.article(classes="box"):
-            t.small(
-                ("未読" if n["unread"] else "既読") + " · " + n["at"][:16].replace("T", " ") + " UTC",
-                classes="muted",
-            )
-            t.h2(n["title"])
-            t.p(n["body"])
-            t.small("送信者 " + n["sender"] + "　宛先 " + n["project"])
-            if n["unread"]:
-                btn("既読にする", read_notice, n["id"])
+    else:
+        with result_table(
+            "通知一覧", ("件名・本文", "状態", "通知日時（UTC）", "送信者", "宛先", "操作")
+        ):
+            for n in rows:
+                with t.tr():
+                    with t.td():
+                        t.strong(n["title"])
+                        t.div(n["body"])
+                    t.td("未読" if n["unread"] else "既読")
+                    t.td(n["at"][:16].replace("T", " "))
+                    t.td(n["sender"])
+                    t.td(n["project"])
+                    with t.td():
+                        if n["unread"]:
+                            btn("既読にする", read_notice, n["id"])
     if ctx.get("notice_offset", 0):
         btn("新しい通知", more_notices, ctx["notice_offset"] - 30)
     if len(rows) == 30:

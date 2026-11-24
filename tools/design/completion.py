@@ -18,7 +18,7 @@ from tools.testing.emulator_e2e import AWS_SUITE
 
 ROOT = Path(__file__).resolve().parents[2]
 WORKFLOW = Path(".github/workflows/check.yml")
-DOCUMENT = Path("docs/generated/definition-of-done.md")
+DOCUMENT = Path("docs/generated/dev-rules/definition-of-done.md")
 
 
 def table(headers, rows):
@@ -223,7 +223,7 @@ def main():
         else branch_rules(repo, args.branch)
     )
     destination = DOCUMENT
-    prefix = "../../"
+    prefix = "../" * len(destination.parent.parts)
     if args.artifact:
         destination = Path("artifacts/definition-of-done.md")
         sha = os.environ.get("PR_HEAD_SHA") or os.environ["GITHUB_SHA"]

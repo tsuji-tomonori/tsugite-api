@@ -2,7 +2,7 @@
 
 # データベース定義書
 
-[API一覧](README.md) · [API別のCRUD一覧](crud.md)
+[API一覧](../apis/README.md) · [API別のCRUD一覧](crud.md)
 
 | テーブルの和名 | テーブル物理名 | レコードの和名 | ORMモデル名 |
 | --- | --- | --- | --- |
@@ -11,15 +11,18 @@
 | [データベース移行版管理](#alembic_version) | alembic_version | 適用済みマイグレーション版 | Alembicが管理 |
 | [API呼び出し件数の監視設定](#alert_rules) | alert_rules | 環境別の呼び出し件数監視ルール | AlertRule |
 | [API認証情報](#api_keys) | api_keys | 発行済みのAPI認証情報 | PortalKey |
+| [API呼び出し識別名](#asset_routes) | asset_routes | 呼び出し用API識別名 | AssetRoute |
 | [APIカタログ](#assets) | assets | 掲載API | Asset |
 | [監査履歴](#audit_events) | audit_events | 監査イベント | Event |
 | [短期トークンの発行状態](#credential_leases) | credential_leases | 短期トークンの再利用・更新記録 | CredentialLease |
 | [認証情報の利用制限](#credential_rules) | credential_rules | 対象別の有効期間・操作制限 | CredentialRule |
 | [組織階層](#directory_tree) | directory_tree | 組織構成の保存記録 | DirectoryTree |
+| [運営への問い合わせ](#inquiries) | inquiries | 問い合わせと回答 | Inquiry |
 | [API呼び出し履歴](#invocation_logs) | invocation_logs | API呼び出し記録 | AccessLog |
 | [API呼び出しと組織の対応](#invocation_units) | invocation_units | 呼び出しの組織別集計対象 | LogUnit |
 | [通知の既読履歴](#notice_reads) | notice_reads | 利用者別の既読記録 | NoticeRead |
 | [通知](#notices) | notices | 配信通知 | Notice |
+| [利用者プロフィール](#portal_member_profiles) | portal_member_profiles | 利用者1人のプロフィール | MemberProfile |
 | [ポータル利用者](#portal_members) | portal_members | 利用者アカウント | Member |
 | [商品別API仕様の公開履歴](#spec_releases) | spec_releases | 商品API仕様の公開版 | SpecRelease |
 
@@ -118,6 +121,19 @@
 | 認証情報が失効済みか | revoked | BOOLEAN | — | 不可 |
 | 認証情報の版番号 | revision | INTEGER | — | 不可 |
 
+<a id="asset_routes"></a>
+
+## API呼び出し識別名（asset_routes）
+
+**1レコードの意味**　掲載APIごとに1件を保存し、掲載終了後も再利用を防ぐために保持します。
+
+レコード名は「呼び出し用API識別名」です。
+
+| カラムの和名 | 物理名 | SQL型 | 主キー | NULL |
+| --- | --- | --- | --- | --- |
+| 掲載APIの識別子 | asset_id | VARCHAR(32) | ○ | 不可 |
+| 呼び出しURLで使う一意なAPI識別名 | slug | VARCHAR(63) | — | 不可 |
+
 <a id="assets"></a>
 
 ## APIカタログ（assets）
@@ -140,6 +156,7 @@
 | 公開範囲と承認条件（JSON） | policy | TEXT | — | 可 |
 | カタログから削除した日時 | removed_at | DATETIME | — | 可 |
 | カタログで公開中か | published | BOOLEAN | — | 不可 |
+| 管理者による全環境の呼び出し停止 | suspended | BOOLEAN | — | 可 |
 | 更新時の競合検出に使う版番号 | revision | INTEGER | — | 不可 |
 
 <a id="audit_events"></a>
@@ -155,6 +172,7 @@
 | 監査イベントの識別子 | id | VARCHAR(32) | ○ | 不可 |
 | 監査対象の操作日時 | at | DATETIME | — | 不可 |
 | 操作した利用者・システムの識別子 | actor | VARCHAR(180) | — | 不可 |
+| 操作の対象となった利用者の識別子 | target_subject | VARCHAR(180) | — | 可 |
 | 操作に関係するプロジェクト・組織 | project | VARCHAR(64) | — | 不可 |
 | 提供プロジェクトの識別子 | owner | VARCHAR(64) | — | 不可 |
 | 対象APIの識別子 | asset_id | VARCHAR(32) | — | 不可 |
@@ -209,6 +227,24 @@
 | 組織構成の識別子 | id | VARCHAR(12) | ○ | 不可 |
 | 部署・プロジェクトの階層データ（JSON） | units | TEXT | — | 不可 |
 | 更新時の競合検出に使う版番号 | revision | INTEGER | — | 不可 |
+
+<a id="inquiries"></a>
+
+## 運営への問い合わせ（inquiries）
+
+**1レコードの意味**　利用者から運営に送信された問い合わせと、管理者からの回答を1件ずつ保存します。
+
+レコード名は「問い合わせと回答」です。
+
+| カラムの和名 | 物理名 | SQL型 | 主キー | NULL |
+| --- | --- | --- | --- | --- |
+| 問い合わせの識別子 | id | VARCHAR(32) | ○ | 不可 |
+| 問い合わせを送信した利用者の識別子 | subject | VARCHAR(180) | — | 不可 |
+| 問い合わせ本文 | question | TEXT | — | 不可 |
+| 管理者の回答本文 | answer | TEXT | — | 可 |
+| 問い合わせ受付日時 | at | DATETIME | — | 不可 |
+| 管理者の回答日時 | answered_at | DATETIME | — | 可 |
+| 問い合わせ更新時の競合検出番号 | revision | INTEGER | — | 不可 |
 
 <a id="invocation_logs"></a>
 
@@ -277,6 +313,23 @@
 | 通知に関連するAPIの識別子 | asset_id | VARCHAR(32) | — | 不可 |
 | 通知の件名 | title | VARCHAR(160) | — | 不可 |
 | 通知本文 | body | TEXT | — | 不可 |
+
+<a id="portal_member_profiles"></a>
+
+## 利用者プロフィール（portal_member_profiles）
+
+**1レコードの意味**　部署・プロジェクトの所属一覧で表示する利用者の情報を保存します。
+
+レコード名は「利用者1人のプロフィール」です。
+
+| カラムの和名 | 物理名 | SQL型 | 主キー | NULL |
+| --- | --- | --- | --- | --- |
+| 利用者の識別子 | subject | VARCHAR(180) | ○ | 不可 |
+| 氏名 | full_name | VARCHAR(120) | — | 可 |
+| 表示名 | display_name | VARCHAR(80) | — | 可 |
+| 名簿に表示するメールアドレス | email | VARCHAR(320) | — | 可 |
+| メール属性を確認した時刻 | email_synced_at | DATETIME | — | 可 |
+| 同時編集を検知する版番号 | revision | INTEGER | — | 不可 |
 
 <a id="portal_members"></a>
 
