@@ -1,3 +1,4 @@
+# 商品の詳細を取得する。
 from app.apis.catalog.common import DB, User, listing, record
 from app.apis.catalog.offers import configured, describe
 from app.apis.catalog.releases import history

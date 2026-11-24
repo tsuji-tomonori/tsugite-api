@@ -1,3 +1,4 @@
+# 初回パスワードの変更から認証アプリ登録まで、各応答のセッションを次の処理に渡す。
 import asyncio
 import json
 from types import SimpleNamespace

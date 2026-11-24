@@ -1,3 +1,4 @@
+# 選択した部署またはプロジェクトの所属設定。
 """選択した部署またはプロジェクトの所属設定。"""
 
 from urllib.parse import urlencode

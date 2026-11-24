@@ -1,3 +1,4 @@
+# 利用申請を一覧表示する。
 from app.apis.catalog.common import DB, User
 from app.apis.catalog.offers import can_review
 from app.apis.schemas import Right

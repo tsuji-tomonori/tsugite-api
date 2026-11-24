@@ -1,3 +1,4 @@
+# 操作ガイドの記事と検索画面を描画する。
 """Usage guide pages in the portal navigation."""
 
 from guide_content import BY_ID, GUIDES, audiences

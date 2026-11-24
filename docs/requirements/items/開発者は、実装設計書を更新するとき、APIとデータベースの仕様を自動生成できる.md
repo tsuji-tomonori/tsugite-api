@@ -14,8 +14,8 @@ APIの入出力やデータ操作と設計書の食い違いを減らすため�
 
 ### 受入テスト
 
-- 受入テスト `tools/tests/test_design.py::test_all_routes_inputs_outputs_and_cleanup`
-- 受入テスト `tools/tests/test_design.py::test_crud_matrices_cover_all_routes_and_match_per_api_evidence`
+- 受入テスト `packages/tools/tests/test_design.py::test_all_routes_inputs_outputs_and_cleanup`
+- 受入テスト `packages/tools/tests/test_design.py::test_crud_matrices_cover_all_routes_and_match_per_api_evidence`
 
 ## 却下した方針
 

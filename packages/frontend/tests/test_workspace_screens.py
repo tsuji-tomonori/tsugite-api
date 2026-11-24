@@ -1,3 +1,4 @@
+# 部署を10件ずつ表示し、次ページとプロジェクト一覧では該当する対象だけを開ける。
 import asyncio
 from types import SimpleNamespace
 from unittest.mock import AsyncMock

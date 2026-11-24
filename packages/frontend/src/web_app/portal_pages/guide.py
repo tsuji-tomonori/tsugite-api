@@ -1,3 +1,4 @@
+# 使い方ガイドの画面と操作を定義する。
 import guide_views
 from portal_navigation import go
 from portal_ui import btn, ctx, route

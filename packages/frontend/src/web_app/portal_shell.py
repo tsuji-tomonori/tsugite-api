@@ -1,3 +1,4 @@
+# ポータルの共通レイアウトを描画する。
 from js import document, window
 from portal_navigation import go
 from portal_session import login_page, logout

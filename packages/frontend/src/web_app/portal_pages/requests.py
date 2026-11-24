@@ -1,3 +1,4 @@
+# 自分の申請・届いた申請の画面と操作を定義する。
 import client
 import guide_examples as example
 import product_views

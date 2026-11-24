@@ -1,3 +1,4 @@
+# 商品の提供者が操作権限を管理する画面を描画する。
 """Provider controls for a person's effective API operations."""
 
 from urllib.parse import quote

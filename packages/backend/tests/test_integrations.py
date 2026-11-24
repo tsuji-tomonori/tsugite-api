@@ -1,3 +1,4 @@
+# 接続確認の後、呼び出し情報をLambdaへ渡して応答を返す。
 import io
 import json
 from types import SimpleNamespace

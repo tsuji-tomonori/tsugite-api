@@ -1,3 +1,4 @@
+# ログイン中の利用者の情報を取得する。
 from app.apis import outputs
 from app.apis.catalog.common import DB, User
 from app.core.workspace import private_project, project_label, units, workspace_targets

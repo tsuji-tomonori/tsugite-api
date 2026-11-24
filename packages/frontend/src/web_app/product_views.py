@@ -1,3 +1,4 @@
+# 商品の公開、変更履歴、環境別の条件を描画する。
 """Product publication, release history and environment-specific application forms."""
 
 import client

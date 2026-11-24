@@ -1,3 +1,4 @@
+# ポータルのチャットと参照元を描画する。
 """The signed-in chat, sources and private inquiry controls."""
 
 import asyncio

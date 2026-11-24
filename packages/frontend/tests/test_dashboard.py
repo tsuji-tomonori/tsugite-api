@@ -1,3 +1,4 @@
+# メトリクス取得が失敗しても件数とログを表示し、再読み込みで業務メニューのない利用状況が表示される。
 import asyncio
 import runpy
 import sys

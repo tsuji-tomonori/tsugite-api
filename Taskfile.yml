@@ -2,7 +2,7 @@ version: '3'
 
 vars:
   RUN: uv run --locked --all-packages
-  MANAGE: '{{.RUN}} python -m tools.operations.manage'
+  MANAGE: '{{.RUN}} python -m packages.tools.operations.manage'
 
 tasks:
   default:
@@ -24,10 +24,10 @@ tasks:
     desc: ワークスペースの依存ロックを更新
     cmds: ['uv lock']
   hook:staged:
-    cmds: ['uv run --locked --no-sync python tools/ci/check_text.py --staged']
+    cmds: ['uv run --locked --no-sync python packages/tools/ci/check_text.py --staged']
   text:
     desc: Git管理下のテキストを検査
-    cmds: ['{{.RUN}} python tools/ci/check_text.py']
+    cmds: ['{{.RUN}} python packages/tools/ci/check_text.py']
   lint:
     desc: 書式と静的検査
     cmds:
@@ -49,7 +49,7 @@ tasks:
       - task: docs:infra
   docs:quality:
     desc: PRの検査項目と対象ブランチのカバレッジ基準から完了の定義を生成
-    cmds: ['uv run --locked --only-group quality-docs python -m tools.design.completion {{.CLI_ARGS}}']
+    cmds: ['uv run --locked --only-group quality-docs python -m packages.tools.design.completion {{.CLI_ARGS}}']
   docs:infra:
     desc: CDKを合成し、コンポーネント別のリソース一覧とパラメーターシートを更新
     cmds:
@@ -58,10 +58,10 @@ tasks:
       - task: docs:infra:render
   docs:infra:render:
     desc: 合成済みCloudFormationテンプレートをMarkdownに変換
-    cmds: ['{{.RUN}} python -m tools.design.infrastructure']
+    cmds: ['{{.RUN}} python -m packages.tools.design.infrastructure']
   docs:api:
     desc: OpenAPI仕様とSQL・AWSのCRUD設計書をMarkdownに出力
-    cmds: ['{{.RUN}} python -m tools.design.generate']
+    cmds: ['{{.RUN}} python -m packages.tools.design.generate']
   docs:commit:
     desc: CIで再生成した設計書の差分だけを既定ブランチへ反映
     preconditions:
@@ -84,7 +84,7 @@ tasks:
     cmds: ['{{.MANAGE}} demo {{.CLI_ARGS}}']
   seed:
     desc: デモのAPIを登録
-    cmds: ['{{.RUN}} python tools/demo/seed_marketplace.py {{.CLI_ARGS}}']
+    cmds: ['{{.RUN}} python packages/tools/demo/seed_marketplace.py {{.CLI_ARGS}}']
   build:
     desc: SPAとLambda配布物を作成
     cmds: ['{{.MANAGE}} build']
@@ -115,8 +115,13 @@ tasks:
   audit:
     desc: CDKおよびLambda実行時依存関係を監査（synthの後に実行）
     cmds:
-      - '{{.RUN}} python tools/ci/audit_infra.py'
+      - '{{.RUN}} python packages/tools/ci/audit_infra.py'
       - '{{.RUN}} pip-audit --disable-pip --no-deps -r build/runtime.txt --format json --output artifacts/dependency-audit.json'
+  test:unit-coverage:
+    desc: 各パッケージの単体テストを実行し、行と分岐の下限を検証
+    cmds:
+      - '{{.RUN}} python -m packages.tools.ci.ci_coverage_parts packages/*/tests'
+      - '{{.RUN}} python -m packages.tools.ci.unit_coverage'
   test:architecture:
     desc: 全層の依存・文書規則と規則自体のテストを実行
     cmds: ['{{.RUN}} pytest -q tests/architecture {{.CLI_ARGS}}']
@@ -137,13 +142,13 @@ tasks:
     cmds: ['{{.RUN}} pytest -q packages/infra/tests {{.CLI_ARGS}}']
   test:mutation:
     desc: 代表的な変更を一時コピーに加え、単体テストが検知するか確認
-    cmds: ['{{.RUN}} python tools/testing/mutation_test.py {{.CLI_ARGS}}']
+    cmds: ['{{.RUN}} python packages/tools/testing/mutation_test.py {{.CLI_ARGS}}']
   test:hooks:
     desc: 一時リポジトリでコミットとプッシュのフックを検証
-    cmds: ['bash tools/testing/test_git_hooks.sh']
+    cmds: ['bash packages/tools/testing/test_git_hooks.sh']
   test:tools:
     desc: 設計書生成・共通ツールのテスト
-    cmds: ['{{.RUN}} pytest -q tools/tests {{.CLI_ARGS}}']
+    cmds: ['{{.RUN}} pytest -q packages/tools/tests {{.CLI_ARGS}}']
   test:e2e:
     desc: ブラウザーでのE2E（buildの後に実行）
     cmds: ['{{.RUN}} pytest -q tests/e2e/browser {{.CLI_ARGS}}']
@@ -153,14 +158,14 @@ tasks:
       - uv python install 3.15
       - |
         export AWS_EMULATOR_BINARY="${AWS_EMULATOR_BINARY:-${RUNNER_TEMP:-${TMPDIR:-/tmp}}/tsugite-aws-emulator/opt/aws-emulator/bin/aws-emulator}"
-        {{.RUN}} python tools/testing/emulator_e2e.py --junitxml=artifacts/aws-emulator.xml {{.CLI_ARGS}}
+        {{.RUN}} python packages/tools/testing/emulator_e2e.py --junitxml=artifacts/aws-emulator.xml {{.CLI_ARGS}}
   test:
     desc: 全パッケージとブラウザーのテスト結果を保存
     cmds:
       - '{{.RUN}} pytest -q --cov --cov-config=pyproject.toml --junitxml=artifacts/junit.xml --given-md=artifacts/scenarios.md --given-html=artifacts/scenarios.html {{.CLI_ARGS}}'
   report:
     desc: HTML・PDFテストレポートを作成
-    cmds: ['{{.RUN}} python tools/testing/test_report.py --pdf']
+    cmds: ['{{.RUN}} python packages/tools/testing/test_report.py --pdf']
   ci:
     desc: CIの検証を順に実行
     cmds:

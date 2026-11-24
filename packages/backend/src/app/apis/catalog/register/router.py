@@ -1,3 +1,4 @@
+# 新しい商品を登録する。
 import json
 
 from app.apis import outputs

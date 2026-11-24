@@ -1,3 +1,4 @@
+# ポータルのログイン状態を管理する。
 from copy import deepcopy
 from urllib.parse import quote, urlencode
 

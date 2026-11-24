@@ -1,3 +1,4 @@
+# 6種類の権限で全メニューを開き、狭幅と広幅で余白・操作領域・横あふれを検査する。
 import os
 from pathlib import Path
 
@@ -5,10 +6,10 @@ import httpx
 import pytest
 from playwright.sync_api import Page, expect, sync_playwright
 
+from packages.tools.demo.seed_marketplace import seed
 from tests.support.catalog_journey import navigate
 from tests.support.portal_server import serve_portal
 from tests.support.screenshots import capture_image
-from tools.demo.seed_marketplace import seed
 
 
 def assert_layout(page: Page) -> None:

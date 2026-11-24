@@ -1,3 +1,4 @@
+# 承認済みの申請だけを候補にし、失効した商品の直接指定では仕様を取得しない。
 import asyncio
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock

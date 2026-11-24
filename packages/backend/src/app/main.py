@@ -1,3 +1,4 @@
+# FastAPIアプリケーションを組み立てる。
 import os
 from pathlib import Path
 

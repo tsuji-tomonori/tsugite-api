@@ -1,3 +1,4 @@
+# infra のテストで使う共通フィクスチャを提供する。
 from shutil import copyfile
 
 import pytest

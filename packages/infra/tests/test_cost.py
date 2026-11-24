@@ -1,3 +1,4 @@
+# 常時稼働の構成を置かず、Lambdaのメモリ・タイムアウトとログ保存期間を制限する。
 from collections import Counter
 
 from aws_cdk import App, Environment

@@ -1,3 +1,4 @@
+# アクセスポリシーを管理する。
 import json
 from typing import Literal
 

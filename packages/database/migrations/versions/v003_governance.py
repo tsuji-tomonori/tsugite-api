@@ -1,3 +1,4 @@
+# ガバナンスに対応するDBスキーマへ移行する。
 """Portal governance and scoped invocation history."""
 
 import sqlalchemy as sa

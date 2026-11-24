@@ -1,3 +1,4 @@
+# 過去分の推定時刻と実測時刻を区別し、質問には選んだ記録の結果と識別子で答える。
 import asyncio
 from unittest.mock import AsyncMock
 

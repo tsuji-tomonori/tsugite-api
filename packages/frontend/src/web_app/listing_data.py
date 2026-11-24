@@ -1,3 +1,4 @@
+# 商品一覧と詳細で使うデータを整形する。
 import asyncio
 from urllib.parse import quote, urlencode
 

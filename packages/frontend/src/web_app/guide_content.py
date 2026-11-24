@@ -1,3 +1,4 @@
+# 利用者向けの操作ガイド本文を提供する。
 """Task guides for the signed-in portal."""
 
 from dataclasses import dataclass

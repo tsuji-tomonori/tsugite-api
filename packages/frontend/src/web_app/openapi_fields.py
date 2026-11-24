@@ -1,3 +1,4 @@
+# OpenAPIのパラメーターと入力形式を解決する。
 from urllib.parse import unquote
 
 

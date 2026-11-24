@@ -1,3 +1,4 @@
+# デモの提供者と利用者が公開・申請・承認・実行・権限取消を画面で完了できる。
 """Run against a fresh, migrated loopback demo database on every test."""
 
 import os
@@ -33,7 +34,7 @@ def test_home_chat_and_inquiry(demo_url: str, request: pytest.FixtureRequest) ->
     import httpx
     from playwright.sync_api import expect, sync_playwright
 
-    from tools.demo.seed_marketplace import seed
+    from packages.tools.demo.seed_marketplace import seed
 
     with httpx.Client(base_url=demo_url + "/api/", trust_env=False) as api:
         seed(api, 1)
@@ -99,8 +100,8 @@ def test_large_catalog(demo_url: str, request: pytest.FixtureRequest) -> None:
     import httpx
     from playwright.sync_api import expect, sync_playwright
 
+    from packages.tools.demo.seed_marketplace import CATALOG, offer, seed
     from tests.support.catalog_journey import browser_evidence, navigate
-    from tools.demo.seed_marketplace import CATALOG, offer, seed
 
     with httpx.Client(base_url=demo_url + "/api/", trust_env=False) as api:
         ids = seed(api, 20)
@@ -174,8 +175,8 @@ def test_console_visual_modes(demo_url: str, request: pytest.FixtureRequest) -> 
     import httpx
     from playwright.sync_api import expect, sync_playwright
 
+    from packages.tools.demo.seed_marketplace import seed
     from tests.support.catalog_journey import browser_evidence, navigate
-    from tools.demo.seed_marketplace import seed
 
     with httpx.Client(base_url=demo_url + "/api/", trust_env=False) as api:
         seed(api, 1)

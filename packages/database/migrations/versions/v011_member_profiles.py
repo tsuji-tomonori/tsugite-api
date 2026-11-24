@@ -1,3 +1,4 @@
+# 利用者プロフィールに対応するDBスキーマへ移行する。
 """Store the portal member's names and directory email by subject."""
 
 import sqlalchemy as sa

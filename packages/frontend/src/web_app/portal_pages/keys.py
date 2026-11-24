@@ -1,3 +1,4 @@
+# APIキーの画面と操作を定義する。
 import asyncio
 from urllib.parse import quote
 

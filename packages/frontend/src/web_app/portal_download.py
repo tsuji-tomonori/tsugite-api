@@ -1,3 +1,4 @@
+# ブラウザーでファイルをダウンロードする。
 from js import document, window
 
 

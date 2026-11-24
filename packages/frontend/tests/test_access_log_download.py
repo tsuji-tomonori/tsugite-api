@@ -1,3 +1,4 @@
+# ログ取得に失敗したときも認証ヘッダーを送り、ダウンロードを中止して理由を表示する。
 import asyncio
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock

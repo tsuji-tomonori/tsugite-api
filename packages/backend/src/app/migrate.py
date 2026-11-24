@@ -1,3 +1,4 @@
+# 配備時にデータベースのマイグレーションを実行する。
 """CloudFormation provider. Delete retains catalog data and audit history."""
 
 import os

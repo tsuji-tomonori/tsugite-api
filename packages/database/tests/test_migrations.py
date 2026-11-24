@@ -1,3 +1,4 @@
+# DB定義がモデルと一致し、旧版のデータを移行できる。
 import pytest
 from alembic import command
 from alembic.config import Config
@@ -60,3 +61,25 @@ def test_schema_matches_models_and_replays(tmp_path, monkeypatch):
         conn.execute(text("INSERT INTO asset_routes (asset_id, slug) VALUES ('another', 'inventory')"))
     db.dispose()
     engine.cache_clear()
+
+
+def test_schema_upgrade_can_resume_after_all_ddl(tmp_path, monkeypatch):
+    """DDLが完了して版番号の記録だけが失われた場合も、データを保持して再適用できる。"""
+    cfg = Config("packages/database/alembic.ini")
+    monkeypatch.setenv("DATABASE_URL", "sqlite:///" + str(tmp_path / "resume.db"))
+    engine.cache_clear()
+    try:
+        command.upgrade(cfg, "head")
+        with engine().begin() as conn:
+            conn.execute(text("INSERT INTO asset_routes (asset_id,slug) VALUES ('saved','stock')"))
+        command.stamp(cfg, "base")
+        command.upgrade(cfg, "head")
+        with engine().connect() as conn:
+            assert conn.scalar(text("SELECT slug FROM asset_routes WHERE asset_id='saved'")) == "stock"
+            assert (
+                conn.scalar(text("SELECT version_num FROM alembic_version"))
+                == ScriptDirectory.from_config(cfg).get_current_head()
+            )
+    finally:
+        engine().dispose()
+        engine.cache_clear()

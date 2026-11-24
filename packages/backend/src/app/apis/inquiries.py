@@ -1,3 +1,4 @@
+# 問い合わせと返信を受け付ける。
 from datetime import datetime
 from uuid import UUID
 

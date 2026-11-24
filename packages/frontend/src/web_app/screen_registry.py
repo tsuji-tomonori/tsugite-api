@@ -1,3 +1,4 @@
+# 画面モジュールからルートとナビゲーションを組み立てる。
 """画面モジュールからルートとナビゲーションを組み立てる。"""
 
 from collections.abc import Awaitable, Callable

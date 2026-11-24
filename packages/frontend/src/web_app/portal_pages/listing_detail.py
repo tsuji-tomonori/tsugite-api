@@ -1,3 +1,4 @@
+# APIの詳細の画面と操作を定義する。
 import json
 
 import api_docs

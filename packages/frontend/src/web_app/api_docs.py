@@ -1,3 +1,4 @@
+# OpenAPI仕様を画面に表示して操作の試行を受け付ける。
 """Local OpenAPI documentation and authenticated, same-origin operation console."""
 
 import asyncio

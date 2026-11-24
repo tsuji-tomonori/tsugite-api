@@ -1,3 +1,4 @@
+# 在庫サンプルが操作に応じたステータスとJSON応答を返す。
 import json
 
 import pytest

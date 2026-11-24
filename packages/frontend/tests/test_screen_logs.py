@@ -1,3 +1,4 @@
+# 画面内の入力不備と不具合を区別し、商品と本人の識別子だけを残す。
 import asyncio
 import json
 from types import SimpleNamespace

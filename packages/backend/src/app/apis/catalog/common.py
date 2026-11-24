@@ -1,3 +1,4 @@
+# カタログ操作に共通のアクセス判定と応答を提供する。
 from typing import Annotated
 
 from app.apis.schemas import Listing

@@ -1,3 +1,4 @@
+# 画面で共用する状態と入力部品を提供する。
 import asyncio
 from copy import deepcopy
 

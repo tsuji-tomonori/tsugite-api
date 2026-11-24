@@ -1,3 +1,4 @@
+# アクセスログの表示と、その1件を根拠とする質問への回答。
 """アクセスログの表示と、その1件を根拠とする質問への回答。"""
 
 from datetime import datetime, timedelta, timezone

@@ -1,3 +1,4 @@
+# ポータルの通知を配信・取得する。
 from app.apis import outputs
 from app.apis.catalog.common import DB, User, event, record
 from app.apis.governance.members import projects

@@ -1,3 +1,4 @@
+# 商品カタログを検索する。
 from app.apis.catalog.common import DB, User, listing
 from app.apis.schemas import CatalogPage, Env, Listing
 from app.core.catalog_rank import rank_assets

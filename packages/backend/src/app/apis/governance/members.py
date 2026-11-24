@@ -1,3 +1,4 @@
+# 利用者の所属や権限を管理する。
 from typing import Literal
 
 import boto3

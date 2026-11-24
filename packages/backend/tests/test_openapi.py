@@ -1,3 +1,4 @@
+# 内部参照の連鎖とJSON Pointerのエスケープを解決し、パス順を保つ。
 import pytest
 from app.core.openapi import path_items
 
@@ -34,3 +35,21 @@ def test_skips_invalid_path_item_without_losing_valid_paths(item):
     """解決できないパスと拡張項目を飛ばし、有効なパスを返す。"""
     spec = {"paths": {"/invalid": item, "x-extra": {}, "/valid": {"get": {}}}, "x-loop": item}
     assert list(path_items(spec)) == [("/valid", {"get": {}})]
+
+
+def test_published_schema_uses_business_names(portal):
+    """公開スキーマの操作、入力項目、成功応答を日本語で取得し、再取得しても内容が変わらない。"""
+    response = portal.get("/api/openapi.json")
+    assert response.status_code == 200
+    schema = response.json()
+    for path, verbs in schema["paths"].items():
+        for method, operation in verbs.items():
+            assert operation["summary"], (method, path)
+            assert "responses" in operation
+    assert schema == portal.get("/api/openapi.json").json()
+    assert any(
+        value["description"] == "正常に処理できました"
+        for verbs in schema["paths"].values()
+        for operation in verbs.values()
+        for value in operation["responses"].values()
+    )

@@ -1,3 +1,4 @@
+# 応答を受け取れずに再送しても受付番号を再利用し、次の新規送信には別の番号を使う。
 import asyncio
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock

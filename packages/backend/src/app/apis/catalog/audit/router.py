@@ -1,3 +1,4 @@
+# 監査履歴を取得する。
 from datetime import UTC, datetime
 
 from app.apis.catalog.common import DB, User

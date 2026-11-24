@@ -1,3 +1,4 @@
+# 監査画面への遷移先を組み立てる。
 from portal_navigation import go
 from portal_ui import ctx
 

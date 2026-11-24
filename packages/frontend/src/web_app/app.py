@@ -1,3 +1,4 @@
+# ポータルの起動と画面描画を行う。
 import asyncio
 
 import client

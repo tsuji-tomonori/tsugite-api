@@ -1,3 +1,4 @@
+# 部署・プロジェクトの実測件数と内訳。
 """部署・プロジェクトの実測件数と内訳。"""
 
 from portal_navigation import load

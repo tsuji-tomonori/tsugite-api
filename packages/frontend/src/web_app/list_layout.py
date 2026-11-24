@@ -1,3 +1,4 @@
+# 一覧の検索条件と結果表で共通の表示。
 """一覧の検索条件と結果表で共通の表示。"""
 
 from contextlib import contextmanager

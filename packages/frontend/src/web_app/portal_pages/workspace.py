@@ -1,3 +1,4 @@
+# 部署一覧の画面と操作を定義する。
 from urllib.parse import unquote
 
 import client

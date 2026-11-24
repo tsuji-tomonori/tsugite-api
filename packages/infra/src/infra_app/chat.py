@@ -1,3 +1,4 @@
+# チャット用のLambdaと権限を構成する。
 import json
 
 from aws_cdk import Aws, Duration, RemovalPolicy, Size

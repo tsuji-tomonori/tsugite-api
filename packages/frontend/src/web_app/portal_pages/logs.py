@@ -1,3 +1,4 @@
+# アクセスログ・監査履歴・監査履歴詳細・アクセスログ詳細の画面と操作を定義する。
 from urllib.parse import parse_qs, quote, unquote, urlencode
 
 import chat_views

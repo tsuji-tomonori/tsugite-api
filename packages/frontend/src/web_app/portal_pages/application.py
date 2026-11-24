@@ -1,3 +1,4 @@
+# 利用申請の画面と操作を定義する。
 from urllib.parse import quote
 
 import client

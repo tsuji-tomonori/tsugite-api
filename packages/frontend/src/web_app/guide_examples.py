@@ -1,3 +1,4 @@
+# 操作ガイドの画面例に渡す架空のデータ。利用中のセッションやAPIを参照しない。
 """操作ガイドの画面例に渡す架空のデータ。利用中のセッションやAPIを参照しない。"""
 
 PROJECT = {"id": "sample-project", "name": "サンプルプロジェクト", "kind": "project", "stopped": False}

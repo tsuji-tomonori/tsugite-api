@@ -1,3 +1,4 @@
+# データベースの接続とセッションを管理する。
 import os
 from collections.abc import Iterator
 from functools import lru_cache

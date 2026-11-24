@@ -1,3 +1,4 @@
+# ブラウザーから認証付きAPIを呼び出す。
 import json
 from urllib.parse import parse_qs, quote, urlencode
 

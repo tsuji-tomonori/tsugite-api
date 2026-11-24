@@ -1,3 +1,4 @@
+# 認証情報に対応するDBスキーマへ移行する。
 """Short-lived token clients, renewal schedules and nested authority bounds."""
 
 import time

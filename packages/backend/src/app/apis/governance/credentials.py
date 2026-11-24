@@ -1,3 +1,4 @@
+# 認証情報の発行・更新を受け付ける。
 import hashlib
 import hmac
 import json

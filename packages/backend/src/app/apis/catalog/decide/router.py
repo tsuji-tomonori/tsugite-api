@@ -1,3 +1,4 @@
+# 利用申請の承認と却下を受け付ける。
 import json
 
 from app.apis.catalog.common import DB, NEXT, User, event, record, right_id

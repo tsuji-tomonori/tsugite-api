@@ -1,3 +1,4 @@
+# APIキーを発行して管理する。
 import hashlib
 import hmac
 import json

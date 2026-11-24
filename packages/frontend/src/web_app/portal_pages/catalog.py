@@ -1,3 +1,4 @@
+# APIカタログ・提供するAPIの画面と操作を定義する。
 from urllib.parse import urlencode
 
 import client

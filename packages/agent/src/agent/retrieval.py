@@ -1,3 +1,4 @@
+# 質問に対応するガイドと根拠を検索する。
 """Stable routing, hybrid retrieval and evidence-bound presentation."""
 
 import math

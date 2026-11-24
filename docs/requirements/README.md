@@ -16,7 +16,7 @@
 main向けPRの **Verify** が原本を検査して一覧を生成する。実行結果の **requirements** 成果物を展開し、`index.md` で主体別の要件、`glossary.md` で用語の意味と定義元を確認する。どちらからも同梱の要件本文へ移動できる。手元でもリポジトリ直下から同じ文書を生成できる。
 
 ```sh
-python tools/design/requirements.py
+python packages/tools/design/requirements.py
 ```
 
 出力先は `artifacts/requirements/`。要件ファイルが増減すると次回の生成で一覧に反映される。`feat/` のPRでは分岐点からの差分に新しい要件ファイルが1件以上必要になる。既存ファイルの編集・改名、テンプレートや一覧の更新は追加に数えない。

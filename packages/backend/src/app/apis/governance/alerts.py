@@ -1,3 +1,4 @@
+# 運用アラートを取得・更新する。
 from time import time
 from typing import Literal
 

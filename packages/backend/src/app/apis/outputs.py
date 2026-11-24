@@ -1,3 +1,4 @@
+# APIの応答モデルを定義する。
 """Response contracts for handlers that build JSON dictionaries directly."""
 
 from datetime import datetime

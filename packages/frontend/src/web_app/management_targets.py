@@ -1,3 +1,4 @@
+# 管理画面で操作できる対象を選ぶ。
 import client
 from portal_labels import LABEL
 from portal_ui import ctx

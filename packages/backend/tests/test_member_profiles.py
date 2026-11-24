@@ -1,3 +1,4 @@
+# 本人と全体管理者の変更を兼務先に反映し、IDと監査の閲覧範囲を保持する。
 from unittest.mock import Mock
 
 from app.apis.governance import profiles

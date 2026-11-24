@@ -1,3 +1,4 @@
+# 部署やプロジェクトの情報を提供する。
 import json
 from typing import Literal
 

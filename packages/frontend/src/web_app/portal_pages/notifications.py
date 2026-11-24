@@ -1,3 +1,4 @@
+# 通知の画面と操作を定義する。
 import client
 import guide_examples as example
 from list_layout import disclosure, result_table

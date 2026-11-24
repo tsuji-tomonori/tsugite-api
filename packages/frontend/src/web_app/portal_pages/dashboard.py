@@ -1,3 +1,4 @@
+# 利用状況の画面と操作を定義する。
 import asyncio
 
 import client

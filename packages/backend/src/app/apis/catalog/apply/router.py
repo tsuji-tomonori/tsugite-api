@@ -1,3 +1,4 @@
+# 商品の利用申請を受け付ける。
 from app.apis.catalog.common import DB, User, event, record, right_id
 from app.apis.catalog.offers import submission
 from app.apis.schemas import Apply, Right

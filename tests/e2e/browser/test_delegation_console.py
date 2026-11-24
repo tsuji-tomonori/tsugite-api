@@ -1,3 +1,4 @@
+# 提供者が公開・自動承認・委任の条件を保存し、部署リーダーが個人申請を画面から却下する。
 import os
 from pathlib import Path
 

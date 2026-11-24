@@ -5,7 +5,7 @@ requires-python = ">=3.14,<3.16"
 dependencies = []
 
 [tool.uv.workspace]
-members = ["packages/*", "tests/e2e", "tools"]
+members = ["packages/*", "tests/e2e"]
 
 [tool.uv.sources]
 tsugite-agent = { workspace = true }
@@ -33,17 +33,18 @@ addopts = ["-p", "tests.support.pytest_cases"]
 junit_family = "xunit1"
 markers = ["case_detail(text): パラメーターごとの条件や期待結果を日本語で示す"]
 pythonpath = ["packages/agent/src", "packages/backend/src", "packages/database/src", "packages/infra", "."]
-testpaths = ["packages/agent/tests", "tests/architecture", "packages/backend/tests", "packages/frontend/tests", "packages/infra/tests", "packages/database/tests", "tests/e2e/browser", "tools/tests"]
+testpaths = ["packages/agent/tests", "tests/architecture", "packages/backend/tests", "packages/frontend/tests", "packages/infra/tests", "packages/database/tests", "tests/e2e/browser", "packages/tools/tests"]
 
 [tool.coverage.run]
 branch = true
 relative_files = true
 source = [
     "packages/backend/src/app",
-    "packages/database/src/tsugite_db",
+    "packages/database",
     "packages/frontend/src/web_app",
     "packages/infra",
     "packages/agent/src/agent",
+    "packages/tools",
 ]
 omit = ["*/tests/*", "*/cdk.out/*", "*/__pycache__/*"]
 
@@ -68,3 +69,12 @@ strict = ["packages/database/src/tsugite_db/models.py", "packages/backend/src/ap
 strict = true
 plugins = ["pydantic.mypy"]
 files = ["packages/database/src/tsugite_db/models.py", "packages/backend/src/app/apis/schemas.py"]
+
+[[tool.uv.index]]
+name = "pypi"
+url = "https://pypi.org/simple"
+default = true
+
+[tool.tsugite.unit-coverage]
+line = 90
+branch = 85

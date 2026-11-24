@@ -1,3 +1,4 @@
+# 操作履歴の検索条件を組み立てる。
 from datetime import datetime, timedelta, timezone
 from urllib.parse import urlencode
 

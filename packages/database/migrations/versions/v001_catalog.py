@@ -1,3 +1,4 @@
+# カタログに対応するDBスキーマへ移行する。
 """Create the API inventory, project grants and append-only event stream."""
 
 import sqlalchemy as sa

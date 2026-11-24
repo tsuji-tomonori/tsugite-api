@@ -1,3 +1,4 @@
+# ホームの画面と操作を定義する。
 import chat_views
 from portal_ui import ctx, render
 from screen_registry import Screen

@@ -1,3 +1,4 @@
+# 管理者と提供者の通知先には登録された名称を表示し、送信には識別子を使う。
 from test_components import render
 
 

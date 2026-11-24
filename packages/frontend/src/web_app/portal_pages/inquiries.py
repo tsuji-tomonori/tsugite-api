@@ -1,3 +1,4 @@
+# 問い合わせの画面と操作を定義する。
 from urllib.parse import urlencode
 
 import client

@@ -1,3 +1,4 @@
+# APIを登録・掲載内容を編集の画面と操作を定義する。
 import json
 
 import client

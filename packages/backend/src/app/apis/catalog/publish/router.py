@@ -1,3 +1,4 @@
+# 商品を公開する。
 from app.apis.catalog.common import DB, User, event, listing, record
 from app.apis.catalog.releases import record_release
 from app.apis.schemas import Listing

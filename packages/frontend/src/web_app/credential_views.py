@@ -1,3 +1,4 @@
+# 認証情報の発行と設定の画面を描画する。
 """Portal controls for access-token lifetime, authentication methods and credential grants."""
 
 import json

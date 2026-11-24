@@ -1,3 +1,4 @@
+# 上流APIの接続設定を構成する。
 from pathlib import Path
 
 from aws_cdk import Stack

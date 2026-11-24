@@ -1,3 +1,4 @@
+# JSON Pointerを解決し、同名のパス共通パラメーターを操作側で上書きする。
 from packages.frontend.src.web_app.openapi_fields import parameters
 
 

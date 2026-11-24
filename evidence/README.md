@@ -14,4 +14,4 @@ GitHub Actions の Verify で `requirement-evidence` をダウンロードし、
 
 要件ファイルが変わったPRでは全件を実行する。ほかのPRでは既存の差分CIの計画に従い、実行していない層を「対象外」、一部の層だけを検証した要求を「部分実行」と記録する。同じディレクトリの `requirements.xml` には、要求ごとに1つのJUnitケースを出力する。部分実行と対象外の要求には `skipped` が付く。
 
-ローカルでは `task test` と `task test:aws` で同じ変更の結果を取得してから、`python -m tools.testing.requirement_evidence` で全要求を照合できる。成功・失敗はコマンドの終了コードで判定できる。
+ローカルでは `task test` と `task test:aws` で同じ変更の結果を取得してから、`python -m packages.tools.testing.requirement_evidence` で全要求を照合できる。成功・失敗はコマンドの終了コードで判定できる。

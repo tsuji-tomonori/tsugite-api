@@ -1,3 +1,4 @@
+# 認証情報の有効期間を設定する。
 import json
 from typing import Literal
 

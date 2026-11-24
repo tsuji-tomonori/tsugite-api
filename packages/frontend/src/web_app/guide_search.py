@@ -1,3 +1,4 @@
+# 操作ガイドから関連する説明を検索する。
 """Hybrid retrieval over portal text and a local vocabulary of task intents."""
 
 import math

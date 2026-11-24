@@ -1,3 +1,4 @@
+# ポータルの画面遷移とナビゲーションを制御する。
 import asyncio
 
 import client

@@ -1,3 +1,4 @@
+# 呼び出し先にAPI識別名を使い、既存商品で識別名が未設定ならUUIDを使う。
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 from urllib.parse import parse_qsl, urlsplit

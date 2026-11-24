@@ -1,3 +1,4 @@
+# frontend のテストで使う共通フィクスチャを提供する。
 import sys
 from importlib import import_module
 from pathlib import Path

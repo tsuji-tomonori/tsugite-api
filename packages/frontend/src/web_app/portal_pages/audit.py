@@ -1,3 +1,4 @@
+# 業務操作履歴の画面と操作を定義する。
 import json
 from datetime import datetime, timezone
 from urllib.parse import urlencode

@@ -1,3 +1,4 @@
+# 語句が一致しない質問も日本語埋め込みで公開商品に結び付ける。
 import json
 from types import SimpleNamespace
 

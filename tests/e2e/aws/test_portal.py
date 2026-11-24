@@ -1,3 +1,4 @@
+# Cognitoで識別した2人が画面で承認し、在庫照会・取消・監査まで進める。
 import json
 import os
 import secrets
@@ -345,7 +346,7 @@ def test_approved_calls_reach_upstream(
 
 def test_marketplace_contracts(aws, resources, tmp_path, request):
     """6種類を個別に登録・公開・承認して実行し、HTTPSの受信・業務応答・監査記録を照合する"""
-    from tools.demo.seed_marketplace import CATALOG, offer
+    from packages.tools.demo.seed_marketplace import CATALOG, offer
 
     expected = [
         {"items": [{"sku": "TS-01", "stock": 12}]},
@@ -414,7 +415,7 @@ def test_marketplace_contracts(aws, resources, tmp_path, request):
 
 def test_upstream_unavailable(aws, resources, tmp_path, request):
     """承認済みのHTTPS接続先が停止したとき、502と監査・アクセスログを同じIDで追跡できる"""
-    from tools.demo.seed_marketplace import CATALOG, offer
+    from packages.tools.demo.seed_marketplace import CATALOG, offer
 
     with ExitStack() as stack:
         with https_stock(aws, tmp_path, os.environ["AWS_CA_BUNDLE"]) as (binding, ca, _):

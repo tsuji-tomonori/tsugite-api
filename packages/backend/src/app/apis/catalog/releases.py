@@ -1,3 +1,4 @@
+# 商品の公開版と変更履歴を扱う。
 import hashlib
 import json
 

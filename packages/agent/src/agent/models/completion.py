@@ -1,3 +1,4 @@
+# ローカル推論プロセスから形式を制約した応答を生成する。
 """Low-token, grammar-constrained completion on a local llama.cpp process."""
 
 import json
