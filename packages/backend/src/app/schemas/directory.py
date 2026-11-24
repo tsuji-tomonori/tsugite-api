@@ -1,6 +1,4 @@
-# directory のAPIで扱う入出力モデルを定義する。
-from typing import Literal
-
+# 部署とプロジェクトの設定・所属変更に使う入力項目を定義する。
 from pydantic import Field
 
 from app.schemas.base import Input
@@ -8,13 +6,8 @@ from app.schemas.base import Input
 
 #: 部署・プロジェクトの編集内容
 class UnitData(Input):
-    #: 組織の種類（部署・プロジェクト）
-    kind: Literal[
-        #: プロジェクト
-        "project",
-        #: 部署
-        "department",
-    ]
+    #: 所属先を分類するメタデータのキー
+    kind: str
     #: 部署・プロジェクト名
     name: str = Field(min_length=1, max_length=120)
     #: 親部署の識別子

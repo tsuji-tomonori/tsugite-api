@@ -54,7 +54,7 @@ def asset_references(db, source, target):
             require_destination(target, "提供中または下書きのAPI")
             asset.owner = target
         policy = json.loads(asset.policy or "{}")
-        for field in ("projects", "departments", "auto_departments", "delegates"):
+        for field in ("projects", "departments", "auto_departments", "delegates", "metadata_values"):
             if source in policy.get(field, []):
                 require_destination(target, "APIの公開・承認条件")
                 policy[field] = replace_ids(policy[field], source, target)

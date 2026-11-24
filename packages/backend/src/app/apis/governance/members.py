@@ -157,6 +157,8 @@ def invite(data: Invitation, request: Request, actor: User, db: DB):
             )["User"]
         except idp.exceptions.UsernameExistsException as exc:
             raise HTTPException(409, "登録済みです") from exc
+        except (idp.exceptions.InternalErrorException, idp.exceptions.TooManyRequestsException):
+            raise HTTPException(503, "招待サービスが一時的に利用できません。時間をおいて再実行してください") from None
         try:
             subject = next(a["Value"] for a in user["Attributes"] if a["Name"] == "sub")
             request.state.target_subject_id = subject

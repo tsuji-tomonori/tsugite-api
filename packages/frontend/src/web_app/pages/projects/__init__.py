@@ -9,7 +9,7 @@ SCREENS = (
         "プロジェクト",
         lambda: list_heading("projects"),
         load_workspace,
-        group="ワークスペース",
+        group="メタデータ",
         order=61,
         own_heading=True,
     ),

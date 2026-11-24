@@ -1,4 +1,5 @@
 # ログイン中の利用者の情報を取得する。
+from app.core.metadata import metadata_fields
 from app.core.workspace import private_project, project_label, units, workspace_targets
 from app.dependencies import DB, User
 from app.schemas import outputs
@@ -13,6 +14,8 @@ def me(actor: User, db: DB):
     tree = units(db) if actor.admin else {}
     projects = [key for key, unit in tree.items() if unit["kind"] == "project"]
     return {
+        "metadata_fields": list(metadata_fields(db).values()),
+        "metadata": {key: sorted(values) for key, values in actor.metadata.items()},
         "known_projects": projects,
         "known_project_labels": {key: project_label(tree, key) for key in projects},
         "personal_project": private_project(actor.subject),

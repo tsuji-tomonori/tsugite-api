@@ -5,7 +5,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
-from actions.workspace import KINDS, location, toggle
+from actions.workspace import KINDS, kind_label, location, toggle
 from puepy import t
 from routing.portal_navigation import load
 from runtime.portal_ui import ctx
@@ -20,7 +20,7 @@ from components.workspace_monitor import monitoring_view
 def page_title() -> str:
     """組織の種類と操作から見出しを作る。"""
     root, parts = location()
-    label = KINDS[root][1]
+    label = kind_label(root)[1]
     suffix = {
         "create": "の作成",
         "edit": "の編集",
@@ -28,6 +28,8 @@ def page_title() -> str:
         "monitor": "のモニタリング",
         "member": "の所属設定",
     }
+    if root.startswith("attributes/"):
+        label += "の値"
     return label + suffix.get(parts[0] if parts else "", "一覧")
 
 
@@ -56,11 +58,12 @@ class UnitView:
 def detail_panel(target: UnitView) -> None:
     """所属メンバーと管理者向けの操作を表示する。"""
     root, unit = target.root, target.unit
-    t.p(directory.unit_state(unit, target.by_id))
+    if root in KINDS:
+        t.p(directory.unit_state(unit, target.by_id))
     with t.div(classes="btn-grouping"):
         if target.data["admin"]:
             directory.link(
-                KINDS[root][1] + "を編集", directory.url(root, "edit", unit["id"]), button=True
+                kind_label(root)[1] + "を編集", directory.url(root, "edit", unit["id"]), button=True
             )
         if target.managed:
             directory.link("モニタリング", directory.url(root, "monitor", unit["id"]), button=True)
@@ -68,13 +71,13 @@ def detail_panel(target: UnitView) -> None:
     if target.managed:
         usage_settings(unit, ctx)
     if target.data["admin"]:
-        directory.retirement_form(root, KINDS[root][1], unit, target.by_id, target.paths)
+        directory.retirement_form(root, kind_label(root)[1], unit, target.by_id, target.paths)
 
 
 def edit_panel(target: UnitView) -> None:
     """管理者に組織名と親部署の編集欄を表示する。"""
     if len(target.parts) == 2 and target.data["admin"]:
-        kind, label = KINDS[target.root]
+        kind, label = kind_label(target.root)
         directory.unit_editor(target.root, kind, label, target.by_id, target.paths, target.unit)
     else:
         unavailable()
@@ -105,11 +108,14 @@ def unavailable() -> None:
 def view(draw: Callable[[UnitView], None] | None = None) -> None:
     """組織の一覧・詳細・編集・集計を組み立てる。"""
     root, parts = location()
-    kind, label = KINDS[root]
+    kind, label = kind_label(root)
     data = ctx.get("workspace")
     if data is None:
         t.p("一覧を取得できませんでした。")
         btn("再読み込み", load)
+        return
+    if not label:
+        t.p("メタデータ項目が見つかりません。")
         return
     by_id = {u["id"]: u for u in data["units"]}
     paths = directory.unit_paths(by_id)
@@ -130,7 +136,7 @@ def view(draw: Callable[[UnitView], None] | None = None) -> None:
     if not unit or unit["kind"] != kind:
         t.p("対象が見つかりません。")
         return
-    managed = data["admin"] or unit["id"] in data["leads"]
+    managed = root in KINDS and (data["admin"] or unit["id"] in data["leads"])
     with t.div(classes="resource-heading"):
         t.h2(paths[unit["id"]])
         t.span(unit["id"], classes="mono")
@@ -151,5 +157,6 @@ def view(draw: Callable[[UnitView], None] | None = None) -> None:
 
 def list_heading(root: str) -> None:
     """組織一覧に見出しを付ける。"""
-    t.h1(KINDS[root][1] + "一覧")
+    t.h1(kind_label(root)[1] + "一覧")
+    t.span("使用中のデータパーツ", classes="metadata-badge")
     view()

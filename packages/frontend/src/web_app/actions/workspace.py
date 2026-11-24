@@ -16,7 +16,27 @@ KINDS = {"departments": ("department", "部署"), "projects": ("project", "プ�
 def location() -> tuple[str, list[str]]:
     """現在のURLから対象の種類と操作を取り出す。"""
     root, *parts = route().split("/")
+    if root == "attributes" and parts:
+        return "attributes/" + parts[0], [unquote(part) for part in parts[1:]]
     return ("departments" if root == "workspace" else root), [unquote(part) for part in parts]
+
+
+def kind_label(root: str) -> tuple[str, str]:
+    """登録済みの項目から種類と表示名を解決する。"""
+    if root in KINDS:
+        return KINDS[root]
+    key = root.partition("/")[2]
+    fields = (ctx.get("workspace") or {}).get("metadata_fields", [])
+    return key, next((f["label"] for f in fields if f["key"] == key and not f["builtin"]), "")
+
+
+def attribute_menu(user: dict[str, Any]) -> list[tuple[str, str]]:
+    """任意項目に対応するメニューを作る。"""
+    return [
+        ("attributes/" + f["key"], f["label"])
+        for f in user.get("metadata_fields", [])
+        if not f["builtin"]
+    ]
 
 
 async def load_workspace(page: str) -> None:
@@ -28,7 +48,7 @@ async def load_workspace(page: str) -> None:
         return
     ctx["workspace"] = data
     root, parts = location()
-    if len(parts) == 2 and parts[0] == "monitor":
+    if root in KINDS and len(parts) == 2 and parts[0] == "monitor":
         unit = next(
             (u for u in data["units"] if u["id"] == parts[1] and u["kind"] == KINDS[root][0]), None
         )

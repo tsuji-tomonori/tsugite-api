@@ -84,10 +84,9 @@ def test_existing_routes_and_role_menus(portal_module: Callable[[str], ModuleTyp
         "keys",
         "mine",
         "notifications",
-        "departments",
-        "projects",
         "dashboard",
     ]
+    assert [s.path for s in menus["メタデータ"]] == ["departments", "projects", "metadata"]
     assert [s.path for s in menus["ヘルプ"]] == ["guide", "inquiries"]
     assert [s.path for s in menus["ガバナンス"]] == ["metrics", "logs", "alerts", "audit"]
     assert "管理" not in menus and "提供者メニュー" not in menus

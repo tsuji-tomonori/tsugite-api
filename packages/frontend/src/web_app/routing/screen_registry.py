@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from collections.abc import Awaitable, Callable
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from functools import cache
 from importlib import import_module
 from pkgutil import iter_modules
@@ -26,6 +26,7 @@ class Screen:
     own_heading: bool = False
     clear_on_load: tuple[str, ...] = ()
 
+    menu_paths: Callable[[dict[str, Any]], list[tuple[str, str]]] | None = None
     examples: dict[str, Callable[[], None]] = field(default_factory=dict)
 
     def page_title(self) -> str:
@@ -72,5 +73,11 @@ def menu(user: dict[str, Any]) -> dict[str, list[Screen]]:
     groups: dict[str, list[Screen]] = {}
     for screen in sorted(screens().values(), key=lambda item: (item.order, item.path)):
         if screen.group and screen.visible(user):
-            groups.setdefault(screen.group, []).append(screen)
+            entries = groups.setdefault(screen.group, [])
+            if screen.menu_paths:
+                entries.extend(
+                    replace(screen, path=path, title=label) for path, label in screen.menu_paths(user)
+                )
+            else:
+                entries.append(screen)
     return groups

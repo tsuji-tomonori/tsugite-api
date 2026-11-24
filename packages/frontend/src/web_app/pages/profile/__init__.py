@@ -11,6 +11,6 @@ SCREENS = (
         load_profile,
         group="個人設定",
         order=105,
-        clear_on_load=("member_profile",),
+        clear_on_load=("member_profile", "profile_directory"),
     ),
 )

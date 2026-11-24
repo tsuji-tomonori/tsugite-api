@@ -58,6 +58,14 @@ MUTATIONS = (
         "packages/tools/tests/test_unit_coverage.py::test_coverage_compares_exact_line_and_branch_counts",
     ),
     Mutation(
+        "metadata",
+        "任意属性の役職を既存の自動承認条件に含める",
+        "packages/backend/src/app/core/workspace.py",
+        "if kind not in BUILTIN_FIELDS:\n            continue",
+        "if kind not in BUILTIN_FIELDS:\n            titles.add(m.title)\n            continue",
+        "packages/backend/tests/test_user_metadata.py::test_metadata_groups_and_visibility",
+    ),
+    Mutation(
         "database",
         "公開履歴テーブルのモデル登録を外す",
         "packages/database/src/tsugite_db/models/__init__.py",
@@ -299,8 +307,8 @@ MUTATIONS = (
         "ci-scope",
         "共有ガイド変更時に利用側のテストを外す",
         "packages/tools/ci/ci_scope.py",
-        "return {AGENT, FRONTEND, BROWSER, BACKEND}",
-        "return {FRONTEND, BROWSER}",
+        'return {AGENT, FRONTEND, BROWSER, BACKEND, "types"}',
+        'return {FRONTEND, BROWSER, "types"}',
         "tests/architecture/core/test_ci_scope.py::test_imported_modules_verify_their_actual_consumers",
     ),
     Mutation(

@@ -3,9 +3,11 @@
 
 import hashlib
 import json
+from collections import defaultdict
 from dataclasses import replace
 
 from app.core.config import local_demo, settings, targets
+from app.core.metadata import BUILTIN_FIELDS, DEPARTMENT, PROJECT
 from sqlalchemy import select
 from tsugite_db.models import Affiliation, DirectoryTree, LogUnit, Member
 
@@ -48,9 +50,7 @@ def workspace_targets(db):
 
 
 def units(db):
-    base = {
-        k: dict(id=k, name=k, kind="project", parent="", stopped=False) for k in configured_projects()
-    }
+    base = {k: dict(id=k, name=k, kind=PROJECT, parent="", stopped=False) for k in configured_projects()}
     if "workspace_tree" not in db.info:
         db.info["workspace_tree"] = db.get(DirectoryTree, "tree")
     saved = db.info["workspace_tree"]
@@ -100,7 +100,8 @@ def populate(db, actor):
         projects.update(inherited)
         if account.role == "provider":
             owners.update(inherited)
-    departments = set()
+    metadata = defaultdict(set)
+    metadata_leads = set()
     leads = set()
     titles = set()
     for m in db.scalars(select(Affiliation).where(Affiliation.subject == actor.subject)):
@@ -111,19 +112,25 @@ def populate(db, actor):
             projects.discard(m.unit_id)
             owners.discard(m.unit_id)
             continue
-        if item["kind"] == "department":
-            departments.add(m.unit_id)
-        else:
-            projects.add(m.unit_id)
+        kind = item["kind"]
+        metadata[kind].add(m.unit_id)
+        if m.leader:
+            metadata_leads.add(m.unit_id)
+        if kind not in BUILTIN_FIELDS:
+            continue
         if m.leader:
             leads.add(m.unit_id)
         if m.title:
             titles.add(m.title)
+    projects.update(metadata[PROJECT])
+    metadata[PROJECT] = projects
     return replace(
         actor,
+        metadata={key: frozenset(values) for key, values in metadata.items() if values},
+        metadata_leads=frozenset(metadata_leads),
         projects=frozenset(projects),
         owners=frozenset(owners),
-        departments=frozenset(ancestry(tree, departments)),
+        departments=frozenset(ancestry(tree, metadata[DEPARTMENT])),
         leads=frozenset(leads),
         titles=frozenset(titles),
     )
@@ -140,6 +147,11 @@ def allowed_audience(asset, actor):
         or p.get("visibility", "all") == "all"
         or bool(actor.projects.intersection(p.get("projects", [])))
         or bool(actor.departments.intersection(p.get("departments", [])))
+        or any(
+            not values.isdisjoint(p.get("metadata_values", []))
+            for kind, values in actor.metadata.items()
+            if kind not in BUILTIN_FIELDS
+        )
     )
 
 
@@ -163,7 +175,7 @@ def delegated(db, actor, asset, grant):
     if not grant.applicant or grant.applicant == actor.subject:
         return False
     tree = units(db)
-    leaders = {k for k in actor.leads if tree.get(k, {}).get("kind") == "department"}
+    leaders = {k for k in actor.leads if tree.get(k, {}).get("kind") == DEPARTMENT}
     assigned = leaders.intersection(policy(asset).get("delegates", []))
     if not assigned:
         return False
@@ -174,5 +186,5 @@ def delegated(db, actor, asset, grant):
     )
     return bool(
         assigned
-        & ancestry(tree, [u for u in applicant_units if tree.get(u, {}).get("kind") == "department"])
+        & ancestry(tree, [u for u in applicant_units if tree.get(u, {}).get("kind") == DEPARTMENT])
     )
