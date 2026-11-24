@@ -123,7 +123,7 @@ def build():
         dest / "agent",
         ignore=shutil.ignore_patterns("__pycache__", "models"),
     )
-    guide_path = Path("packages/frontend/src/web_app")
+    guide_path = Path("packages/frontend/src/web_app/content")
     (dest / guide_path).mkdir(parents=True)
     for name in ("guide_content.py", "guide_search.py"):
         shutil.copy(ROOT / guide_path / name, dest / guide_path / name)

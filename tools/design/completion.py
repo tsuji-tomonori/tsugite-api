@@ -125,6 +125,9 @@ def render(rules, branch, source_prefix):
         return f"[{label}]({source_prefix}{quote(path.as_posix())}" + (f"#L{line})" if line else ")")
 
     config = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["tool"]
+    frontend_mypy = tomllib.loads(
+        (ROOT / "packages/frontend/pyproject.toml").read_text(encoding="utf-8")
+    )["tool"]["mypy"]
     suites = config["pytest"]["ini_options"]["testpaths"]
     labels = suite_labels()
     minimum, drop = coverage_limits(rules)
@@ -183,6 +186,10 @@ def render(rules, branch, source_prefix):
                 ("Pyright", code(config["pyright"]["include"])),
                 ("Pyright（strict）", code(config["pyright"].get("strict", []))),
                 (f"mypy（strict={config['mypy']['strict']}）", code(config["mypy"]["files"])),
+                (
+                    f"フロントエンドのmypy（strict={frontend_mypy['strict']}）",
+                    code(frontend_mypy["files"]),
+                ),
             ],
         ),
         "",

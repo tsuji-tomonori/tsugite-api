@@ -9,6 +9,7 @@ from hashlib import sha256
 from importlib.metadata import distribution
 from importlib.util import find_spec
 from pathlib import Path
+from typing import IO, Any
 
 from tinycss2 import parse_component_value_list
 
@@ -35,7 +36,7 @@ BUNDLES = {
 }
 
 
-def cloudscape_tokens(css):
+def cloudscape_tokens(css: str) -> list[str]:
     """Read var() references, including references inside nested functions and fallbacks."""
     names = set()
     pending = parse_component_value_list(css, skip_comments=True)
@@ -53,10 +54,10 @@ def cloudscape_tokens(css):
     return sorted(names)
 
 
-def write_theme(definitions):
+def write_theme(definitions: dict[str, Any]) -> None:
     """Resolve only the official tokens that the Python portal's stylesheet consumes."""
     names = cloudscape_tokens((DIST / "ui.css").read_text(encoding="utf-8"))
-    tables = {"light": [], "dark": []}
+    tables: dict[str, list[str]] = {"light": [], "dark": []}
     for name in names:
         value = definitions["tokens"][name]["$value"]
         for mode, table in tables.items():
@@ -73,13 +74,18 @@ def write_theme(definitions):
     )
 
 
-def bundle_styles(source, dist):
+def bundle_styles(source: Path, dist: Path) -> None:
     with (dist / "ui.css").open("a", encoding="utf-8") as bundle:
-        for css in sorted(source.rglob("*.css")):
+        # 既存シートのカスケードを保ち、追加シートはパス順に連結する。
+        order = ("login.css", "guide.css", "listing_detail.css", "logs.css", "workspace.css")
+        rank = {name: index for index, name in enumerate(order)}
+        for css in sorted(
+            source.rglob("*.css"), key=lambda path: (rank.get(path.name, len(rank)), path)
+        ):
             bundle.write("\n" + css.read_text(encoding="utf-8") + "\n")
 
 
-def copy_app_modules(source, dist):
+def copy_app_modules(source: Path, dist: Path) -> dict[str, str]:
     files = {}
     for src in sorted(source.rglob("*.py")):
         relative = src.relative_to(source)
@@ -92,7 +98,15 @@ def copy_app_modules(source, dist):
     return files
 
 
-def build():
+def archive_file(archive: tarfile.TarFile, member: tarfile.TarInfo) -> IO[bytes]:
+    """通常ファイルとして選別したアーカイブの要素を開く。"""
+    source = archive.extractfile(member)
+    if source is None:
+        raise ValueError(f"ファイルを展開できません: {member.name}")
+    return source
+
+
+def build() -> None:
     CACHE.mkdir(parents=True, exist_ok=True)
     if DIST.exists():
         shutil.rmtree(DIST)
@@ -111,7 +125,7 @@ def build():
                 if not member.isfile() or path.name.endswith(".map"):
                     continue
                 if name == "cloudscape" and path.name == "index-visual-refresh.json":
-                    with tar.extractfile(member) as file:
+                    with archive_file(tar, member) as file:
                         write_theme(json.load(file))
                 selected = (
                     name == "pyscript"
@@ -127,8 +141,12 @@ def build():
                     dest = DIST / "vendor" / name / path.name
                     dest.parent.mkdir(parents=True, exist_ok=True)
                     with dest.open("wb") as file:
-                        shutil.copyfileobj(tar.extractfile(member), file)
-    pyroot = Path(find_spec("puepy").origin).parent
+                        with archive_file(tar, member) as stream:
+                            shutil.copyfileobj(stream, file)
+    spec = find_spec("puepy")
+    if spec is None or spec.origin is None:
+        raise RuntimeError("PuePyのインストール先が見つかりません")
+    pyroot = Path(spec.origin).parent
     files = {}
     for src in sorted(pyroot.glob("*.py")):
         dest = DIST / "vendor/puepy" / src.name
@@ -136,9 +154,9 @@ def build():
         shutil.copy(src, dest)
         files["/vendor/puepy/" + src.name] = "./puepy/" + src.name
     wheel = distribution("puepy")
-    for file in wheel.files or ():
-        if file.name.upper() == "LICENSE":
-            shutil.copy(wheel.locate_file(file), DIST / "vendor/puepy/LICENSE")
+    for package_file in wheel.files or ():
+        if package_file.name.upper() == "LICENSE":
+            shutil.copy(str(wheel.locate_file(package_file)), DIST / "vendor/puepy/LICENSE")
     files.update(copy_app_modules(source, DIST))
     shutil.copy(ROOT / "packages/backend/src/app/core/log_record.py", DIST / "log_record.py")
     files["/log_record.py"] = "./log_record.py"

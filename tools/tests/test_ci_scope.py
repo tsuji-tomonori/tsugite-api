@@ -30,8 +30,9 @@ def test_component_tests_and_mixed_changes(tmp_path):
         "packages/infra/tests/cloudformation_snapshot.json",
     ]
     plan = ci.select(files, SUITES, tmp_path)
+    assert plan["types"]
     assert plan["suites"] == [ci.FRONTEND, ci.INFRA]
-    assert not any(plan[key] for key in ("chromium", "synth", "audit", "aws", "types", "frontend_build"))
+    assert not any(plan[key] for key in ("chromium", "synth", "audit", "aws", "frontend_build"))
 
 
 def test_css_and_authentication_have_different_consumers(tmp_path):
@@ -40,7 +41,7 @@ def test_css_and_authentication_have_different_consumers(tmp_path):
     css = ci.select(["packages/frontend/public/ui.css"], SUITES, tmp_path)
     assert css["suites"] == [ci.FRONTEND, ci.BROWSER]
     assert css["chromium"] and css["frontend_build"] and not css["aws"]
-    auth = ci.select(["packages/frontend/src/web_app/client.py"], SUITES, tmp_path)
+    auth = ci.select(["packages/frontend/src/web_app/apis/client.py"], SUITES, tmp_path)
     assert auth["aws_portal_only"] and auth["aws"] and auth["synth"]
 
 
@@ -165,7 +166,7 @@ def test_changed_screen_invalidates_only_suites_that_executed_it(tmp_path):
     import json
 
     cached_report(tmp_path)
-    screen = "packages/frontend/src/web_app/guide_views.py"
+    screen = "packages/frontend/src/web_app/components/guide_views.py"
     for suite, files in [(ci.DATABASE, [screen]), (ci.INFRA, ["packages/infra/app.py"])]:
         part = tmp_path / "coverage-parts" / ci.part_name(suite)
         part.write_bytes(b"measured")

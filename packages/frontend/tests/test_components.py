@@ -1,4 +1,9 @@
-from types import SimpleNamespace
+# 表示部品と操作ガイドを検証する。
+from __future__ import annotations
+
+from collections.abc import Callable
+from types import ModuleType, SimpleNamespace
+from typing import Any
 from unittest.mock import Mock, patch
 from urllib.parse import parse_qsl, urlsplit
 from xml.dom.minidom import Document
@@ -8,9 +13,9 @@ from puepy import Page
 from puepy.core import Tag
 
 
-def render(component, *args):
+def render(component: Callable[..., object], *args: Any) -> tuple[Page, Any]:
     class ComponentPage(Page):
-        def populate(self):
+        def populate(self) -> None:
             component(*args)
 
     page = ComponentPage()
@@ -20,13 +25,13 @@ def render(component, *args):
         return page, page.render()
 
 
-def elements(dom):
+def elements(dom: Any) -> dict[str, Any]:
     return {el.getAttribute("id"): el for el in dom.getElementsByTagName("*") if el.hasAttribute("id")}
 
 
-def test_invocation_path_uses_product_slug(portal_module):
+def test_invocation_path_uses_product_slug(portal_module: Callable[[str], ModuleType]) -> None:
     """呼び出し先にAPI識別名を使い、既存商品で識別名が未設定ならUUIDを使う。"""
-    client = portal_module("client")
+    client = portal_module("apis.client")
     product = {"id": "52a8193c70c941e894bc12fa4bc92e8a", "slug": "stock-lookup"}
     assert (
         client.invocation_path(product, "sandbox", "finance")
@@ -38,9 +43,9 @@ def test_invocation_path_uses_product_slug(portal_module):
     )
 
 
-def test_chat_product_and_guide_are_linked(portal_module):
+def test_chat_product_and_guide_are_linked(portal_module: Callable[[str], ModuleType]) -> None:
     """チャットの候補と操作手順に、対応する商品・ガイドのリンクが付く。"""
-    chat = portal_module("chat_views")
+    chat = portal_module("components.chat_views")
     _, dom = render(
         chat.show_result,
         {
@@ -65,9 +70,9 @@ def test_chat_product_and_guide_are_linked(portal_module):
     assert dom.getElementsByTagName("li")[0].firstChild.data == "キーを選びます"
 
 
-def test_guide_results_render_matching_cards_only(portal_module):
+def test_guide_results_render_matching_cards_only(portal_module: Callable[[str], ModuleType]) -> None:
     """提供者の検索結果で一致したガイドを先頭に表示し、件数を読み上げる。"""
-    guide = portal_module("guide_views")
+    guide = portal_module("components.guide_views")
     _, dom = render(guide.index, {"guide_query": "読み取りだけ許可したい", "guide_role": "提供者"})
     by_id = elements(dom)
     cards = by_id["guide-grid"].getElementsByTagName("article")
@@ -79,9 +84,11 @@ def test_guide_results_render_matching_cards_only(portal_module):
     assert by_id["guide-empty"].hasAttribute("hidden")
 
 
-def test_guide_reset_restores_role_and_keyboard_focus(portal_module, monkeypatch):
+def test_guide_reset_restores_role_and_keyboard_focus(
+    portal_module: Callable[[str], ModuleType], monkeypatch: pytest.MonkeyPatch
+) -> None:
     """ガイドの条件をクリアすると全件に戻り、検索欄にフォーカスする。"""
-    guide = portal_module("guide_views")
+    guide = portal_module("components.guide_views")
     ctx = {"guide_query": "unmatchedXYZ", "guide_role": "提供者"}
     page, dom = render(guide.index, ctx)
     assert not elements(dom)["guide-empty"].hasAttribute("hidden")
@@ -113,30 +120,56 @@ def test_guide_reset_restores_role_and_keyboard_focus(portal_module, monkeypatch
     query.focus.assert_called_once_with()
 
 
-def test_guide_article_shows_admin_navigation_only_to_admins(portal_module):
+def test_guide_article_shows_admin_navigation_only_to_admins(
+    portal_module: Callable[[str], ModuleType],
+) -> None:
     """ユーザー管理の手順は閲覧でき、管理画面へのボタンは管理者にだけ表示する。"""
-    guide = portal_module("guide_views")
+    guide = portal_module("components.guide_views")
     button, navigate = Mock(), Mock()
     pages = {"members": "ユーザー管理"}
     user = {"admin": False, "owners": [], "leads": []}
-    _, dom = render(guide.article, "member", user, pages, navigate, button)
+    _, dom = render(
+        guide.article,
+        "member",
+        user,
+        pages,
+        navigate,
+        button,
+        portal_module("routing.screen_registry").guide_examples(),
+    )
     figure = dom.getElementsByTagName("figure")[0]
     assert figure.getElementsByTagName("input")[0].getAttribute("id") == "member-email"
     assert figure.getElementsByTagName("figcaption")[0].firstChild.data
     button.assert_not_called()
-    render(guide.article, "member", {**user, "admin": True}, pages, navigate, button)
+    render(
+        guide.article,
+        "member",
+        {**user, "admin": True},
+        pages,
+        navigate,
+        button,
+        portal_module("routing.screen_registry").guide_examples(),
+    )
     button.assert_called_once_with("「ユーザー管理」を開く", navigate, "members", primary=True)
 
 
-def test_each_guide_renders_inert_example(portal_module):
+def test_each_guide_renders_inert_example(portal_module: Callable[[str], ModuleType]) -> None:
     """全手順でサンプルデータから実画面の操作部品を描画し、画面例の内側だけを操作不能にする。"""
-    guide = portal_module("guide_views")
-    registry = portal_module("screen_registry")
+    guide = portal_module("components.guide_views")
+    registry = portal_module("routing.screen_registry")
     assert set(registry.guide_examples()) == set(guide.BY_ID)
     pages = {path: screen.title for path, screen in registry.screens().items() if screen.group}
     admin = {"admin": True, "owners": ["sample-owner"], "leads": []}
     for key in guide.BY_ID:
-        _, dom = render(guide.article, key, admin, pages, Mock(), portal_module("portal_ui").btn)
+        _, dom = render(
+            guide.article,
+            key,
+            admin,
+            pages,
+            Mock(),
+            portal_module("components.controls").btn,
+            registry.guide_examples(),
+        )
         figure = dom.getElementsByTagName("figure")[0]
         preview = figure.getElementsByTagName("div")[0]
         assert preview.hasAttribute("inert"), key
@@ -148,9 +181,9 @@ def test_each_guide_renders_inert_example(portal_module):
         ), key
 
 
-def test_operation_parameter_renders_openapi_default(portal_module):
+def test_operation_parameter_renders_openapi_default(portal_module: Callable[[str], ModuleType]) -> None:
     """OpenAPIの型定義を参照し、クエリ入力欄に既定値の例を表示する。"""
-    api = portal_module("api_docs")
+    api = portal_module("components.api_docs")
     spec = {"components": {"schemas": {"Filters": {"type": "array", "default": ["在庫", "受注"]}}}}
     param = {"in": "query", "name": "filters", "schema": {"$ref": "#/components/schemas/Filters"}}
     _, dom = render(api.input_param, spec, param, "filters")
@@ -158,9 +191,11 @@ def test_operation_parameter_renders_openapi_default(portal_module):
     assert elements(dom)["filters"].getAttribute("placeholder") == '["在庫","受注"]'
 
 
-def test_operation_location_encodes_path_and_query_values(portal_module):
+def test_operation_location_encodes_path_and_query_values(
+    portal_module: Callable[[str], ModuleType],
+) -> None:
     """パスの予約文字をエンコードし、配列とオブジェクトを指定形式で送る。"""
-    api = portal_module("api_docs")
+    api = portal_module("components.api_docs")
     params = [
         {"in": "path", "name": "id"},
         {"in": "query", "name": "tag", "schema": {"type": "array"}},
@@ -178,16 +213,16 @@ def test_operation_location_encodes_path_and_query_values(portal_module):
     assert parse_qsl(location.query) == [("tag", "a"), ("tag", "b"), ("filter[空]", "あり")]
 
 
-def test_operation_location_requires_mandatory_query(portal_module):
+def test_operation_location_requires_mandatory_query(portal_module: Callable[[str], ModuleType]) -> None:
     """必須のクエリ入力が空なら、入力項目名を示して送信を止める。"""
-    api = portal_module("api_docs")
+    api = portal_module("components.api_docs")
     with pytest.raises(ValueError, match="limit を入力してください"):
         api.build_location({}, "/items", [{"in": "query", "name": "limit", "required": True}], {})
 
 
-def test_publication_history_shows_release_changes(portal_module):
+def test_publication_history_shows_release_changes(portal_module: Callable[[str], ModuleType]) -> None:
     """公開履歴の表に版番号・公開日・変更された操作を表示し、空の差分は省く。"""
-    history = portal_module("product_views").release_history
+    history = portal_module("components.product_views").release_history
     _, dom = render(
         history,
         {
@@ -221,9 +256,11 @@ def test_publication_history_shows_release_changes(portal_module):
     assert note.firstChild.data == "在庫照会を追加"
 
 
-def test_login_form_uses_native_labels_and_keyboard_submit(portal_module):
+def test_login_form_uses_native_labels_and_keyboard_submit(
+    portal_module: Callable[[str], ModuleType],
+) -> None:
     """ログインフォームに入力ラベルと自動入力の用途を示し、Enterで送信できる。"""
-    view = portal_module("login_views")
+    view = portal_module("components.login_views")
     ctx = {"config": {"client_id": "web", "identity_endpoint": "https://identity.example"}}
     _, dom = render(view.portal_form, ctx, Mock(), Mock(), Mock())
     fields = elements(dom)
@@ -243,11 +280,11 @@ def test_login_form_uses_native_labels_and_keyboard_submit(portal_module):
     ]
 
 
-def test_curl_reuses_request_without_exposing_token(portal_module):
+def test_curl_reuses_request_without_exposing_token(portal_module: Callable[[str], ModuleType]) -> None:
     """送信したURL・形式・本文をシェルで再現し、短期トークンは変数で参照する。"""
     import shlex
 
-    api = portal_module("api_docs")
+    api = portal_module("components.api_docs")
     body = """{"item":"O'Reilly","count":2}"""
     url = "https://example.test/api/invoke/stock/sandbox/p/items?a=1&b=2"
     options = {

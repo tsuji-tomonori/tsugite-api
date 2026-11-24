@@ -1,9 +1,17 @@
+# 通知先の名前と識別子の対応を検証する。
+from __future__ import annotations
+
+from collections.abc import Callable
+from types import ModuleType
+
 from test_components import render
 
 
-def test_notification_recipient_dropdown_uses_display_names(portal_module):
+def test_notification_recipient_dropdown_uses_display_names(
+    portal_module: Callable[[str], ModuleType],
+) -> None:
     """管理者と提供者の通知先には登録された名称を表示し、送信には識別子を使う。"""
-    page = portal_module("portal_pages.notifications")
+    page = portal_module("components.notifications")
     label = "営業部 / 受注から出荷までの納期改善"
     page.ctx.update(
         notices={"items": []},
