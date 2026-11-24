@@ -2,11 +2,12 @@
 
 # インフラ設計書
 
-対象テンプレート `TsugiteApi.template.json`。全7コンポーネント、59リソース。
+対象テンプレート `TsugiteApi.template.json`。全8コンポーネント、79リソース。
 
 | コンポーネント | リソース数 |
 | --- | ---: |
 | [`Bindings`](component-Bindings.md) | 7 |
+| [`Chat`](component-Chat.md) | 20 |
 | [`Database`](component-Database.md) | 9 |
 | [`Gateway`](component-Gateway.md) | 10 |
 | [`Identities`](component-Identities.md) | 12 |

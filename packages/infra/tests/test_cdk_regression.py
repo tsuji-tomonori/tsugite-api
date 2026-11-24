@@ -82,6 +82,7 @@ def test_backend_layer_changes_only_with_dependencies(tmp_path):
             and (props := resource["Properties"]).get("Handler") in handlers
         }
         assert functions.keys() == handlers
+        assert all(props["Runtime"] == "python3.15" for props in functions.values())
         layer_id = functions["app.main.handler"]["Layers"][0]["Ref"]
         assert all(props["Layers"] == [{"Ref": layer_id}] for props in functions.values())
         layer = resources[layer_id]
@@ -119,7 +120,10 @@ def test_model_layer_changes_are_isolated(tmp_path):
                 (layer_ref,) = props["Layers"]
                 layer = resources[layer_ref["Ref"]]
                 assert layer["Type"] == "AWS::Lambda::LayerVersion"
-                assert layer["Properties"]["CompatibleRuntimes"] == [props["Runtime"]] == ["python3.14"]
+                expected_runtime = "python3.14" if role == "decision" else "python3.15"
+                assert (
+                    layer["Properties"]["CompatibleRuntimes"] == [props["Runtime"]] == [expected_runtime]
+                )
                 codes[role] = props["Code"]
                 layers[role] = layer["Properties"]["Content"]
         assert set(layers) == {"decision", "tool", "generate"}
@@ -137,6 +141,13 @@ def test_model_layer_changes_are_isolated(tmp_path):
     assert final_codes == new_codes
     assert final_layers["decision"] != layers["decision"]
     assert final_layers["tool"] == layers["tool"]
+
+
+def test_sample_functions_use_python_315(catalog_stack):
+    """3環境のサンプルAPIがすべてPython 3.15で動作する構成になっている。"""
+    Template.from_stack(catalog_stack).resource_properties_count_is(
+        "AWS::Lambda::Function", {"Handler": "stock.handler", "Runtime": "python3.15"}, 3
+    )
 
 
 def test_schema_waits_for_chat_models(catalog_stack):

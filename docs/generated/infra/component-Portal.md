@@ -230,7 +230,7 @@
 | `Properties.Prune` | `true` |
 | `Properties.ServiceToken` | `${GetAtt:CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C512MiB6723FB92.Arn}` |
 | `Properties.SourceBucketNames[0].Fn::Sub` | `cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}` |
-| `Properties.SourceObjectKeys[0]` | `0c846efc909fd08b5150d469b6c8420c32ecbe20b0ca0205dbd8e036748a7913.zip` |
+| `Properties.SourceObjectKeys[0]` | `fed4dd95d25c69cd9d4fd196eabb60302054916432cdcc5aa92109664c4248e8.zip` |
 | `Properties.WaitForDistributionInvalidation` | `true` |
 | `UpdateReplacePolicy` | `Delete` |
 

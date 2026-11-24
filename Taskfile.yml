@@ -1,6 +1,7 @@
 version: '3'
 
 vars:
+  DECISION: packages/agent/decision-model
   RUN: uv run --locked --all-packages
   MANAGE: '{{.RUN}} python -m tools.operations.manage'
 
@@ -10,7 +11,7 @@ tasks:
   setup:
     desc: Python・依存関係を同期し、このcloneのGitフックを有効にする
     cmds:
-      - uv python install 3.14
+      - uv python install 3.15
       - uv sync --locked --all-packages
       - git config --local core.hooksPath .githooks
       - git config --local commit.template .gitmessage.txt
@@ -22,7 +23,7 @@ tasks:
     cmds: ['uv remove {{.CLI_ARGS}}']
   lock:
     desc: ワークスペースの依存ロックを更新
-    cmds: ['uv lock']
+    cmds: ['uv lock', 'uv lock --project {{.DECISION}}']
   hook:staged:
     cmds: ['uv run --locked --no-sync python tools/ci/check_text.py --staged']
   text:
@@ -41,7 +42,11 @@ tasks:
       - '{{.RUN}} ruff format .'
   types:
     desc: 型検査
-    cmds: ['uv run --locked --all-packages --group decision-model pyright', '{{.RUN}} mypy']
+    cmds:
+      - '{{.RUN}} pyright'
+      - uv sync --locked --project {{.DECISION}}
+      - '{{.RUN}} pyright --project {{.DECISION}}'
+      - '{{.RUN}} mypy'
   docs:
     desc: APIとインフラの設計書を更新
     cmds:

@@ -46,7 +46,6 @@ def test_chat_uses_separate_on_demand_python_functions(tmp_path):
     template.resource_properties_count_is(
         "AWS::Lambda::Function",
         {
-            "Runtime": "python3.14",
             "ReservedConcurrentExecutions": Match.absent(),
             "MemorySize": 3008,
             "EphemeralStorage": {"Size": 512},

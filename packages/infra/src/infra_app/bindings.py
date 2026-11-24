@@ -4,8 +4,9 @@ from aws_cdk import Stack
 from aws_cdk import aws_iam as iam
 from aws_cdk import aws_lambda as fn
 from aws_cdk import aws_ssm as ssm
-from cdk_nag import NagSuppressions
 from constructs import Construct
+
+from .functions import EVENT_PYTHON
 
 
 class UpstreamBindings(Construct):
@@ -21,21 +22,12 @@ class UpstreamBindings(Construct):
                 sample = fn.Function(
                     self,
                     name,
-                    runtime=fn.Runtime.PYTHON_3_14,
+                    runtime=EVENT_PYTHON,
                     handler="stock.handler",
                     code=fn.Code.from_asset(
                         str(Path(__file__).parent / "lambdas" / "stock"),
                         exclude=["__pycache__", "*.pyc"],
                     ),
-                )
-                NagSuppressions.add_resource_suppressions(
-                    sample,
-                    [
-                        {
-                            "id": "AwsSolutions-L1",
-                            "reason": "The sample uses the stable Python 3.14 runtime for AWS Emulator compatibility.",
-                        }
-                    ],
                 )
                 targets["stock-" + environment] = {
                     "owner": "supply",
