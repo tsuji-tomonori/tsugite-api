@@ -95,7 +95,8 @@ class PublishedShape:
     annotation: Any
 
 
-def describe_product_fields(schemas):
+def describe_product_fields(schemas: dict[str, Any]) -> None:
+    """商品項目の公開形式をOpenAPIのスキーマに反映する。"""
     pending = [BaseModel]
     seen = set()
     while pending:

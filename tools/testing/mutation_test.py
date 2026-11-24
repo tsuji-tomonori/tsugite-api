@@ -42,8 +42,16 @@ MUTATIONS = (
     ),
     Mutation(
         "frontend",
+        "ページからPuePyを直接使う変更を見逃す",
+        "tests/architecture/frontend_screens.py",
+        'parts[0] in {"puepy", "js"}',
+        'parts[0] in {"js"}',
+        "tests/architecture/test_frontend_screens.py::test_components_cannot_import_pages_and_pages_cannot_define_widgets",
+    ),
+    Mutation(
+        "frontend",
         "集計区間数に応じたグラフの最小幅を無効にする",
-        "packages/frontend/src/web_app/activity_filters.py",
+        "packages/frontend/src/web_app/components/activity_filters.py",
         'style=f"--buckets:{len(pts)}"',
         'style="--buckets:0"',
         "packages/frontend/tests/test_dashboard.py::test_dashboard_recovers_from_metrics_failure",
@@ -59,7 +67,7 @@ MUTATIONS = (
     Mutation(
         "member-profile",
         "所属一覧で名前と独立したメールアドレスを無視する",
-        "packages/frontend/src/web_app/workspace_members.py",
+        "packages/frontend/src/web_app/components/workspace_members.py",
         'email = person.get("email")',
         "email = None",
         "packages/frontend/tests/test_workspace_screens.py::test_direct_members_have_aligned_table_columns",
@@ -83,7 +91,7 @@ MUTATIONS = (
     Mutation(
         "frontend",
         "API Docsで同じ商品の個人認証情報を毎回発行する",
-        "packages/frontend/src/web_app/api_docs.py",
+        "packages/frontend/src/web_app/components/api_docs.py",
         "if project not in keys:",
         "if True:",
         "packages/frontend/tests/test_api_client.py::"
@@ -92,7 +100,7 @@ MUTATIONS = (
     Mutation(
         "frontend",
         "公開履歴の表で操作の変更を表示しない",
-        "packages/frontend/src/web_app/product_views.py",
+        "packages/frontend/src/web_app/components/product_views.py",
         "if row[key]",
         'if row[key] and key != "changed"',
         "packages/frontend/tests/test_components.py::test_publication_history_shows_release_changes",
@@ -100,7 +108,7 @@ MUTATIONS = (
     Mutation(
         "frontend",
         "利用状況に業務メニューを表示する",
-        "packages/frontend/src/web_app/portal_pages/dashboard.py",
+        "packages/frontend/src/web_app/components/dashboard.py",
         '        btn("利用状況を再読み込み", load)',
         '        btn("利用状況を再読み込み", load)\n'
         '    with t.div(classes="box"):\n'
@@ -111,7 +119,7 @@ MUTATIONS = (
     Mutation(
         "frontend",
         "同じ問い合わせを再送するときに受付番号を振り直す",
-        "packages/frontend/src/web_app/inquiry_form.py",
+        "packages/frontend/src/web_app/apis/messages.py",
         'if state.get("draft") != question:',
         "if True:",
         "packages/frontend/tests/test_inquiry_form.py::test_retry_reuses_pending_inquiry_id",
@@ -119,7 +127,7 @@ MUTATIONS = (
     Mutation(
         "frontend",
         "管理者の通知先にプロジェクト名を表示しない",
-        "packages/frontend/src/web_app/portal_pages/notifications.py",
+        "packages/frontend/src/web_app/components/notifications.py",
         '[(p, names.get(p, p)) for p in me["known_projects"]]',
         '[(p, p) for p in me["known_projects"]]',
         "packages/frontend/tests/test_notification_recipients.py::"
@@ -128,7 +136,7 @@ MUTATIONS = (
     Mutation(
         "frontend",
         "提供者の通知先にプロジェクト名を表示しない",
-        "packages/frontend/src/web_app/management_targets.py",
+        "packages/frontend/src/web_app/actions/management_targets.py",
         "r.get('project_label', r['project'])",
         "r['project']",
         "packages/frontend/tests/test_notification_recipients.py::"
@@ -137,7 +145,7 @@ MUTATIONS = (
     Mutation(
         "frontend",
         "ガイドの画面例を操作可能にする",
-        "packages/frontend/src/web_app/guide_views.py",
+        "packages/frontend/src/web_app/components/guide_views.py",
         'classes="guide-preview", inert=True',
         'classes="guide-preview", inert=False',
         "packages/frontend/tests/test_components.py::test_each_guide_renders_inert_example",
@@ -145,7 +153,7 @@ MUTATIONS = (
     Mutation(
         "access-log",
         "次ページ確認用の1件を一覧にも表示する",
-        "packages/frontend/src/web_app/portal_pages/logs.py",
+        "packages/frontend/src/web_app/components/logs.py",
         "for row in rows[:PAGE_SIZE]:",
         "for row in rows:",
         "packages/frontend/tests/test_access_log_detail.py::test_log_page_shows_only_requested_rows",
@@ -169,7 +177,7 @@ MUTATIONS = (
     Mutation(
         "api-slug",
         "画面の呼び出しURLにAPI識別名を使わない",
-        "packages/frontend/src/web_app/client.py",
+        "packages/frontend/src/web_app/apis/client.py",
         '(asset.get("slug") or asset["id"], environment, project)',
         '(asset["id"], environment, project)',
         "packages/frontend/tests/test_components.py::test_invocation_path_uses_product_slug",
@@ -185,7 +193,7 @@ MUTATIONS = (
     Mutation(
         "frontend",
         "直接指定したURLにブラウザーの認証情報を送る",
-        "packages/frontend/src/web_app/manual_request.py",
+        "packages/frontend/src/web_app/apis/manual.py",
         '"credentials": "omit"',
         '"credentials": "include"',
         "packages/frontend/tests/test_api_client.py::test_manual_request_uses_only_entered_headers",
@@ -201,7 +209,7 @@ MUTATIONS = (
     Mutation(
         "frontend",
         "curlコマンドから本文を除く",
-        "packages/frontend/src/web_app/api_docs.py",
+        "packages/frontend/src/web_app/components/api_docs.py",
         'if "body" in options:',
         "if False:",
         "packages/frontend/tests/test_components.py::test_curl_reuses_request_without_exposing_token",
@@ -313,7 +321,7 @@ MUTATIONS = (
     Mutation(
         "frontend",
         "画面内の入力不備をサーバー障害として記録する",
-        "packages/frontend/src/web_app/client.py",
+        "packages/frontend/src/web_app/apis/client.py",
         "failed=not user_error",
         "failed=True",
         "packages/frontend/tests/test_screen_logs.py::test_screen_error_context",
@@ -321,7 +329,7 @@ MUTATIONS = (
     Mutation(
         "frontend",
         "ログ取得の失敗を記録済みと扱い、画面側の障害ログを失う",
-        "packages/frontend/src/web_app/portal_pages/logs.py",
+        "packages/frontend/src/web_app/actions/logs.py",
         'raise ValueError("ログを取得できませんでした")',
         'raise client.ResponseError("ログを取得できませんでした")',
         "packages/frontend/tests/test_access_log_download.py::test_failed_log_download_reports_error",
@@ -330,7 +338,7 @@ MUTATIONS = (
         "architecture",
         "公開画面の空の登録を許可する",
         "tests/architecture/frontend_screens.py",
-        " or not value.elts",
+        " or len(value.elts) != 1",
         "",
         "tests/architecture/test_frontend_screens.py::test_feature_requires_local_screen_declaration",
     ),
@@ -338,22 +346,22 @@ MUTATIONS = (
         "architecture",
         "画面間の直接参照を許可する",
         "tests/architecture/frontend_screens.py",
-        'parts[0] == "portal_pages"',
-        'parts[0] == "_unused"',
+        'if parts[0] == "pages":',
+        'if parts[0] == "_unused":',
         "tests/architecture/test_frontend_screens.py::test_feature_cannot_depend_on_another_screen_or_the_shell",
     ),
     Mutation(
         "architecture",
         "共通レイアウトの画面分岐を見逃す",
         "tests/architecture/frontend_screens.py",
-        'module in {"app", "portal_shell"}',
+        'module in {"app", "runtime.portal_shell"}',
         'module == "app"',
         "tests/architecture/test_frontend_screens.py::test_shared_layout_delegates_route_dispatch",
     ),
     Mutation(
         "frontend",
         "モニタリングの所属メンバーを表として表示しない",
-        "packages/frontend/src/web_app/workspace_monitor.py",
+        "packages/frontend/src/web_app/components/workspace_monitor.py",
         'with t.table(aria_label="所属メンバー一覧"):',
         'with t.div(aria_label="所属メンバー一覧"):',
         "packages/frontend/tests/test_workspace_screens.py::test_project_monitor_shows_members_as_a_table",
@@ -361,7 +369,7 @@ MUTATIONS = (
     Mutation(
         "frontend",
         "部署一覧の次ページにも先頭の部署を表示する",
-        "packages/frontend/src/web_app/workspace_views.py",
+        "packages/frontend/src/web_app/components/workspace_views.py",
         "start = (number - 1) * PAGE_SIZE",
         "start = 0",
         "packages/frontend/tests/test_workspace_screens.py::test_directory_pages_filter_before_paginating",
@@ -369,7 +377,7 @@ MUTATIONS = (
     Mutation(
         "frontend",
         "直接所属のメールアドレス欄を空にする",
-        "packages/frontend/src/web_app/workspace_members.py",
+        "packages/frontend/src/web_app/components/workspace_members.py",
         't.td(email or "—")',
         't.td("—")',
         "packages/frontend/tests/test_workspace_screens.py::test_direct_members_have_aligned_table_columns",
@@ -385,7 +393,7 @@ MUTATIONS = (
     Mutation(
         "frontend",
         "同じルートを登録した画面で先に登録した画面を上書きする",
-        "packages/frontend/src/web_app/screen_registry.py",
+        "packages/frontend/src/web_app/routing/screen_registry.py",
         "if screen.path in by_path:",
         "if False:",
         "packages/frontend/tests/test_screen_registry.py::test_duplicate_screen_path_is_rejected",
@@ -521,7 +529,7 @@ MUTATIONS = (
     Mutation(
         "frontend",
         "未取得のメトリクスを描画時に直接参照する",
-        "packages/frontend/src/web_app/portal_pages/dashboard.py",
+        "packages/frontend/src/web_app/components/dashboard.py",
         'data = ctx.get("home_metrics")',
         'data = ctx["home_metrics"]',
         "packages/frontend/tests/test_dashboard.py::test_dashboard_recovers_from_metrics_failure",
@@ -537,7 +545,7 @@ MUTATIONS = (
     Mutation(
         "frontend",
         "認証アプリの検証後に古いセッションを再利用する",
-        "packages/frontend/src/web_app/portal_auth.py",
+        "packages/frontend/src/web_app/apis/portal_auth.py",
         'self.session = verified["Session"]',
         "self.session = self.session",
         "packages/frontend/tests/test_portal_login.py::test_invitation_and_totp_setup",
@@ -585,7 +593,7 @@ MUTATIONS = (
     Mutation(
         "frontend",
         "候補の商品リンクがカタログのトップを指す",
-        "packages/frontend/src/web_app/chat_views.py",
+        "packages/frontend/src/web_app/components/chat_views.py",
         'href="#/api/" + quote(product["id"], safe="")',
         'href="#/catalog"',
         "packages/frontend/tests/test_components.py::test_chat_product_and_guide_are_linked",
@@ -668,7 +676,7 @@ MUTATIONS = (
     Mutation(
         "frontend",
         "操作側のパラメーターをパス側の定義で上書きする",
-        "packages/frontend/src/web_app/openapi_fields.py",
+        "packages/frontend/src/web_app/content/openapi_fields.py",
         "for source in (item, operation):",
         "for source in (operation, item):",
         "packages/frontend/tests/test_openapi_fields.py::"
@@ -677,7 +685,7 @@ MUTATIONS = (
     Mutation(
         "frontend",
         "一覧の検索条件を常に展開する",
-        "packages/frontend/src/web_app/list_layout.py",
+        "packages/frontend/src/web_app/components/list_layout.py",
         'with t.details(classes="list-disclosure", open=expanded):',
         'with t.details(classes="list-disclosure", open=True):',
         "packages/frontend/tests/test_components.py::test_log_search_starts_collapsed_and_shows_active_conditions",
@@ -685,7 +693,7 @@ MUTATIONS = (
     Mutation(
         "frontend",
         "ガイドの条件をクリアした後にフォーカスを戻さない",
-        "packages/frontend/src/web_app/guide_views.py",
+        "packages/frontend/src/web_app/components/guide_views.py",
         '        document.getElementById("guide-query").focus()\n',
         "",
         "packages/frontend/tests/test_components.py::test_guide_reset_restores_role_and_keyboard_focus",

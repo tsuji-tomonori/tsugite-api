@@ -41,7 +41,7 @@ tasks:
       - '{{.RUN}} ruff format .'
   types:
     desc: 型検査
-    cmds: ['uv run --locked --all-packages --group decision-model pyright', '{{.RUN}} mypy']
+    cmds: ['uv run --locked --all-packages --group decision-model pyright', '{{.RUN}} mypy', '{{.RUN}} mypy --config-file packages/frontend/pyproject.toml']
   docs:
     desc: APIとインフラの設計書を更新
     cmds:
