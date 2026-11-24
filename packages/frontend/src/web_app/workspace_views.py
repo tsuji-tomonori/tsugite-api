@@ -67,7 +67,7 @@ def list_view(root, label, kind, data, by_id, paths, number):
         if not rows:
             t.p(label + "は登録されていません。")
             return
-        with t.div(classes="resource-table"):
+        with t.div(classes="resource-table", tabindex="0", role="region", aria_label=label + "一覧"):
             with t.table(aria_label=label + "一覧"):
                 with t.thead():
                     with t.tr():

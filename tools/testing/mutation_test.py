@@ -25,6 +25,14 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
+        "frontend",
+        "集計区間数に応じたグラフの最小幅を無効にする",
+        "packages/frontend/src/web_app/activity_filters.py",
+        'style=f"--buckets:{len(pts)}"',
+        'style="--buckets:0"',
+        "packages/frontend/tests/test_dashboard.py::test_dashboard_recovers_from_metrics_failure",
+    ),
+    Mutation(
         "member-profile",
         "氏名と表示名の更新で監査イベントを書き込まない",
         "packages/backend/src/app/apis/governance/profiles.py",
@@ -344,10 +352,10 @@ MUTATIONS = (
     ),
     Mutation(
         "frontend",
-        "直接所属のメールアドレスを名前の列に表示する",
+        "直接所属のメールアドレス欄を空にする",
         "packages/frontend/src/web_app/workspace_members.py",
-        'email, name = (username, "—") if "@" in username else ("—", username)',
-        'email, name = "—", username',
+        't.td(email or "—")',
+        't.td("—")',
         "packages/frontend/tests/test_workspace_screens.py::test_direct_members_have_aligned_table_columns",
     ),
     Mutation(
