@@ -33,6 +33,14 @@ MUTATIONS = (
         "tests/architecture/test_boundaries.py::test_model_files_match_registered_tables",
     ),
     Mutation(
+        "generated-docs",
+        "API一覧のリンクが操作別の設計書に届かない",
+        "tools/design/generate.py",
+        'f"[{operation_label}]({filename})"',
+        'f"[{operation_label}]({dest})"',
+        "tools/tests/test_design.py::test_all_routes_inputs_outputs_and_cleanup",
+    ),
+    Mutation(
         "frontend",
         "集計区間数に応じたグラフの最小幅を無効にする",
         "packages/frontend/src/web_app/activity_filters.py",

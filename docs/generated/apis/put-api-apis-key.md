@@ -4,9 +4,9 @@
 
 PUT `/api/apis/{key}`
 
-[API一覧](../README.md) · [CRUD一覧](../crud.md)
+[API一覧](README.md) · [CRUD一覧](../db/crud.md)
 
-共通 · `edit_api_apis__key__put` · [edit:76](../../../packages/backend/src/app/apis/catalog/register/router.py#L76)
+共通 · `edit_api_apis__key__put` · [edit:89](../../../packages/backend/src/app/apis/catalog/register.py#L89)
 
 ## 入力
 
@@ -23,7 +23,7 @@ PUT `/api/apis/{key}`
 
 | Content-Type | スキーマ |
 | --- | --- |
-| application/json | [APIのカタログ登録内容（Register）](../schemas.md#register) |
+| application/json | [カタログに登録済みのAPIを編集する入力（Register）](../db/schemas.md#register) |
 
 #### application/json の項目
 
@@ -35,29 +35,31 @@ PUT `/api/apis/{key}`
 | 環境別の接続先 | targets | 必須 | オブジェクト（キーに対応する値は文字列）、最小項目数 `1`、最大項目数 `3` |
 | 接続先APIの基底パス | base_path | 任意 | 文字列、最大文字数 `300`、正規表現 `"^(?:/[A-Za-z0-9_-]+)*$"`、既定値 `""` |
 | 提供者が登録したOpenAPI仕様 | spec | 必須 | オブジェクト |
-| 提供環境ごとの利用条件 | offers | 任意 | オブジェクト（キーに対応する値は[環境別の利用条件・承認設定（Offer）](../schemas.md#offer)） または 空値 |
+| 提供環境ごとの利用条件 | offers | 任意 | オブジェクト（キーに対応する値は[環境別の利用条件・承認設定（Offer）](../db/schemas.md#offer)） または 空値 |
 | 申請者に表示する案内 | offers[任意のキー].instructions | 任意 | 文字列、最大文字数 `4000`、既定値 `""` |
 | 利用規約の本文 | offers[任意のキー].terms | 任意 | 文字列、最大文字数 `8000`、既定値 `""` |
 | 申請の承認経路 | offers[任意のキー].route | 任意 | 文字列、既定値 `"provider"`、指定値 従来方式（`legacy`）、自動承認（`auto`）、提供者（`provider`）、部署（`department`）、部署承認後に提供者が承認（`department_provider`）、個別指定の承認経路（`custom`） |
 | 承認担当の順序 | offers[任意のキー].steps | 任意 | 配列 / 文字列、正規表現 `"^(provider\|department\|unit/[a-z][a-z0-9-]{0,62})$"`、最大要素数 `12` |
-| 追加の申請項目 | offers[任意のキー].fields | 任意 | 配列 / [利用申請の追加質問（ApplicationField）](../schemas.md#applicationfield)、最大要素数 `20` |
+| 追加の申請項目 | offers[任意のキー].fields | 任意 | 配列 / [利用申請の追加質問（ApplicationField）](../db/schemas.md#applicationfield)、最大要素数 `20` |
 | 申請画面の質問名 | offers[任意のキー].fields[].label | 必須 | 文字列、最小文字数 `1`、最大文字数 `100` |
 | 回答が必須か | offers[任意のキー].fields[].required | 任意 | 真偽値、既定値 `true` |
 | 申請で受理する回答の候補 | offers[任意のキー].fields[].allowed_values | 任意 | 配列 / 文字列、最小文字数 `1`、最大文字数 `500`、最大要素数 `100` |
 | 公開版の変更説明 | release_note | 任意 | 文字列、最大文字数 `2000`、既定値 `""` |
+| 呼び出しURLで使うAPI識別名 | slug | 任意 | 文字列、最小文字数 `1`、最大文字数 `63`、正規表現 `"^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"` または 空値 |
 
 ## レスポンス
 
 | ステータス | 説明 | 形式・条件 | スキーマ |
 | --- | --- | --- | --- |
-| 200 | 正常に処理できました | application/json | [カタログ掲載APIの概要（Listing）](../schemas.md#listing) |
-| 422 | 入力内容が条件を満たしていません | application/json | [リクエスト入力エラー（HTTPValidationError）](../schemas.md#httpvalidationerror) |
+| 200 | 正常に処理できました | application/json | [カタログ掲載APIの概要（Listing）](../db/schemas.md#listing) |
+| 422 | 入力内容が条件を満たしていません | application/json | [リクエスト入力エラー（HTTPValidationError）](../db/schemas.md#httpvalidationerror) |
 
 ### 200 application/json の項目
 
 | 項目の和名 | 物理名 | 指定 | 型・制約 |
 | --- | --- | --- | --- |
 | カタログ掲載APIの識別子 | id | 必須 | 文字列 |
+| 呼び出しURLで使うAPI識別名 | slug | 任意 | 文字列 または 空値 |
 | API名 | name | 必須 | 文字列 |
 | 提供プロジェクトの識別子 | owner | 必須 | 文字列 |
 | APIの用途・概要 | summary | 必須 | 文字列 |
@@ -69,7 +71,7 @@ PUT `/api/apis/{key}`
 
 | 項目の和名 | 物理名 | 指定 | 型・制約 |
 | --- | --- | --- | --- |
-| 入力エラーの明細一覧 | detail | 任意 | 配列 / [入力エラーの項目別明細（ValidationError）](../schemas.md#validationerror) |
+| 入力エラーの明細一覧 | detail | 任意 | 配列 / [入力エラーの項目別明細（ValidationError）](../db/schemas.md#validationerror) |
 | 入力エラーの発生箇所 | detail[].loc | 必須 | 配列 / 文字列 または 整数 |
 | 入力エラーの説明 | detail[].msg | 必須 | 文字列 |
 | 入力エラーの分類コード | detail[].type | 必須 | 文字列 |
@@ -86,27 +88,29 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| [API利用申請・利用権](../database.md#access_rights) | access_rights | R | 検索 | select | [close_rights:141](../../../packages/backend/src/app/apis/catalog/register/router.py#L141) |
-| [API利用申請・利用権](../database.md#access_rights) | access_rights | U | 現在の承認担当を設定 | stage に代入 | [close_rights:145](../../../packages/backend/src/app/apis/catalog/register/router.py#L145) |
-| [API利用申請・利用権](../database.md#access_rights) | access_rights | U | 審査・取消の理由を設定 | decision_note に代入 | [close_rights:147](../../../packages/backend/src/app/apis/catalog/register/router.py#L147) |
-| [API利用申請・利用権](../database.md#access_rights) | access_rights | U | 利用申請の審査状態を設定 | status に代入 | [close_rights:148](../../../packages/backend/src/app/apis/catalog/register/router.py#L148) |
-| [利用者の組織所属](../database.md#affiliations) | affiliations | R | 検索 | select | [populate:69](../../../packages/backend/src/app/core/workspace.py#L69) |
-| [APIカタログ](../database.md#assets) | assets | R | 主キーで取得 | db.get | [record:31](../../../packages/backend/src/app/apis/catalog/common.py#L31) |
-| [APIカタログ](../database.md#assets) | assets | U | カタログで公開中かを設定 | published に代入 | [edit:111](../../../packages/backend/src/app/apis/catalog/register/router.py#L111) |
-| [APIカタログ](../database.md#assets) | assets | U | カタログで公開中かを設定 | published に代入 | [edit:116](../../../packages/backend/src/app/apis/catalog/register/router.py#L116) |
-| [APIカタログ](../database.md#assets) | assets | U | 環境別の申請項目・利用規約・承認経路（JSON）を設定 | offers に代入 | [edit:117](../../../packages/backend/src/app/apis/catalog/register/router.py#L117) |
-| [APIカタログ](../database.md#assets) | assets | U | 次の公開版の変更説明を設定 | release_note に代入 | [edit:118](../../../packages/backend/src/app/apis/catalog/register/router.py#L118) |
-| [APIカタログ](../database.md#assets) | assets | U | 接続先APIの基底パスを設定 | base_path に代入 | [edit:119](../../../packages/backend/src/app/apis/catalog/register/router.py#L119) |
-| [APIカタログ](../database.md#assets) | assets | U | API名を設定 | name に代入 | [edit:119](../../../packages/backend/src/app/apis/catalog/register/router.py#L119) |
-| [APIカタログ](../database.md#assets) | assets | U | 登録したOpenAPI仕様（JSON）を設定 | spec に代入 | [edit:119](../../../packages/backend/src/app/apis/catalog/register/router.py#L119) |
-| [APIカタログ](../database.md#assets) | assets | U | APIの用途・概要を設定 | summary に代入 | [edit:119](../../../packages/backend/src/app/apis/catalog/register/router.py#L119) |
-| [APIカタログ](../database.md#assets) | assets | U | 提供環境と接続先の対応（JSON）を設定 | targets に代入 | [edit:119](../../../packages/backend/src/app/apis/catalog/register/router.py#L119) |
-| [監査履歴](../database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [event:16](../../../packages/backend/src/app/apis/catalog/common.py#L16) |
-| [組織階層](../database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
-| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:121](../../../packages/backend/src/app/core/auth.py#L121) |
-| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:56](../../../packages/backend/src/app/core/workspace.py#L56) |
-| [商品別API仕様の公開履歴](../database.md#spec_releases) | spec_releases | C | レコードを追加 | db.add | [record_release:50](../../../packages/backend/src/app/apis/catalog/releases.py#L50) |
-| [商品別API仕様の公開履歴](../database.md#spec_releases) | spec_releases | R | 検索 | select | [record_release:32](../../../packages/backend/src/app/apis/catalog/releases.py#L32) |
+| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | R | 検索 | select | [close_rights:157](../../../packages/backend/src/app/apis/catalog/register.py#L157) |
+| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | U | 現在の承認担当を設定 | stage に代入 | [close_rights:161](../../../packages/backend/src/app/apis/catalog/register.py#L161) |
+| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | U | 審査・取消の理由を設定 | decision_note に代入 | [close_rights:163](../../../packages/backend/src/app/apis/catalog/register.py#L163) |
+| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | U | 利用申請の審査状態を設定 | status に代入 | [close_rights:164](../../../packages/backend/src/app/apis/catalog/register.py#L164) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:105](../../../packages/backend/src/app/core/workspace.py#L105) |
+| [API呼び出し識別名](../db/database.md#asset_routes) | asset_routes | R | 検索 | select | [assign_slug:25](../../../packages/backend/src/app/apis/catalog/register.py#L25) |
+| [APIカタログ](../db/database.md#assets) | assets | R | 主キーで取得 | db.get | [record:25](../../../packages/backend/src/app/core/catalog.py#L25) |
+| [APIカタログ](../db/database.md#assets) | assets | U | カタログで公開中かを設定 | published に代入 | [edit:127](../../../packages/backend/src/app/apis/catalog/register.py#L127) |
+| [APIカタログ](../db/database.md#assets) | assets | U | カタログで公開中かを設定 | published に代入 | [edit:132](../../../packages/backend/src/app/apis/catalog/register.py#L132) |
+| [APIカタログ](../db/database.md#assets) | assets | U | 環境別の申請項目・利用規約・承認経路（JSON）を設定 | offers に代入 | [edit:133](../../../packages/backend/src/app/apis/catalog/register.py#L133) |
+| [APIカタログ](../db/database.md#assets) | assets | U | 次の公開版の変更説明を設定 | release_note に代入 | [edit:134](../../../packages/backend/src/app/apis/catalog/register.py#L134) |
+| [APIカタログ](../db/database.md#assets) | assets | U | 接続先APIの基底パスを設定 | base_path に代入 | [edit:135](../../../packages/backend/src/app/apis/catalog/register.py#L135) |
+| [APIカタログ](../db/database.md#assets) | assets | U | API名を設定 | name に代入 | [edit:135](../../../packages/backend/src/app/apis/catalog/register.py#L135) |
+| [APIカタログ](../db/database.md#assets) | assets | U | 登録したOpenAPI仕様（JSON）を設定 | spec に代入 | [edit:135](../../../packages/backend/src/app/apis/catalog/register.py#L135) |
+| [APIカタログ](../db/database.md#assets) | assets | U | APIの用途・概要を設定 | summary に代入 | [edit:135](../../../packages/backend/src/app/apis/catalog/register.py#L135) |
+| [APIカタログ](../db/database.md#assets) | assets | U | 提供環境と接続先の対応（JSON）を設定 | targets に代入 | [edit:135](../../../packages/backend/src/app/apis/catalog/register.py#L135) |
+| [監査履歴](../db/database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [event:10](../../../packages/backend/src/app/core/catalog.py#L10) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:30](../../../packages/backend/src/app/core/workspace.py#L30) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:54](../../../packages/backend/src/app/core/workspace.py#L54) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:123](../../../packages/backend/src/app/core/auth.py#L123) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:91](../../../packages/backend/src/app/core/workspace.py#L91) |
+| [商品別API仕様の公開履歴](../db/database.md#spec_releases) | spec_releases | C | レコードを追加 | db.add | [record_release:51](../../../packages/backend/src/app/core/releases.py#L51) |
+| [商品別API仕様の公開履歴](../db/database.md#spec_releases) | spec_releases | R | 検索 | select | [record_release:33](../../../packages/backend/src/app/core/releases.py#L33) |
 
 ### AWSサービス
 
@@ -117,30 +121,35 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 <details><summary>解析した関数・依存</summary>
 
-- `app.apis.catalog.common.allowed_spec`
-- `app.apis.catalog.common.event`
-- `app.apis.catalog.common.listing`
-- `app.apis.catalog.common.record`
-- `app.apis.catalog.offers.configured`
-- `app.apis.catalog.register.router.close_rights`
-- `app.apis.catalog.register.router.edit`
-- `app.apis.catalog.register.router.validated_spec`
-- `app.apis.catalog.releases.entries`
-- `app.apis.catalog.releases.fingerprint`
-- `app.apis.catalog.releases.record_release`
+- `app.apis.catalog.register.assign_slug`
+- `app.apis.catalog.register.close_rights`
+- `app.apis.catalog.register.edit`
+- `app.apis.catalog.register.validated_spec`
 - `app.core.auth.check_member`
 - `app.core.auth.current`
 - `app.core.auth.human`
 - `app.core.auth.identify`
 - `app.core.auth.keyset`
+- `app.core.catalog.allowed_spec`
+- `app.core.catalog.event`
+- `app.core.catalog.listing`
+- `app.core.catalog.record`
 - `app.core.config.local_demo`
 - `app.core.config.settings`
 - `app.core.config.targets`
+- `app.core.diagnostics.asset_object`
+- `app.core.offers.configured`
 - `app.core.openapi.path_items`
+- `app.core.releases.entries`
+- `app.core.releases.fingerprint`
+- `app.core.releases.record_release`
 - `app.core.workspace.ancestry`
 - `app.core.workspace.configured_projects`
 - `app.core.workspace.populate`
+- `app.core.workspace.project_ids`
+- `app.core.workspace.retired_units`
 - `app.core.workspace.units`
+- `app.core.workspace.workspace_targets`
 - `app.integrations.spec_archive.archive_spec`
 - `app.integrations.spec_archive.canonical`
 - `tsugite_db.session.engine`

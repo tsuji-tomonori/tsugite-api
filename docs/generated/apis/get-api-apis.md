@@ -4,9 +4,9 @@
 
 GET `/api/apis`
 
-[API一覧](../README.md) · [CRUD一覧](../crud.md)
+[API一覧](README.md) · [CRUD一覧](../db/crud.md)
 
-共通 · `catalog` · [catalog:32](../../../packages/backend/src/app/apis/catalog/catalog/router.py#L32)
+共通 · `catalog` · [catalog:17](../../../packages/backend/src/app/apis/catalog/catalog.py#L17)
 
 ## 入力
 
@@ -25,14 +25,15 @@ GET `/api/apis`
 
 | ステータス | 説明 | 形式・条件 | スキーマ |
 | --- | --- | --- | --- |
-| 200 | 正常に処理できました | application/json | 配列 / [カタログ掲載APIの概要（Listing）](../schemas.md#listing) |
-| 422 | 入力内容が条件を満たしていません | application/json | [リクエスト入力エラー（HTTPValidationError）](../schemas.md#httpvalidationerror) |
+| 200 | 正常に処理できました | application/json | 配列 / [カタログ掲載APIの概要（Listing）](../db/schemas.md#listing) |
+| 422 | 入力内容が条件を満たしていません | application/json | [リクエスト入力エラー（HTTPValidationError）](../db/schemas.md#httpvalidationerror) |
 
 ### 200 application/json の項目
 
 | 項目の和名 | 物理名 | 指定 | 型・制約 |
 | --- | --- | --- | --- |
 | カタログ掲載APIの識別子 | [].id | 必須 | 文字列 |
+| 呼び出しURLで使うAPI識別名 | [].slug | 任意 | 文字列 または 空値 |
 | API名 | [].name | 必須 | 文字列 |
 | 提供プロジェクトの識別子 | [].owner | 必須 | 文字列 |
 | APIの用途・概要 | [].summary | 必須 | 文字列 |
@@ -44,14 +45,14 @@ GET `/api/apis`
 
 | 項目の和名 | 物理名 | 指定 | 型・制約 |
 | --- | --- | --- | --- |
-| 入力エラーの明細一覧 | detail | 任意 | 配列 / [入力エラーの項目別明細（ValidationError）](../schemas.md#validationerror) |
+| 入力エラーの明細一覧 | detail | 任意 | 配列 / [入力エラーの項目別明細（ValidationError）](../db/schemas.md#validationerror) |
 | 入力エラーの発生箇所 | detail[].loc | 必須 | 配列 / 文字列 または 整数 |
 | 入力エラーの説明 | detail[].msg | 必須 | 文字列 |
 | 入力エラーの分類コード | detail[].type | 必須 | 文字列 |
 | エラーになった入力値 | detail[].input | 任意 | 任意の型 |
 | 入力エラーの補足情報 | detail[].ctx | 任意 | オブジェクト |
 
-実装・認証依存で送出し得るHTTPエラー（エラーの詳細を示す `detail` を含むJSON）　401, 403。
+実装・認証依存で送出し得るHTTPエラー（エラーの詳細を示す `detail` を含むJSON）　401, 403, 503。
 
 AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugite-Origin` を付与します。共通ミドルウェアは通常のAPI応答にリクエスト識別子 `X-Request-ID` とキャッシュへの保存を禁止する `Cache-Control: no-store` を付けます。Lambdaのオリジン検証に失敗すると403、DBの競合は409、DB操作エラーは409または503です。
 
@@ -61,11 +62,12 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| [利用者の組織所属](../database.md#affiliations) | affiliations | R | 検索 | select | [populate:69](../../../packages/backend/src/app/core/workspace.py#L69) |
-| [APIカタログ](../database.md#assets) | assets | R | 検索 | select | [collection:16](../../../packages/backend/src/app/apis/catalog/catalog/router.py#L16) |
-| [組織階層](../database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
-| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:121](../../../packages/backend/src/app/core/auth.py#L121) |
-| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:56](../../../packages/backend/src/app/core/workspace.py#L56) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:105](../../../packages/backend/src/app/core/workspace.py#L105) |
+| [APIカタログ](../db/database.md#assets) | assets | R | 検索 | select | [visible_collection:9](../../../packages/backend/src/app/core/catalog_visibility.py#L9) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:30](../../../packages/backend/src/app/core/workspace.py#L30) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:54](../../../packages/backend/src/app/core/workspace.py#L54) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:123](../../../packages/backend/src/app/core/auth.py#L123) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:91](../../../packages/backend/src/app/core/workspace.py#L91) |
 
 ### AWSサービス
 
@@ -75,28 +77,32 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 <details><summary>解析した関数・依存</summary>
 
-- `app.apis.catalog.catalog.router.catalog`
-- `app.apis.catalog.catalog.router.collection`
-- `app.apis.catalog.common.listing`
-- `app.apis.catalog.search_rank.concept_vector`
-- `app.apis.catalog.search_rank.contains`
-- `app.apis.catalog.search_rank.document`
-- `app.apis.catalog.search_rank.normalize`
-- `app.apis.catalog.search_rank.rank_assets`
-- `app.apis.catalog.search_rank.terms`
+- `app.apis.catalog.catalog.catalog`
+- `app.apis.catalog.catalog.collection`
 - `app.core.auth.check_member`
 - `app.core.auth.current`
 - `app.core.auth.human`
 - `app.core.auth.identify`
 - `app.core.auth.keyset`
+- `app.core.catalog.listing`
+- `app.core.catalog_rank.concept_vector`
+- `app.core.catalog_rank.contains`
+- `app.core.catalog_rank.document`
+- `app.core.catalog_rank.normalize`
+- `app.core.catalog_rank.rank_assets`
+- `app.core.catalog_rank.terms`
+- `app.core.catalog_visibility.visible_collection`
 - `app.core.config.local_demo`
 - `app.core.config.settings`
+- `app.core.diagnostics.asset_object`
 - `app.core.openapi.path_items`
 - `app.core.workspace.allowed_audience`
 - `app.core.workspace.ancestry`
 - `app.core.workspace.configured_projects`
 - `app.core.workspace.policy`
 - `app.core.workspace.populate`
+- `app.core.workspace.project_ids`
+- `app.core.workspace.retired_units`
 - `app.core.workspace.units`
 - `tsugite_db.session.engine`
 - `tsugite_db.session.session`

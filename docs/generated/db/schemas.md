@@ -2,7 +2,7 @@
 
 # 入出力スキーマ
 
-[API一覧](README.md)
+[API一覧](../apis/README.md)
 
 <a id="accesslog"></a>
 
@@ -106,12 +106,158 @@
 
 </details>
 
+<a id="accesslogdetail"></a>
+
+## 1回のAPI呼び出しの詳細（AccessLogDetail）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| APIの呼び出し日時 | at | 必須 | 文字列、形式 `"date-time"` |
+| リクエスト識別子 | request_id | 必須 | 文字列 |
+| 呼び出し元の利用者・システム識別子 | actor | 必須 | 文字列 |
+| 認証情報の識別子 | key_id | 必須 | 文字列 または 空値 |
+| 提供プロジェクトの識別子 | owner | 必須 | 文字列 |
+| 利用プロジェクトの識別子 | project | 必須 | 文字列 |
+| カタログ掲載APIの識別子 | asset_id | 必須 | 文字列 |
+| 提供環境 | environment | 必須 | 文字列 |
+| HTTPメソッド | method | 必須 | 文字列 |
+| 呼び出したAPI操作 | operation | 必須 | 文字列 |
+| HTTPステータスコード | status | 必須 | 整数 |
+| 応答時間（ミリ秒） | duration_ms | 必須 | 整数 |
+| 呼び出し処理の開始日時 | started_at | 必須 | 文字列、形式 `"date-time"` または 空値 |
+| 応答結果が確定した日時 | responded_at | 必須 | 文字列、形式 `"date-time"` または 空値 |
+| 記録されたエラー理由のコード | error_code | 必須 | 文字列 または 空値 |
+
+<details><summary>JSON Schema</summary>
+
+```json
+{
+  "properties": {
+    "actor": {
+      "title": "呼び出し元の利用者・システム識別子",
+      "type": "string"
+    },
+    "asset_id": {
+      "title": "カタログ掲載APIの識別子",
+      "type": "string"
+    },
+    "at": {
+      "format": "date-time",
+      "title": "APIの呼び出し日時",
+      "type": "string"
+    },
+    "duration_ms": {
+      "title": "応答時間（ミリ秒）",
+      "type": "integer"
+    },
+    "environment": {
+      "title": "提供環境",
+      "type": "string"
+    },
+    "error_code": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "記録されたエラー理由のコード"
+    },
+    "key_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "認証情報の識別子"
+    },
+    "method": {
+      "title": "HTTPメソッド",
+      "type": "string"
+    },
+    "operation": {
+      "title": "呼び出したAPI操作",
+      "type": "string"
+    },
+    "owner": {
+      "title": "提供プロジェクトの識別子",
+      "type": "string"
+    },
+    "project": {
+      "title": "利用プロジェクトの識別子",
+      "type": "string"
+    },
+    "request_id": {
+      "title": "リクエスト識別子",
+      "type": "string"
+    },
+    "responded_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "応答結果が確定した日時"
+    },
+    "started_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "呼び出し処理の開始日時"
+    },
+    "status": {
+      "title": "HTTPステータスコード",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "at",
+    "request_id",
+    "actor",
+    "key_id",
+    "owner",
+    "project",
+    "asset_id",
+    "environment",
+    "method",
+    "operation",
+    "status",
+    "duration_ms",
+    "started_at",
+    "responded_at",
+    "error_code"
+  ],
+  "title": "1回のAPI呼び出しの詳細",
+  "type": "object"
+}
+```
+
+</details>
+
 <a id="affiliation"></a>
 
 ## 利用者の所属情報（Affiliation）
 
 | 項目の和名 | 物理名 | 指定 | 型・制約 |
 | --- | --- | --- | --- |
+| メールアドレス | email | 必須 | 文字列 または 空値 |
+| 氏名 | full_name | 必須 | 文字列 または 空値 |
+| 表示名 | display_name | 必須 | 文字列 または 空値 |
 | 対象利用者の識別子 | subject | 必須 | 文字列 |
 | ログイン名 | username | 必須 | 文字列 |
 | 部署・プロジェクトの識別子 | unit_id | 必須 | 文字列 |
@@ -127,6 +273,39 @@
     "active": {
       "title": "所属が有効か",
       "type": "boolean"
+    },
+    "display_name": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "表示名"
+    },
+    "email": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "メールアドレス"
+    },
+    "full_name": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "氏名"
     },
     "leader": {
       "title": "所属先の管理者か",
@@ -150,6 +329,9 @@
     }
   },
   "required": [
+    "email",
+    "full_name",
+    "display_name",
     "subject",
     "username",
     "unit_id",
@@ -378,6 +560,7 @@
 | --- | --- | --- | --- |
 | 監査対象の操作日時 | at | 必須 | 文字列、形式 `"date-time"` |
 | 操作した利用者・システムの識別子 | actor | 必須 | 文字列 |
+| 操作の対象となった利用者の識別子 | target_subject | 任意 | 文字列 または 空値 |
 | 利用プロジェクトの識別子 | project | 必須 | 文字列 |
 | 提供プロジェクトの識別子 | owner | 必須 | 文字列 |
 | カタログ掲載APIの識別子 | asset_id | 必須 | 文字列 |
@@ -427,6 +610,17 @@
     "request_id": {
       "title": "リクエスト識別子",
       "type": "string"
+    },
+    "target_subject": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "操作の対象となった利用者の識別子"
     }
   },
   "required": [
@@ -564,6 +758,181 @@
     "total"
   ],
   "title": "APIカタログの検索結果ページ",
+  "type": "object"
+}
+```
+
+</details>
+
+<a id="chatguide"></a>
+
+## 操作ガイドの検索結果（ChatGuide）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| ガイドの識別子 | id | 必須 | 文字列 |
+| ガイド名 | title | 必須 | 文字列 |
+| 操作手順 | steps | 必須 | 配列 / 文字列 |
+| 操作後の状態 | result | 必須 | 文字列 |
+
+<details><summary>JSON Schema</summary>
+
+```json
+{
+  "properties": {
+    "id": {
+      "title": "ガイドの識別子",
+      "type": "string"
+    },
+    "result": {
+      "title": "操作後の状態",
+      "type": "string"
+    },
+    "steps": {
+      "items": {
+        "type": "string"
+      },
+      "title": "操作手順",
+      "type": "array"
+    },
+    "title": {
+      "title": "ガイド名",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "title",
+    "steps",
+    "result"
+  ],
+  "title": "操作ガイドの検索結果",
+  "type": "object"
+}
+```
+
+</details>
+
+<a id="chatquestion"></a>
+
+## チャットへの質問（ChatQuestion）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| チャットの受付識別子 | job_id | 必須 | 文字列、形式 `"uuid"` |
+| 質問本文 | question | 必須 | 文字列、最小文字数 `2`、最大文字数 `400` |
+
+<details><summary>JSON Schema</summary>
+
+```json
+{
+  "additionalProperties": false,
+  "properties": {
+    "job_id": {
+      "format": "uuid",
+      "title": "チャットの受付識別子",
+      "type": "string"
+    },
+    "question": {
+      "maxLength": 400,
+      "minLength": 2,
+      "title": "質問本文",
+      "type": "string"
+    }
+  },
+  "required": [
+    "job_id",
+    "question"
+  ],
+  "title": "チャットへの質問",
+  "type": "object"
+}
+```
+
+</details>
+
+<a id="chatreceipt"></a>
+
+## チャットの受付結果（ChatReceipt）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| チャットの受付識別子 | job_id | 必須 | 文字列、形式 `"uuid"` |
+
+<details><summary>JSON Schema</summary>
+
+```json
+{
+  "properties": {
+    "job_id": {
+      "format": "uuid",
+      "title": "チャットの受付識別子",
+      "type": "string"
+    }
+  },
+  "required": [
+    "job_id"
+  ],
+  "title": "チャットの受付結果",
+  "type": "object"
+}
+```
+
+</details>
+
+<a id="chatresult"></a>
+
+## チャットの回答（ChatResult）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 回答の種類 | kind | 必須 | 文字列、指定値 回答を作成中（`pending`）、商品検索（`catalog`）、操作ガイド（`manual`）、問い合わせ（`contact`）、該当なし（`empty`）、対象外（`outside`）、処理エラー（`error`） |
+| 回答本文 | answer | 任意 | 文字列、既定値 `""` |
+| おすすめのAPI商品 | products | 任意 | 配列 / [カタログ掲載APIの概要（Listing）](#listing) |
+| 該当する操作ガイド | guides | 任意 | 配列 / [操作ガイドの検索結果（ChatGuide）](#chatguide) |
+
+<details><summary>JSON Schema</summary>
+
+```json
+{
+  "properties": {
+    "answer": {
+      "default": "",
+      "title": "回答本文",
+      "type": "string"
+    },
+    "guides": {
+      "items": {
+        "$ref": "#/components/schemas/ChatGuide"
+      },
+      "title": "該当する操作ガイド",
+      "type": "array"
+    },
+    "kind": {
+      "enum": [
+        "pending",
+        "catalog",
+        "manual",
+        "contact",
+        "empty",
+        "outside",
+        "error"
+      ],
+      "title": "回答の種類",
+      "type": "string"
+    },
+    "products": {
+      "items": {
+        "$ref": "#/components/schemas/Listing"
+      },
+      "title": "おすすめのAPI商品",
+      "type": "array"
+    }
+  },
+  "required": [
+    "kind"
+  ],
+  "title": "チャットの回答",
   "type": "object"
 }
 ```
@@ -891,12 +1260,14 @@
 | 項目の和名 | 物理名 | 指定 | 型・制約 |
 | --- | --- | --- | --- |
 | カタログ掲載APIの識別子 | id | 必須 | 文字列 |
+| 呼び出しURLで使うAPI識別名 | slug | 任意 | 文字列 または 空値 |
 | API名 | name | 必須 | 文字列 |
 | 提供プロジェクトの識別子 | owner | 必須 | 文字列 |
 | APIの用途・概要 | summary | 必須 | 文字列 |
 | 利用できる提供環境 | environments | 必須 | 配列 / 文字列、指定値 検証環境（`sandbox`）、準本番環境（`staging`）、本番環境（`production`） |
 | カタログで公開中か | published | 必須 | 真偽値 |
 | 更新時の競合検出に使う版番号 | revision | 必須 | 整数 |
+| 管理者が全環境の呼び出しを停止しているか | suspended | 任意 | 真偽値、既定値 `false` |
 | 提供環境ごとの利用条件 | offers | 任意 | オブジェクト（キーに対応する値は[公開中の環境別利用条件（PublishedOffer）](#publishedoffer)） |
 | API仕様の公開履歴 | releases | 任意 | 配列 / [API仕様の公開版（ReleaseEntry）](#releaseentry) |
 | 公開版の変更説明 | release_note | 任意 | 文字列、既定値 `""` |
@@ -987,6 +1358,17 @@
       "title": "更新時の競合検出に使う版番号",
       "type": "integer"
     },
+    "slug": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "呼び出しURLで使うAPI識別名"
+    },
     "spec": {
       "additionalProperties": true,
       "title": "提供者が登録したOpenAPI仕様",
@@ -995,6 +1377,11 @@
     "summary": {
       "title": "APIの用途・概要",
       "type": "string"
+    },
+    "suspended": {
+      "default": false,
+      "title": "管理者が全環境の呼び出しを停止しているか",
+      "type": "boolean"
     }
   },
   "required": [
@@ -1087,6 +1474,71 @@
     "client_secret"
   ],
   "title": "トークン交換の入力",
+  "type": "object"
+}
+```
+
+</details>
+
+<a id="exchangedtoken"></a>
+
+## OAuthトークン交換の応答（ExchangedToken）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| アクセストークン | access_token | 必須 | 文字列 |
+| トークンの種類 | token_type | 必須 | 文字列、指定値 ベアラートークン（`Bearer`） |
+| 有効期限までの秒数 | expires_in | 必須 | 整数 |
+| 更新可能になるまでの秒数 | refresh_after | 必須 | 整数 |
+| 有効期限（UNIX秒） | expires_at | 必須 | 整数 |
+| 更新可能になる時刻（UNIX秒） | refresh_at | 必須 | 整数 |
+| 交換して発行したトークンの種類 | issued_token_type | 必須 | 文字列 |
+
+<details><summary>JSON Schema</summary>
+
+```json
+{
+  "properties": {
+    "access_token": {
+      "title": "アクセストークン",
+      "type": "string"
+    },
+    "expires_at": {
+      "title": "有効期限（UNIX秒）",
+      "type": "integer"
+    },
+    "expires_in": {
+      "title": "有効期限までの秒数",
+      "type": "integer"
+    },
+    "issued_token_type": {
+      "title": "交換して発行したトークンの種類",
+      "type": "string"
+    },
+    "refresh_after": {
+      "title": "更新可能になるまでの秒数",
+      "type": "integer"
+    },
+    "refresh_at": {
+      "title": "更新可能になる時刻（UNIX秒）",
+      "type": "integer"
+    },
+    "token_type": {
+      "const": "Bearer",
+      "title": "トークンの種類",
+      "type": "string"
+    }
+  },
+  "required": [
+    "access_token",
+    "token_type",
+    "expires_in",
+    "refresh_after",
+    "expires_at",
+    "refresh_at",
+    "issued_token_type"
+  ],
+  "title": "OAuthトークン交換の応答",
   "type": "object"
 }
 ```
@@ -1214,12 +1666,151 @@
 
 </details>
 
+<a id="inquiryrecord"></a>
+
+## 問い合わせの受付・回答履歴（InquiryRecord）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 問い合わせの識別子 | inquiry_id | 必須 | 文字列 |
+| 問い合わせ本文 | question | 必須 | 文字列 |
+| 回答本文 | answer | 必須 | 文字列 または 空値 |
+| 問い合わせ受付日時 | at | 必須 | 文字列、形式 `"date-time"` |
+| 回答日時 | answered_at | 必須 | 文字列、形式 `"date-time"` または 空値 |
+
+<details><summary>JSON Schema</summary>
+
+```json
+{
+  "properties": {
+    "answer": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "回答本文"
+    },
+    "answered_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "回答日時"
+    },
+    "at": {
+      "format": "date-time",
+      "title": "問い合わせ受付日時",
+      "type": "string"
+    },
+    "inquiry_id": {
+      "title": "問い合わせの識別子",
+      "type": "string"
+    },
+    "question": {
+      "title": "問い合わせ本文",
+      "type": "string"
+    }
+  },
+  "required": [
+    "inquiry_id",
+    "question",
+    "answer",
+    "at",
+    "answered_at"
+  ],
+  "title": "問い合わせの受付・回答履歴",
+  "type": "object"
+}
+```
+
+</details>
+
+<a id="inquiryreply"></a>
+
+## 問い合わせへの回答（InquiryReply）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 回答本文 | answer | 必須 | 文字列、最小文字数 `2`、最大文字数 `2000` |
+
+<details><summary>JSON Schema</summary>
+
+```json
+{
+  "additionalProperties": false,
+  "properties": {
+    "answer": {
+      "maxLength": 2000,
+      "minLength": 2,
+      "title": "回答本文",
+      "type": "string"
+    }
+  },
+  "required": [
+    "answer"
+  ],
+  "title": "問い合わせへの回答",
+  "type": "object"
+}
+```
+
+</details>
+
+<a id="inquirysubmission"></a>
+
+## 運営への問い合わせ内容（InquirySubmission）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 問い合わせの識別子 | inquiry_id | 必須 | 文字列、形式 `"uuid"` |
+| 問い合わせ本文 | question | 必須 | 文字列、最小文字数 `2`、最大文字数 `2000` |
+
+<details><summary>JSON Schema</summary>
+
+```json
+{
+  "additionalProperties": false,
+  "properties": {
+    "inquiry_id": {
+      "format": "uuid",
+      "title": "問い合わせの識別子",
+      "type": "string"
+    },
+    "question": {
+      "maxLength": 2000,
+      "minLength": 2,
+      "title": "問い合わせ本文",
+      "type": "string"
+    }
+  },
+  "required": [
+    "inquiry_id",
+    "question"
+  ],
+  "title": "運営への問い合わせ内容",
+  "type": "object"
+}
+```
+
+</details>
+
 <a id="invitation"></a>
 
 ## ポータル利用者の招待内容（Invitation）
 
 | 項目の和名 | 物理名 | 指定 | 型・制約 |
 | --- | --- | --- | --- |
+| 氏名 | full_name | 任意 | 文字列、最大文字数 `120` または 空値 |
+| 表示名 | display_name | 任意 | 文字列、最大文字数 `80` または 空値 |
 | 招待先メールアドレス | email | 必須 | 文字列、最大文字数 `150`、正規表現 `"^[^\\s@/]+@[^\\s@/]+\\.[^\\s@/]+$"` |
 | 招待先プロジェクトの識別子 | project | 必須 | 文字列 |
 | 利用者の役割 | role | 必須 | 文字列、指定値 利用者（`consumer`）、提供者（`provider`） |
@@ -1230,11 +1821,35 @@
 {
   "additionalProperties": false,
   "properties": {
+    "display_name": {
+      "anyOf": [
+        {
+          "maxLength": 80,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "表示名"
+    },
     "email": {
       "maxLength": 150,
       "pattern": "^[^\\s@/]+@[^\\s@/]+\\.[^\\s@/]+$",
       "title": "招待先メールアドレス",
       "type": "string"
+    },
+    "full_name": {
+      "anyOf": [
+        {
+          "maxLength": 120,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "氏名"
     },
     "project": {
       "title": "招待先プロジェクトの識別子",
@@ -2029,6 +2644,7 @@
 | 項目の和名 | 物理名 | 指定 | 型・制約 |
 | --- | --- | --- | --- |
 | カタログ掲載APIの識別子 | id | 必須 | 文字列 |
+| 呼び出しURLで使うAPI識別名 | slug | 任意 | 文字列 または 空値 |
 | API名 | name | 必須 | 文字列 |
 | 提供プロジェクトの識別子 | owner | 必須 | 文字列 |
 | APIの用途・概要 | summary | 必須 | 文字列 |
@@ -2073,6 +2689,17 @@
       "title": "更新時の競合検出に使う版番号",
       "type": "integer"
     },
+    "slug": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "呼び出しURLで使うAPI識別名"
+    },
     "summary": {
       "title": "APIの用途・概要",
       "type": "string"
@@ -2104,6 +2731,7 @@
 | API名 | name | 必須 | 文字列 |
 | 利用プロジェクトの識別子 | project | 必須 | 文字列 |
 | 監視対象の識別子 | id | 必須 | 文字列 |
+| 利用プロジェクトの表示名 | project_label | 任意 | 文字列 |
 | 提供環境 | environment | 必須 | 文字列 |
 
 <details><summary>JSON Schema</summary>
@@ -2130,6 +2758,10 @@
     "project": {
       "title": "利用プロジェクトの識別子",
       "type": "string"
+    },
+    "project_label": {
+      "title": "利用プロジェクトの表示名",
+      "type": "string"
     }
   },
   "required": [
@@ -2152,6 +2784,9 @@
 
 | 項目の和名 | 物理名 | 指定 | 型・制約 |
 | --- | --- | --- | --- |
+| メールアドレス | email | 必須 | 文字列 または 空値 |
+| 氏名 | full_name | 必須 | 文字列 または 空値 |
+| 表示名 | display_name | 必須 | 文字列 または 空値 |
 | 対象利用者の識別子 | subject | 必須 | 文字列 |
 | ログイン名 | username | 必須 | 文字列 |
 | 利用者の役割 | role | 必須 | 文字列 |
@@ -2166,6 +2801,39 @@
     "deleted": {
       "title": "削除済みか",
       "type": "boolean"
+    },
+    "display_name": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "表示名"
+    },
+    "email": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "メールアドレス"
+    },
+    "full_name": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "氏名"
     },
     "project": {
       "title": "所属プロジェクトの識別子",
@@ -2185,6 +2853,9 @@
     }
   },
   "required": [
+    "email",
+    "full_name",
+    "display_name",
     "subject",
     "username",
     "role"
@@ -2236,6 +2907,79 @@
     "projects"
   ],
   "title": "利用者一覧のページ",
+  "type": "object"
+}
+```
+
+</details>
+
+<a id="memberprofile"></a>
+
+## 編集用の利用者プロフィール（MemberProfile）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| メールアドレス | email | 必須 | 文字列 または 空値 |
+| 氏名 | full_name | 必須 | 文字列 または 空値 |
+| 表示名 | display_name | 必須 | 文字列 または 空値 |
+| 利用者の識別子 | subject | 必須 | 文字列 |
+| 更新時に照合する版番号 | revision | 必須 | 整数 |
+
+<details><summary>JSON Schema</summary>
+
+```json
+{
+  "properties": {
+    "display_name": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "表示名"
+    },
+    "email": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "メールアドレス"
+    },
+    "full_name": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "氏名"
+    },
+    "revision": {
+      "title": "更新時に照合する版番号",
+      "type": "integer"
+    },
+    "subject": {
+      "title": "利用者の識別子",
+      "type": "string"
+    }
+  },
+  "required": [
+    "email",
+    "full_name",
+    "display_name",
+    "subject",
+    "revision"
+  ],
+  "title": "編集用の利用者プロフィール",
   "type": "object"
 }
 ```
@@ -2455,6 +3199,124 @@
     "points"
   ],
   "title": "期間別のAPI利用統計",
+  "type": "object"
+}
+```
+
+</details>
+
+<a id="newlisting"></a>
+
+## APIをカタログへ新規登録する入力（NewListing）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 提供プロジェクトの識別子 | owner | 必須 | 文字列、最小文字数 `1`、最大文字数 `63` |
+| API名 | name | 必須 | 文字列、最小文字数 `1`、最大文字数 `120` |
+| APIの用途・概要 | summary | 必須 | 文字列、最小文字数 `1`、最大文字数 `1000` |
+| 環境別の接続先 | targets | 必須 | オブジェクト（キーに対応する値は文字列）、最小項目数 `1`、最大項目数 `3` |
+| 接続先APIの基底パス | base_path | 任意 | 文字列、最大文字数 `300`、正規表現 `"^(?:/[A-Za-z0-9_-]+)*$"`、既定値 `""` |
+| 提供者が登録したOpenAPI仕様 | spec | 必須 | オブジェクト |
+| 提供環境ごとの利用条件 | offers | 任意 | オブジェクト（キーに対応する値は[環境別の利用条件・承認設定（Offer）](#offer)） または 空値 |
+| 公開版の変更説明 | release_note | 任意 | 文字列、最大文字数 `2000`、既定値 `""` |
+| 呼び出しURLで使う一意なAPI識別名 | slug | 必須 | 文字列、最小文字数 `1`、最大文字数 `63`、正規表現 `"^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"` |
+
+<details><summary>JSON Schema</summary>
+
+```json
+{
+  "additionalProperties": false,
+  "properties": {
+    "base_path": {
+      "default": "",
+      "maxLength": 300,
+      "pattern": "^(?:/[A-Za-z0-9_-]+)*$",
+      "title": "接続先APIの基底パス",
+      "type": "string"
+    },
+    "name": {
+      "maxLength": 120,
+      "minLength": 1,
+      "title": "API名",
+      "type": "string"
+    },
+    "offers": {
+      "anyOf": [
+        {
+          "additionalProperties": {
+            "$ref": "#/components/schemas/Offer"
+          },
+          "propertyNames": {
+            "enum": [
+              "sandbox",
+              "staging",
+              "production"
+            ]
+          },
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "提供環境ごとの利用条件"
+    },
+    "owner": {
+      "maxLength": 63,
+      "minLength": 1,
+      "title": "提供プロジェクトの識別子",
+      "type": "string"
+    },
+    "release_note": {
+      "default": "",
+      "maxLength": 2000,
+      "title": "公開版の変更説明",
+      "type": "string"
+    },
+    "slug": {
+      "maxLength": 63,
+      "minLength": 1,
+      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+      "title": "呼び出しURLで使う一意なAPI識別名",
+      "type": "string"
+    },
+    "spec": {
+      "additionalProperties": true,
+      "title": "提供者が登録したOpenAPI仕様",
+      "type": "object"
+    },
+    "summary": {
+      "maxLength": 1000,
+      "minLength": 1,
+      "title": "APIの用途・概要",
+      "type": "string"
+    },
+    "targets": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "maxProperties": 3,
+      "minProperties": 1,
+      "propertyNames": {
+        "enum": [
+          "sandbox",
+          "staging",
+          "production"
+        ]
+      },
+      "title": "環境別の接続先",
+      "type": "object"
+    }
+  },
+  "required": [
+    "owner",
+    "name",
+    "summary",
+    "targets",
+    "spec",
+    "slug"
+  ],
+  "title": "APIをカタログへ新規登録する入力",
   "type": "object"
 }
 ```
@@ -2699,6 +3561,9 @@
 
 | 項目の和名 | 物理名 | 指定 | 型・制約 |
 | --- | --- | --- | --- |
+| メールアドレス | email | 必須 | 文字列 または 空値 |
+| 氏名 | full_name | 必須 | 文字列 または 空値 |
+| 表示名 | display_name | 必須 | 文字列 または 空値 |
 | 対象利用者の識別子 | subject | 必須 | 文字列 |
 | ログイン名 | username | 必須 | 文字列 |
 
@@ -2707,6 +3572,39 @@
 ```json
 {
   "properties": {
+    "display_name": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "表示名"
+    },
+    "email": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "メールアドレス"
+    },
+    "full_name": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "氏名"
+    },
     "subject": {
       "title": "対象利用者の識別子",
       "type": "string"
@@ -2717,6 +3615,9 @@
     }
   },
   "required": [
+    "email",
+    "full_name",
+    "display_name",
     "subject",
     "username"
   ],
@@ -2806,6 +3707,7 @@
 | --- | --- | --- | --- |
 | デモ環境か | demo | 必須 | 真偽値 |
 | ログイン用ドメイン | domain | 必須 | 文字列 |
+| ユーザープールの認証API接続先 | identity_endpoint | 必須 | 文字列 |
 | ポータルのログイン用クライアント識別子 | client_id | 必須 | 文字列 |
 
 <details><summary>JSON Schema</summary>
@@ -2824,11 +3726,16 @@
     "domain": {
       "title": "ログイン用ドメイン",
       "type": "string"
+    },
+    "identity_endpoint": {
+      "title": "ユーザープールの認証API接続先",
+      "type": "string"
     }
   },
   "required": [
     "demo",
     "domain",
+    "identity_endpoint",
     "client_id"
   ],
   "title": "ポータルのログイン設定",
@@ -2845,6 +3752,7 @@
 | 項目の和名 | 物理名 | 指定 | 型・制約 |
 | --- | --- | --- | --- |
 | 管理者が参照できるプロジェクト | known_projects | 必須 | 配列 / 文字列 |
+| 管理者が参照できるプロジェクトの識別子と表示名の対応 | known_project_labels | 任意 | オブジェクト（キーに対応する値は文字列） |
 | 個人用プロジェクトの識別子 | personal_project | 必須 | 文字列 |
 | 管理権限を持つ組織 | leads | 必須 | 配列 / 文字列 |
 | 所属部署 | departments | 必須 | 配列 / 文字列 |
@@ -2875,6 +3783,13 @@
       },
       "title": "所属部署",
       "type": "array"
+    },
+    "known_project_labels": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "管理者が参照できるプロジェクトの識別子と表示名の対応",
+      "type": "object"
     },
     "known_projects": {
       "items": {
@@ -2941,6 +3856,62 @@
     "targets"
   ],
   "title": "ログイン利用者の所属と権限",
+  "type": "object"
+}
+```
+
+</details>
+
+<a id="profileedit"></a>
+
+## 利用者プロフィールの編集内容（ProfileEdit）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 氏名 | full_name | 任意 | 文字列、最大文字数 `120` または 空値 |
+| 表示名 | display_name | 任意 | 文字列、最大文字数 `80` または 空値 |
+| 取得したプロフィールの版番号 | revision | 必須 | 整数、最小値 `0.0` |
+
+<details><summary>JSON Schema</summary>
+
+```json
+{
+  "additionalProperties": false,
+  "properties": {
+    "display_name": {
+      "anyOf": [
+        {
+          "maxLength": 80,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "表示名"
+    },
+    "full_name": {
+      "anyOf": [
+        {
+          "maxLength": 120,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "氏名"
+    },
+    "revision": {
+      "minimum": 0.0,
+      "title": "取得したプロフィールの版番号",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "revision"
+  ],
+  "title": "利用者プロフィールの編集内容",
   "type": "object"
 }
 ```
@@ -3075,7 +4046,7 @@
 
 <a id="register"></a>
 
-## APIのカタログ登録内容（Register）
+## カタログに登録済みのAPIを編集する入力（Register）
 
 | 項目の和名 | 物理名 | 指定 | 型・制約 |
 | --- | --- | --- | --- |
@@ -3087,6 +4058,7 @@
 | 提供者が登録したOpenAPI仕様 | spec | 必須 | オブジェクト |
 | 提供環境ごとの利用条件 | offers | 任意 | オブジェクト（キーに対応する値は[環境別の利用条件・承認設定（Offer）](#offer)） または 空値 |
 | 公開版の変更説明 | release_note | 任意 | 文字列、最大文字数 `2000`、既定値 `""` |
+| 呼び出しURLで使うAPI識別名 | slug | 任意 | 文字列、最小文字数 `1`、最大文字数 `63`、正規表現 `"^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"` または 空値 |
 
 <details><summary>JSON Schema</summary>
 
@@ -3140,6 +4112,20 @@
       "title": "公開版の変更説明",
       "type": "string"
     },
+    "slug": {
+      "anyOf": [
+        {
+          "maxLength": 63,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "呼び出しURLで使うAPI識別名"
+    },
     "spec": {
       "additionalProperties": true,
       "title": "提供者が登録したOpenAPI仕様",
@@ -3175,7 +4161,7 @@
     "targets",
     "spec"
   ],
-  "title": "APIのカタログ登録内容",
+  "title": "カタログに登録済みのAPIを編集する入力",
   "type": "object"
 }
 ```
@@ -3758,6 +4744,35 @@
     "refresh_at"
   ],
   "title": "短期アクセストークンと期限",
+  "type": "object"
+}
+```
+
+</details>
+
+<a id="transfer"></a>
+
+## 組織の移管先（Transfer）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 移管先の部署またはプロジェクトの識別子 | destination | 必須 | 文字列 |
+
+<details><summary>JSON Schema</summary>
+
+```json
+{
+  "additionalProperties": false,
+  "properties": {
+    "destination": {
+      "title": "移管先の部署またはプロジェクトの識別子",
+      "type": "string"
+    }
+  },
+  "required": [
+    "destination"
+  ],
+  "title": "組織の移管先",
   "type": "object"
 }
 ```

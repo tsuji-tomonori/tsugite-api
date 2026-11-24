@@ -4,9 +4,9 @@
 
 GET `/api/alerts`
 
-[API一覧](../README.md) · [CRUD一覧](../crud.md)
+[API一覧](README.md) · [CRUD一覧](../db/crud.md)
 
-共通 · `rules_api_alerts_get` · [rules:86](../../../packages/backend/src/app/apis/governance/alerts.py#L86)
+共通 · `rules_api_alerts_get` · [rules:59](../../../packages/backend/src/app/apis/governance/alerts.py#L59)
 
 ## 入力
 
@@ -22,7 +22,7 @@ GET `/api/alerts`
 
 | ステータス | 説明 | 形式・条件 | スキーマ |
 | --- | --- | --- | --- |
-| 200 | 正常に処理できました | application/json | 配列 / [呼び出し件数の監視設定と実績（RuleResult）](../schemas.md#ruleresult) |
+| 200 | 正常に処理できました | application/json | 配列 / [呼び出し件数の監視設定と実績（RuleResult）](../db/schemas.md#ruleresult) |
 
 ### 200 application/json の項目
 
@@ -38,7 +38,7 @@ GET `/api/alerts`
 | API名 | [].name | 必須 | 文字列 |
 | 呼び出し件数 | [].calls | 必須 | 整数 |
 
-実装・認証依存で送出し得るHTTPエラー（エラーの詳細を示す `detail` を含むJSON）　401, 403。
+実装・認証依存で送出し得るHTTPエラー（エラーの詳細を示す `detail` を含むJSON）　401, 403, 503。
 
 AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugite-Origin` を付与します。共通ミドルウェアは通常のAPI応答にリクエスト識別子 `X-Request-ID` とキャッシュへの保存を禁止する `Cache-Control: no-store` を付けます。Lambdaのオリジン検証に失敗すると403、DBの競合は409、DB操作エラーは409または503です。
 
@@ -48,14 +48,15 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| [利用者の組織所属](../database.md#affiliations) | affiliations | R | 検索 | select | [populate:69](../../../packages/backend/src/app/core/workspace.py#L69) |
-| [API呼び出し件数の監視設定](../database.md#alert_rules) | alert_rules | R | テーブルを結合 | join | [rules:88](../../../packages/backend/src/app/apis/governance/alerts.py#L88) |
-| [API呼び出し件数の監視設定](../database.md#alert_rules) | alert_rules | R | 検索 | select | [rules:88](../../../packages/backend/src/app/apis/governance/alerts.py#L88) |
-| [APIカタログ](../database.md#assets) | assets | R | テーブルを結合 | join | [rules:88](../../../packages/backend/src/app/apis/governance/alerts.py#L88) |
-| [APIカタログ](../database.md#assets) | assets | R | 検索 | select | [rules:88](../../../packages/backend/src/app/apis/governance/alerts.py#L88) |
-| [組織階層](../database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
-| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:121](../../../packages/backend/src/app/core/auth.py#L121) |
-| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:56](../../../packages/backend/src/app/core/workspace.py#L56) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:105](../../../packages/backend/src/app/core/workspace.py#L105) |
+| [API呼び出し件数の監視設定](../db/database.md#alert_rules) | alert_rules | R | テーブルを結合 | join | [rules:61](../../../packages/backend/src/app/apis/governance/alerts.py#L61) |
+| [API呼び出し件数の監視設定](../db/database.md#alert_rules) | alert_rules | R | 検索 | select | [rules:61](../../../packages/backend/src/app/apis/governance/alerts.py#L61) |
+| [APIカタログ](../db/database.md#assets) | assets | R | テーブルを結合 | join | [rules:61](../../../packages/backend/src/app/apis/governance/alerts.py#L61) |
+| [APIカタログ](../db/database.md#assets) | assets | R | 検索 | select | [rules:61](../../../packages/backend/src/app/apis/governance/alerts.py#L61) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:30](../../../packages/backend/src/app/core/workspace.py#L30) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:54](../../../packages/backend/src/app/core/workspace.py#L54) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:123](../../../packages/backend/src/app/core/auth.py#L123) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:91](../../../packages/backend/src/app/core/workspace.py#L91) |
 
 ### AWSサービス
 
@@ -76,6 +77,8 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 - `app.core.workspace.ancestry`
 - `app.core.workspace.configured_projects`
 - `app.core.workspace.populate`
+- `app.core.workspace.project_ids`
+- `app.core.workspace.retired_units`
 - `app.core.workspace.units`
 - `tsugite_db.session.engine`
 - `tsugite_db.session.session`

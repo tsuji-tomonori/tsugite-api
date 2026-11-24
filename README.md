@@ -31,7 +31,7 @@ task demo
 
 ## 開発完了の判定
 
-[分野別の完了の定義](docs/generated/definition-of-done.md)で、変更時の検査、行カバレッジの基準、個々のテストが確かめる内容を確認できます。各PRの Verify は、そのコミットの定義と対象ブランチの有効なルールで文書を再生成し、成果物 `definition-of-done` に保存します。手元ではGitHub CLIにログインして `task docs:quality` を実行すると掲載版を更新できます。
+[分野別の完了の定義](docs/generated/dev-rules/definition-of-done.md)で、変更時の検査、行カバレッジの基準、個々のテストが確かめる内容を確認できます。各PRの Verify は、そのコミットの定義と対象ブランチの有効なルールで文書を再生成し、成果物 `definition-of-done` に保存します。手元ではGitHub CLIにログインして `task docs:quality` を実行すると掲載版を更新できます。
 
 ## コミットとプッシュの前に
 
@@ -63,7 +63,9 @@ task demo
 
 CDKのスナップショットは標準構成の論理ID、リソース型と出力を比較します。意図したインフラ変更で差分が出たら、合成したテンプレートで内容を確認して `packages/infra/tests/cloudformation_snapshot.json` を更新します。CDK Nagは既存指摘を `cdk_nag_baseline.json` で照合し、新規指摘をテスト失敗として報告します。詳細は `task audit` が出力する `artifacts/cdk-nag.csv` で確認できます。
 
-`task docs` は実行中のデータベースやAWS資格情報を使わず、[API別の実装設計書](docs/generated/README.md)、[SQL・AWS操作のCRUD一覧](docs/generated/crud.md)、[入出力スキーマ](docs/generated/schemas.md)、[テーブル・レコード・カラム定義](docs/generated/database.md)を更新します。設計を変えるときはルーターの引数・応答モデル・依存関数を修正します。CRUD表はAPIを行に、SQLテーブルとAWSサービスをそれぞれ別の表の列に並べます。各セルで操作の種類を、API詳細で条件分岐を含む操作の根拠となるソース行を確認できます。転送先の利用者定義APIの項目は、登録時のOpenAPIで決まります。
+[自動生成ドキュメントの目次](docs/generated/README.md)から、API・DB・インフラ・開発ルールの各資料を参照できます。
+
+`task docs:api` は実行中のデータベースやAWS資格情報を使わず、[API別の実装設計書](docs/generated/apis/README.md)、[SQL・AWS操作のCRUD一覧](docs/generated/db/crud.md)、[入出力スキーマ](docs/generated/db/schemas.md)、[テーブル・レコード・カラム定義](docs/generated/db/database.md)を更新します。設計を変えるときはルーターの引数・応答モデル・依存関数を修正します。CRUD表はAPIを行に、SQLテーブルとAWSサービスをそれぞれ別の表の列に並べます。各セルで操作の種類を、API詳細で条件分岐を含む操作の根拠となるソース行を確認できます。転送先の利用者定義APIの項目は、登録時のOpenAPIで決まります。
 
 API操作はルートデコレーター、引数・モデル・項目・列挙値はそれぞれの宣言の直前に `#: 和名` を書きます。DBモデルのクラスには同じ形式でテーブル名を書き、docstringの1段落目にレコード名、2段落目に1行が表す内容を書きます。AWS SDK呼び出しの直前には `#: サービスの和名 / 操作の和名` を書きます。`task docs` はPythonの構文木とコメントトークンをFastAPI・SQLAlchemyの定義と照合し、設計書とデモ環境のOpenAPIに和名を反映します。
 

@@ -4,9 +4,9 @@
 
 PUT `/api/workspace/memberships`
 
-[API一覧](../README.md) · [CRUD一覧](../crud.md)
+[API一覧](README.md) · [CRUD一覧](../db/crud.md)
 
-共通 · `assign_api_workspace_memberships_put` · [assign:166](../../../packages/backend/src/app/apis/governance/directory.py#L166)
+共通 · `assign_api_workspace_memberships_put` · [assign:156](../../../packages/backend/src/app/apis/governance/directory.py#L156)
 
 ## 入力
 
@@ -20,7 +20,7 @@ PUT `/api/workspace/memberships`
 
 | Content-Type | スキーマ |
 | --- | --- |
-| application/json | [組織への所属設定（Membership）](../schemas.md#membership) |
+| application/json | [組織への所属設定（Membership）](../db/schemas.md#membership) |
 
 #### application/json の項目
 
@@ -35,8 +35,8 @@ PUT `/api/workspace/memberships`
 
 | ステータス | 説明 | 形式・条件 | スキーマ |
 | --- | --- | --- | --- |
-| 200 | 正常に処理できました | application/json | [組織への所属設定（Membership）](../schemas.md#membership) |
-| 422 | 入力内容が条件を満たしていません | application/json | [リクエスト入力エラー（HTTPValidationError）](../schemas.md#httpvalidationerror) |
+| 200 | 正常に処理できました | application/json | [組織への所属設定（Membership）](../db/schemas.md#membership) |
+| 422 | 入力内容が条件を満たしていません | application/json | [リクエスト入力エラー（HTTPValidationError）](../db/schemas.md#httpvalidationerror) |
 
 ### 200 application/json の項目
 
@@ -51,14 +51,14 @@ PUT `/api/workspace/memberships`
 
 | 項目の和名 | 物理名 | 指定 | 型・制約 |
 | --- | --- | --- | --- |
-| 入力エラーの明細一覧 | detail | 任意 | 配列 / [入力エラーの項目別明細（ValidationError）](../schemas.md#validationerror) |
+| 入力エラーの明細一覧 | detail | 任意 | 配列 / [入力エラーの項目別明細（ValidationError）](../db/schemas.md#validationerror) |
 | 入力エラーの発生箇所 | detail[].loc | 必須 | 配列 / 文字列 または 整数 |
 | 入力エラーの説明 | detail[].msg | 必須 | 文字列 |
 | 入力エラーの分類コード | detail[].type | 必須 | 文字列 |
 | エラーになった入力値 | detail[].input | 任意 | 任意の型 |
 | 入力エラーの補足情報 | detail[].ctx | 任意 | オブジェクト |
 
-実装・認証依存で送出し得るHTTPエラー（エラーの詳細を示す `detail` を含むJSON）　401, 403, 404, 409。
+実装・認証依存で送出し得るHTTPエラー（エラーの詳細を示す `detail` を含むJSON）　401, 403, 404, 409, 503。
 
 AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugite-Origin` を付与します。共通ミドルウェアは通常のAPI応答にリクエスト識別子 `X-Request-ID` とキャッシュへの保存を禁止する `Cache-Control: no-store` を付けます。Lambdaのオリジン検証に失敗すると403、DBの競合は409、DB操作エラーは409または503です。
 
@@ -68,17 +68,18 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| [利用者の組織所属](../database.md#affiliations) | affiliations | C | レコードを追加 | db.add | [assign:176](../../../packages/backend/src/app/apis/governance/directory.py#L176) |
-| [利用者の組織所属](../database.md#affiliations) | affiliations | R | 主キーで取得 | db.get | [assign:173](../../../packages/backend/src/app/apis/governance/directory.py#L173) |
-| [利用者の組織所属](../database.md#affiliations) | affiliations | R | 検索 | select | [populate:69](../../../packages/backend/src/app/core/workspace.py#L69) |
-| [利用者の組織所属](../database.md#affiliations) | affiliations | U | 所属が有効かを設定 | active に代入 | [assign:177](../../../packages/backend/src/app/apis/governance/directory.py#L177) |
-| [利用者の組織所属](../database.md#affiliations) | affiliations | U | 所属先の管理権限があるかを設定 | leader に代入 | [assign:177](../../../packages/backend/src/app/apis/governance/directory.py#L177) |
-| [利用者の組織所属](../database.md#affiliations) | affiliations | U | 所属先での役職名を設定 | title に代入 | [assign:177](../../../packages/backend/src/app/apis/governance/directory.py#L177) |
-| [監査履歴](../database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [audit:53](../../../packages/backend/src/app/apis/governance/directory.py#L53) |
-| [組織階層](../database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
-| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [assign:170](../../../packages/backend/src/app/apis/governance/directory.py#L170) |
-| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:121](../../../packages/backend/src/app/core/auth.py#L121) |
-| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:56](../../../packages/backend/src/app/core/workspace.py#L56) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | C | レコードを追加 | db.add | [assign:167](../../../packages/backend/src/app/apis/governance/directory.py#L167) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 主キーで取得 | db.get | [assign:164](../../../packages/backend/src/app/apis/governance/directory.py#L164) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:105](../../../packages/backend/src/app/core/workspace.py#L105) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | U | 所属が有効かを設定 | active に代入 | [assign:168](../../../packages/backend/src/app/apis/governance/directory.py#L168) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | U | 所属先の管理権限があるかを設定 | leader に代入 | [assign:168](../../../packages/backend/src/app/apis/governance/directory.py#L168) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | U | 所属先での役職名を設定 | title に代入 | [assign:168](../../../packages/backend/src/app/apis/governance/directory.py#L168) |
+| [監査履歴](../db/database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [audit:19](../../../packages/backend/src/app/apis/governance/directory.py#L19) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:30](../../../packages/backend/src/app/core/workspace.py#L30) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:54](../../../packages/backend/src/app/core/workspace.py#L54) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [assign:161](../../../packages/backend/src/app/apis/governance/directory.py#L161) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:123](../../../packages/backend/src/app/core/auth.py#L123) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:91](../../../packages/backend/src/app/core/workspace.py#L91) |
 
 ### AWSサービス
 
@@ -101,6 +102,8 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 - `app.core.workspace.ancestry`
 - `app.core.workspace.configured_projects`
 - `app.core.workspace.populate`
+- `app.core.workspace.project_ids`
+- `app.core.workspace.retired_units`
 - `app.core.workspace.units`
 - `tsugite_db.session.engine`
 - `tsugite_db.session.session`

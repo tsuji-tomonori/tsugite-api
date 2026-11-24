@@ -4,9 +4,9 @@
 
 POST `/api/keys`
 
-[API一覧](../README.md) · [CRUD一覧](../crud.md)
+[API一覧](README.md) · [CRUD一覧](../db/crud.md)
 
-共通 · `issue_api_keys_post` · [issue:97](../../../packages/backend/src/app/apis/governance/keys.py#L97)
+共通 · `issue_api_keys_post` · [issue:81](../../../packages/backend/src/app/apis/governance/keys.py#L81)
 
 ## 入力
 
@@ -20,7 +20,7 @@ POST `/api/keys`
 
 | Content-Type | スキーマ |
 | --- | --- |
-| application/json | [APIキーの発行条件（KeyInput）](../schemas.md#keyinput) |
+| application/json | [APIキーの発行条件（KeyInput）](../db/schemas.md#keyinput) |
 
 #### application/json の項目
 
@@ -35,8 +35,8 @@ POST `/api/keys`
 
 | ステータス | 説明 | 形式・条件 | スキーマ |
 | --- | --- | --- | --- |
-| 201 | 正常に処理できました | application/json | [発行した従来方式のAPIキー（IssuedKey）](../schemas.md#issuedkey) |
-| 422 | 入力内容が条件を満たしていません | application/json | [リクエスト入力エラー（HTTPValidationError）](../schemas.md#httpvalidationerror) |
+| 201 | 正常に処理できました | application/json | [発行した従来方式のAPIキー（IssuedKey）](../db/schemas.md#issuedkey) |
+| 422 | 入力内容が条件を満たしていません | application/json | [リクエスト入力エラー（HTTPValidationError）](../db/schemas.md#httpvalidationerror) |
 
 ### 201 application/json の項目
 
@@ -61,14 +61,14 @@ POST `/api/keys`
 
 | 項目の和名 | 物理名 | 指定 | 型・制約 |
 | --- | --- | --- | --- |
-| 入力エラーの明細一覧 | detail | 任意 | 配列 / [入力エラーの項目別明細（ValidationError）](../schemas.md#validationerror) |
+| 入力エラーの明細一覧 | detail | 任意 | 配列 / [入力エラーの項目別明細（ValidationError）](../db/schemas.md#validationerror) |
 | 入力エラーの発生箇所 | detail[].loc | 必須 | 配列 / 文字列 または 整数 |
 | 入力エラーの説明 | detail[].msg | 必須 | 文字列 |
 | 入力エラーの分類コード | detail[].type | 必須 | 文字列 |
 | エラーになった入力値 | detail[].input | 任意 | 任意の型 |
 | 入力エラーの補足情報 | detail[].ctx | 任意 | オブジェクト |
 
-実装・認証依存で送出し得るHTTPエラー（エラーの詳細を示す `detail` を含むJSON）　401, 403, 404。
+実装・認証依存で送出し得るHTTPエラー（エラーの詳細を示す `detail` を含むJSON）　401, 403, 404, 503。
 
 AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugite-Origin` を付与します。共通ミドルウェアは通常のAPI応答にリクエスト識別子 `X-Request-ID` とキャッシュへの保存を禁止する `Cache-Control: no-store` を付けます。Lambdaのオリジン検証に失敗すると403、DBの競合は409、DB操作エラーは409または503です。
 
@@ -78,14 +78,15 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| [API利用申請・利用権](../database.md#access_rights) | access_rights | R | 検索 | select | [issue:104](../../../packages/backend/src/app/apis/governance/keys.py#L104) |
-| [利用者の組織所属](../database.md#affiliations) | affiliations | R | 検索 | select | [populate:69](../../../packages/backend/src/app/core/workspace.py#L69) |
-| [API認証情報](../database.md#api_keys) | api_keys | C | レコードを追加 | db.add | [issue:129](../../../packages/backend/src/app/apis/governance/keys.py#L129) |
-| [APIカタログ](../database.md#assets) | assets | R | 主キーで取得 | db.get | [record:31](../../../packages/backend/src/app/apis/catalog/common.py#L31) |
-| [監査履歴](../database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [audit:53](../../../packages/backend/src/app/apis/governance/directory.py#L53) |
-| [組織階層](../database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
-| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:121](../../../packages/backend/src/app/core/auth.py#L121) |
-| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:56](../../../packages/backend/src/app/core/workspace.py#L56) |
+| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | R | 検索 | select | [issue:88](../../../packages/backend/src/app/apis/governance/keys.py#L88) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:105](../../../packages/backend/src/app/core/workspace.py#L105) |
+| [API認証情報](../db/database.md#api_keys) | api_keys | C | レコードを追加 | db.add | [issue:113](../../../packages/backend/src/app/apis/governance/keys.py#L113) |
+| [APIカタログ](../db/database.md#assets) | assets | R | 主キーで取得 | db.get | [record:25](../../../packages/backend/src/app/core/catalog.py#L25) |
+| [監査履歴](../db/database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [audit:19](../../../packages/backend/src/app/apis/governance/directory.py#L19) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:30](../../../packages/backend/src/app/core/workspace.py#L30) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:54](../../../packages/backend/src/app/core/workspace.py#L54) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:123](../../../packages/backend/src/app/core/auth.py#L123) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:91](../../../packages/backend/src/app/core/workspace.py#L91) |
 
 ### AWSサービス
 
@@ -95,7 +96,6 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 <details><summary>解析した関数・依存</summary>
 
-- `app.apis.catalog.common.record`
 - `app.apis.governance.directory.audit`
 - `app.apis.governance.keys.issue`
 - `app.apis.governance.keys.metadata`
@@ -104,6 +104,7 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 - `app.core.auth.human`
 - `app.core.auth.identify`
 - `app.core.auth.keyset`
+- `app.core.catalog.record`
 - `app.core.config.local_demo`
 - `app.core.config.settings`
 - `app.core.credential_policy.clock`
@@ -113,8 +114,9 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 - `app.core.workspace.policy`
 - `app.core.workspace.populate`
 - `app.core.workspace.private_project`
+- `app.core.workspace.project_ids`
+- `app.core.workspace.retired_units`
 - `app.core.workspace.units`
-- `tsugite_db.models.new_id`
 - `tsugite_db.session.engine`
 - `tsugite_db.session.session`
 
