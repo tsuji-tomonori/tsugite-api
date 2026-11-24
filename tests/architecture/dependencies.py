@@ -118,9 +118,9 @@ def dependency_violations(path, source):
         }:
             continue  # ローカルでのみ同じFastAPIアプリを呼ぶ。
         # チャット検索だけがブラウザーに依存しないガイド本文と検索関数を共有する。
-        if module == "agent.retrieval" and imported.split(".")[:2] in (
-            ["web_app", "guide_content"],
-            ["web_app", "guide_search"],
+        if module == "agent.retrieval" and imported.split(".")[:3] in (
+            ["web_app", "content", "guide_content"],
+            ["web_app", "content", "guide_search"],
         ):
             continue
         errors.append(f"{path}:{line}: {owner}から{target}への依存 {imported}")

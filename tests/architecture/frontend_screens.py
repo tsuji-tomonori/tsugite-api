@@ -47,7 +47,8 @@ def screen_violations(path: Path, source: str) -> list[str]:
     tree = ast.parse(source, filename=str(path))
     module = ".".join(path.with_suffix("").parts)
     package = ("web_app." + module).rpartition(".")[0]
-    feature = path.parent == Path("portal_pages") and not path.name.startswith("_")
+    page = path.parts[0] == "pages" and len(path.parts) >= 3
+    feature = page and len(path.parts) == 3 and path.name == "__init__.py" and path.parts[1] != "login"
     errors = []
 
     def report(node: ast.stmt | ast.expr, message: str) -> None:
@@ -64,23 +65,50 @@ def screen_violations(path: Path, source: str) -> list[str]:
             errors.append(f"{path}: 公開する画面をモジュール直下のSCREENSに一度だけ定義してください")
         else:
             value = definitions[0].value
-            if not isinstance(value, (ast.Tuple, ast.List)) or not value.elts:
-                report(definitions[0], "SCREENSにはこの機能が公開する画面を一件以上並べてください")
+            if not isinstance(value, (ast.Tuple, ast.List)) or len(value.elts) != 1:
+                report(
+                    definitions[0], "SCREENSにはこのディレクトリが公開する画面を一件だけ並べてください"
+                )
     elif definitions:
-        report(definitions[0], "画面のSCREENSはportal_pagesの機能別モジュールに置いてください")
+        report(definitions[0], "画面のSCREENSはpages直下の画面パッケージに置いてください")
 
-    for line, imported in dependencies(tree, package):
-        target = imported.removeprefix("web_app.")
+    imports = [(line, target.removeprefix("web_app.")) for line, target in dependencies(tree, package)]
+    if path.parent == Path("pages") and path.name != "__init__.py":
+        errors.append(f"{path}: 画面ごとにディレクトリを作成してください")
+    if feature and not any(target.startswith("components.") for _, target in imports):
+        errors.append(f"{path}: 画面はcomponentsの部品で組み立ててください")
+
+    for line, target in imports:
         parts = target.split(".")
-        if len(parts) >= 2 and parts[0] == "portal_pages" and not parts[1].startswith("_"):
-            errors.append(
-                f"{path}:{line}: 個別画面 {target} の直接参照は画面の自動登録を経由してください"
-            )
-        if feature and parts[0] in {"app", "portal_shell"}:
+        if parts[0] == "pages":
+            same_page = page and parts[:2] == list(path.parts[:2])
+            discovery = module == "routing.screen_registry" and target == "pages"
+            login = module == "runtime.portal_shell" and target == "pages.login.login_page"
+            if not (same_page or discovery or login):
+                errors.append(f"{path}:{line}: 個別画面 {target} の直接参照は許可されていません")
+        if (page or path.parts[0] == "components") and (
+            parts[0] == "app" or parts[:2] == ["runtime", "portal_shell"]
+        ):
             errors.append(f"{path}:{line}: 画面から起動処理・共通レイアウト {target} を参照できません")
+        if page and parts[0] in {"puepy", "js"}:
+            errors.append(f"{path}:{line}: 描画とDOM操作はcomponentsで定義してください")
+        if path.parts[0] == "components" and parts[:2] == ["routing", "screen_registry"]:
+            errors.append(f"{path}:{line}: 画面レジストリの参照はページから渡してください")
+        if (page or path.parts[0] == "components") and parts[0] in {"importlib", "pkgutil"}:
+            errors.append(f"{path}:{line}: 画面と部品は静的にインポートしてください")
+        if path.parts[0] != "apis" and parts[:2] == ["pyodide", "http"]:
+            errors.append(f"{path}:{line}: HTTP通信はapisで定義してください")
+        if path.parts[0] == "apis" and parts[0] in {
+            "actions",
+            "runtime",
+            "routing",
+            "components",
+            "puepy",
+        }:
+            errors.append(f"{path}:{line}: API処理は表示層から独立させてください")
 
     # 画面へのリンクや共通レイアウトの表示条件は許可し、URLごとの描画分岐を検出する。
-    if module in {"app", "portal_shell"}:
+    if module in {"app", "runtime.portal_shell"}:
         names = route_names(tree)
         for node in ast.walk(tree):
             if isinstance(node, (ast.If, ast.IfExp)):
@@ -91,7 +119,7 @@ def screen_violations(path: Path, source: str) -> list[str]:
                 continue
             if uses_route(condition, names):
                 report(node, "URLによる画面の振り分けは共通ファイルに追加せずScreenで定義してください")
-    if module == "portal_navigation":
+    if module == "routing.portal_navigation":
         names = route_names(tree)
         for node in ast.walk(tree):
             if isinstance(node, (ast.If, ast.IfExp, ast.Match)):

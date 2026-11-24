@@ -1,25 +1,38 @@
 # フロントエンドの画面開発
 
-画面の表示、操作、データ取得、メニューの設定は `src/web_app/portal_pages/` の機能別ファイルにまとめます。たとえば利用状況は `dashboard.py`、ユーザー管理は `members.py` で変更できます。カタログと提供一覧など、同じ画面を条件違いで表示する場合は同じファイルを使います。
+`src/web_app/pages/` の各ディレクトリが一つの画面です。たとえば `access_logs/` は本人のアクセスログ一覧、`audit_log_detail/` は管理対象の呼び出し一件、`project_monitor/` はプロジェクトのモニタリングを担当します。
 
-## 新しい画面を追加する
+| 場所 | 置くもの |
+| --- | --- |
+| `pages/<画面名>/` | 部品の組み合わせ、URL、タイトル、メニューの権限と順番。画面専用の読み込み処理やCSSも同じ場所に置く |
+| `components/` | 表、フォーム、グラフ、ガイドの画面例などの表示部品と、複数画面にまたがる部品のCSS |
+| `apis/` | 業務別のAPI操作、送信パスとHTTPメソッド、認証、HTTPエラー処理 |
+| `actions/` | ボタン操作、状態更新、複数画面で使う読み込み処理 |
+| `routing/` | 画面の自動登録、URLの解決、画面遷移 |
+| `runtime/` | セッション、画面状態、ブラウザーとの連携、共通のレイアウト |
+| `content/` | ガイド本文・検索、表示名、整形処理 |
+| `public/` | HTMLの入口、アイコン、ポータル全体のスタイル |
 
-たとえば、次の内容を `portal_pages/reports.py` に保存すると、`#/reports` に画面ができ、ワークスペースのメニューにも表示されます。
+## 画面を追加する
+
+`pages/reports/__init__.py` で表示部品を選び、画面を登録します。
 
 ```python
-from puepy import t
-from screen_registry import Screen
+# レポート画面の検索欄とルートを定義する。
+from components.controls import field
+from routing.screen_registry import Screen
 
 
-def view():
-    t.p("表示するレポートを選んでください。")
+def view() -> None:
+    """レポートを選ぶための入力欄を表示する。"""
+    field("レポート名", "report-name")
 
 
 SCREENS = (Screen("reports", "レポート", view, group="ワークスペース", order=75),)
 ```
 
-- APIからデータを取得する画面では `async def load_reports(page)` を定義し、`Screen` の `load_data` に渡します。`page` は遷移先のパスです。既存の `portal_navigation.load` を操作後に呼ぶと、現在の画面を再取得します。
-- `group` を省略した画面はURLから開けます。`api/` のように末尾がスラッシュのルートは、その後にIDが続く詳細画面を受け持ちます。`visible` はメニュー表示の条件です。アクセス権限はAPI側で検査します。
-- 画面専用のCSSは隣に `reports.css` として置き、画面固有のクラスで適用範囲を絞ります。ビルドがPythonファイルの階層を保って配布し、CSSを共通スタイルの後ろにまとめます。
-- 画面内の処理をさらに分けたいときは、同じディレクトリに `_reports_format.py` のような補助モジュールを置けます。先頭が `_` のファイルは画面の自動登録から除外されます。
-- 画面固有のテストは `tests/test_reports.py` に置きます。`app.py` は起動処理、`portal_shell.py` は全画面共通のレイアウトを担当します。
+画面を開いたときにデータが必要なら、同じディレクトリの `data.py` などに `async def load_reports(page: str) -> None` を定義し、`Screen` の `load_data` に渡します。APIの操作は `apis/` から呼び出します。画面専用のCSSはビルド時に自動で取り込まれます。
+
+`group` を省略した画面はURLから直接開けます。末尾が `/` のルートはその後にIDなどが続くURLを受け持ちます。複数のルートが一致すると、最も具体的なパスを使います。ログイン画面は認証前に共通レイアウトから表示します。
+
+Python・CSSなどのソースの先頭行には、そのファイルの責務を日本語コメントで書きます。関数には引数と戻り値の型を付け、公開関数には役割を示す日本語のdocstringを添えます。`task types` は画面・部品・API処理とフロントエンドの単体テストをmypyのstrict設定で検査します。

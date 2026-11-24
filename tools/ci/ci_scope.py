@@ -45,7 +45,7 @@ def affected(path, suites):
         return FULL
     for suite in suites:
         if path.startswith(suite + "/"):
-            return {suite, "types"} if suite == AGENT else {suite}
+            return {suite, "types"} if suite in {AGENT, FRONTEND} else {suite}
     if path.startswith("docs/requirements/items/"):
         return FULL
     if (
@@ -69,29 +69,18 @@ def affected(path, suites):
         return {AGENT, BACKEND, BROWSER, TOOLS, "types", "design", "aws"}
     if path.startswith("packages/database/"):
         return {DATABASE, AGENT, BACKEND, BROWSER, TOOLS, "types", "design", "aws"}
-    if path.endswith(("/web_app/guide_content.py", "/web_app/guide_search.py")):
-        return {AGENT, FRONTEND, BROWSER, BACKEND}
+    if path.endswith(("/web_app/content/guide_content.py", "/web_app/content/guide_search.py")):
+        return {AGENT, FRONTEND, BROWSER, BACKEND, "types"}
     if path == "tools/packaging/build_frontend.py":
         return {FRONTEND, BROWSER, TOOLS, "aws_portal"}
-    if (
-        path.startswith("packages/frontend/src/web_app/portal_pages/") and path.endswith(".py")
-    ) or path.endswith(
-        (
-            "/portal_shell.py",
-            "/portal_session.py",
-            "/portal_ui.py",
-            "/portal_navigation.py",
-            "/screen_registry.py",
-            "/listing_data.py",
-        )
-    ):
-        return {FRONTEND, BROWSER, "aws_portal"}
-    if path == "packages/frontend/public/index.html" or path.endswith(
-        ("/web_app/client.py", "/web_app/app.py", "/web_app/product_views.py", "/web_app/api_docs.py")
-    ):
+    if path.startswith("packages/frontend/typings/"):
+        return {FRONTEND, "types"}
+    if path.startswith("packages/frontend/src/web_app/") and path.endswith(".py"):
+        return {FRONTEND, BROWSER, "types", "aws_portal"}
+    if path == "packages/frontend/public/index.html":
         return {FRONTEND, BROWSER, "aws_portal"}
     if path == "packages/frontend/pyproject.toml":
-        return {FRONTEND, BROWSER, TOOLS, "aws_portal"}
+        return {FRONTEND, BROWSER, TOOLS, "aws_portal", "types"}
     if path.startswith("packages/frontend/"):
         return {FRONTEND, BROWSER}
     if path.startswith("packages/agent/"):

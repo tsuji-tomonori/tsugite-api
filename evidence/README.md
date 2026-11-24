@@ -1,6 +1,10 @@
 # 要件別の検証証跡
 
-GitHub Actions の Verify で `requirement-evidence` をダウンロードし、展開して `report.md` を開く。一覧から要件名を選ぶと、要件ごとのMarkdownに、実行したテスト名、条件と期待結果、成否、実行時間、画面画像と実測値を表示する。各ページ末尾のJUnit XMLで、その要件に対応するテストの実行記録を確認できる。インフラの要求には合成テンプレートに対するアサーションの結果を表示する。
+[最新の検証結果](https://github.com/tsuji-tomonori/tsugite-api/blob/evidence/evidence/report.md)を開くと、マージされたPRで確認した要件とその判定を読める。[保存履歴](https://github.com/tsuji-tomonori/tsugite-api/commits/evidence/)では、各コミットから当時の証跡、対応する `main` のマージコミット（`Source-merge`）、元のVerify実行をたどれる。
+
+PRが `main` にマージされるたびに、CIがそのPRの検証対象コミットと一致する `requirement-evidence` を、同じリポジトリの `evidence` ブランチの `evidence/` に保存する。保存処理に失敗した場合は、Actionsの「Publish requirement evidence」を `main` で再実行すると、未保存のマージから順に再開する。PRのレビュー中は、Verifyの成果物 `requirement-evidence` を展開して `report.md` を開ける。
+
+一覧から要件名を選ぶと、要件ごとのMarkdownに、実行したテスト名、条件と期待結果、成否、実行時間、画面画像と実測値を表示する。各ページ末尾のJUnit XMLで、その要件に対応するテストの実行記録を確認できる。インフラの要求には合成テンプレートに対するアサーションの結果を表示する。
 
 要件を追加するときは、`docs/requirements/items` の該当ファイルの「決めた方針」にある「受入テスト」に、実際に挙動を確認する pytest 関数を指定する。画面を操作するケースには、そのケース自身が撮影して JUnit に登録する PNG のファイル名も指定する。
 

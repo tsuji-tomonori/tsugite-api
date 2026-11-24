@@ -22,7 +22,7 @@
 | サンプルAPI | `packages/sample_api/src/sample_api/database.py` | サンプルAPI、アーキテクチャ、バックエンド、インフラ、ブラウザーE2E | Ruff（書式・静的解析）、API設計書・契約の生成、依存関係・CDK監査、CDK合成・インフラ文書生成、AWSエミュレーターE2E |
 | エージェント・推論モデル | `packages/agent/src/agent/jobs.py` | エージェント・推論モデル、アーキテクチャ、バックエンド、インフラ、ブラウザーE2E | Ruff（書式・静的解析）、型検査、依存関係・CDK監査、CDK合成・インフラ文書生成、AWSエミュレーターE2E |
 | バックエンド | `packages/backend/src/app/apis/catalog/apply/router.py` | エージェント・推論モデル、アーキテクチャ、バックエンド、ブラウザーE2E、開発ツール | Ruff（書式・静的解析）、型検査、API設計書・契約の生成、CDK合成・インフラ文書生成、AWSエミュレーターE2E |
-| フロントエンド | `packages/frontend/src/web_app/access_log_display.py` | アーキテクチャ、フロントエンド、ブラウザーE2E | Ruff（書式・静的解析） |
+| フロントエンド | `packages/frontend/src/web_app/actions/activity.py` | アーキテクチャ、フロントエンド、ブラウザーE2E | Ruff（書式・静的解析）、型検査、CDK合成・インフラ文書生成、AWSエミュレーターE2E |
 | インフラ | `packages/infra/src/components/bindings.py` | アーキテクチャ、インフラ | Ruff（書式・静的解析）、依存関係・CDK監査、CDK合成・インフラ文書生成、AWSエミュレーターE2E |
 | データベース | `packages/database/src/tsugite_db/design_names.py` | エージェント・推論モデル、アーキテクチャ、バックエンド、データベース、ブラウザーE2E、開発ツール | Ruff（書式・静的解析）、型検査、API設計書・契約の生成、CDK合成・インフラ文書生成、AWSエミュレーターE2E |
 
@@ -64,6 +64,7 @@
 | Pyright | `packages/agent`、`packages/backend/src/app`、`packages/database/src/tsugite_db` |
 | Pyright（strict） | `packages/database/src/tsugite_db/models.py`、`packages/backend/src/app/apis/schemas.py` |
 | mypy（strict=True） | `packages/database/src/tsugite_db/models.py`、`packages/backend/src/app/apis/schemas.py` |
+| フロントエンドのmypy（strict=True） | `packages/frontend/src/web_app`、`packages/frontend/tests` |
 
 ## テストが確認する条件と期待結果
 
@@ -96,7 +97,7 @@
 | 応答しない生成プロセスを停止し、同じモデルをCPUで再起動して準備完了を待つ。 | — | [test_model_process_recovers_from_failed_health_check](../../../packages/agent/tests/test_model_workers.py#L105) |
 | 埋め込みモデルと長さ制限付きトークナイザーを初回だけ読み込む。 | — | [test_embedding_load_reuses_cpu_model_and_tokenizer](../../../packages/agent/tests/test_model_workers.py#L125) |
 
-### アーキテクチャ（35項目）
+### アーキテクチャ（38項目）
 
 | 確認内容 | 条件別の確認内容 | テスト定義 |
 | --- | --- | --- |
@@ -119,13 +120,16 @@
 | 定義元のコメントだけを変更するとOpenAPI、API詳細、DB定義書、AWS操作表に反映される。 | — | [test_editing_declaration_comments_changes_openapi_and_design_pages](../../../tests/architecture/test_design_sources.py#L208) |
 | 要件・設計書・生成文書・各層の説明書は、日本語を含む表題で目的を示す。 | — | [test_markdown_documents_have_japanese_titles](../../../tests/architecture/test_documents.py#L25) |
 | 全要件のファイル名・要件文・四つの節・共通語彙を索引生成と同じ規則で検査する。 | — | [test_requirements_follow_the_project_vocabulary](../../../tests/architecture/test_documents.py#L38) |
-| 全画面で機能ごとの定義を検査し、共通コードへの画面登録と個別画面間の直接依存を検出する。 | — | [test_portal_screens_keep_their_feature_boundaries](../../../tests/architecture/test_frontend_screens.py#L7) |
-| 一つの機能が補助モジュールを共有し、通常URLと詳細URLを持つ構成を許可する。 | — | [test_feature_can_share_helpers_and_serve_related_routes](../../../tests/architecture/test_frontend_screens.py#L17) |
-| 画面定義の欠落、空の宣言、別モジュールからの丸ごと転送を検出する。 | — | [test_feature_requires_local_screen_declaration](../../../tests/architecture/test_frontend_screens.py#L29) |
-| 共通コードに移した画面一覧と、別名で取り込んだ個別画面の両方を検出する。 | — | [test_shared_code_cannot_own_or_import_an_individual_screen](../../../tests/architecture/test_frontend_screens.py#L36) |
-| 画面間の相対インポートと共通レイアウトへの逆向き依存を行番号付きで検出する。 | — | [test_feature_cannot_depend_on_another_screen_or_the_shell](../../../tests/architecture/test_frontend_screens.py#L45) |
-| 共通レイアウトへのURL別の条件分岐を検出し、通知やガイドへのリンクを許可する。 | — | [test_shared_layout_delegates_route_dispatch](../../../tests/architecture/test_frontend_screens.py#L55) |
-| 遷移時の状態破棄を許可し、共通ナビゲーションに戻した画面別API取得を検出する。 | — | [test_page_loading_stays_in_the_feature](../../../tests/architecture/test_frontend_screens.py#L68) |
+| 全画面で機能ごとの定義を検査し、共通コードへの画面登録と個別画面間の直接依存を検出する。 | — | [test_portal_screens_keep_their_feature_boundaries](../../../tests/architecture/test_frontend_screens.py#L9) |
+| 画面が同じディレクトリの補助処理と共通の表示部品を組み合わせられる。 | — | [test_feature_can_compose_components_and_its_own_helpers](../../../tests/architecture/test_frontend_screens.py#L22) |
+| 画面定義の欠落、空の宣言、別モジュールからの丸ごと転送を検出する。 | — | [test_feature_requires_local_screen_declaration](../../../tests/architecture/test_frontend_screens.py#L35) |
+| 共通コードに移した画面一覧と、別名で取り込んだ個別画面の両方を検出する。 | — | [test_shared_code_cannot_own_or_import_an_individual_screen](../../../tests/architecture/test_frontend_screens.py#L47) |
+| 画面間の相対インポートと共通レイアウトへの逆向き依存を行番号付きで検出する。 | — | [test_feature_cannot_depend_on_another_screen_or_the_shell](../../../tests/architecture/test_frontend_screens.py#L56) |
+| 共通レイアウトへのURL別の条件分岐を検出し、通知やガイドへのリンクを許可する。 | — | [test_shared_layout_delegates_route_dispatch](../../../tests/architecture/test_frontend_screens.py#L66) |
+| 遷移時の状態破棄を許可し、共通ナビゲーションに戻した画面別API取得を検出する。 | — | [test_page_loading_stays_in_the_feature](../../../tests/architecture/test_frontend_screens.py#L81) |
+| 部品からの画面参照とページ内の独自描画を別名・相対インポートでも検出する。 | — | [test_components_cannot_import_pages_and_pages_cannot_define_widgets](../../../tests/architecture/test_frontend_screens.py#L91) |
+| フロントのソース先頭行と公開関数の説明が日本語で記述されていることを確認する。 | — | [test_frontend_source_describes_files_and_public_functions](../../../tests/architecture/test_frontend_screens.py#L102) |
+| 空行・英語だけのコメント・日本語の文字列をファイル先頭の説明として受理しない。 | — | [test_first_line_requires_a_japanese_comment](../../../tests/architecture/test_frontend_screens.py#L113) |
 | 各層の違反をインポートの別名・相対参照・完全修飾名でも行番号付きで報告する。 | — | [test_boundary_checker_rejects_cross_layer_imports](../../../tests/architecture/test_rule_checks.py#L14) |
 | APIのジョブ受付、エージェントのガイド共有、モデル内の参照を許可する。 | — | [test_boundary_checker_accepts_supported_collaboration](../../../tests/architecture/test_rule_checks.py#L39) |
 | 所属する層を定義していない新規パッケージを検査対象から漏らさない。 | — | [test_new_package_requires_layer_rules](../../../tests/architecture/test_rule_checks.py#L52) |
@@ -201,50 +205,50 @@
 
 | 確認内容 | 条件別の確認内容 | テスト定義 |
 | --- | --- | --- |
-| 過去分の推定時刻と実測時刻を区別し、質問には選んだ記録の結果と識別子で答える。 | — | [test_detail_timestamps_and_answers](../../../packages/frontend/tests/test_access_log_detail.py#L25) |
-| 共有用URLから記号を含む元のIDと閲覧範囲を復元し、1件だけを読み込む。 | — | [test_detail_link_preserves_scope_and_id](../../../packages/frontend/tests/test_access_log_detail.py#L41) |
-| 次ページ確認用の21件目を表に出さず、最終ページで次への案内を消す。 | — | [test_log_page_shows_only_requested_rows](../../../packages/frontend/tests/test_access_log_detail.py#L53) |
-| 前のページに戻る間に新しい呼び出しがあっても、検索期間を固定して同じ行を表示する。 | — | [test_paging_back_keeps_the_time_window](../../../packages/frontend/tests/test_access_log_detail.py#L83) |
-| ログ取得に失敗したときも認証ヘッダーを送り、ダウンロードを中止して理由を表示する。 | — | [test_failed_log_download_reports_error](../../../packages/frontend/tests/test_access_log_download.py#L8) |
-| 承認済みの申請だけを候補にし、失効した商品の直接指定では仕様を取得しない。 | — | [test_console_reads_only_approved_spec](../../../packages/frontend/tests/test_api_client.py#L9) |
-| 本人に許可された操作と承認環境を選べ、操作制限のある委任認証は候補から外れる。 | — | [test_only_allowed_operations_and_environments](../../../packages/frontend/tests/test_api_client.py#L28) |
-| ログインだけの実行を拒否し、選択した委任認証でOAuth交換した短期トークンを送る。 | — | [test_identity_and_delegated_token](../../../packages/frontend/tests/test_api_client.py#L59) |
-| 承認済み環境だけを表示し、同時実行でも同じ商品の個人認証情報を再利用する。 | — | [test_trial_uses_approved_environments_and_reuses_personal_credential](../../../packages/frontend/tests/test_api_client.py#L82) |
-| URL直接指定では入力したヘッダーと本文だけを使い、Cookieとリダイレクトを無効にする。 | — | [test_manual_request_uses_only_entered_headers](../../../packages/frontend/tests/test_api_client.py#L127) |
-| 送信先やヘッダーの形式が不正な場合やGETに本文がある場合は送信前にエラーになる。 | — | [test_invalid_manual_requests_are_rejected](../../../packages/frontend/tests/test_api_client.py#L156) |
-| 呼び出し先にAPI識別名を使い、既存商品で識別名が未設定ならUUIDを使う。 | — | [test_invocation_path_uses_product_slug](../../../packages/frontend/tests/test_components.py#L27) |
-| チャットの候補と操作手順に、対応する商品・ガイドのリンクが付く。 | — | [test_chat_product_and_guide_are_linked](../../../packages/frontend/tests/test_components.py#L41) |
-| 提供者の検索結果で一致したガイドを先頭に表示し、件数を読み上げる。 | — | [test_guide_results_render_matching_cards_only](../../../packages/frontend/tests/test_components.py#L68) |
-| ガイドの条件をクリアすると全件に戻り、検索欄にフォーカスする。 | — | [test_guide_reset_restores_role_and_keyboard_focus](../../../packages/frontend/tests/test_components.py#L82) |
-| ユーザー管理の手順は閲覧でき、管理画面へのボタンは管理者にだけ表示する。 | — | [test_guide_article_shows_admin_navigation_only_to_admins](../../../packages/frontend/tests/test_components.py#L116) |
-| 全手順でサンプルデータから実画面の操作部品を描画し、画面例の内側だけを操作不能にする。 | — | [test_each_guide_renders_inert_example](../../../packages/frontend/tests/test_components.py#L131) |
-| OpenAPIの型定義を参照し、クエリ入力欄に既定値の例を表示する。 | — | [test_operation_parameter_renders_openapi_default](../../../packages/frontend/tests/test_components.py#L151) |
-| パスの予約文字をエンコードし、配列とオブジェクトを指定形式で送る。 | — | [test_operation_location_encodes_path_and_query_values](../../../packages/frontend/tests/test_components.py#L161) |
-| 必須のクエリ入力が空なら、入力項目名を示して送信を止める。 | — | [test_operation_location_requires_mandatory_query](../../../packages/frontend/tests/test_components.py#L181) |
-| 公開履歴の表に版番号・公開日・変更された操作を表示し、空の差分は省く。 | — | [test_publication_history_shows_release_changes](../../../packages/frontend/tests/test_components.py#L188) |
-| ログインフォームに入力ラベルと自動入力の用途を示し、Enterで送信できる。 | — | [test_login_form_uses_native_labels_and_keyboard_submit](../../../packages/frontend/tests/test_components.py#L224) |
-| 送信したURL・形式・本文をシェルで再現し、短期トークンは変数で参照する。 | — | [test_curl_reuses_request_without_exposing_token](../../../packages/frontend/tests/test_components.py#L246) |
-| 条件を適用しても入力欄は折りたたみ、閉じた見出しには期間と絞り込み状態を表示する。 | — | [test_log_search_starts_collapsed_and_shows_active_conditions](../../../packages/frontend/tests/test_components.py#L276) |
-| メトリクス取得が失敗しても件数とログを表示し、再読み込みで業務メニューのない利用状況が表示される。 | — | [test_dashboard_recovers_from_metrics_failure](../../../packages/frontend/tests/test_dashboard.py#L13) |
-| 応答を受け取れずに再送しても受付番号を再利用し、次の新規送信には別の番号を使う。 | — | [test_retry_reuses_pending_inquiry_id](../../../packages/frontend/tests/test_inquiry_form.py#L8) |
-| 短すぎる本文と文字数の上限を超えた本文は運営へ送信しない。 | — | [test_invalid_question_is_not_submitted](../../../packages/frontend/tests/test_inquiry_form.py#L29) |
-| 自分の履歴の2ページ目から送信すると、受付番号と先頭ページの新しい問い合わせが表示される。 | — | [test_inquiries_page_shows_receipt_and_latest_tickets](../../../packages/frontend/tests/test_inquiry_form.py#L40) |
-| 管理者と提供者の通知先には登録された名称を表示し、送信には識別子を使う。 | — | [test_notification_recipient_dropdown_uses_display_names](../../../packages/frontend/tests/test_notification_recipients.py#L4) |
-| JSON Pointerを解決し、同名のパス共通パラメーターを操作側で上書きする | — | [test_operation_overrides_path_parameter_and_resolves_pointer](../../../packages/frontend/tests/test_openapi_fields.py#L4) |
-| 初回パスワードの変更から認証アプリ登録まで、各応答のセッションを次の処理に渡す。 | — | [test_invitation_and_totp_setup](../../../packages/frontend/tests/test_portal_login.py#L13) |
-| 登録済みの利用者は確認コードを間違えても同じ画面で再入力できる。 | — | [test_returning_user_retries_mfa](../../../packages/frontend/tests/test_portal_login.py#L61) |
-| 再設定コードを受け取った利用者は新しいパスワードを設定してログイン画面に戻れる。 | — | [test_reset_returns_to_signin](../../../packages/frontend/tests/test_portal_login.py#L83) |
-| パスワードは認証サービスへのPOST本文だけで送信し、エラーは日本語で表示する。 | — | [test_credentials_sent_to_identity_service](../../../packages/frontend/tests/test_portal_login.py#L104) |
-| 画面内の入力不備と不具合を区別し、商品と本人の識別子だけを残す。 | — | [test_screen_error_context](../../../packages/frontend/tests/test_screen_logs.py#L7) |
-| API呼び出しには登録済み画面の識別子だけを付加する。 | — | [test_request_carries_screen](../../../packages/frontend/tests/test_screen_logs.py#L25) |
-| 独立した画面ファイルを追加すると配布物に入り、URLからデータ取得と描画までできる。 | — | [test_new_screen_is_packaged_loaded_and_rendered](../../../packages/frontend/tests/test_screen_registry.py#L12) |
-| 既存の固定・詳細URLを解決し、役割に応じたメニューを従来の順序で表示する。 | — | [test_existing_routes_and_role_menus](../../../packages/frontend/tests/test_screen_registry.py#L64) |
-| 別の画面が登録済みのURLを使うと重複したパスを示して失敗する。 | — | [test_duplicate_screen_path_is_rejected](../../../packages/frontend/tests/test_screen_registry.py#L94) |
-| 部署を10件ずつ表示し、次ページとプロジェクト一覧では該当する対象だけを開ける。 | — | [test_directory_pages_filter_before_paginating](../../../packages/frontend/tests/test_workspace_screens.py#L38) |
-| 直接所属の利用者をメールアドレス・名前・担当ロールに分け、管理者にだけ操作列を表示する。 | — | [test_direct_members_have_aligned_table_columns](../../../packages/frontend/tests/test_workspace_screens.py#L56) |
-| 権限と種類が一致する対象だけの利用統計を取得し、管理者専用の編集フォームを分離する。 | — | [test_scoped_monitor_and_edit_routes](../../../packages/frontend/tests/test_workspace_screens.py#L110) |
-| 管理者にだけ移管・削除を表示し、移管先には同種の別組織だけを提示する。 | — | [test_unit_retirement_actions_are_admin_only](../../../packages/frontend/tests/test_workspace_screens.py#L143) |
-| プロジェクト単位の集計であることを案内し、所属メンバーを4列の表で表示する。 | — | [test_project_monitor_shows_members_as_a_table](../../../packages/frontend/tests/test_workspace_screens.py#L159) |
+| 過去分の推定時刻と実測時刻を区別し、質問には選んだ記録の結果と識別子で答える。 | — | [test_detail_timestamps_and_answers](../../../packages/frontend/tests/test_access_log_detail.py#L32) |
+| 共有用URLから記号を含む元のIDと閲覧範囲を復元し、1件だけを読み込む。 | — | [test_detail_link_preserves_scope_and_id](../../../packages/frontend/tests/test_access_log_detail.py#L48) |
+| 次ページ確認用の21件目を表に出さず、最終ページで次への案内を消す。 | — | [test_log_page_shows_only_requested_rows](../../../packages/frontend/tests/test_access_log_detail.py#L62) |
+| 前のページに戻る間に新しい呼び出しがあっても、検索期間を固定して同じ行を表示する。 | — | [test_paging_back_keeps_the_time_window](../../../packages/frontend/tests/test_access_log_detail.py#L94) |
+| ログ取得に失敗したときも認証ヘッダーを送り、ダウンロードを中止して理由を表示する。 | — | [test_failed_log_download_reports_error](../../../packages/frontend/tests/test_access_log_download.py#L12) |
+| 承認済みの申請だけを候補にし、失効した商品の直接指定では仕様を取得しない。 | — | [test_console_reads_only_approved_spec](../../../packages/frontend/tests/test_api_client.py#L14) |
+| 本人に許可された操作と承認環境を選べ、操作制限のある委任認証は候補から外れる。 | — | [test_only_allowed_operations_and_environments](../../../packages/frontend/tests/test_api_client.py#L35) |
+| ログインだけの実行を拒否し、選択した委任認証でOAuth交換した短期トークンを送る。 | — | [test_identity_and_delegated_token](../../../packages/frontend/tests/test_api_client.py#L66) |
+| 承認済み環境だけを表示し、同時実行でも同じ商品の個人認証情報を再利用する。 | — | [test_trial_uses_approved_environments_and_reuses_personal_credential](../../../packages/frontend/tests/test_api_client.py#L96) |
+| URL直接指定では入力したヘッダーと本文だけを使い、Cookieとリダイレクトを無効にする。 | — | [test_manual_request_uses_only_entered_headers](../../../packages/frontend/tests/test_api_client.py#L144) |
+| 送信先やヘッダーの形式が不正な場合やGETに本文がある場合は送信前にエラーになる。 | — | [test_invalid_manual_requests_are_rejected](../../../packages/frontend/tests/test_api_client.py#L175) |
+| 呼び出し先にAPI識別名を使い、既存商品で識別名が未設定ならUUIDを使う。 | — | [test_invocation_path_uses_product_slug](../../../packages/frontend/tests/test_components.py#L32) |
+| チャットの候補と操作手順に、対応する商品・ガイドのリンクが付く。 | — | [test_chat_product_and_guide_are_linked](../../../packages/frontend/tests/test_components.py#L46) |
+| 提供者の検索結果で一致したガイドを先頭に表示し、件数を読み上げる。 | — | [test_guide_results_render_matching_cards_only](../../../packages/frontend/tests/test_components.py#L73) |
+| ガイドの条件をクリアすると全件に戻り、検索欄にフォーカスする。 | — | [test_guide_reset_restores_role_and_keyboard_focus](../../../packages/frontend/tests/test_components.py#L87) |
+| ユーザー管理の手順は閲覧でき、管理画面へのボタンは管理者にだけ表示する。 | — | [test_guide_article_shows_admin_navigation_only_to_admins](../../../packages/frontend/tests/test_components.py#L123) |
+| 全手順でサンプルデータから実画面の操作部品を描画し、画面例の内側だけを操作不能にする。 | — | [test_each_guide_renders_inert_example](../../../packages/frontend/tests/test_components.py#L156) |
+| OpenAPIの型定義を参照し、クエリ入力欄に既定値の例を表示する。 | — | [test_operation_parameter_renders_openapi_default](../../../packages/frontend/tests/test_components.py#L184) |
+| パスの予約文字をエンコードし、配列とオブジェクトを指定形式で送る。 | — | [test_operation_location_encodes_path_and_query_values](../../../packages/frontend/tests/test_components.py#L194) |
+| 必須のクエリ入力が空なら、入力項目名を示して送信を止める。 | — | [test_operation_location_requires_mandatory_query](../../../packages/frontend/tests/test_components.py#L216) |
+| 公開履歴の表に版番号・公開日・変更された操作を表示し、空の差分は省く。 | — | [test_publication_history_shows_release_changes](../../../packages/frontend/tests/test_components.py#L223) |
+| ログインフォームに入力ラベルと自動入力の用途を示し、Enterで送信できる。 | — | [test_login_form_uses_native_labels_and_keyboard_submit](../../../packages/frontend/tests/test_components.py#L259) |
+| 送信したURL・形式・本文をシェルで再現し、短期トークンは変数で参照する。 | — | [test_curl_reuses_request_without_exposing_token](../../../packages/frontend/tests/test_components.py#L283) |
+| 条件を適用しても入力欄は折りたたみ、閉じた見出しには期間と絞り込み状態を表示する。 | — | [test_log_search_starts_collapsed_and_shows_active_conditions](../../../packages/frontend/tests/test_components.py#L313) |
+| メトリクス取得が失敗しても件数とログを表示し、再読み込みで業務メニューのない利用状況が表示される。 | — | [test_dashboard_recovers_from_metrics_failure](../../../packages/frontend/tests/test_dashboard.py#L19) |
+| 応答を受け取れずに再送しても受付番号を再利用し、次の新規送信には別の番号を使う。 | — | [test_retry_reuses_pending_inquiry_id](../../../packages/frontend/tests/test_inquiry_form.py#L12) |
+| 短すぎる本文と文字数の上限を超えた本文は運営へ送信しない。 | — | [test_invalid_question_is_not_submitted](../../../packages/frontend/tests/test_inquiry_form.py#L35) |
+| 自分の履歴の2ページ目から送信すると、受付番号と先頭ページの新しい問い合わせが表示される。 | — | [test_inquiries_page_shows_receipt_and_latest_tickets](../../../packages/frontend/tests/test_inquiry_form.py#L48) |
+| 管理者と提供者の通知先には登録された名称を表示し、送信には識別子を使う。 | — | [test_notification_recipient_dropdown_uses_display_names](../../../packages/frontend/tests/test_notification_recipients.py#L10) |
+| JSON Pointerを解決し、同名のパス共通パラメーターを操作側で上書きする | — | [test_operation_overrides_path_parameter_and_resolves_pointer](../../../packages/frontend/tests/test_openapi_fields.py#L8) |
+| 初回パスワードの変更から認証アプリ登録まで、各応答のセッションを次の処理に渡す。 | — | [test_invitation_and_totp_setup](../../../packages/frontend/tests/test_portal_login.py#L18) |
+| 登録済みの利用者は確認コードを間違えても同じ画面で再入力できる。 | — | [test_returning_user_retries_mfa](../../../packages/frontend/tests/test_portal_login.py#L66) |
+| 再設定コードを受け取った利用者は新しいパスワードを設定してログイン画面に戻れる。 | — | [test_reset_returns_to_signin](../../../packages/frontend/tests/test_portal_login.py#L88) |
+| パスワードは認証サービスへのPOST本文だけで送信し、エラーは日本語で表示する。 | — | [test_credentials_sent_to_identity_service](../../../packages/frontend/tests/test_portal_login.py#L109) |
+| 画面内の入力不備と不具合を区別し、商品と本人の識別子だけを残す。 | — | [test_screen_error_context](../../../packages/frontend/tests/test_screen_logs.py#L13) |
+| API呼び出しには登録済み画面の識別子だけを付加する。 | — | [test_request_carries_screen](../../../packages/frontend/tests/test_screen_logs.py#L33) |
+| 独立した画面ファイルを追加すると配布物に入り、URLからデータ取得と描画までできる。 | — | [test_new_screen_is_packaged_loaded_and_rendered](../../../packages/frontend/tests/test_screen_registry.py#L17) |
+| 既存の固定・詳細URLを解決し、役割に応じたメニューを従来の順序で表示する。 | — | [test_existing_routes_and_role_menus](../../../packages/frontend/tests/test_screen_registry.py#L71) |
+| 別の画面が登録済みのURLを使うと重複したパスを示して失敗する。 | — | [test_duplicate_screen_path_is_rejected](../../../packages/frontend/tests/test_screen_registry.py#L105) |
+| 部署を10件ずつ表示し、次ページとプロジェクト一覧では該当する対象だけを開ける。 | — | [test_directory_pages_filter_before_paginating](../../../packages/frontend/tests/test_workspace_screens.py#L48) |
+| 直接所属の利用者をメールアドレス・名前・担当ロールに分け、管理者にだけ操作列を表示する。 | — | [test_direct_members_have_aligned_table_columns](../../../packages/frontend/tests/test_workspace_screens.py#L66) |
+| 権限と種類が一致する対象だけの利用統計を取得し、管理者専用の編集フォームを分離する。 | — | [test_scoped_monitor_and_edit_routes](../../../packages/frontend/tests/test_workspace_screens.py#L120) |
+| 管理者にだけ移管・削除を表示し、移管先には同種の別組織だけを提示する。 | — | [test_unit_retirement_actions_are_admin_only](../../../packages/frontend/tests/test_workspace_screens.py#L155) |
+| プロジェクト単位の集計であることを案内し、所属メンバーを4列の表で表示する。 | — | [test_project_monitor_shows_members_as_a_table](../../../packages/frontend/tests/test_workspace_screens.py#L171) |
 
 ### インフラ（10項目）
 
@@ -293,9 +297,9 @@
 | 部署リーダーの判断が済むまで提供者は承認できず、最終承認後に呼び出しが成功する。 | — | [test_ordered_review](../../../tests/e2e/browser/test_requirement_flows.py#L106) |
 | 拒否を記録した対象APIを管理者が一時停止し、許可済みの呼び出しだけを対象別に止められる。 | — | [test_admin_stops_target_after_denial](../../../tests/e2e/browser/test_requirement_flows.py#L167) |
 | 利用者が2ページ目の1件を開き、同じリクエストIDで質問と問い合わせを送れる。 | — | [test_access_log_detail_and_support](../../../tests/e2e/browser/test_requirement_flows.py#L210) |
-| 部署リーダーが配下の別人の呼び出しを監査し、リーダー解除後は詳細を再表示できない。 | — | [test_lead_access_audit](../../../tests/e2e/browser/test_requirement_flows.py#L251) |
-| 監査担当が他の利用者のアクセスと業務監査を同じIDで照合し、両方の記録を保存できる。 | — | [test_auditor_cross_checks_exports](../../../tests/e2e/browser/test_requirement_flows.py#L291) |
-| 提供者が商品ごとのトークンの上限を短縮すると、利用者による上限超過の発行を拒否する。 | — | [test_provider_shortens_token_lifetime](../../../tests/e2e/browser/test_requirement_flows.py#L327) |
+| 部署リーダーが配下の別人の呼び出しを監査し、リーダー解除後は詳細を再表示できない。 | — | [test_lead_access_audit](../../../tests/e2e/browser/test_requirement_flows.py#L255) |
+| 監査担当が他の利用者のアクセスと業務監査を同じIDで照合し、両方の記録を保存できる。 | — | [test_auditor_cross_checks_exports](../../../tests/e2e/browser/test_requirement_flows.py#L295) |
+| 提供者が商品ごとのトークンの上限を短縮すると、利用者による上限超過の発行を拒否する。 | — | [test_provider_shortens_token_lifetime](../../../tests/e2e/browser/test_requirement_flows.py#L331) |
 | 役割と検索語で使い方を絞り込み、手順から対象画面を開ける | — | [test_usage_guide](../../../tests/e2e/browser/test_usage_guide.py#L13) |
 | 管理者が組織階層と兼務を設定し、リーダーがキー・利用状況・停止と再開を操作する | — | [test_workspace_key_console](../../../tests/e2e/browser/test_workspace_console.py#L29) |
 | finance の利用者には所属先が1件だけ表示され、未所属の詳細URLを開いても情報は表示されない | — | [test_consumer_project_directory](../../../tests/e2e/browser/test_workspace_console.py#L212) |
@@ -316,21 +320,21 @@
 | AWS CLI が失敗したときは操作名を示し、引数の招待先を例外に含めない。 | — | [test_cli_error_hides_invitation_address](../../../tools/tests/test_bootstrap_admin.py#L137) |
 | 説明文のみの変更は既存の全体カバレッジを引き継ぎ、実行環境の準備を省ける。 | — | [test_docs_reuse_complete_report](../../../tools/tests/test_ci_scope.py#L17) |
 | 単体テストの変更は該当層に絞り、複数層の変更は両方を選ぶ。 | — | [test_component_tests_and_mixed_changes](../../../tools/tests/test_ci_scope.py#L25) |
-| CSSは画面の検証を行い、認証クライアントの変更ではCognitoの画面操作も確認する。 | — | [test_css_and_authentication_have_different_consumers](../../../tools/tests/test_ci_scope.py#L37) |
-| 画面のビルド処理を変えるとCSS解析とコード解析の規則も検査する。 | — | [test_frontend_builder_runs_stylesheet_and_design_policy_tests](../../../tools/tests/test_ci_scope.py#L47) |
-| インフラの実装変更ではCDK・監査・AWSの画面連携に必要な環境を用意する。 | — | [test_infra_and_aws_require_browser_and_assets](../../../tools/tests/test_ci_scope.py#L56) |
-| 計測対象コードの変更時は以前に実行行を記録した層も再計測する。 | — | [test_measured_source_invalidates_suites_that_executed_it](../../../tools/tests/test_ci_scope.py#L65) |
-| 保存結果がない層は比較元での補完対象にし、PRの実行対象とは区別する。 | — | [test_missing_coverage_never_becomes_a_partial_baseline](../../../tools/tests/test_ci_scope.py#L74) |
-| 未知の領域・依存ロック・CI定義を変更した場合は全検証を選ぶ。 | — | [test_unknown_or_shared_input_runs_all_checks](../../../tools/tests/test_ci_scope.py#L86) |
-| 日本語と空白を含むパスの移動と削除を移動元も含めて判定する。 | — | [test_git_diff_includes_deleted_and_both_renamed_paths](../../../tools/tests/test_ci_scope.py#L100) |
-| 全領域の実行行と未実行行を区別し、未読込のモデルとインフラの入口も分母に含める。 | — | [test_coverage_includes_all_runtime_layers_and_unexecuted_files](../../../tools/tests/test_ci_scope.py#L122) |
-| 画面変更時はその画面を実行した別の層を再計測し、無関係な層の結果を再利用する。 | — | [test_changed_screen_invalidates_only_suites_that_executed_it](../../../tools/tests/test_ci_scope.py#L163) |
-| 旧形式または異なる計測条件の結果は再利用せず、同じ条件の結果だけを使う。 | — | [test_cache_requires_same_coverage_policy](../../../tools/tests/test_ci_scope.py#L177) |
-| 比較元でブラウザーのタイムアウトだけが起きた場合に限り再計測する。 | — | [test_baseline_retry_requires_only_browser_timeouts](../../../tools/tests/test_ci_scope.py#L188) |
-| エージェントとモデルの変更で単体・API結合・構造・型・配布物の検査を選ぶ。 | — | [test_agent_sources_select_agent_consumers_and_deployment_checks](../../../tools/tests/test_ci_scope.py#L203) |
-| 移動前と同じ範囲の総カバレッジを比較に使い、古いパスのスイート別結果は再利用しない。 | — | [test_moved_agent_reuses_only_aggregate_baseline](../../../tools/tests/test_ci_scope.py#L215) |
-| 間接依存の更新は利用パッケージに絞り、移動した依存は変更前と変更後の両方を検証する。 | — | [test_lock_changes_follow_transitive_old_and_new_consumers](../../../tools/tests/test_ci_scope.py#L232) |
-| PRテンプレートだけの差分はキャッシュがなくても準備やテストを起動せず、空の計測を公開しない。 | — | [test_template_plan_never_bootstraps_coverage](../../../tools/tests/test_ci_scope.py#L261) |
+| CSSは画面の検証を行い、認証クライアントの変更ではCognitoの画面操作も確認する。 | — | [test_css_and_authentication_have_different_consumers](../../../tools/tests/test_ci_scope.py#L38) |
+| 画面のビルド処理を変えるとCSS解析とコード解析の規則も検査する。 | — | [test_frontend_builder_runs_stylesheet_and_design_policy_tests](../../../tools/tests/test_ci_scope.py#L48) |
+| インフラの実装変更ではCDK・監査・AWSの画面連携に必要な環境を用意する。 | — | [test_infra_and_aws_require_browser_and_assets](../../../tools/tests/test_ci_scope.py#L57) |
+| 計測対象コードの変更時は以前に実行行を記録した層も再計測する。 | — | [test_measured_source_invalidates_suites_that_executed_it](../../../tools/tests/test_ci_scope.py#L66) |
+| 保存結果がない層は比較元での補完対象にし、PRの実行対象とは区別する。 | — | [test_missing_coverage_never_becomes_a_partial_baseline](../../../tools/tests/test_ci_scope.py#L75) |
+| 未知の領域・依存ロック・CI定義を変更した場合は全検証を選ぶ。 | — | [test_unknown_or_shared_input_runs_all_checks](../../../tools/tests/test_ci_scope.py#L87) |
+| 日本語と空白を含むパスの移動と削除を移動元も含めて判定する。 | — | [test_git_diff_includes_deleted_and_both_renamed_paths](../../../tools/tests/test_ci_scope.py#L101) |
+| 全領域の実行行と未実行行を区別し、未読込のモデルとインフラの入口も分母に含める。 | — | [test_coverage_includes_all_runtime_layers_and_unexecuted_files](../../../tools/tests/test_ci_scope.py#L123) |
+| 画面変更時はその画面を実行した別の層を再計測し、無関係な層の結果を再利用する。 | — | [test_changed_screen_invalidates_only_suites_that_executed_it](../../../tools/tests/test_ci_scope.py#L164) |
+| 旧形式または異なる計測条件の結果は再利用せず、同じ条件の結果だけを使う。 | — | [test_cache_requires_same_coverage_policy](../../../tools/tests/test_ci_scope.py#L178) |
+| 比較元でブラウザーのタイムアウトだけが起きた場合に限り再計測する。 | — | [test_baseline_retry_requires_only_browser_timeouts](../../../tools/tests/test_ci_scope.py#L189) |
+| エージェントとモデルの変更で単体・API結合・構造・型・配布物の検査を選ぶ。 | — | [test_agent_sources_select_agent_consumers_and_deployment_checks](../../../tools/tests/test_ci_scope.py#L204) |
+| 移動前と同じ範囲の総カバレッジを比較に使い、古いパスのスイート別結果は再利用しない。 | — | [test_moved_agent_reuses_only_aggregate_baseline](../../../tools/tests/test_ci_scope.py#L216) |
+| 間接依存の更新は利用パッケージに絞り、移動した依存は変更前と変更後の両方を検証する。 | — | [test_lock_changes_follow_transitive_old_and_new_consumers](../../../tools/tests/test_ci_scope.py#L233) |
+| PRテンプレートだけの差分はキャッシュがなくても準備やテストを起動せず、空の計測を公開しない。 | — | [test_template_plan_never_bootstraps_coverage](../../../tools/tests/test_ci_scope.py#L262) |
 | 検査の直前の説明と実行条件を対応付け、シェル文字列内の偽コメントを無視する。 | — | [test_workflow_comments_follow_steps](../../../tools/tests/test_completion.py#L8) |
 | ブランチの下限・低下幅を合成し、非同期テストとクラスの説明を定義行から取得する。 | — | [test_rule_changes_and_test_edits_reach_document](../../../tools/tests/test_completion.py#L28) |
 | 旧方式で測った成果物は比較元に階層付き画面がなく計測器の他の部分が一致するときだけ使う。 | — | [test_flat_baseline_requires_equivalent_file_selection](../../../tools/tests/test_coverage_baseline.py#L6) |
