@@ -83,10 +83,22 @@ def test_member_profile_management(tmp_path: Path, request: pytest.FixtureReques
 
             menu(admin, "ユーザー管理")
             row.get_by_role("button", name="プロフィールを編集").click()
-            admin.get_by_label("表示名（任意）").fill("")
-            admin.get_by_role("button", name="保存する", exact=True).click()
+            display_name = admin.get_by_label("表示名（任意）", exact=True)
+            expect(display_name).to_have_value("みさき")
+            display_name.press("ControlOrMeta+a")
+            display_name.press("Backspace")
+            expect(display_name).to_have_value("")
+            with admin.expect_response(
+                lambda r: (
+                    r.request.method == "PATCH" and r.url.endswith(f"/api/members/{subject}/profile")
+                )
+            ) as edited:
+                admin.get_by_role("button", name="保存する", exact=True).click()
+            saved = edited.value
+            assert saved.ok and saved.json()["display_name"] is None and saved.json()["revision"] == 3
             expect(admin.get_by_text("プロフィールを保存しました", exact=True)).to_be_visible()
             menu(admin, "業務操作履歴")
+            admin.get_by_label("リクエストID", exact=True).fill(saved.headers["x-request-id"])
             admin.get_by_label("操作", exact=True).select_option("profile.admin_update")
             admin.get_by_role("button", name="絞り込む").click()
             entry = admin.locator(".audit-row").filter(has_text="管理者によるプロフィール変更")
