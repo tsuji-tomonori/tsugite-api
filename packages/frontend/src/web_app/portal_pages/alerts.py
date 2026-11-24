@@ -1,5 +1,6 @@
 import client
 import guide_examples as example
+from list_layout import disclosure, result_table
 from management_targets import load_targets, target_options
 from portal_labels import LABEL
 from portal_navigation import load
@@ -27,9 +28,8 @@ async def save_alert():
     ctx["message"] = "アラート設定を保存しました"
 
 
-def rule_form(targets):
-    with t.div(classes="box"):
-        t.h2("利用件数のルール")
+def rule_form(targets, *, expanded=False):
+    with disclosure("利用件数のルール", expanded=expanded):
         field("対象の利用申請", "alert-target", options=targets)
         field(
             "集計期間",
@@ -55,16 +55,24 @@ def rule_form(targets):
 def alerts_view():
     targets = target_options()
     if targets:
-        rule_form(targets)
-    for r in ctx["rules"]:
-        with t.article(classes="box"):
-            t.h3(r["name"] + " · " + r["project"] + " · " + LABEL[r["environment"]])
-            t.p(
-                f"{r['minutes']}分 / {r['threshold']}件　現在 {r['calls']}件　"
-                + ("無効" if not r["enabled"] else "通知と停止" if r["stop"] else "通知")
-            )
+        with t.div(classes="list-tools"):
+            rule_form(targets)
     if not ctx["rules"]:
         t.p("設定済みのルールはありません。", classes="empty")
+        return
+    with result_table(
+        "設定済みのルール",
+        ("API", "プロジェクト", "環境", "集計期間", "しきい値", "現在の件数", "到達時の動作"),
+    ):
+        for r in ctx["rules"]:
+            with t.tr():
+                t.th(r["name"], scope="row")
+                t.td(r["project"])
+                t.td(LABEL[r["environment"]])
+                t.td(f"{r['minutes']}分")
+                t.td(f"{r['threshold']}件")
+                t.td(f"{r['calls']}件")
+                t.td("無効" if not r["enabled"] else "通知と停止" if r["stop"] else "通知")
 
 
 async def load_alerts(_page):
@@ -80,6 +88,6 @@ SCREENS = (
         load_alerts,
         group="ガバナンス",
         order=150,
-        examples={"alerts": lambda: rule_form(example.TARGETS)},
+        examples={"alerts": lambda: rule_form(example.TARGETS, expanded=True)},
     ),
 )
