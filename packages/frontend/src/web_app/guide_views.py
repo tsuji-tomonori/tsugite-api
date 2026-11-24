@@ -3,6 +3,7 @@
 from guide_content import BY_ID, GUIDES, audiences
 from guide_search import search
 from js import document
+from list_layout import disclosure, result_table
 from puepy import t
 from screen_registry import guide_examples
 
@@ -34,55 +35,64 @@ def index(ctx):
         document.getElementById("guide-query").value = ""
         document.getElementById("guide-role").value = ROLES[0]
         update(event)
+        document.getElementById("guide-query").closest("details").open = True
         document.getElementById("guide-query").focus()
 
-    with t.form(classes="box guide-search", on_submit=update):
-        with t.label(classes="field"):
-            t.span("何をしたいですか？")
-            t.input(
-                type="search",
-                id="guide-query",
-                classes="form-control",
-                value=query,
-                on_input=update,
-                placeholder="例　APIを使いたい、読み取りだけ許可したい",
-            )
-        with t.label(classes="field"):
-            t.span("役割", id="guide-role-label")
-            with t.select(
-                id="guide-role",
-                aria_labelledby="guide-role-label",
-                classes="form-select",
-                on_change=update,
-            ):
-                for label in ROLES:
-                    t.option(label, value=label, selected=label == role)
-        t.button("ガイドを検索", type="submit", classes="btn btn-primary")
+    def submit(event):
+        update(event)
+        panel = event.currentTarget.closest("details")
+        panel.open = False
+        panel.querySelector("summary").focus()
 
     results = search(query, role)
-    with t.div(classes="guide-results"):
-        t.h2("操作手順")
-        t.span(f"{len(results)}件", id="guide-count", role="status")
-        t.button(
-            "条件をクリア",
-            id="guide-clear",
-            hidden=not (query or role != ROLES[0]),
-            type="button",
-            classes="btn btn-outline-secondary",
-            on_click=reset,
-        )
+    with t.div(classes="list-tools"):
+        with t.div(classes="list-count"):
+            t.h2("操作手順")
+            t.span(f"{len(results)}件", id="guide-count", role="status")
+            t.button(
+                "条件をクリア",
+                id="guide-clear",
+                hidden=not (query or role != ROLES[0]),
+                type="button",
+                classes="btn btn-outline-secondary",
+                on_click=reset,
+            )
+        with disclosure("検索条件"):
+            with t.form(classes="guide-search", on_submit=submit):
+                with t.label(classes="field"):
+                    t.span("何をしたいですか？")
+                    t.input(
+                        type="search",
+                        id="guide-query",
+                        classes="form-control",
+                        value=query,
+                        on_input=update,
+                        placeholder="例　APIを使いたい、読み取りだけ許可したい",
+                    )
+                with t.label(classes="field"):
+                    t.span("役割", id="guide-role-label")
+                    with t.select(
+                        id="guide-role",
+                        aria_labelledby="guide-role-label",
+                        classes="form-select",
+                        on_change=update,
+                    ):
+                        for label in ROLES:
+                            t.option(label, value=label, selected=label == role)
+                t.button("ガイドを検索", type="submit", classes="btn btn-primary")
+
     t.p(
         "手順が見つかりませんでした。役割を［すべて］にするか、画面名や別の言葉で検索してください。",
         id="guide-empty",
         hidden=bool(results),
         classes="empty",
     )
-    with t.div(classes="guide-grid", id="guide-grid"):
+    with result_table("操作手順", ("手順", "対象の役割"), body_id="guide-grid"):
         for g in [*results, *(g for g in GUIDES if g not in results)]:
-            with t.article(classes="box", id="guide-card-" + g.id, hidden=g not in results):
-                t.small("・".join(audiences(g)), classes="muted")
-                with t.h3():
+            with t.tr(id="guide-card-" + g.id, hidden=g not in results):
+                with t.th(scope="row"):
                     t.a(g.title, href="#/guide/" + g.id)
+                t.td("・".join(audiences(g)))
 
 
 def article(key, user, pages, go, btn):

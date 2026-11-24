@@ -186,7 +186,7 @@
 | 管理者だけが空の部署を子から削除でき、廃止した識別子は再作成できない。 | — | [test_unit_retirement](../../../packages/backend/tests/test_unit_lifecycle.py#L4) |
 | 提供・利用を既存プロジェクトへ移管し、公開状態・旧URLと新URLでの認証済み呼び出しを確認する。 | — | [test_project_transfer](../../../packages/backend/tests/test_unit_lifecycle.py#L24) |
 
-### フロントエンド（43項目）
+### フロントエンド（44項目）
 
 | 確認内容 | 条件別の確認内容 | テスト定義 |
 | --- | --- | --- |
@@ -213,6 +213,7 @@
 | 公開履歴の表に版番号・公開日・変更された操作を表示し、空の差分は省く。 | — | [test_publication_history_shows_release_changes](../../../packages/frontend/tests/test_components.py#L188) |
 | ログインフォームに入力ラベルと自動入力の用途を示し、Enterで送信できる。 | — | [test_login_form_uses_native_labels_and_keyboard_submit](../../../packages/frontend/tests/test_components.py#L224) |
 | 送信したURL・形式・本文をシェルで再現し、短期トークンは変数で参照する。 | — | [test_curl_reuses_request_without_exposing_token](../../../packages/frontend/tests/test_components.py#L246) |
+| 条件を適用しても入力欄は折りたたみ、閉じた見出しには期間と絞り込み状態を表示する。 | — | [test_log_search_starts_collapsed_and_shows_active_conditions](../../../packages/frontend/tests/test_components.py#L276) |
 | メトリクス取得が失敗しても件数とログを表示し、再読み込みで業務メニューのない利用状況が表示される。 | — | [test_dashboard_recovers_from_metrics_failure](../../../packages/frontend/tests/test_dashboard.py#L13) |
 | 応答を受け取れずに再送しても受付番号を再利用し、次の新規送信には別の番号を使う。 | — | [test_retry_reuses_pending_inquiry_id](../../../packages/frontend/tests/test_inquiry_form.py#L8) |
 | 短すぎる本文と文字数の上限を超えた本文は運営へ送信しない。 | — | [test_invalid_question_is_not_submitted](../../../packages/frontend/tests/test_inquiry_form.py#L29) |
@@ -265,30 +266,30 @@
 | OpenAPIの型からパス・クエリ・JSONを入力し、選択したキーでHTTPSの送料計算を実行する | — | [test_openapi_key_console](../../../tests/e2e/browser/test_api_docs.py#L135) |
 | ブラウザーで3方式を発行し、実時計で1分後に更新、シークレット変更・失効まで確認する | — | [test_credentials_console](../../../tests/e2e/browser/test_credentials_console.py#L17) |
 | 提供者が公開・自動承認・委任の条件を保存し、部署リーダーが個人申請を画面から却下する | — | [test_provider_policy_console](../../../tests/e2e/browser/test_delegation_console.py#L13) |
-| 6種類の権限で全メニューを開き、狭幅と広幅で余白・操作領域・横あふれを検査する。 | — | [test_role_screen_layout](../../../tests/e2e/browser/test_layout.py#L92) |
+| 6種類の権限で全メニューを開き、狭幅と広幅で余白・操作領域・横あふれを検査する。 | — | [test_role_screen_layout](../../../tests/e2e/browser/test_layout.py#L94) |
 | 管理者が招待時に氏名を入力し、本人の表示名とともに兼務先に表示して監査を確認する。 | — | [test_member_profile_management](../../../tests/e2e/browser/test_member_profile_console.py#L16) |
 | 提供者が利用者の操作を選び、送料1,400円のHTTPS応答と権限変更直後の転送停止を照合する | — | [test_person_operation_console](../../../tests/e2e/browser/test_operation_console.py#L15) |
-| デモの提供者と利用者が公開・申請・承認・実行・権限取消を画面で完了できる | — | [test_user_flow](../../../tests/e2e/browser/test_portal.py#L25) |
-| ホームで商品と手順を調べ、運営への問い合わせを明示的に送信できる。 | — | [test_home_chat_and_inquiry](../../../tests/e2e/browser/test_portal.py#L30) |
-| 利用者が問い合わせ画面から送信すると受付番号が表示され、再訪しても回答待ちの履歴を確認できる。 | — | [test_submit_from_inquiries](../../../tests/e2e/browser/test_portal.py#L63) |
-| 6業務・20拠点の公開120件を全件照合し、PC・スマートフォンの検索とページ送りを確認する | — | [test_large_catalog](../../../tests/e2e/browser/test_portal.py#L95) |
-| 11月の外観変更を反映した明暗テーマの文字コントラストとキーボード操作を確認する | — | [test_console_visual_modes](../../../tests/e2e/browser/test_portal.py#L166) |
-| 3役で利用状況、ユーザー管理、名称で選んだ宛先への通知、ログ保存、掲載終了を確認する。 | — | [test_governance_console](../../../tests/e2e/browser/test_portal.py#L269) |
-| スマートフォンでログインし、確認コードを入力して元のカタログへ戻れる。 | — | [test_portal_login_on_mobile](../../../tests/e2e/browser/test_portal.py#L402) |
+| デモの提供者と利用者が公開・申請・承認・実行・権限取消を画面で完了できる | — | [test_user_flow](../../../tests/e2e/browser/test_portal.py#L26) |
+| ホームで商品と手順を調べ、運営への問い合わせを明示的に送信できる。 | — | [test_home_chat_and_inquiry](../../../tests/e2e/browser/test_portal.py#L31) |
+| 利用者が問い合わせ画面から送信すると受付番号が表示され、再訪しても回答待ちの履歴を確認できる。 | — | [test_submit_from_inquiries](../../../tests/e2e/browser/test_portal.py#L64) |
+| 6業務・20拠点の公開120件を全件照合し、PC・スマートフォンの検索とページ送りを確認する | — | [test_large_catalog](../../../tests/e2e/browser/test_portal.py#L97) |
+| 11月の外観変更を反映した明暗テーマの文字コントラストとキーボード操作を確認する | — | [test_console_visual_modes](../../../tests/e2e/browser/test_portal.py#L172) |
+| 3役で利用状況、ユーザー管理、名称で選んだ宛先への通知、ログ保存、掲載終了を確認する。 | — | [test_governance_console](../../../tests/e2e/browser/test_portal.py#L277) |
+| スマートフォンでログインし、確認コードを入力して元のカタログへ戻れる。 | — | [test_portal_login_on_mobile](../../../tests/e2e/browser/test_portal.py#L414) |
 | 商品を公開し、利用者が商品詳細から利用申請できる | — | [test_publish_and_apply_from_product_page](../../../tests/e2e/browser/test_product_publication.py#L15) |
 | 実行レポートの画像をオフラインで拡大し、キーボード・タッチ・印刷でも確認できる | — | [test_report_image_viewer](../../../tests/e2e/browser/test_report_images.py#L12) |
-| 利用者が承認待ちの申請を取り下げると画面に反映され、同じ環境に再申請できる。 | — | [test_withdraw_pending](../../../tests/e2e/browser/test_requirement_flows.py#L49) |
-| 利用者が商品画面で旧版と新版の版番号、追加された操作と提供者の説明を確認できる。 | — | [test_release_history](../../../tests/e2e/browser/test_requirement_flows.py#L71) |
-| 部署リーダーの判断が済むまで提供者は承認できず、最終承認後に呼び出しが成功する。 | — | [test_ordered_review](../../../tests/e2e/browser/test_requirement_flows.py#L105) |
-| 拒否を記録した対象APIを管理者が一時停止し、許可済みの呼び出しだけを対象別に止められる。 | — | [test_admin_stops_target_after_denial](../../../tests/e2e/browser/test_requirement_flows.py#L166) |
-| 利用者が2ページ目の1件を開き、同じリクエストIDで質問と問い合わせを送れる。 | — | [test_access_log_detail_and_support](../../../tests/e2e/browser/test_requirement_flows.py#L209) |
-| 部署リーダーが配下の別人の呼び出しを監査し、リーダー解除後は詳細を再表示できない。 | — | [test_lead_access_audit](../../../tests/e2e/browser/test_requirement_flows.py#L245) |
-| 監査担当が他の利用者のアクセスと業務監査を同じIDで照合し、両方の記録を保存できる。 | — | [test_auditor_cross_checks_exports](../../../tests/e2e/browser/test_requirement_flows.py#L284) |
-| 提供者が商品ごとのトークンの上限を短縮すると、利用者による上限超過の発行を拒否する。 | — | [test_provider_shortens_token_lifetime](../../../tests/e2e/browser/test_requirement_flows.py#L318) |
+| 利用者が承認待ちの申請を取り下げると画面に反映され、同じ環境に再申請できる。 | — | [test_withdraw_pending](../../../tests/e2e/browser/test_requirement_flows.py#L50) |
+| 利用者が商品画面で旧版と新版の版番号、追加された操作と提供者の説明を確認できる。 | — | [test_release_history](../../../tests/e2e/browser/test_requirement_flows.py#L72) |
+| 部署リーダーの判断が済むまで提供者は承認できず、最終承認後に呼び出しが成功する。 | — | [test_ordered_review](../../../tests/e2e/browser/test_requirement_flows.py#L106) |
+| 拒否を記録した対象APIを管理者が一時停止し、許可済みの呼び出しだけを対象別に止められる。 | — | [test_admin_stops_target_after_denial](../../../tests/e2e/browser/test_requirement_flows.py#L167) |
+| 利用者が2ページ目の1件を開き、同じリクエストIDで質問と問い合わせを送れる。 | — | [test_access_log_detail_and_support](../../../tests/e2e/browser/test_requirement_flows.py#L210) |
+| 部署リーダーが配下の別人の呼び出しを監査し、リーダー解除後は詳細を再表示できない。 | — | [test_lead_access_audit](../../../tests/e2e/browser/test_requirement_flows.py#L251) |
+| 監査担当が他の利用者のアクセスと業務監査を同じIDで照合し、両方の記録を保存できる。 | — | [test_auditor_cross_checks_exports](../../../tests/e2e/browser/test_requirement_flows.py#L291) |
+| 提供者が商品ごとのトークンの上限を短縮すると、利用者による上限超過の発行を拒否する。 | — | [test_provider_shortens_token_lifetime](../../../tests/e2e/browser/test_requirement_flows.py#L327) |
 | 役割と検索語で使い方を絞り込み、手順から対象画面を開ける | — | [test_usage_guide](../../../tests/e2e/browser/test_usage_guide.py#L13) |
 | 管理者が組織階層と兼務を設定し、リーダーがキー・利用状況・停止と再開を操作する | — | [test_workspace_key_console](../../../tests/e2e/browser/test_workspace_console.py#L29) |
-| finance の利用者には所属先が1件だけ表示され、未所属の詳細URLを開いても情報は表示されない | — | [test_consumer_project_directory](../../../tests/e2e/browser/test_workspace_console.py#L210) |
-| 管理画面で部署を移管して子部署を引き継ぎ、未使用の子部署を削除できる。 | — | [test_retire_workspace_units](../../../tests/e2e/browser/test_workspace_console.py#L235) |
+| finance の利用者には所属先が1件だけ表示され、未所属の詳細URLを開いても情報は表示されない | — | [test_consumer_project_directory](../../../tests/e2e/browser/test_workspace_console.py#L212) |
+| 管理画面で部署を移管して子部署を引き継ぎ、未使用の子部署を削除できる。 | — | [test_retire_workspace_units](../../../tests/e2e/browser/test_workspace_console.py#L237) |
 
 ### 開発ツール（56項目）
 

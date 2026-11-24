@@ -4,10 +4,10 @@ from urllib.parse import urlencode
 
 import client
 from js import window
-from portal_navigation import load
+from portal_navigation import go, load
 from portal_ui import btn, ctx, field, value
 from puepy import t
-from workspace_views import link, navigate, url
+from workspace_views import link, url
 
 
 def person_label(person):
@@ -114,7 +114,7 @@ def membership_editor(root, unit, data, subject, *, draft=None):
                 "leader": value("org-leader") == "yes",
             },
         )
-        await navigate(detail)
+        await go(detail)
         ctx["message"] = "所属と役職を保存しました"
 
     with t.section(classes="box"):

@@ -3,12 +3,13 @@ from urllib.parse import parse_qs, quote, unquote, urlencode
 import chat_views
 import client
 from access_log_display import detail_fields, timestamp
-from activity_filters import filters_view, load_dimensions, time_params
+from activity_filters import filter_form, filters_view, load_dimensions, time_params
 from audit_navigation import trace_lookup
 from js import window
+from list_layout import download_button
 from portal_download import save_blob
 from portal_navigation import go, load
-from portal_ui import action, btn, ctx, field, render, route, value
+from portal_ui import INITIAL_STATE, action, btn, ctx, render, route
 from puepy import t
 from pyodide.http import pyfetch
 from screen_registry import Screen
@@ -41,21 +42,8 @@ async def download_logs():
     save_blob(window.Blob.new(parts), "access-log.jsonl")
 
 
-async def log_lookup():
-    ctx.update(access_id=value("access-id"), log_offset=0)
-    await load()
-
-
 async def log_page(offset):
     await fetch_log_rows(ctx["log_period"], offset)
-
-
-def request_lookup(request_id):
-    with t.div(classes="box"):
-        field("照合するリクエストID", "access-id", text=request_id)
-        with t.div(classes="btn-grouping"):
-            btn("IDで検索", log_lookup)
-            btn("アクセスログをダウンロード", download_logs)
 
 
 def logs_view(scope="personal"):
@@ -66,8 +54,9 @@ def logs_view(scope="personal"):
         t.p("ログを取得できませんでした。")
         btn("再読み込み", load)
         return
-    filters_view(False, scope=scope)
-    request_lookup(ctx.get("access_id", ""))
+    with t.div(classes="list-tools"):
+        filters_view(False, scope=scope)
+        download_button("アクセスログをダウンロード", action(download_logs))
     rows = ctx["log_rows"]
     if not rows:
         t.p("条件に一致するアクセスログはありません。", classes="empty")
@@ -75,8 +64,11 @@ def logs_view(scope="personal"):
     workspace = ctx.get("workspace", {})
     names = {u["id"]: u["name"] for u in workspace.get("units", [])}
     users = {u["subject"]: u["username"] for u in workspace.get("users", [])}
-    with t.div(classes="box table-scroll log-table"):
-        with t.table(aria_label="監査履歴一覧" if scope == "audit" else "アクセスログ一覧"):
+    label = "監査履歴一覧" if scope == "audit" else "アクセスログ一覧"
+    with t.div(
+        classes="resource-table result-table log-table", tabindex="0", role="region", aria_label=label
+    ):
+        with t.table(aria_label=label):
             with t.thead():
                 with t.tr():
                     for title in (
@@ -194,9 +186,12 @@ SCREENS = (
         load_logs,
         group="ガバナンス",
         order=140,
-        description="自分が呼び出したAPIの記録を確認できます。",
         clear_on_load=("log_rows", "dims", "workspace"),
-        examples={"logs": lambda: request_lookup("example-request")},
+        examples={
+            "logs": lambda: filter_form(
+                False, INITIAL_STATE["filters"], [], {}, scope="personal", request_id="example-request"
+            )
+        },
     ),
     Screen(
         "audit-logs",
@@ -206,7 +201,6 @@ SCREENS = (
         group="ガバナンス",
         order=145,
         visible=can_audit,
-        description="担当する部署・プロジェクトのAPI呼び出しを確認できます。管理者と監査担当は全体を確認できます。",
         clear_on_load=("log_rows", "dims", "workspace"),
     ),
     Screen(
