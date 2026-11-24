@@ -1,14 +1,8 @@
-from typing import Literal
-
 import boto3
-from app.apis import outputs
-from app.apis.catalog.common import DB, User
-from app.apis.governance.profile_fields import ProfileNames
 from app.core.auth import DEMO_GROUPS
 from app.core.config import local_demo, settings
 from app.core.diagnostics import OperationalRepair
 from app.core.member_profiles import (
-    INVITATION_EMAIL,
     NAME_FIELDS,
     directory_accounts,
     directory_fields,
@@ -17,9 +11,11 @@ from app.core.member_profiles import (
     set_directory_email,
 )
 from app.core.workspace import configured_projects, retired_units, units
+from app.dependencies import DB, User
+from app.schemas import outputs
+from app.schemas.members import Invitation
 from botocore.exceptions import BotoCoreError, ClientError
 from fastapi import APIRouter, HTTPException, Query, Request
-from pydantic import Field
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from tsugite_db.models import Event, Member, MemberProfile, new_id
@@ -31,21 +27,6 @@ def projects(db=None):
     if db is not None:
         return sorted(k for k, u in units(db).items() if u["kind"] == "project")
     return sorted(configured_projects())
-
-
-#: ポータル利用者の招待内容
-class Invitation(ProfileNames):
-    #: 招待先メールアドレス
-    email: str = Field(pattern=INVITATION_EMAIL, max_length=150)
-    #: 招待先プロジェクトの識別子
-    project: str
-    #: 利用者の役割
-    role: Literal[
-        #: 利用者
-        "consumer",
-        #: 提供者
-        "provider",
-    ]
 
 
 def administrator(actor):

@@ -6,7 +6,7 @@ GET `/api/me`
 
 [API一覧](README.md) · [CRUD一覧](../db/crud.md)
 
-共通 · `me` · [me:11](../../../packages/backend/src/app/apis/catalog/me/router.py#L11)
+共通 · `me` · [me:11](../../../packages/backend/src/app/apis/catalog/me.py#L11)
 
 ## 入力
 
@@ -67,7 +67,7 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 <details><summary>解析した関数・依存</summary>
 
-- `app.apis.catalog.me.router.me`
+- `app.apis.catalog.me.me`
 - `app.core.auth.check_member`
 - `app.core.auth.current`
 - `app.core.auth.human`

@@ -6,7 +6,7 @@ GET `/api/catalog-page`
 
 [API一覧](README.md) · [CRUD一覧](../db/crud.md)
 
-共通 · `catalogPage` · [catalog_page:49](../../../packages/backend/src/app/apis/catalog/catalog/router.py#L49)
+共通 · `catalogPage` · [catalog_page:30](../../../packages/backend/src/app/apis/catalog/catalog.py#L30)
 
 ## 入力
 
@@ -69,7 +69,7 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
 | [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:105](../../../packages/backend/src/app/core/workspace.py#L105) |
-| [APIカタログ](../db/database.md#assets) | assets | R | 検索 | select | [visible_collection:15](../../../packages/backend/src/app/apis/catalog/catalog/router.py#L15) |
+| [APIカタログ](../db/database.md#assets) | assets | R | 検索 | select | [visible_collection:9](../../../packages/backend/src/app/core/catalog_visibility.py#L9) |
 | [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:30](../../../packages/backend/src/app/core/workspace.py#L30) |
 | [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:54](../../../packages/backend/src/app/core/workspace.py#L54) |
 | [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:123](../../../packages/backend/src/app/core/auth.py#L123) |
@@ -83,21 +83,21 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 <details><summary>解析した関数・依存</summary>
 
-- `app.apis.catalog.catalog.router.catalog_page`
-- `app.apis.catalog.catalog.router.collection`
-- `app.apis.catalog.catalog.router.visible_collection`
-- `app.apis.catalog.common.listing`
+- `app.apis.catalog.catalog.catalog_page`
+- `app.apis.catalog.catalog.collection`
 - `app.core.auth.check_member`
 - `app.core.auth.current`
 - `app.core.auth.human`
 - `app.core.auth.identify`
 - `app.core.auth.keyset`
+- `app.core.catalog.listing`
 - `app.core.catalog_rank.concept_vector`
 - `app.core.catalog_rank.contains`
 - `app.core.catalog_rank.document`
 - `app.core.catalog_rank.normalize`
 - `app.core.catalog_rank.rank_assets`
 - `app.core.catalog_rank.terms`
+- `app.core.catalog_visibility.visible_collection`
 - `app.core.config.local_demo`
 - `app.core.config.settings`
 - `app.core.diagnostics.asset_object`

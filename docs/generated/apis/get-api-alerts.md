@@ -6,7 +6,7 @@ GET `/api/alerts`
 
 [API一覧](README.md) · [CRUD一覧](../db/crud.md)
 
-共通 · `rules_api_alerts_get` · [rules:86](../../../packages/backend/src/app/apis/governance/alerts.py#L86)
+共通 · `rules_api_alerts_get` · [rules:59](../../../packages/backend/src/app/apis/governance/alerts.py#L59)
 
 ## 入力
 
@@ -49,10 +49,10 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
 | [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:105](../../../packages/backend/src/app/core/workspace.py#L105) |
-| [API呼び出し件数の監視設定](../db/database.md#alert_rules) | alert_rules | R | テーブルを結合 | join | [rules:88](../../../packages/backend/src/app/apis/governance/alerts.py#L88) |
-| [API呼び出し件数の監視設定](../db/database.md#alert_rules) | alert_rules | R | 検索 | select | [rules:88](../../../packages/backend/src/app/apis/governance/alerts.py#L88) |
-| [APIカタログ](../db/database.md#assets) | assets | R | テーブルを結合 | join | [rules:88](../../../packages/backend/src/app/apis/governance/alerts.py#L88) |
-| [APIカタログ](../db/database.md#assets) | assets | R | 検索 | select | [rules:88](../../../packages/backend/src/app/apis/governance/alerts.py#L88) |
+| [API呼び出し件数の監視設定](../db/database.md#alert_rules) | alert_rules | R | テーブルを結合 | join | [rules:61](../../../packages/backend/src/app/apis/governance/alerts.py#L61) |
+| [API呼び出し件数の監視設定](../db/database.md#alert_rules) | alert_rules | R | 検索 | select | [rules:61](../../../packages/backend/src/app/apis/governance/alerts.py#L61) |
+| [APIカタログ](../db/database.md#assets) | assets | R | テーブルを結合 | join | [rules:61](../../../packages/backend/src/app/apis/governance/alerts.py#L61) |
+| [APIカタログ](../db/database.md#assets) | assets | R | 検索 | select | [rules:61](../../../packages/backend/src/app/apis/governance/alerts.py#L61) |
 | [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:30](../../../packages/backend/src/app/core/workspace.py#L30) |
 | [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:54](../../../packages/backend/src/app/core/workspace.py#L54) |
 | [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:123](../../../packages/backend/src/app/core/auth.py#L123) |

@@ -6,7 +6,7 @@ POST `/api/inquiries`
 
 [API一覧](README.md) · [CRUD一覧](../db/crud.md)
 
-共通 · `submit_inquiry_api_inquiries_post` · [submit_inquiry:55](../../../packages/backend/src/app/apis/inquiries.py#L55)
+共通 · `submit_inquiry_api_inquiries_post` · [submit_inquiry:25](../../../packages/backend/src/app/apis/inquiries.py#L25)
 
 ## 入力
 
@@ -70,9 +70,9 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 | [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:105](../../../packages/backend/src/app/core/workspace.py#L105) |
 | [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:30](../../../packages/backend/src/app/core/workspace.py#L30) |
 | [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:54](../../../packages/backend/src/app/core/workspace.py#L54) |
-| [運営への問い合わせ](../db/database.md#inquiries) | inquiries | C | レコードを追加 | db.add | [submit_inquiry:63](../../../packages/backend/src/app/apis/inquiries.py#L63) |
-| [運営への問い合わせ](../db/database.md#inquiries) | inquiries | R | 主キーで取得 | db.get | [submit_inquiry:60](../../../packages/backend/src/app/apis/inquiries.py#L60) |
-| [運営への問い合わせ](../db/database.md#inquiries) | inquiries | R | 主キーで取得 | db.get | [submit_inquiry:68](../../../packages/backend/src/app/apis/inquiries.py#L68) |
+| [運営への問い合わせ](../db/database.md#inquiries) | inquiries | C | レコードを追加 | db.add | [submit_inquiry:33](../../../packages/backend/src/app/apis/inquiries.py#L33) |
+| [運営への問い合わせ](../db/database.md#inquiries) | inquiries | R | 主キーで取得 | db.get | [submit_inquiry:30](../../../packages/backend/src/app/apis/inquiries.py#L30) |
+| [運営への問い合わせ](../db/database.md#inquiries) | inquiries | R | 主キーで取得 | db.get | [submit_inquiry:38](../../../packages/backend/src/app/apis/inquiries.py#L38) |
 | [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:123](../../../packages/backend/src/app/core/auth.py#L123) |
 | [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:91](../../../packages/backend/src/app/core/workspace.py#L91) |
 

@@ -6,7 +6,7 @@ PUT `/api/apis/{key}/suspension`
 
 [API一覧](README.md) · [CRUD一覧](../db/crud.md)
 
-共通 · `set_suspension` · [set_suspension:14](../../../packages/backend/src/app/apis/catalog/publish/router.py#L14)
+共通 · `set_suspension` · [set_suspension:15](../../../packages/backend/src/app/apis/catalog/publish.py#L15)
 
 ## 入力
 
@@ -63,9 +63,9 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
 | [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:105](../../../packages/backend/src/app/core/workspace.py#L105) |
-| [APIカタログ](../db/database.md#assets) | assets | R | 主キーで取得 | db.get | [record:32](../../../packages/backend/src/app/apis/catalog/common.py#L32) |
-| [APIカタログ](../db/database.md#assets) | assets | U | 管理者による全環境の呼び出し停止を設定 | suspended に代入 | [set_suspension:27](../../../packages/backend/src/app/apis/catalog/publish/router.py#L27) |
-| [監査履歴](../db/database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [event:17](../../../packages/backend/src/app/apis/catalog/common.py#L17) |
+| [APIカタログ](../db/database.md#assets) | assets | R | 主キーで取得 | db.get | [record:25](../../../packages/backend/src/app/core/catalog.py#L25) |
+| [APIカタログ](../db/database.md#assets) | assets | U | 管理者による全環境の呼び出し停止を設定 | suspended に代入 | [set_suspension:28](../../../packages/backend/src/app/apis/catalog/publish.py#L28) |
+| [監査履歴](../db/database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [event:10](../../../packages/backend/src/app/core/catalog.py#L10) |
 | [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:30](../../../packages/backend/src/app/core/workspace.py#L30) |
 | [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:54](../../../packages/backend/src/app/core/workspace.py#L54) |
 | [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:123](../../../packages/backend/src/app/core/auth.py#L123) |
@@ -79,15 +79,15 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 <details><summary>解析した関数・依存</summary>
 
-- `app.apis.catalog.common.event`
-- `app.apis.catalog.common.listing`
-- `app.apis.catalog.common.record`
-- `app.apis.catalog.publish.router.set_suspension`
+- `app.apis.catalog.publish.set_suspension`
 - `app.core.auth.check_member`
 - `app.core.auth.current`
 - `app.core.auth.human`
 - `app.core.auth.identify`
 - `app.core.auth.keyset`
+- `app.core.catalog.event`
+- `app.core.catalog.listing`
+- `app.core.catalog.record`
 - `app.core.config.local_demo`
 - `app.core.config.settings`
 - `app.core.diagnostics.asset_object`

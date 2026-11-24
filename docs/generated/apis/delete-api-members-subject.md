@@ -6,7 +6,7 @@ DELETE `/api/members/{subject}`
 
 [API一覧](README.md) · [CRUD一覧](../db/crud.md)
 
-共通 · `remove_member_api_members__subject__delete` · [remove_member:209](../../../packages/backend/src/app/apis/governance/members.py#L209)
+共通 · `remove_member_api_members__subject__delete` · [remove_member:190](../../../packages/backend/src/app/apis/governance/members.py#L190)
 
 ## 入力
 
@@ -56,24 +56,24 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
 | [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:105](../../../packages/backend/src/app/core/workspace.py#L105) |
-| [監査履歴](../db/database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [member_event:57](../../../packages/backend/src/app/apis/governance/members.py#L57) |
+| [監査履歴](../db/database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [member_event:38](../../../packages/backend/src/app/apis/governance/members.py#L38) |
 | [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:30](../../../packages/backend/src/app/core/workspace.py#L30) |
 | [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:54](../../../packages/backend/src/app/core/workspace.py#L54) |
 | [利用者プロフィール](../db/database.md#portal_member_profiles) | portal_member_profiles | C | レコードを追加 | db.add | [forget_profile:51](../../../packages/backend/src/app/core/member_profiles.py#L51) |
 | [利用者プロフィール](../db/database.md#portal_member_profiles) | portal_member_profiles | R | 主キーで取得 | db.get | [forget_profile:49](../../../packages/backend/src/app/core/member_profiles.py#L49) |
 | [利用者プロフィール](../db/database.md#portal_member_profiles) | portal_member_profiles | U | 指定されたカラムの値を更新 | setattr による属性更新 | [forget_profile:54](../../../packages/backend/src/app/core/member_profiles.py#L54) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | C | レコードを追加 | db.add | [remove_member:240](../../../packages/backend/src/app/apis/governance/members.py#L240) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [remove_member:221](../../../packages/backend/src/app/apis/governance/members.py#L221) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | C | レコードを追加 | db.add | [remove_member:221](../../../packages/backend/src/app/apis/governance/members.py#L221) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [remove_member:202](../../../packages/backend/src/app/apis/governance/members.py#L202) |
 | [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:123](../../../packages/backend/src/app/core/auth.py#L123) |
 | [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:91](../../../packages/backend/src/app/core/workspace.py#L91) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | U | 削除済みかを設定 | deleted に代入 | [remove_member:242](../../../packages/backend/src/app/apis/governance/members.py#L242) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | U | 削除済みかを設定 | deleted に代入 | [remove_member:223](../../../packages/backend/src/app/apis/governance/members.py#L223) |
 
 ### AWSサービス
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| 利用者・グループの管理（Cognitoユーザープール） | cognito-idp | D | 利用者を削除 | admin_delete_user | [remove_member:249](../../../packages/backend/src/app/apis/governance/members.py#L249) |
-| 利用者・グループの管理（Cognitoユーザープール） | cognito-idp | R | 利用者の登録情報を取得 | admin_get_user | [remove_member:231](../../../packages/backend/src/app/apis/governance/members.py#L231) |
+| 利用者・グループの管理（Cognitoユーザープール） | cognito-idp | D | 利用者を削除 | admin_delete_user | [remove_member:230](../../../packages/backend/src/app/apis/governance/members.py#L230) |
+| 利用者・グループの管理（Cognitoユーザープール） | cognito-idp | R | 利用者の登録情報を取得 | admin_get_user | [remove_member:212](../../../packages/backend/src/app/apis/governance/members.py#L212) |
 | 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:53](../../../packages/backend/src/app/core/config.py#L53) |
 
 <details><summary>解析した関数・依存</summary>
