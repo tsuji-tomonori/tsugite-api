@@ -668,6 +668,14 @@ MUTATIONS = (
     ),
     Mutation(
         "frontend",
+        "一覧の検索条件を常に展開する",
+        "packages/frontend/src/web_app/list_layout.py",
+        'with t.details(classes="list-disclosure", open=expanded):',
+        'with t.details(classes="list-disclosure", open=True):',
+        "packages/frontend/tests/test_components.py::test_log_search_starts_collapsed_and_shows_active_conditions",
+    ),
+    Mutation(
+        "frontend",
         "ガイドの条件をクリアした後にフォーカスを戻さない",
         "packages/frontend/src/web_app/guide_views.py",
         '        document.getElementById("guide-query").focus()\n',

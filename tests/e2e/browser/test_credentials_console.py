@@ -53,6 +53,7 @@ def test_credentials_console(tmp_path: Path, request: pytest.FixtureRequest) -> 
                 content="#credential-value-secret,#credential-value-token{color:transparent!important}"
             )
             for mode, label in result_labels.items():
+                page.locator("summary").filter(has_text="認証情報を作成").click()
                 page.get_by_label("発行先プロジェクト").select_option("finance")
                 page.get_by_role("button", name="発行条件を確認").click()
                 page.get_by_label("認証情報の名前").fill(label)
@@ -102,10 +103,10 @@ def test_credentials_console(tmp_path: Path, request: pytest.FixtureRequest) -> 
                     ).is_success
                 page.get_by_role("button", name="秘密の表示を閉じる").click()
                 expect(output).to_have_count(0)
-                expect(page.get_by_role("heading", name=label, exact=True)).to_be_visible()
+                expect(page.get_by_role("rowheader", name=label, exact=True)).to_be_visible()
                 if mode == "bearer":
-                    record = page.locator("article").filter(
-                        has=page.get_by_role("heading", name=label, exact=True)
+                    record = page.get_by_role("row").filter(
+                        has=page.get_by_role("rowheader", name=label, exact=True)
                     )
                     record.get_by_role("button", name="アクセストークンを取得・更新").click()
                     expect(output).to_be_visible()
@@ -114,8 +115,8 @@ def test_credentials_console(tmp_path: Path, request: pytest.FixtureRequest) -> 
                         == hashlib.sha256(value.encode()).digest()
                     )
                     page.get_by_role("button", name="秘密の表示を閉じる").click()
-            client = page.locator("article").filter(
-                has=page.get_by_role("heading", name="夜間集計", exact=True)
+            client = page.get_by_role("row").filter(
+                has=page.get_by_role("rowheader", name="夜間集計", exact=True)
             )
             client.get_by_role("button", name="シークレットを更新").click()
             expect(page.locator("#credential-value-secret")).to_be_visible()
@@ -129,8 +130,8 @@ def test_credentials_console(tmp_path: Path, request: pytest.FixtureRequest) -> 
             )
             page.set_viewport_size({"width": 1440, "height": 1440})
             capture(page, "credentials", "短期Bearer・アプリ・システム認証の一覧と対象操作、更新条件")
-            live = page.locator("article").filter(
-                has=page.get_by_role("heading", name="試用トークン", exact=True)
+            live = page.get_by_role("row").filter(
+                has=page.get_by_role("rowheader", name="試用トークン", exact=True)
             )
             display = page.locator("#credential-value-token")
             # Exercise the selected one-minute interval using the server's real clock.

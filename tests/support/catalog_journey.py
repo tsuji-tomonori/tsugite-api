@@ -85,6 +85,7 @@ def catalog_journey(
             if not tokens:
                 consumer.get_by_role("button", name="利用チーム", exact=True).click()
             navigate(consumer, "APIカタログ")
+            consumer.locator("summary").filter(has_text="検索条件").click()
             consumer.get_by_label("キーワードで検索").fill("在庫一覧を取得")
             consumer.get_by_role("button", name="検索", exact=True).click()
             expect(consumer.get_by_role("link", name="棚卸API")).to_be_visible()
@@ -194,12 +195,21 @@ def catalog_journey(
                 "権限を取り消した後、同じ利用者の呼び出しを拒否",
             )
             consumer.get_by_role("button", name="この実行の業務操作履歴").click()
-            expect(consumer.locator(".audit-row")).to_have_count(1)
-            expect(consumer.locator(".audit-row")).to_contain_text("呼び出し拒否")
+            expect(consumer.locator(".result-table tbody tr")).to_have_count(1)
+            expect(consumer.locator(".result-table tbody tr")).to_contain_text("呼び出し拒否")
             capture(consumer, "08b-trace", "取消後の403からリクエストIDで特定した監査記録")
             navigate(provider, "業務操作履歴")
-            expect(provider.get_by_text(f"invoke.denied · {consumer_subject}")).to_have_count(0)
-            expect(provider.get_by_text(f"apply · {consumer_subject}").first).to_be_visible()
+            expect(
+                provider.get_by_role("row")
+                .filter(has_text="invoke.denied")
+                .filter(has_text=consumer_subject)
+            ).to_have_count(0)
+            expect(
+                provider.get_by_role("row")
+                .filter(has=provider.get_by_text("apply", exact=True))
+                .filter(has_text=consumer_subject)
+                .first
+            ).to_be_visible()
             capture(provider, "09-audit", "利用者・操作・リクエストIDを表示した業務操作履歴")
             assert remote_requests == []
         browser.close()
