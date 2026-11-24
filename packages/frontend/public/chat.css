@@ -22,3 +22,8 @@
   .chat-history:not(:empty) { max-height: 52vh; }
   .chat-user, .chat-agent { padding: 8px 10px; }
 }
+
+@media (max-width: 30rem) {
+  .chat-composer { grid-template-columns: minmax(0, 1fr); }
+  .chat-composer .btn { justify-self: end; }
+}

@@ -1,12 +1,13 @@
 .resource-heading { margin-block: 24px 16px; }
 .resource-heading .mono { display: block; margin-top: 8px; color: var(--secondary); }
 .resource-table { overflow-x: auto; }
-.resource-table table { width: 100%; border-collapse: collapse; }
+.resource-table table { width: 100%; min-width: 40rem; border-collapse: collapse; }
 .resource-table th, .resource-table td {
   text-align: start;
   padding: 12px 16px;
   border-bottom: 1px solid var(--line);
 }
+.resource-table thead th { white-space: nowrap; }
 .resource-table thead { background: var(--bar); }
 .resource-table tbody th a { display: inline-block; padding-block: 8px; }
 .membership-table th, .membership-actions { white-space: nowrap; }

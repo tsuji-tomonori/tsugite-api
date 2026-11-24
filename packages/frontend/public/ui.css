@@ -96,6 +96,7 @@ a:hover, summary:hover { color: var(--primary-hover); text-decoration-thickness:
 .menu-icon { width: 15px; height: 12px; border-block: 2px solid currentColor; display: grid; align-items: center; }
 .menu-icon::after { content: ""; border-top: 2px solid currentColor; }
 .crumb { gap: 12px; color: var(--secondary); }
+.crumb a { white-space: nowrap; }
 .crumb a, .asset-title { text-decoration: underline; text-decoration-color: var(--field-edge); text-underline-offset: 0.2em; font-weight: 600; }
 .crumb a:hover, .asset-title:hover { text-decoration: underline; }
 
@@ -196,6 +197,12 @@ textarea.form-control { min-height: 76px; resize: vertical; }
   .results-head, .audit-top { flex-wrap: wrap; }
   .card-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 245px), 1fr)); gap: 12px; }
 }
+@media (max-width: 30rem) {
+  .console-tools { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 0 12px; }
+  .console-tools:has(.guide-shortcut) .crumb { grid-column: 1 / -1; grid-row: 2; padding: 4px 0 8px; }
+  .console-tools .guide-shortcut { grid-column: 2; grid-row: 1; padding-block: 8px; }
+}
+
 @media (forced-colors: active) {
   .mast, .console-tools { border-bottom: 1px solid CanvasText; }
   .btn, .form-control, .form-select, .menu-button { border: 1px solid ButtonText; }
