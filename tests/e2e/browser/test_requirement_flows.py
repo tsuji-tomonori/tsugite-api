@@ -220,6 +220,10 @@ def test_access_log_detail_and_support(portal_session: PortalSession) -> None:
     expect(listing.get_by_role("link")).to_have_count(20)
     for width, height in ((1366, 768), (390, 844), (320, 640)):
         page.set_viewport_size({"width": width, "height": height})
+        # matchMedia の change がナビゲーションに反映されてから表を計測する。
+        expect(page.get_by_role("button", name="ナビゲーション", exact=True)).to_have_attribute(
+            "aria-expanded", "false" if width <= 780 else "true"
+        )
         expect(page.get_by_label("照合するリクエストID")).to_be_hidden()
         assert visible_table_ratio(listing) >= 0.70
     capture(page, "log-list", "検索条件を閉じたスマートフォンのアクセスログ一覧")
