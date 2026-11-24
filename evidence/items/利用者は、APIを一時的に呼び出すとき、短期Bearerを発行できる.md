@@ -2,11 +2,11 @@
 
 判定　合格
 
-対象コミット　`a8ce7bc1f7c63cce6c1b5f352626ae1b791f7a85`
+対象コミット　`01130309252051badc6cb01f91b2a33a407ed01c`
 
 ## 実行したテストと証跡
 
-- 成功　ブラウザーで3方式を発行し、実時計で1分後に更新、シークレット変更・失効まで確認する（68.688 秒）　`tests/e2e/browser/test_credentials_console.py::test_credentials_console`
+- 成功　ブラウザーで3方式を発行し、実時計で1分後に更新、シークレット変更・失効まで確認する（68.293 秒）　`tests/e2e/browser/test_credentials_console.py::test_credentials_console`
   - ![短期Bearer・アプリ・システム認証の一覧と対象操作、更新条件](../screenshots/credentials/credentials.png)
 
 [テスト実行記録（JUnit XML）](%E5%88%A9%E7%94%A8%E8%80%85%E3%81%AF%E3%80%81API%E3%82%92%E4%B8%80%E6%99%82%E7%9A%84%E3%81%AB%E5%91%BC%E3%81%B3%E5%87%BA%E3%81%99%E3%81%A8%E3%81%8D%E3%80%81%E7%9F%AD%E6%9C%9FBearer%E3%82%92%E7%99%BA%E8%A1%8C%E3%81%A7%E3%81%8D%E3%82%8B.xml)
