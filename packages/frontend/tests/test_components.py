@@ -70,7 +70,7 @@ def test_guide_results_render_matching_cards_only(portal_module):
     guide = portal_module("guide_views")
     _, dom = render(guide.index, {"guide_query": "読み取りだけ許可したい", "guide_role": "提供者"})
     by_id = elements(dom)
-    cards = by_id["guide-grid"].getElementsByTagName("article")
+    cards = by_id["guide-grid"].getElementsByTagName("tr")
     visible = [card for card in cards if not card.hasAttribute("hidden")]
     assert visible[0].getAttribute("id") == "guide-card-operations"
     assert by_id["guide-card-member"].hasAttribute("hidden")
@@ -86,7 +86,7 @@ def test_guide_reset_restores_role_and_keyboard_focus(portal_module, monkeypatch
     page, dom = render(guide.index, ctx)
     assert not elements(dom)["guide-empty"].hasAttribute("hidden")
     assert elements(dom)["guide-count"].firstChild.data == "0件"
-    query = SimpleNamespace(value=ctx["guide_query"], focus=Mock())
+    query = SimpleNamespace(value=ctx["guide_query"], focus=Mock(), closest=Mock())
     role = SimpleNamespace(value=ctx["guide_role"])
     nodes = {f"guide-card-{item.id}": SimpleNamespace(hidden=True) for item in guide.GUIDES}
     nodes.update(
@@ -271,3 +271,18 @@ def test_curl_reuses_request_without_exposing_token(portal_module):
         "--data-raw",
         body,
     ]
+
+
+def test_log_search_starts_collapsed_and_shows_active_conditions(portal_module):
+    """条件を適用しても入力欄は折りたたみ、閉じた見出しには期間と絞り込み状態を表示する。"""
+    logs = portal_module("portal_pages.logs")
+    logs.ctx.update(me={"auditor": False}, log_rows=[], access_id="one-request")
+    _, dom = render(logs.logs_view)
+    panel = dom.getElementsByTagName("details")[0]
+    assert not panel.hasAttribute("open")
+    summary = panel.getElementsByTagName("summary")[0].toxml()
+    assert "検索条件" in summary and "過去24時間" in summary and "絞り込み中" in summary
+    fields = elements(panel)
+    assert fields["access-id"].getAttribute("value") == "one-request"
+    assert "f-status" in fields
+    assert "アクセスログをダウンロード" not in panel.toxml()
