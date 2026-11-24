@@ -67,7 +67,7 @@ def test_member_profile_management(tmp_path: Path, request: pytest.FixtureReques
             expect(user.get_by_label("氏名（任意）")).to_have_value("高橋 美咲")
             user.get_by_label("表示名（任意）").fill("みさき")
             user.get_by_role("button", name="保存する", exact=True).click()
-            expect(user.get_by_role("status")).to_have_text("プロフィールを保存しました")
+            expect(user.get_by_text("プロフィールを保存しました", exact=True)).to_be_visible()
             for label, key in (("プロジェクト", "finance"), ("部署", department)):
                 menu(admin, label)
                 admin.locator(f'a[href$="/detail/{key}"]').click()
@@ -85,7 +85,7 @@ def test_member_profile_management(tmp_path: Path, request: pytest.FixtureReques
             row.get_by_role("button", name="プロフィールを編集").click()
             admin.get_by_label("表示名（任意）").fill("")
             admin.get_by_role("button", name="保存する", exact=True).click()
-            expect(admin.get_by_role("status")).to_have_text("プロフィールを保存しました")
+            expect(admin.get_by_text("プロフィールを保存しました", exact=True)).to_be_visible()
             menu(admin, "業務操作履歴")
             admin.get_by_label("操作", exact=True).select_option("profile.admin_update")
             admin.get_by_role("button", name="絞り込む").click()
