@@ -1,0 +1,197 @@
+openapi: 3.1.0
+info:
+  title: 電力使用量
+  description: 電力計を設置場所や消費電力量（kWh）で検索します。
+  version: 1.0.0
+paths:
+  /health:
+    get:
+      summary: データベースの稼働状態を確認
+      operationId: health_health_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+  /meters:
+    get:
+      summary: 電力計を一覧で取得
+      operationId: list_meters_meters_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/PowerMeter'
+                type: array
+                title: Response List Meters Meters Get
+  /meters/{meter_id}:
+    get:
+      summary: 電力計の詳細を取得
+      operationId: detail_meters__meter_id__get
+      parameters:
+      - name: meter_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Meter Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PowerMeter'
+        '404':
+          description: 該当なし
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /meter-sites:
+    get:
+      summary: 設置場所ごとの電力計件数を集計
+      operationId: by_site_meter_sites_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/PowerMeterCount'
+                type: array
+                title: Response By Site Meter Sites Get
+  /low-usage:
+    get:
+      summary: 消費電力量（kWh）が上限以下の電力計を取得
+      operationId: below_limit_low_usage_get
+      parameters:
+      - name: maximum
+        in: query
+        required: false
+        schema:
+          type: integer
+          description: 消費電力量（kWh）の上限
+          default: 85
+          title: Maximum
+        description: 消費電力量（kWh）の上限
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PowerMeter'
+                title: Response Below Limit Low Usage Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /energy-total:
+    get:
+      summary: 消費電力量（kWh）の合計を取得
+      operationId: kwh_summary_energy_total_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PowerMeterTotal'
+components:
+  schemas:
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    Health:
+      properties:
+        status:
+          type: string
+          const: ok
+          title: Status
+          default: ok
+      type: object
+      title: Health
+    PowerMeter:
+      properties:
+        meter_id:
+          type: string
+          title: Meter Id
+        site:
+          type: string
+          title: Site
+        kwh:
+          type: integer
+          title: Kwh
+      type: object
+      required:
+      - meter_id
+      - site
+      - kwh
+      title: PowerMeter
+    PowerMeterCount:
+      properties:
+        site:
+          type: string
+          title: Site
+        count:
+          type: integer
+          title: Count
+      type: object
+      required:
+      - site
+      - count
+      title: PowerMeterCount
+    PowerMeterTotal:
+      properties:
+        total:
+          type: integer
+          title: Total
+      type: object
+      required:
+      - total
+      title: PowerMeterTotal
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError

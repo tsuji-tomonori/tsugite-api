@@ -16,6 +16,7 @@ members = [
     "tsugite-frontend",
     "tsugite-infra",
     "tsugite-model",
+    "tsugite-sample-api",
     "tsugite-tools",
 ]
 constraints = [
@@ -2458,6 +2459,23 @@ requires-dist = [
     { name = "tokenizers", marker = "python_full_version == '3.14.*' and extra == 'decision'", specifier = "==0.22.2" },
 ]
 provides-extras = ["decision"]
+
+[[package]]
+name = "tsugite-sample-api"
+version = "0.1.0"
+source = { editable = "packages/sample_api" }
+dependencies = [
+    { name = "fastapi" },
+    { name = "mangum" },
+    { name = "pydantic" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "fastapi" },
+    { name = "mangum" },
+    { name = "pydantic", specifier = ">=2" },
+]
 
 [[package]]
 name = "tsugite-tools"

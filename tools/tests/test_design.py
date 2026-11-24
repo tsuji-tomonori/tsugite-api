@@ -10,11 +10,23 @@ def test_all_routes_inputs_outputs_and_cleanup(tmp_path):
     generate(tmp_path)
     files = {p.relative_to(tmp_path): p.read_bytes() for p in tmp_path.rglob("*.md")}
     _, routes = catalog(True)
-    index = (tmp_path / "README.md").read_text()
+    landing = (tmp_path / "README.md").read_text()
+    pages = tmp_path / "apis"
+    index = (pages / "README.md").read_text()
+    assert "](apis/README.md)" in landing and "operationId" not in landing
+    for target in (
+        "db/database.md",
+        "db/schemas.md",
+        "db/crud.md",
+        "infra/README.md",
+        "dev-rules/definition-of-done.md",
+    ):
+        assert f"]({target})" in landing
     for path, method in routes:
         assert f"[{method} `{path}`]" in index
-    assert len(re.findall(r"\]\(apis/", index)) == len(routes)
-    pages = tmp_path / "apis"
+    links = re.findall(r"\[[A-Z]+ `[^`]+`\]\(([^)]+)\)", index)
+    assert len(links) == len(routes)
+    assert all((pages / target).is_file() for target in links)
     (pages / "removed.md").write_text(SIGNATURE + "\n")
     (pages / "manual.md").write_text("# 個別メモ\n")
     generate(tmp_path)
@@ -45,7 +57,7 @@ def test_crud_matrices_cover_all_routes_and_match_per_api_evidence(tmp_path):
     from tsugite_db.design_names import table_names
 
     generate(tmp_path)
-    document = (tmp_path / "crud.md").read_text()
+    document = (tmp_path / "db/crud.md").read_text()
     sql, aws = document.split("## AWSサービス別の操作表")
     _, routes = catalog(True)
     for section, heading in ((sql, "SQLテーブル"), (aws, "AWSサービス")):
@@ -55,11 +67,13 @@ def test_crud_matrices_cover_all_routes_and_match_per_api_evidence(tmp_path):
         used = set()
         seen = set()
         for api, *cells in rows[2:]:
-            match = re.search(r"\[(\w+) `([^`]+)`\]\((apis/[^)]+)\)", api)
+            match = re.search(r"\[(\w+) `([^`]+)`\]\((\.\./apis/[^)]+)\)", api)
             method, path, file = match.groups()
             assert (path, method) not in seen
             seen.add((path, method))
-            detail = (tmp_path / file).read_text().split(f"### {heading}\n\n")[1].split("\n\n", 1)[0]
+            detail = (
+                (tmp_path / "db" / file).read_text().split(f"### {heading}\n\n")[1].split("\n\n", 1)[0]
+            )
             expected = {}
             for row in detail.splitlines()[2:]:
                 _, physical, actions, *_ = row.strip(" |").split(" | ")
@@ -82,12 +96,12 @@ def test_sqlalchemy_and_conditional_aws_writes():
     def effects(key):
         return {(kind, name, action) for kind, name, action, *_ in index.trace([key]).effects}
 
-    deleted = effects("app.apis.catalog.register.router.delete")
+    deleted = effects("app.apis.catalog.register.delete")
     assert ("SQL", "assets", "U") in deleted and ("SQL", "assets", "D") not in deleted
     assert ("SQL", "audit_events", "C") in deleted
     assert not any(
         table == "assets" and detail in {"status に代入", "decision_note に代入"}
-        for _, table, _, _, _, detail in index.trace(["app.apis.catalog.register.router.delete"]).effects
+        for _, table, _, _, _, detail in index.trace(["app.apis.catalog.register.delete"]).effects
     )
     assert effects("app.integrations.spec_archive.archive_spec") == {("AWS", "s3", "C")}
     invite = effects("app.apis.governance.members.invite")
@@ -149,7 +163,7 @@ def test_openapi_preserves_wire_names_and_labels_them_in_context(monkeypatch):
 
 def test_nested_contracts_preserve_legacy_records_and_follow_field_annotations():
     """過去に保存した独自項目を返しつつ、公開する入れ子の型をフィールド宣言から取得する。"""
-    from app.apis.schemas import Right
+    from app.schemas.catalog import Right
 
     evidence = {"legacy_key": {"retired_option": True}, "steps": ["previous-format"]}
     grant = Right(

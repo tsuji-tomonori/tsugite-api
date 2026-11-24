@@ -14,7 +14,9 @@ from tools.demo.seed_marketplace import CATALOG, offer
 def stock_and_orders(api, provider, consumer):
     listing = offer(CATALOG[0])
     listing["base_path"] = "/v1"
-    listing["spec"]["paths"]["/orders"] = offer(CATALOG[4])["spec"]["paths"]["/orders"]
+    orders = offer(CATALOG[4])["spec"]
+    listing["spec"]["paths"]["/orders"] = orders["paths"]["/orders"]
+    listing["spec"]["components"]["schemas"].update(orders["components"]["schemas"])
     asset = api.post("apis", headers=provider, json=listing).raise_for_status().json()["id"]
     api.put(f"apis/{asset}/publication?published=true", headers=provider).raise_for_status()
     grant = (

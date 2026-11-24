@@ -6,9 +6,9 @@ from pathlib import Path
 import pytest
 from aws_cdk import App, AssetStaging, Environment
 from aws_cdk.assertions import Template
-from src.infra_app import stack
-from src.infra_app.stack import CatalogStack
 
+from packages.infra.src import stack
+from packages.infra.src.stack import CatalogStack
 from tools.ci.audit_infra import synthesize_report
 
 HERE = Path(__file__).resolve().parent

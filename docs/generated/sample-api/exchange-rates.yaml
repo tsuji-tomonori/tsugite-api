@@ -1,0 +1,201 @@
+openapi: 3.1.0
+info:
+  title: 為替レート
+  description: 円換算に使う基準通貨と適用レートを取得します。
+  version: 1.0.0
+paths:
+  /health:
+    get:
+      summary: データベースの稼働状態を確認
+      operationId: health_health_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+  /rates:
+    get:
+      summary: 為替レートを一覧で取得
+      operationId: list_rates_rates_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/ExchangeRate'
+                type: array
+                title: Response List Rates Rates Get
+  /rates/{currency}:
+    get:
+      summary: 為替レートの詳細を取得
+      operationId: detail_rates__currency__get
+      parameters:
+      - name: currency
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Currency
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExchangeRate'
+        '404':
+          description: 該当なし
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /currency-regions:
+    get:
+      summary: 地域ごとの為替レート件数を集計
+      operationId: by_region_currency_regions_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/ExchangeRateCount'
+                type: array
+                title: Response By Region Currency Regions Get
+  /rates-below:
+    get:
+      summary: 円換算レートが上限以下の為替レートを取得
+      operationId: below_limit_rates_below_get
+      parameters:
+      - name: maximum
+        in: query
+        required: false
+        schema:
+          type: integer
+          description: 円換算レートの上限
+          default: 1
+          title: Maximum
+        description: 円換算レートの上限
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ExchangeRate'
+                title: Response Below Limit Rates Below Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /rate-range:
+    get:
+      summary: 円換算レートの範囲を取得
+      operationId: rate_summary_rate_range_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExchangeRateRange'
+components:
+  schemas:
+    ExchangeRate:
+      properties:
+        currency:
+          type: string
+          title: Currency
+        region:
+          type: string
+          title: Region
+        rate:
+          type: integer
+          title: Rate
+      type: object
+      required:
+      - currency
+      - region
+      - rate
+      title: ExchangeRate
+    ExchangeRateCount:
+      properties:
+        region:
+          type: string
+          title: Region
+        count:
+          type: integer
+          title: Count
+      type: object
+      required:
+      - region
+      - count
+      title: ExchangeRateCount
+    ExchangeRateRange:
+      properties:
+        minimum:
+          type: integer
+          title: Minimum
+        maximum:
+          type: integer
+          title: Maximum
+      type: object
+      required:
+      - minimum
+      - maximum
+      title: ExchangeRateRange
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    Health:
+      properties:
+        status:
+          type: string
+          const: ok
+          title: Status
+          default: ok
+      type: object
+      title: Health
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError

@@ -118,11 +118,11 @@ def live_portal(aws, resources, tmp_path, identity, binding=None, ca=None):
     with auth as (config, tokens):
         config["targets"] = {
             "sample-" + env: {
-                **(binding or {"kind": "lambda", "address": resources[logical_id]}),
+                **(binding or {"kind": "lambda", "address": resources["transport-" + env]}),
                 "owner": "supply",
                 "environment": env,
             }
-            for env, logical_id in STOCK_FUNCTIONS.items()
+            for env in STOCK_FUNCTIONS
         }
         param = "/tsugite/" + tmp_path.name
         aws.client("ssm").put_parameter(Name=param, Type="String", Value=json.dumps(config))
@@ -362,7 +362,7 @@ def test_marketplace_contracts(aws, resources, tmp_path, request):
     ):
         owner, user = ({"Authorization": "Bearer " + tokens[k]} for k in ("owner", "user"))
         call_headers = invocation_headers(api, user, endpoint="credentials")
-        for product, answer in zip(CATALOG, expected, strict=True):
+        for product, answer in zip(CATALOG[:6], expected, strict=True):
             data = {**offer(product), "base_path": "/v1"}
             asset = api.post("apis", headers=owner, json=data).raise_for_status().json()["id"]
             api.put(
@@ -408,7 +408,7 @@ def test_marketplace_contracts(aws, resources, tmp_path, request):
                 )
             )
         assert [(m, p) for m, p in calls if m != "HEAD"] == [
-            (item["method"], "/warehouse/v1" + item["path"]) for item in CATALOG
+            (item["method"], "/warehouse/v1" + item["path"]) for item in CATALOG[:6]
         ]
 
 

@@ -31,7 +31,7 @@ task demo
 
 ## 開発完了の判定
 
-[分野別の完了の定義](docs/generated/definition-of-done.md)で、変更時の検査、行カバレッジの基準、個々のテストが確かめる内容を確認できます。各PRの Verify は、そのコミットの定義と対象ブランチの有効なルールで文書を再生成し、成果物 `definition-of-done` に保存します。エージェントとモデルは、各パッケージの `pyproject.toml` の `[tool.tsugite.verify]` と `tests/` から完了の定義に掲載されます。Verifyは差分に該当するパッケージを並列ジョブで検証します。手元ではGitHub CLIにログインして `task docs:quality` を実行すると掲載版を更新できます。
+[分野別の完了の定義](docs/generated/dev-rules/definition-of-done.md)で、変更時の検査、行カバレッジの基準、個々のテストが確かめる内容を確認できます。各PRの Verify は、そのコミットの定義と対象ブランチの有効なルールで文書を再生成し、成果物 `definition-of-done` に保存します。エージェントとモデルは、各パッケージの `pyproject.toml` の `[tool.tsugite.verify]` と `tests/` から完了の定義に掲載されます。Verifyは差分に該当するパッケージを並列ジョブで検証します。手元ではGitHub CLIにログインして `task docs:quality` を実行すると掲載版を更新できます。
 
 ## コミットとプッシュの前に
 
@@ -65,7 +65,9 @@ task demo
 
 CDKのスナップショットは標準構成の論理ID、リソース型と出力を比較します。意図したインフラ変更で差分が出たら、合成したテンプレートで内容を確認して `packages/infra/tests/cloudformation_snapshot.json` を更新します。CDK Nagは既存指摘を `cdk_nag_baseline.json` で照合し、新規指摘をテスト失敗として報告します。詳細は `task audit` が出力する `artifacts/cdk-nag.csv` で確認できます。
 
-`task docs` は実行中のデータベースやAWS資格情報を使わず、[API別の実装設計書](docs/generated/README.md)、[SQL・AWS操作のCRUD一覧](docs/generated/crud.md)、[入出力スキーマ](docs/generated/schemas.md)、[テーブル・レコード・カラム定義](docs/generated/database.md)を更新します。設計を変えるときはルーターの引数・応答モデル・依存関数を修正します。CRUD表はAPIを行に、SQLテーブルとAWSサービスをそれぞれ別の表の列に並べます。各セルで操作の種類を、API詳細で条件分岐を含む操作の根拠となるソース行を確認できます。転送先の利用者定義APIの項目は、登録時のOpenAPIで決まります。
+[自動生成ドキュメントの目次](docs/generated/README.md)から、API・DB・インフラ・開発ルールの各資料を参照できます。
+
+`task docs:api` は実行中のデータベースやAWS資格情報を使わず、[API別の実装設計書](docs/generated/apis/README.md)、[SQL・AWS操作のCRUD一覧](docs/generated/db/crud.md)、[入出力スキーマ](docs/generated/db/schemas.md)、[テーブル・レコード・カラム定義](docs/generated/db/database.md)を更新します。設計を変えるときはルーターの引数・応答モデル・依存関数を修正します。CRUD表はAPIを行に、SQLテーブルとAWSサービスをそれぞれ別の表の列に並べます。各セルで操作の種類を、API詳細で条件分岐を含む操作の根拠となるソース行を確認できます。転送先の利用者定義APIの項目は、登録時のOpenAPIで決まります。
 
 API操作はルートデコレーター、引数・モデル・項目・列挙値はそれぞれの宣言の直前に `#: 和名` を書きます。DBモデルのクラスには同じ形式でテーブル名を書き、docstringの1段落目にレコード名、2段落目に1行が表す内容を書きます。AWS SDK呼び出しの直前には `#: サービスの和名 / 操作の和名` を書きます。`task docs` はPythonの構文木とコメントトークンをFastAPI・SQLAlchemyの定義と照合し、設計書とデモ環境のOpenAPIに和名を反映します。
 
@@ -142,4 +144,12 @@ task test:aws
 
 GitHub Actions の **Verify** から成果物 **contracts-and-test-results** 内の `test-report.html` または `test-report.pdf` を開くと、ケースごとの期待結果、成否、実行時間、実際の画面とタグ一覧を確認できます。手元では通常のテストに `--junitxml=artifacts/junit.xml`、エミュレーターのテストに `--junitxml=artifacts/aws-emulator.xml` を付けて実行し、`task report` で同じレポートを作れます。
 
-[ポータルの画面仕様と業務フロー](docs/design/portal.md)。デモ起動中に別の端末で `task seed -- --editions 20` を実行すると、在庫・配送・為替・店舗・発注・営業日の6種類を20拠点分、計120件公開できます。同じ名前の出品は再利用します。デモでの実行結果は接続情報の折り返しです。業務ごとの応答はHTTPS接続のE2Eで確認します。
+[ポータルの画面仕様と業務フロー](docs/design/portal.md)。デモ起動中に別の端末で `task seed` を実行すると、SQLiteの見本データを持つ12商品が公開されます。`task seed -- --editions 20` では20拠点分の240件を作成します。過去に同じデモ商品を登録した環境で再実行すると、旧仕様を新版に更新して再公開します。仕様を変更した商品の既存の利用権はポータルの規則に従い再申請が必要です。
+
+[商品別のOpenAPI YAML](docs/generated/sample-api/) は `task docs:samples` で再生成できます。各商品の5つの業務操作と `GET /health` を掲載しています。商品ごとの実装は [packages/sample_api](packages/sample_api/src/sample_api/products/) にあります。AWSの標準構成では環境別の既存の接続先（例：`stock-sandbox`）を選び、ベースパスを `/<商品slug>` に設定します。画面はJSON入力なので、例えば配送追跡は次のコマンドで同じ定義をJSONにして登録します。
+
+```bash
+uv run --locked --all-packages python -c 'import json; from sample_api.products.parcel_tracking import app; print(json.dumps(app.openapi(), ensure_ascii=False, indent=2))' > parcel-tracking.json
+```
+
+旧在庫APIの `/items` と `/items/{sku}` は引き続きベースパスなしで呼べます。サンプルのデータはLambdaの実行環境内に保持し、発注は入力数量で結果を試算します。

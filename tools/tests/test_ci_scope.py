@@ -30,8 +30,9 @@ def test_component_tests_and_mixed_changes(tmp_path):
         "packages/infra/tests/cloudformation_snapshot.json",
     ]
     plan = ci.select(files, SUITES, tmp_path)
+    assert plan["types"]
     assert plan["suites"] == [ci.FRONTEND, ci.INFRA]
-    assert not any(plan[key] for key in ("chromium", "synth", "audit", "aws", "types", "frontend_build"))
+    assert not any(plan[key] for key in ("chromium", "synth", "audit", "aws", "frontend_build"))
 
 
 def test_css_and_authentication_have_different_consumers(tmp_path):
@@ -40,7 +41,7 @@ def test_css_and_authentication_have_different_consumers(tmp_path):
     css = ci.select(["packages/frontend/public/ui.css"], SUITES, tmp_path)
     assert css["suites"] == [ci.FRONTEND, ci.BROWSER]
     assert css["chromium"] and css["frontend_build"] and not css["aws"]
-    auth = ci.select(["packages/frontend/src/web_app/client.py"], SUITES, tmp_path)
+    auth = ci.select(["packages/frontend/src/web_app/apis/client.py"], SUITES, tmp_path)
     assert auth["aws_portal_only"] and auth["aws"] and auth["synth"]
 
 
@@ -56,7 +57,7 @@ def test_frontend_builder_runs_stylesheet_and_design_policy_tests(tmp_path):
 def test_infra_and_aws_require_browser_and_assets(tmp_path):
     """インフラの実装変更ではCDK・監査・AWSの画面連携に必要な環境を用意する。"""
     cached_report(tmp_path)
-    plan = ci.select(["packages/infra/src/infra_app/stack.py"], SUITES, tmp_path)
+    plan = ci.select(["packages/infra/src/stack.py"], SUITES, tmp_path)
     assert plan["suites"] == [ci.INFRA]
     assert all(plan[key] for key in ("synth", "aws", "audit", "chromium"))
     assert not plan["aws_portal_only"]
@@ -66,7 +67,7 @@ def test_measured_source_invalidates_suites_that_executed_it(tmp_path):
     """計測対象コードの変更時は以前に実行行を記録した層も再計測する。"""
     cached_report(tmp_path)
     (tmp_path / "coverage-parts" / ci.part_name(ci.INFRA)).write_bytes(b"measured")
-    plan = ci.select(["packages/database/src/tsugite_db/models.py"], SUITES, tmp_path)
+    plan = ci.select(["packages/database/src/tsugite_db/models/assets.py"], SUITES, tmp_path)
     assert set(plan["suites"]) == {ci.AGENT, ci.BACKEND, ci.DATABASE, ci.INFRA, ci.BROWSER, ci.TOOLS}
     assert plan["design"] and plan["types"] and plan["aws"]
 
@@ -129,7 +130,7 @@ def test_coverage_includes_all_runtime_layers_and_unexecuted_files(tmp_path, mon
         "packages/backend/src/app/api.py",
         "packages/database/src/tsugite_db/session.py",
         "packages/frontend/src/web_app/app.py",
-        "packages/infra/src/infra_app/stack.py",
+        "packages/infra/src/stack.py",
         "packages/infra/app.py",
         "packages/agent/src/worker.py",
         "packages/model/src/nested/inference.py",
@@ -165,7 +166,7 @@ def test_changed_screen_invalidates_only_suites_that_executed_it(tmp_path):
     import json
 
     cached_report(tmp_path)
-    screen = "packages/frontend/src/web_app/guide_views.py"
+    screen = "packages/frontend/src/web_app/components/guide_views.py"
     for suite, files in [(ci.DATABASE, [screen]), (ci.INFRA, ["packages/infra/app.py"])]:
         part = tmp_path / "coverage-parts" / ci.part_name(suite)
         part.write_bytes(b"measured")

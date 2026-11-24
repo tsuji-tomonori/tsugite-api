@@ -1,18 +1,23 @@
+# ログイン手順と認証チャレンジを検証する。
+from __future__ import annotations
+
 import asyncio
 import json
-from types import SimpleNamespace
+from collections.abc import Callable
+from types import ModuleType, SimpleNamespace
+from typing import Any
 from unittest.mock import AsyncMock, call
 
 import pytest
 
 
-def login(module):
+def login(module: ModuleType) -> Any:
     return module.PortalLogin({"client_id": "web", "identity_endpoint": "https://identity.example"})
 
 
-def test_invitation_and_totp_setup(portal_module):
+def test_invitation_and_totp_setup(portal_module: Callable[[str], ModuleType]) -> None:
     """初回パスワードの変更から認証アプリ登録まで、各応答のセッションを次の処理に渡す。"""
-    flow = login(portal_module("portal_auth"))
+    flow = login(portal_module("apis.portal_auth"))
     flow.call = AsyncMock(
         side_effect=[
             {
@@ -58,9 +63,9 @@ def test_invitation_and_totp_setup(portal_module):
     assert (flow.step, flow.secret, flow.session) == ("signin", None, None)
 
 
-def test_returning_user_retries_mfa(portal_module):
+def test_returning_user_retries_mfa(portal_module: Callable[[str], ModuleType]) -> None:
     """登録済みの利用者は確認コードを間違えても同じ画面で再入力できる。"""
-    module = portal_module("portal_auth")
+    module = portal_module("apis.portal_auth")
     flow = login(module)
     flow.call = AsyncMock(
         side_effect=[
@@ -80,9 +85,9 @@ def test_returning_user_retries_mfa(portal_module):
     }
 
 
-def test_reset_returns_to_signin(portal_module):
+def test_reset_returns_to_signin(portal_module: Callable[[str], ModuleType]) -> None:
     """再設定コードを受け取った利用者は新しいパスワードを設定してログイン画面に戻れる。"""
-    flow = login(portal_module("portal_auth"))
+    flow = login(portal_module("apis.portal_auth"))
     flow.reset("forgot")
     flow.call = AsyncMock(return_value={})
     asyncio.run(flow.submit(username="member"))
@@ -101,9 +106,11 @@ def test_reset_returns_to_signin(portal_module):
     ]
 
 
-def test_credentials_sent_to_identity_service(portal_module, monkeypatch):
+def test_credentials_sent_to_identity_service(
+    portal_module: Callable[[str], ModuleType], monkeypatch: pytest.MonkeyPatch
+) -> None:
     """パスワードは認証サービスへのPOST本文だけで送信し、エラーは日本語で表示する。"""
-    module = portal_module("portal_auth")
+    module = portal_module("apis.portal_auth")
     fetch = AsyncMock(
         return_value=SimpleNamespace(
             ok=False,
@@ -116,6 +123,7 @@ def test_credentials_sent_to_identity_service(portal_module, monkeypatch):
     flow = login(module)
     with pytest.raises(ValueError, match="入力内容を確認"):
         asyncio.run(flow.submit(username="member", password=" test "))
+    assert fetch.await_args is not None
     args, kwargs = fetch.await_args
     assert args == ("https://identity.example",)
     assert kwargs["method"] == "POST" and kwargs["redirect"] == "error"

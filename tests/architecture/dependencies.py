@@ -11,7 +11,8 @@ MODULES = {
     "app": "バックエンド",
     "tsugite_db": "データベース",
     "web_app": "フロント",
-    "infra_app": "インフラ",
+    "src": "インフラ",
+    "sample_api": "サンプルAPI",
     "tools": "開発ツール",
     "tests": "テスト",
 }
@@ -21,7 +22,8 @@ PACKAGE_MODULES = {
     "backend": "app",
     "database": "tsugite_db",
     "frontend": "web_app",
-    "infra": "infra_app",
+    "infra": "src",
+    "sample_api": "sample_api",
 }
 # Lambda ZIP の直下に配置するモジュールの import 名を実ファイルから取得する。
 FLAT_MODULES = {
@@ -33,7 +35,7 @@ FLAT_MODULES = {
 LIBRARIES = {
     "sqlalchemy": "データベース",
     "alembic": "データベース",
-    "fastapi": "バックエンド",
+    "fastapi": "HTTPフレームワーク",
     "aws_cdk": "インフラ",
     "constructs": "インフラ",
     "js": "フロント",
@@ -43,13 +45,23 @@ LIBRARIES = {
     "tokenizers": "モデル",
 }
 ALLOWED = {
-    "バックエンド": {"データベース", "エージェント"},
+    "バックエンド": {"データベース", "エージェント", "HTTPフレームワーク"},
+    "サンプルAPI": {"HTTPフレームワーク"},
     "データベース": set(),
     "フロント": set(),
     "インフラ": set(),
     "モデル": set(),
     "エージェント": {"バックエンド", "データベース"},
-    "開発ツール": {"バックエンド", "データベース", "フロント", "インフラ", "エージェント", "モデル"},
+    "開発ツール": {
+        "サンプルAPI",
+        "HTTPフレームワーク",
+        "バックエンド",
+        "データベース",
+        "フロント",
+        "インフラ",
+        "エージェント",
+        "モデル",
+    },
 }
 
 
@@ -62,11 +74,11 @@ def canonical(module):
             return ".".join(tail)
         if parts[1] in {"agent", "model"} and tail[:1] == ["src"]:
             return ".".join((prefix, *tail[1:]))
+        if prefix == "src" and tail[:1] == ["src"]:
+            return ".".join(tail)
         if tail[:2] == ["src", prefix]:
             tail = tail[2:]
         return ".".join((prefix, *tail))
-    if parts[:2] == ["src", "infra_app"]:
-        return ".".join(parts[1:])
     if parts[0] in FLAT_MODULES:
         return ".".join((FLAT_MODULES[parts[0]], *parts[1:]))
     return module
@@ -112,10 +124,15 @@ def dependency_violations(path, source):
         target = layer(imported)
         if target is None or target == owner or target in ALLOWED[owner]:
             continue
+        if module == "app.integrations.upstream" and imported in {
+            "sample_api.main.app",
+            "sample_api.main.PRODUCTS",
+        }:
+            continue  # ローカルでのみ同じFastAPIアプリを呼ぶ。
         # チャット検索だけがブラウザーに依存しないガイド本文と検索関数を共有する。
-        if module == "agent.chat_retrieval" and imported.split(".")[:2] in (
-            ["web_app", "guide_content"],
-            ["web_app", "guide_search"],
+        if module == "agent.chat_retrieval" and imported.split(".")[:3] in (
+            ["web_app", "content", "guide_content"],
+            ["web_app", "content", "guide_search"],
         ):
             continue
         errors.append(f"{path}:{line}: {owner}から{target}への依存 {imported}")

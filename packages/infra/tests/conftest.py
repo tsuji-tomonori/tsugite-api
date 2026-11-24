@@ -1,7 +1,9 @@
 from shutil import copyfile
 
 import pytest
-from src.infra_app import chat, delivery, stack
+
+from packages.infra.src import stack
+from packages.infra.src.components import bindings, chat, delivery
 
 
 @pytest.fixture(autouse=True)
@@ -10,6 +12,7 @@ def cdk_test_assets(tmp_path, monkeypatch):
     root = tmp_path / "assets"
     for relative in (
         "build/lambda/handler.py",
+        "build/sample-api/sample_api/main.py",
         "build/chat-decision/decision.py",
         "build/chat-llm/completion.py",
         "packages/frontend/dist/index.html",
@@ -26,6 +29,7 @@ def cdk_test_assets(tmp_path, monkeypatch):
         chat.ROOT / "packages/model/src/manifest.json",
         root / "packages/model/src/manifest.json",
     )
+    monkeypatch.setattr(bindings, "ROOT", root)
     monkeypatch.setattr(stack, "ROOT", root)
     monkeypatch.setattr(delivery, "ROOT", root)
     monkeypatch.setattr(chat, "ROOT", root)

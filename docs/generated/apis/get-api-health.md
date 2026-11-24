@@ -4,9 +4,9 @@
 
 GET `/api/health`
 
-[API一覧](../README.md) · [CRUD一覧](../crud.md)
+[API一覧](README.md) · [CRUD一覧](../db/crud.md)
 
-共通 · `health_api_health_get` · [health:81](../../../packages/backend/src/app/main.py#L81)
+共通 · `health_api_health_get` · [health:31](../../../packages/backend/src/app/main.py#L31)
 
 ## 入力
 
@@ -22,7 +22,7 @@ GET `/api/health`
 
 | ステータス | 説明 | 形式・条件 | スキーマ |
 | --- | --- | --- | --- |
-| 200 | 正常に処理できました | application/json | [サービスの稼働状態（Health）](../schemas.md#health) |
+| 200 | 正常に処理できました | application/json | [サービスの稼働状態（Health）](../db/schemas.md#health) |
 
 ### 200 application/json の項目
 

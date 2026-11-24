@@ -1,5 +1,16 @@
+# フロントエンドの実行依存と型検査の対象を定義する。
 [project]
 name = "tsugite-frontend"
 version = "0.1.0"
 requires-python = ">=3.14,<3.16"
 dependencies = ["puepy==0.6.5"]
+
+[tool.mypy]
+files = ["packages/frontend/src/web_app", "packages/frontend/tests"]
+mypy_path = ["packages/frontend/tests", "packages/frontend/src/web_app", "packages/frontend/typings", "packages/backend/src/app/core"]
+strict = true
+explicit_package_bases = true
+
+[[tool.mypy.overrides]]
+module = "tinycss2"
+ignore_missing_imports = true

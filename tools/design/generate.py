@@ -88,25 +88,29 @@ def reference(spec, obj):
     return obj
 
 
-def schema_label(spec, schema):
+def schema_label(spec, schema, schema_page="../db/schemas.md"):
     if schema is False:
         return "入力不可"
     if not schema or schema is True:
         return "任意の型"
     if "$ref" in schema:
         model = schema["$ref"].rsplit("/", 1)[-1]
-        return f"[{reference(spec, schema)['title']}（{model}）](../schemas.md#{model.lower()})"
+        return f"[{reference(spec, schema)['title']}（{model}）]({schema_page}#{model.lower()})"
     if schema.get("type") == JsonType.ARRAY:
-        kind = "配列 / " + schema_label(spec, schema.get("items"))
+        kind = "配列 / " + schema_label(spec, schema.get("items"), schema_page)
     elif "anyOf" in schema or "oneOf" in schema or "allOf" in schema:
         group = next(g for g in ("anyOf", "oneOf", "allOf") if g in schema)
         kind = (" かつ " if group == "allOf" else " または ").join(
-            schema_label(spec, v) for v in schema[group]
+            schema_label(spec, v, schema_page) for v in schema[group]
         )
     else:
         kind = display_names(JsonType).get(schema.get("type", ""), "任意の型")
     if isinstance(schema.get("additionalProperties"), dict):
-        kind += "（キーに対応する値は" + schema_label(spec, schema["additionalProperties"]) + "）"
+        kind += (
+            "（キーに対応する値は"
+            + schema_label(spec, schema["additionalProperties"], schema_page)
+            + "）"
+        )
     if schema.get("additionalProperties") is False:
         kind += "（定義外の項目は禁止）"
     constraints = {
@@ -370,7 +374,7 @@ def database_design():
     return [
         "# データベース定義書",
         "",
-        "[API一覧](README.md) · [API別のCRUD一覧](crud.md)",
+        "[API一覧](../apis/README.md) · [API別のCRUD一覧](crud.md)",
         "",
         *grid(["テーブルの和名", "テーブル物理名", "レコードの和名", "ORMモデル名"], overview),
         *details,
@@ -418,7 +422,7 @@ def generate(out=OUT):
         dest = "apis/" + filename
         if dest in pages:
             raise ValueError(f"ページ名が重複しました {dest}")
-        link = f"[{method} `{path}`]({dest})"
+        operation_label = f"{method} `{path}`"
         scope = (
             "デモ限定"
             if (path, method) not in production
@@ -429,7 +433,9 @@ def generate(out=OUT):
             else "転送用（公開スキーマ外）"
         )
         title = op["summary"]
-        overview.append((title, link, scope, op["operationId"], security(spec, op)))
+        overview.append(
+            (title, f"[{operation_label}]({filename})", scope, op["operationId"], security(spec, op))
+        )
         facts = index.trace(symbol(fn) for fn in dependencies(route.dependant))
         handler = symbol(route.endpoint)
         lines = [
@@ -437,7 +443,7 @@ def generate(out=OUT):
             "",
             f"{method} `{path}`",
             "",
-            "[API一覧](../README.md) · [CRUD一覧](../crud.md)",
+            "[API一覧](README.md) · [CRUD一覧](../db/crud.md)",
             "",
             f"{scope} · `{op['operationId']}` · "
             + source_link(index, handler, index.functions[handler].lineno),
@@ -484,7 +490,7 @@ def generate(out=OUT):
         for kind, resource, action, func, line, detail in sorted(facts.effects):
             grouped[kind, resource].update(action.split("/"))
             if kind == "SQL":
-                resource_label = f"[{tables[resource]['table']}](../database.md#{resource})"
+                resource_label = f"[{tables[resource]['table']}](../db/database.md#{resource})"
                 col = detail.removesuffix(" に代入")
                 if col != detail:
                     operation = tables[resource]["columns"][col] + "を設定"
@@ -526,7 +532,7 @@ def generate(out=OUT):
             "",
             "</details>",
         ]
-        api = f"{title}<br>{link}"
+        api = f"{title}<br>[{operation_label}](../{dest})"
         crud.append((api, grouped))
         if facts.unresolved:
             unresolved.append((api, len(facts.unresolved)))
@@ -534,9 +540,31 @@ def generate(out=OUT):
     with patch.dict(os.environ, {"TSUGITE_DEMO": "1", "AWS_LAMBDA_FUNCTION_NAME": ""}):
         schema_url = create_app().openapi_url
     pages["README.md"] = [
+        "# 自動生成ドキュメント",
+        "",
+        "このディレクトリには、実装・設定・テストから自動生成したドキュメントを配置します。"
+        "内容を更新するときは、生成元を変更し、該当するコマンドを実行してください。",
+        "",
+        *grid(
+            ["分野", "ドキュメント", "再生成コマンド"],
+            [
+                ("API", "[API操作一覧と操作別の実装設計書](apis/README.md)", "`task docs:api`"),
+                ("サンプルAPI", "[商品別のOpenAPI YAML](sample-api/)", "`task docs:samples`"),
+                (
+                    "DB",
+                    "[テーブル・レコード・カラム定義](db/database.md) · "
+                    "[入出力スキーマ](db/schemas.md) · [SQL・AWSのCRUD表](db/crud.md)",
+                    "`task docs:api`",
+                ),
+                ("インフラ", "[CDKコンポーネント別の設計書](infra/README.md)", "`task docs:infra`"),
+                ("開発ルール", "[完了の定義](dev-rules/definition-of-done.md)", "`task docs:quality`"),
+            ],
+        ),
+    ]
+    pages["apis/README.md"] = [
         "# API実装設計書",
         "",
-        f"{len(records)}操作。[SQL・AWS CRUD一覧](crud.md) · [入出力スキーマ](schemas.md) · [テーブル・レコード・カラム定義](database.md)",
+        f"{len(records)}操作。[SQL・AWS CRUD一覧](../db/crud.md) · [入出力スキーマ](../db/schemas.md) · [テーブル・レコード・カラム定義](../db/database.md)",
         "",
         "FastAPIに登録された業務ルートをメソッド別に掲載します。認証条件・入力・応答・呼び出し先は各操作を開いて確認できます。",
         "",
@@ -548,7 +576,7 @@ def generate(out=OUT):
         "",
         f"デモ環境の `GET {schema_url}` は認証・パラメータ・ボディ不要です。200 application/jsonでOpenAPI文書を返します。SQL・AWS操作はありません。",
     ]
-    pages["crud.md"] = [
+    pages["db/crud.md"] = [
         "# API別 SQL・AWS CRUD一覧",
         "",
         "[SQLテーブル別](#sql) · [AWSサービス別](#aws)",
@@ -587,13 +615,13 @@ def generate(out=OUT):
         ),
     ]
     if unresolved:
-        pages["crud.md"] += [
+        pages["db/crud.md"] += [
             "",
             "## 静的解析で特定できなかった操作",
             "",
             *grid(["API", "要確認件数"], unresolved),
         ]
-    lines = ["# 入出力スキーマ", "", "[API一覧](README.md)"]
+    lines = ["# 入出力スキーマ", "", "[API一覧](../apis/README.md)"]
     for key, schema in sorted(spec["components"].get("schemas", {}).items()):
         lines += ["", f'<a id="{key.lower()}"></a>', "", f"## {schema['title']}（{key}）", ""]
         if props := schema.get("properties"):
@@ -604,7 +632,7 @@ def generate(out=OUT):
                         v["title"],
                         k,
                         "必須" if k in schema.get("required", []) else "任意",
-                        schema_label(spec, v).replace("../schemas.md#", "#"),
+                        schema_label(spec, v, schema_page=""),
                     )
                     for k, v in props.items()
                 ],
@@ -619,8 +647,8 @@ def generate(out=OUT):
             "",
             "</details>",
         ]
-    pages["schemas.md"] = lines
-    pages["database.md"] = database_design()
+    pages["db/schemas.md"] = lines
+    pages["db/database.md"] = database_design()
     out = Path(out)
     for dest, lines in pages.items():
         target = out / dest

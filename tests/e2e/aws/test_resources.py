@@ -1,9 +1,12 @@
 import json
 import os
 import ssl
+import subprocess
+import sys
 import time
 from pathlib import Path
 from urllib.request import urlopen
+from zipfile import ZipFile
 
 
 def test_deployed_resources(aws, resources):
@@ -35,21 +38,23 @@ def test_deployed_resources(aws, resources):
         FunctionName=name, WaiterConfig={"Delay": 1, "MaxAttempts": 30}
     )
     arn = functions.get_function_configuration(FunctionName=name)["FunctionArn"]
+    transport = resources["transport-sandbox"]
+    transport_arn = functions.get_function_configuration(FunctionName=transport)["FunctionArn"]
     functions.add_permission(
-        FunctionName=name,
+        FunctionName=transport,
         StatementId="AllowStockRoute",
         Action="lambda:InvokeFunction",
         Principal="apigateway.amazonaws.com",
-        SourceArn=f"arn:aws:execute-api:us-east-1:000000000000:{api_id}/*/GET/stock",
+        SourceArn=f"arn:aws:execute-api:us-east-1:000000000000:{api_id}/*/GET/items",
     )
-    result = functions.invoke(FunctionName=name, Payload=b"{}")
-    data = json.load(result["Payload"])
-    assert "FunctionError" not in result, data
     integration = gateway.create_integration(
-        ApiId=api_id, IntegrationType="AWS_PROXY", IntegrationUri=arn, PayloadFormatVersion="2.0"
+        ApiId=api_id,
+        IntegrationType="AWS_PROXY",
+        IntegrationUri=transport_arn,
+        PayloadFormatVersion="2.0",
     )
     gateway.create_route(
-        ApiId=api_id, RouteKey="GET /stock", Target="integrations/" + integration["IntegrationId"]
+        ApiId=api_id, RouteKey="GET /items", Target="integrations/" + integration["IntegrationId"]
     )
     api = gateway.get_api(ApiId=api_id)
     assert api["Tags"]["Component"] == "Gateway"
@@ -57,7 +62,7 @@ def test_deployed_resources(aws, resources):
     endpoint = api["ApiEndpoint"]
     assert endpoint.startswith(os.environ["AWS_ENDPOINT_URL"] + "/")
     with urlopen(
-        endpoint + "/stock",
+        endpoint + "/items",
         context=ssl.create_default_context(cafile=os.environ["AWS_CA_BUNDLE"]),
         timeout=8,
     ) as r:
@@ -91,3 +96,42 @@ def test_openapi_archive_versions(aws, resources, monkeypatch):
     s3 = aws.client("s3")
     assert json.load(s3.get_object(Bucket=bucket, Key=key)["Body"]) == SPEC
     assert len(s3.list_object_versions(Bucket=bucket, Prefix=key)["Versions"]) == 1
+
+
+def test_packaged_sample_products(resources, tmp_path):
+    """登録済みのLambda配布ZIPをCPythonで実行し、全商品のヘルスチェックと業務応答を検証する。"""
+    from tools.demo.seed_marketplace import CATALOG
+
+    with ZipFile(resources["sample-package"]) as archive:
+        archive.extractall(tmp_path)
+    events = []
+    for product in CATALOG:
+        for method, suffix in (("GET", "/health"), (product["method"], product["path"])):
+            path = f"/{product['slug']}{suffix}"
+            events.append(
+                {
+                    "version": "2.0",
+                    "headers": {"content-type": "application/json"},
+                    "rawPath": path,
+                    "rawQueryString": "",
+                    "body": '{"units": 7}' if method == "POST" else None,
+                    "requestContext": {
+                        "http": {"method": method, "path": path, "sourceIp": "127.0.0.1"}
+                    },
+                }
+            )
+    runner = Path(__file__).with_name("sample_package.py")
+    process = subprocess.run(
+        [sys.executable, "-I", "-S", str(runner), str(tmp_path)],
+        input=json.dumps(events),
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    for event, line in zip(events, process.stdout.splitlines(), strict=True):
+        payload = json.loads(line)
+        assert payload["statusCode"] == 200, (event, payload)
+        result = json.loads(payload["body"])
+        assert result
+        if event["rawPath"].endswith("/health"):
+            assert result == {"status": "ok"}

@@ -17,7 +17,7 @@ def test_boundary_checker_rejects_cross_layer_imports():
         ("packages/backend/src/app/main.py", "import decision as m", "モデル"),
         ("packages/database/migrations/env.py", "from app.main import app", "バックエンド"),
         (
-            "packages/frontend/src/web_app/client.py",
+            "packages/frontend/src/web_app/apis/client.py",
             "from packages.database.src.tsugite_db import models",
             "データベース",
         ),
@@ -42,7 +42,7 @@ def test_boundary_checker_accepts_supported_collaboration():
         ("packages/backend/src/app/main.py", "import chat_jobs as jobs"),
         (
             "packages/agent/src/chat_retrieval.py",
-            "from packages.frontend.src.web_app.guide_content import GUIDES",
+            "from packages.frontend.src.web_app.content.guide_content import GUIDES",
         ),
         ("packages/model/src/completion.py", "import runtime"),
     ):
