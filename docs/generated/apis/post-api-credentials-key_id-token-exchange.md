@@ -6,7 +6,7 @@ POST `/api/credentials/{key_id}/token-exchange`
 
 [API一覧](README.md) · [CRUD一覧](../db/crud.md)
 
-共通 · `oauth_exchange_api_credentials__key_id__token_exchange_post` · [oauth_exchange:227](../../../packages/backend/src/app/apis/governance/credentials.py#L227)
+共通 · `oauth_exchange_api_credentials__key_id__token_exchange_post` · [oauth_exchange:233](../../../packages/backend/src/app/apis/governance/credentials.py#L233)
 
 ## 入力
 
@@ -38,6 +38,7 @@ POST `/api/credentials/{key_id}/token-exchange`
 | ステータス | 説明 | 形式・条件 | スキーマ |
 | --- | --- | --- | --- |
 | 200 | 正常に処理できました | application/json | [OAuthトークン交換の応答（ExchangedToken）](../db/schemas.md#exchangedtoken) |
+| 400 | 交換方式が未対応、またはフォームの入力内容が不正です。 | application/json | [OAuthトークン交換のエラー応答（TokenExchangeError）](../db/schemas.md#tokenexchangeerror) |
 | 422 | 入力内容が条件を満たしていません | application/json | [リクエスト入力エラー（HTTPValidationError）](../db/schemas.md#httpvalidationerror) |
 
 ### 200 application/json の項目
@@ -51,6 +52,13 @@ POST `/api/credentials/{key_id}/token-exchange`
 | 有効期限（UNIX秒） | expires_at | 必須 | 整数 |
 | 更新可能になる時刻（UNIX秒） | refresh_at | 必須 | 整数 |
 | 交換して発行したトークンの種類 | issued_token_type | 必須 | 文字列 |
+
+### 400 application/json の項目
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| エラーを識別するコード | error | 必須 | 文字列 |
+| 利用者向けのエラーの説明 | error_description | 必須 | 文字列 |
 
 ### 422 application/json の項目
 

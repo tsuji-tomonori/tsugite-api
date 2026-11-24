@@ -4862,6 +4862,40 @@
 
 </details>
 
+<a id="tokenexchangeerror"></a>
+
+## OAuthトークン交換のエラー応答（TokenExchangeError）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| エラーを識別するコード | error | 必須 | 文字列 |
+| 利用者向けのエラーの説明 | error_description | 必須 | 文字列 |
+
+<details><summary>JSON Schema</summary>
+
+```json
+{
+  "properties": {
+    "error": {
+      "title": "エラーを識別するコード",
+      "type": "string"
+    },
+    "error_description": {
+      "title": "利用者向けのエラーの説明",
+      "type": "string"
+    }
+  },
+  "required": [
+    "error",
+    "error_description"
+  ],
+  "title": "OAuthトークン交換のエラー応答",
+  "type": "object"
+}
+```
+
+</details>
+
 <a id="transfer"></a>
 
 ## 組織の移管先（Transfer）

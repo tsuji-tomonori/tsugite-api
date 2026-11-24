@@ -6,7 +6,7 @@ POST `/api/auth/token`
 
 [API一覧](README.md) · [CRUD一覧](../db/crud.md)
 
-共通 · `exchange_api_auth_token_post` · [exchange:287](../../../packages/backend/src/app/apis/governance/credentials.py#L287)
+共通 · `exchange_api_auth_token_post` · [exchange:293](../../../packages/backend/src/app/apis/governance/credentials.py#L293)
 
 ## 入力
 
@@ -70,7 +70,7 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 | --- | --- | --- | --- | --- | --- |
 | [API利用申請・利用権](../db/database.md#access_rights) | access_rights | R | 検索 | select | [approved_assets:51](../../../packages/backend/src/app/core/credential_policy.py#L51) |
 | [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:107](../../../packages/backend/src/app/core/workspace.py#L107) |
-| [API認証情報](../db/database.md#api_keys) | api_keys | R | 主キーで取得 | db.get | [exchange:289](../../../packages/backend/src/app/apis/governance/credentials.py#L289) |
+| [API認証情報](../db/database.md#api_keys) | api_keys | R | 主キーで取得 | db.get | [exchange:295](../../../packages/backend/src/app/apis/governance/credentials.py#L295) |
 | [監査履歴](../db/database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [audit:22](../../../packages/backend/src/app/apis/governance/directory.py#L22) |
 | [短期トークンの発行状態](../db/database.md#credential_leases) | credential_leases | C | レコードを追加 | db.add | [mint:68](../../../packages/backend/src/app/apis/governance/credentials.py#L68) |
 | [短期トークンの発行状態](../db/database.md#credential_leases) | credential_leases | R | 主キーで取得 | db.get | [mint:56](../../../packages/backend/src/app/apis/governance/credentials.py#L56) |

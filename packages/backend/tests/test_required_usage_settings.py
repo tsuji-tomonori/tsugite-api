@@ -127,3 +127,88 @@ def test_alert_threshold_and_counter_reset(portal, stop):
     assert changed["threshold"] == 3 and changed["calls"] == 0
     call = portal.get(invoke_url, headers=caller)
     assert call.status_code == 200, (invoke_url, call.json())
+
+
+def test_inherited_limit_after_department_reorganization(portal):
+    """プロジェクトの管轄が変わると、後継部署の短い上限が発行候補に反映される。"""
+    admin = headers(portal, "admin")
+    user = headers(portal, "consumer")
+    for department, limit in (("engineering", 30), ("field", 12)):
+        assert (
+            portal.put(
+                f"/api/workspace/units/{department}",
+                headers=admin,
+                json={"kind": "department", "name": department},
+            ).status_code
+            == 200
+        )
+        assert (
+            portal.put(
+                f"/api/credential-limits/units/{department}", headers=admin, json={"max_minutes": limit}
+            ).status_code
+            == 200
+        )
+    for department, limit in (("engineering", 30), ("field", 12), ("", 60)):
+        moved = portal.put(
+            "/api/workspace/units/finance",
+            headers=admin,
+            json={"kind": "project", "name": "経理", "parent": department},
+        )
+        assert moved.status_code == 200
+        visible = portal.get("/api/credentials/options", headers=user, params={"project": "finance"})
+        assert visible.status_code == 200 and visible.json()["max_minutes"] == limit
+        configured = portal.get("/api/credential-limits/units/finance", headers=admin).json()
+        assert configured["max_minutes"] is None and configured["inherited_minutes"] == limit
+
+
+def test_project_pause_and_resume_preserves_active_key(portal):
+    """担当リーダーが部署を停止すると配下の呼び出しも止まり、再開後は同じ認証情報で利用を続けられる。"""
+    admin = headers(portal, "admin")
+    owner = headers(portal, "provider")
+    user = headers(portal, "consumer")
+    asset_id, _, invoke_url = approved(portal, owner, user)
+    assert (
+        portal.put(
+            "/api/workspace/units/operations",
+            headers=admin,
+            json={"name": "業務部", "kind": "department"},
+        ).status_code
+        == 200
+    )
+    assert (
+        portal.put(
+            "/api/workspace/units/finance",
+            headers=admin,
+            json={"name": "経理", "kind": "project", "parent": "operations"},
+        ).status_code
+        == 200
+    )
+    subject = portal.get("/api/me", headers=owner).json()["subject"]
+    assert (
+        portal.put(
+            "/api/workspace/memberships",
+            headers=admin,
+            json={"subject": subject, "unit_id": "operations", "leader": True},
+        ).status_code
+        == 200
+    )
+    issued = portal.post(
+        "/api/credentials",
+        headers=user,
+        json={
+            "name": "契約額",
+            "kind": "personal",
+            "mode": "bearer",
+            "project": "finance",
+            "api_ids": [asset_id],
+        },
+    )
+    assert issued.status_code == 201
+    caller = {"Authorization": f"Bearer {issued.json()['access_token']}"}
+    assert portal.get(invoke_url, headers=caller).status_code == 200
+    for stopped, expected in ((True, 403), (False, 200)):
+        state = portal.put(
+            "/api/workspace/units/operations/state", headers=owner, json={"stopped": stopped}
+        )
+        assert state.status_code == 200 and state.json()["stopped"] is stopped
+        assert portal.get(invoke_url, headers=caller).status_code == expected

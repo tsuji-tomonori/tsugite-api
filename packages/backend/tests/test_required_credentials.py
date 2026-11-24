@@ -108,7 +108,7 @@ def test_issue_use_and_retire_credentials(portal, mode, kind, explicit_assets):
 
 
 def test_choose_shortest_scope_limit(portal):
-    """提供APIが複数あるとき、選んだ対象と利用プロジェクトのうち短い上限が発行条件に反映される。"""
+    """提供APIと利用プロジェクトの両方で有効期間を制限したとき、短い方の上限が発行条件に反映される。"""
     owner = headers(portal, "provider")
     user = headers(portal, "consumer")
     admin = headers(portal, "admin")
@@ -509,3 +509,116 @@ def test_project_leader_takes_over_shared_system_credential(portal):
     )
     current = portal.get("/api/keys", headers=owner).json()
     assert [(k["id"], k["name"]) for k in current if k["id"] == key_id] == [(key_id, "月次バッチ")]
+
+
+def test_retired_key_and_missing_key_do_not_change_other_issuances(portal):
+    """削除済みまたは存在しない認証情報の操作を再試行しても、同じプロジェクトの有効なキーを維持する。"""
+    user = headers(portal, "consumer")
+    ids = []
+    for name in ("旧担当", "新担当"):
+        issued = portal.post(
+            "/api/keys", headers=user, json={"kind": "personal", "project": "finance", "name": name}
+        )
+        assert issued.status_code == 201
+        ids.append(issued.json()["id"])
+    assert portal.delete(f"/api/keys/{ids[0]}", headers=user).json()["revoked"]
+    rerun = portal.delete(f"/api/keys/{ids[0]}", headers=user)
+    assert rerun.status_code in (200, 404)
+    missing = portal.delete("/api/keys/removed-before-this-request", headers=user)
+    assert missing.status_code == 404 and missing.json()["detail"]
+    known = {row["id"]: row for row in portal.get("/api/keys", headers=user).json()}
+    assert known[ids[0]]["revoked"] and not known[ids[1]]["revoked"]
+
+
+@pytest.mark.parametrize(
+    "field, value",
+    [
+        pytest.param(
+            "grant_type",
+            "authorization_code",
+            id="different-grant",
+            marks=pytest.mark.case_detail("トークン交換以外の方式は入力エラーとして返す"),
+        ),
+        pytest.param(
+            "subject_token_type",
+            "urn:ietf:params:oauth:token-type:id_token",
+            id="id-token-kind",
+            marks=pytest.mark.case_detail("交換元の種類にIDトークンを選んだフォームを拒否する"),
+        ),
+        pytest.param(
+            "requested_token_type",
+            "urn:ietf:params:oauth:token-type:refresh_token",
+            id="unsupported-result",
+            marks=pytest.mark.case_detail("アクセストークン以外の応答種別を指定したフォームを拒否する"),
+        ),
+    ],
+)
+def test_oauth_exchange_form_accepts_only_documented_token_types(portal, field, value):
+    """API Docsの交換フォームで未対応の方式や種別を指定したとき、短期トークンを発行しない。"""
+    user = headers(portal, "consumer")
+    issued = portal.post(
+        "/api/credentials",
+        headers=user,
+        json={"name": "操作確認用", "mode": "bearer", "kind": "personal", "project": "finance"},
+    )
+    assert issued.status_code == 201
+    token_type = "urn:ietf:params:oauth:token-type:access_token"
+    form = {
+        "grant_type": "urn:ietf:params:oauth:grant-type:token-exchange",
+        "subject_token_type": token_type,
+        "subject_token": user["Authorization"].removeprefix("Bearer "),
+        "requested_token_type": token_type,
+    }
+    exchange = f"/api/credentials/{issued.json()['id']}/token-exchange"
+    invalid = portal.post(exchange, data={**form, field: value})
+    expected_error = "unsupported_grant_type" if field == "grant_type" else "invalid_request"
+    assert invalid.status_code == 400
+    assert invalid.json()["error"] == expected_error and invalid.json()["error_description"]
+    assert "access_token" not in invalid.json()
+    corrected = portal.post(exchange, data=form)
+    assert corrected.status_code == 200 and corrected.json()["issued_token_type"] == token_type
+
+
+def test_personal_bearer_has_no_client_secret_to_rotate(portal):
+    """短期Bearer方式には更新するクライアントシークレットがなく、本人はポータルからトークンを更新できる。"""
+    user = headers(portal, "consumer")
+    result = portal.post(
+        "/api/credentials",
+        headers=user,
+        json={"kind": "personal", "mode": "bearer", "name": "確認", "project": "finance"},
+    )
+    assert result.status_code == 201
+    item = result.json()
+    assert "client_secret" not in item and "client_id" not in item
+    rotated = portal.post(f"/api/credentials/{item['id']}/rotate", headers=user)
+    assert 400 <= rotated.status_code < 500 and "client_secret" not in rotated.json()
+    token = portal.post(f"/api/credentials/{item['id']}/token", headers=user)
+    assert token.status_code == 200 and token.json()["token_type"] == "Bearer"
+
+
+def test_project_system_credential_cannot_be_rotated_after_retirement(portal):
+    """リーダーがシステム認証を失効させた後はシークレットを再発行できず、一覧でも失効状態を保つ。"""
+    user = headers(portal, "consumer")
+    admin = headers(portal, "admin")
+    subject = portal.get("/api/me", headers=user).json()["subject"]
+    assert (
+        portal.put(
+            "/api/workspace/memberships",
+            headers=admin,
+            json={"unit_id": "finance", "subject": subject, "leader": True},
+        ).status_code
+        == 200
+    )
+    issue = portal.post(
+        "/api/credentials",
+        headers=user,
+        json={"kind": "shared", "mode": "system", "name": "終了済みバッチ", "project": "finance"},
+    )
+    assert issue.status_code == 201
+    key_id = issue.json()["id"]
+    removed = portal.delete(f"/api/keys/{key_id}", headers=user)
+    assert removed.status_code == 200 and removed.json()["revoked"]
+    rotated = portal.post(f"/api/credentials/{key_id}/rotate", headers=user)
+    assert rotated.status_code in (403, 404) and "client_secret" not in rotated.json()
+    keys = portal.get("/api/keys", headers=user).json()
+    assert any(key["id"] == key_id and key["revoked"] for key in keys)

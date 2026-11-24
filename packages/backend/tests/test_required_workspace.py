@@ -352,3 +352,21 @@ def test_repeated_transfer_keeps_successor_membership(portal):
         )
         == 1
     )
+
+
+def test_transfer_conflicting_token_lifetime_settings(portal):
+    """二つのプロジェクトに別々の有効期間上限があるとき、移管競合によってどちらの設定も失われない。"""
+    admin = headers(portal, "admin")
+    for key, minutes in (("monthly", 30), ("daily", 15)):
+        _unit(portal, admin, key, "project", key)
+        configured = portal.put(
+            f"/api/credential-limits/units/{key}", headers=admin, json={"max_minutes": minutes}
+        )
+        assert configured.status_code == 200 and configured.json()["max_minutes"] == minutes
+    moved = portal.post(
+        "/api/workspace/units/monthly/transfer", headers=admin, json={"destination": "daily"}
+    )
+    assert moved.status_code == 409 and moved.json()["detail"]
+    for key, minutes in (("monthly", 30), ("daily", 15)):
+        actual = portal.get(f"/api/credential-limits/units/{key}", headers=admin)
+        assert actual.status_code == 200 and actual.json()["max_minutes"] == minutes

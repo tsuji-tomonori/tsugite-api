@@ -171,3 +171,21 @@ def test_response_retry_after_an_inquiry_has_been_answered(portal):
     )
     own = portal.get("/api/inquiries", headers=user).json()
     assert [item["inquiry_id"] for item in own] == [receipt]
+
+
+def test_blank_question_and_reply_leave_history_unchanged(portal):
+    """空白だけの問い合わせ・回答は本文として受理せず、利用者が本文を書き直すまでは履歴を変えない。"""
+    user = headers(portal, "consumer")
+    admin = headers(portal, "admin")
+    receipt = str(uuid4())
+    submission = {"inquiry_id": receipt, "question": "  \n  "}
+    blank = portal.post("/api/inquiries", headers=user, json=submission)
+    assert blank.status_code == 422 and blank.json()["detail"]
+    assert portal.get("/api/inquiries", headers=user).json() == []
+    question = "納期を確認する方法はありますか。"
+    valid = portal.post("/api/inquiries", headers=user, json={**submission, "question": question})
+    assert valid.status_code == 201
+    empty_reply = portal.put(f"/api/inquiries/{receipt}/reply", headers=admin, json={"answer": "  \n  "})
+    assert empty_reply.status_code == 422 and empty_reply.json()["detail"]
+    records = portal.get("/api/inquiries", headers=user).json()
+    assert len(records) == 1 and records[0]["question"] == question and records[0]["answer"] is None

@@ -158,7 +158,7 @@
 | 全API項目とDBカラムに業務用の和名がある | — | [test_business_names_cover_every_operation_field_and_database_column](../../../tests/architecture/tools/test_design_sources.py#L172) |
 | 定義元のコメントだけを変更するとOpenAPI、API詳細、DB定義書、AWS操作表に反映される。 | — | [test_editing_declaration_comments_changes_openapi_and_design_pages](../../../tests/architecture/tools/test_design_sources.py#L209) |
 
-### バックエンド（150項目）
+### バックエンド（162項目）
 
 | 確認内容 | 条件別の確認内容 | テスト定義 |
 | --- | --- | --- |
@@ -217,7 +217,7 @@
 | モデルにも同じJSON形式を同梱し、重み不一致時は復元作業を記録する。 | — | [test_packaged_model_reports_weight_repair](../../../packages/backend/tests/test_request_logs.py#L209) |
 | 管轄部署の変更前後に呼び出すと、各部署のリーダーは実行時点で配下にあった記録を取得できる。 | — | [test_department_audit_uses_hierarchy_at_call_time](../../../packages/backend/tests/test_required_audit_scope.py#L7) |
 | 認証方式に応じた手順で期限付きトークンを発行し、利用後は対象の認証情報だけを失効させる。 | 本人の短期Bearerで承認済みAPI全体を呼べる<br>共有の短期Bearerを指定のAPIで利用できる<br>アプリと本人の資格で指定のAPIを利用できる<br>共有アプリで指定したメンバーが承認済み操作を利用できる<br>プロジェクトのリーダーがシステム認証を発行し、利用者のログインなしで交換できる | [test_issue_use_and_retire_credentials](../../../packages/backend/tests/test_required_credentials.py#L49) |
-| 提供APIが複数あるとき、選んだ対象と利用プロジェクトのうち短い上限が発行条件に反映される。 | — | [test_choose_shortest_scope_limit](../../../packages/backend/tests/test_required_credentials.py#L110) |
+| 提供APIと利用プロジェクトの両方で有効期間を制限したとき、短い方の上限が発行条件に反映される。 | — | [test_choose_shortest_scope_limit](../../../packages/backend/tests/test_required_credentials.py#L110) |
 | 発行条件に一致しない設定で認証情報を発行できず、既存の認証情報一覧を維持する。 | 有効期間後の時刻を更新開始に選べない<br>既に提供終了したAPIを対象として発行しない<br>APIに存在しない操作は選んで発行できない<br>プロジェクトに所属しない利用者を対象にしたアプリ設定を保存しない | [test_invalid_issuance_keeps_project_credentials](../../../packages/backend/tests/test_required_credentials.py#L164) |
 | 短期Bearerをポータルで更新しても認証情報は増えず、指定のAPIと有効期間を維持する。 | — | [test_portal_bearer_refresh_and_scope_after_renewal](../../../packages/backend/tests/test_required_credentials.py#L197) |
 | 新設プロジェクトのメンバーには本人が選べる認証情報と、承認待ちで空の対象API一覧を示す。 | — | [test_project_with_no_approvals_can_see_empty_options](../../../packages/backend/tests/test_required_credentials.py#L225) |
@@ -228,6 +228,10 @@
 | 個人と共有の両方で認証情報を発行すると、共有のメンバーと本人がそれぞれの範囲を確認できる。 | — | [test_whole_project_and_individual_inventories](../../../packages/backend/tests/test_required_credentials.py#L402) |
 | 組織で定めた上限を守って発行し、更新開始時刻は指定した有効期間の中に限定する。 | — | [test_shorter_project_cap_rejects_invalid_refresh](../../../packages/backend/tests/test_required_credentials.py#L432) |
 | 後任のプロジェクトリーダーは共有システム認証のシークレットを更新し、同じ資格名で継続運用できる。 | — | [test_project_leader_takes_over_shared_system_credential](../../../packages/backend/tests/test_required_credentials.py#L459) |
+| 削除済みまたは存在しない認証情報の操作を再試行しても、同じプロジェクトの有効なキーを維持する。 | — | [test_retired_key_and_missing_key_do_not_change_other_issuances](../../../packages/backend/tests/test_required_credentials.py#L514) |
+| API Docsの交換フォームで未対応の方式や種別を指定したとき、短期トークンを発行しない。 | トークン交換以外の方式は入力エラーとして返す<br>交換元の種類にIDトークンを選んだフォームを拒否する<br>アクセストークン以外の応答種別を指定したフォームを拒否する | [test_oauth_exchange_form_accepts_only_documented_token_types](../../../packages/backend/tests/test_required_credentials.py#L556) |
+| 短期Bearer方式には更新するクライアントシークレットがなく、本人はポータルからトークンを更新できる。 | — | [test_personal_bearer_has_no_client_secret_to_rotate](../../../packages/backend/tests/test_required_credentials.py#L582) |
+| リーダーがシステム認証を失効させた後はシークレットを再発行できず、一覧でも失効状態を保つ。 | — | [test_project_system_credential_cannot_be_rotated_after_retirement](../../../packages/backend/tests/test_required_credentials.py#L599) |
 | 同名のパス引数を操作ごとに和名化し、依存から受ける検索件数の範囲と既定値を保持する。 | — | [test_portal_schema_localizes_operation_and_parameter_by_context](../../../packages/backend/tests/test_required_design_contract.py#L41) |
 | 和名を適用しても配列と辞書の返却型・共通モデル参照・必須フィールドは元の仕様と一致する。 | — | [test_localized_schema_preserves_arrays_maps_responses_and_required_fields](../../../packages/backend/tests/test_required_design_contract.py#L62) |
 | 厳格な設計チェックは和名を取得できない定義の位置を開発者に報告する。 | 和名を取得できない操作にはHTTPメソッドとパスを示す<br>和名のない新規モデルにはモデル名を示す<br>新しい項目だけの和名が不足した場合はモデル名と項目名を示す | [test_strict_design_check_identifies_the_missing_name](../../../packages/backend/tests/test_required_design_contract.py#L113) |
@@ -267,6 +271,7 @@
 | 異なる質問を同じ受付番号に送っても元の質問を保持し、運営はその受付に回答できる。 | — | [test_receipt_reuse_and_answer_retry](../../../packages/backend/tests/test_required_messages.py#L107) |
 | 二人が別々に相談すると各自の履歴には本人の受付だけが載り、管理者は双方を確認できる。 | — | [test_inquiry_history_separates_requesters](../../../packages/backend/tests/test_required_messages.py#L132) |
 | 受付の確認が回答後になった場合も、同じ本文の再送は既存の回答を保持する。 | — | [test_response_retry_after_an_inquiry_has_been_answered](../../../packages/backend/tests/test_required_messages.py#L154) |
+| 空白だけの問い合わせ・回答は本文として受理せず、利用者が本文を書き直すまでは履歴を変えない。 | — | [test_blank_question_and_reply_leave_history_unchanged](../../../packages/backend/tests/test_required_messages.py#L176) |
 | 兼務する任意属性の値を追加・訂正・解除しても既存のプロジェクトと部署の権限を保つ。 | — | [test_metadata_assignments_can_be_corrected_without_adding_projects](../../../packages/backend/tests/test_required_metadata.py#L29) |
 | 任意属性の名称を公開しても所属名簿を開示せず、値のリーダーは配下の名簿のみを確認できる。 | — | [test_public_value_names_do_not_expose_rosters_and_leader_scope_stays_in_tree](../../../packages/backend/tests/test_required_metadata.py#L75) |
 | 分類値の名称が公開されていても一般利用者は定義・値・所属権限を変更できない。 | 非管理者による項目の公開設定と表示名変更を拒否する<br>非管理者による新しい分類値の作成を拒否する<br>非管理者による自身への分類値のリーダー付与を拒否する | [test_non_admin_cannot_change_metadata_definition_or_grant_roles](../../../packages/backend/tests/test_required_metadata.py#L136) |
@@ -285,15 +290,21 @@
 | 利用中のプロジェクトを移管すると、利用者の所属、商品の公開範囲、利用権と監視設定を引き継ぐ。 | — | [test_project_transfer_with_established_usage](../../../packages/backend/tests/test_required_products.py#L155) |
 | 部署リーダーの判断だけでは承認は終わらず、提供者の最終承認で両者の理由を確認できる。 | 所属部署の上位リーダーから提供者へ回す<br>指定部署のリーダーから提供者へ回す | [test_two_stage_review](../../../packages/backend/tests/test_required_products.py#L247) |
 | 限定商品のカタログは子部署の所属を反映し、所属変更後も現在の公開範囲で検索結果を返す。 | — | [test_visible_catalog_moves_with_department_membership](../../../packages/backend/tests/test_required_products.py#L308) |
-| 提供者が新規受付を停止しても利用権を維持し、再掲載後は別のプロジェクトから新しく申請できる。 | — | [test_provider_stops_and_reopens_new_applications](../../../packages/backend/tests/test_required_products.py#L352) |
-| 提供者が商品名を変更した後、古い版番号で削除しても新しい商品と利用者向けの掲載を保持する。 | — | [test_revision_conflict_does_not_remove_published_product](../../../packages/backend/tests/test_required_products.py#L400) |
-| 限定公開と自動承認に使う部署を移管しても、移管した配下の人は商品を見つけて申請できる。 | — | [test_department_transfer_preserves_visibility_and_auto_approval](../../../packages/backend/tests/test_required_products.py#L424) |
-| 同じ商品の利用申請が両方のプロジェクトにある場合、移管競合は承認結果や理由を上書きしない。 | — | [test_overlapping_project_grants_do_not_overwrite_decisions](../../../packages/backend/tests/test_required_products.py#L471) |
-| 提供プロジェクトの組織を移管しても既存商品の公開名と提供の責任を後継組織から確認できる。 | — | [test_existing_api_settings_survive_project_transfer](../../../packages/backend/tests/test_required_products.py#L529) |
-| 対応対象外のOpenAPI形式を登録しようとしても、公開カタログに不完全な商品は追加されない。 | — | [test_product_with_unsupported_contract_stays_out_of_catalog](../../../packages/backend/tests/test_required_products.py#L555) |
+| 提供者が新規受付を停止しても利用権を維持し、再掲載後は別のプロジェクトから新しく申請できる。 | — | [test_provider_stops_and_reopens_new_applications](../../../packages/backend/tests/test_required_products.py#L349) |
+| 提供者が商品名を変更した後、古い版番号で削除しても新しい商品と利用者向けの掲載を保持する。 | — | [test_revision_conflict_does_not_remove_published_product](../../../packages/backend/tests/test_required_products.py#L397) |
+| 限定公開と自動承認に使う部署を移管しても、移管した配下の人は商品を見つけて申請できる。 | — | [test_department_transfer_preserves_visibility_and_auto_approval](../../../packages/backend/tests/test_required_products.py#L421) |
+| 同じ商品の利用申請が両方のプロジェクトにある場合、移管競合は承認結果や理由を上書きしない。 | — | [test_overlapping_project_grants_do_not_overwrite_decisions](../../../packages/backend/tests/test_required_products.py#L468) |
+| 提供プロジェクトの組織を移管しても既存商品の公開名と提供の責任を後継組織から確認できる。 | — | [test_existing_api_settings_survive_project_transfer](../../../packages/backend/tests/test_required_products.py#L526) |
+| 対応対象外のOpenAPI形式を登録しようとしても、公開カタログに不完全な商品は追加されない。 | — | [test_product_with_unsupported_contract_stays_out_of_catalog](../../../packages/backend/tests/test_required_products.py#L552) |
+| 利用条件の表示後に規約を更新した場合、古い版への同意では申請を受け付けず、新版への同意を保存する。 | — | [test_updated_terms_require_fresh_consent](../../../packages/backend/tests/test_required_products.py#L566) |
+| チームに所属していない利用者も個人ワークスペースで申請し、本人用の認証情報で承認された商品を呼べる。 | — | [test_personal_workspace_solicits_and_uses_a_single_api](../../../packages/backend/tests/test_required_products.py#L600) |
+| 提供者が役職を自動承認条件にすると、申請者の実際の所属上の役職に応じて審査結果が変わる。 | 役職が指定条件に一致しなければ提供者の判断を待つ<br>所属の役職が指定条件に一致すれば自動承認する | [test_title_based_auto_approval](../../../packages/backend/tests/test_required_products.py#L663) |
+| プロジェクト内で本人限定の承認を得た人は、チームの承認がなくても本人限定キーで利用できる。 | — | [test_personal_approval_as_shared_project_member](../../../packages/backend/tests/test_required_products.py#L702) |
 | 部署の有効期間上限をプロジェクトが継承し、個別上限を消すと上位の値に戻る。 | — | [test_lifetime_inheritance_and_reset](../../../packages/backend/tests/test_required_usage_settings.py#L7) |
 | 提供者が一部の操作、全解除、継承を順に設定すると、商品詳細で本人に示す操作も切り替わる。 | — | [test_provider_changes_and_clears_individual_operations](../../../packages/backend/tests/test_required_usage_settings.py#L44) |
 | 到達時に一回だけ通知し、上限を変更すると次の呼び出しを新しい件数として集計する。 | 通知のみなら上限到達後も呼び出せて、通知は一回に限られる<br>停止ありなら上限到達の次の呼び出しを止め、設定の更新で再開する | [test_alert_threshold_and_counter_reset](../../../packages/backend/tests/test_required_usage_settings.py#L86) |
+| プロジェクトの管轄が変わると、後継部署の短い上限が発行候補に反映される。 | — | [test_inherited_limit_after_department_reorganization](../../../packages/backend/tests/test_required_usage_settings.py#L132) |
+| 担当リーダーが部署を停止すると配下の呼び出しも止まり、再開後は同じ認証情報で利用を続けられる。 | — | [test_project_pause_and_resume_preserves_active_key](../../../packages/backend/tests/test_required_usage_settings.py#L164) |
 | 上位部署とプロジェクトを兼務してから片方を外しても、残る所属の役職と管理権限を保持する。 | — | [test_direct_and_concurrent_memberships](../../../packages/backend/tests/test_required_workspace.py#L31) |
 | 新しい組織を改名し、リーダーが停止・再開すると、一覧から各時点の状態を確認できる。 | プロジェクトの停止と再開を一覧に反映する<br>部署の停止と再開を一覧に反映する | [test_unit_lifecycle](../../../packages/backend/tests/test_required_workspace.py#L79) |
 | 所属のある組織は同種の移管先に統合でき、旧組織は一覧から消える。 | プロジェクトの所属を移管先に引き継ぐ<br>部署の所属と配下の組織を移管先に引き継ぐ | [test_transfer_of_affiliated_unit](../../../packages/backend/tests/test_required_workspace.py#L112) |
@@ -305,6 +316,7 @@
 | 所属先が既に廃止された場合は新しい所属を作らず、既存の所属を維持する。 | — | [test_missing_membership_target](../../../packages/backend/tests/test_required_workspace.py#L288) |
 | 移管元で既に解除した所属があっても、後継部署で現在有効な役職とリーダー設定は保持される。 | — | [test_department_transfer_preserves_successor_leadership](../../../packages/backend/tests/test_required_workspace.py#L305) |
 | 移管済みの旧組織を再度指定しても、後継組織に引き継いだ所属を二重に移管しない。 | — | [test_repeated_transfer_keeps_successor_membership](../../../packages/backend/tests/test_required_workspace.py#L332) |
+| 二つのプロジェクトに別々の有効期間上限があるとき、移管競合によってどちらの設定も失われない。 | — | [test_transfer_conflicting_token_lifetime_settings](../../../packages/backend/tests/test_required_workspace.py#L357) |
 | 旧版の出品を同じIDで更新し、再実行後も承認済みの商品がSQLiteの配送状況を返す。 | — | [test_seed_replaces_old_contract_and_calls_product](../../../packages/backend/tests/test_sample_catalog.py#L6) |
 | 語句・意味の両方で業務APIを検索し、同義語を含めて順位付けする | — | [test_hybrid_retrieval](../../../packages/backend/tests/test_search_rank.py#L18) |
 | 閲覧可能なOpenAPIタグの説明だけを意味検索に使う | — | [test_visible_openapi_tags_supply_custom_meaning](../../../packages/backend/tests/test_search_rank.py#L33) |

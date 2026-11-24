@@ -332,21 +332,18 @@ def test_visible_catalog_moves_with_department_membership(portal):
     assert selected.status_code == 200
     member = {"subject": subject, "unit_id": "local-team"}
     search = {"q": draft["name"], "environment": "sandbox"}
-    for belongs in (False, True, False):
+
+    def matches():
         result = portal.get("/api/catalog-page", headers=user, params=search)
         assert result.status_code == 200
         page = result.json()
-        assert (asset["id"] in [item["id"] for item in page["items"]]) is belongs
-        assert page["total"] == int(belongs)
-        if belongs:
-            assert (
-                portal.delete("/api/workspace/memberships", headers=admin, params=member).status_code
-                == 200
-            )
-        elif not page["total"]:
-            assert (
-                portal.put("/api/workspace/memberships", headers=admin, json=member).status_code == 200
-            )
+        return page["total"], [item["id"] for item in page["items"]]
+
+    assert matches() == (0, [])
+    assert portal.put("/api/workspace/memberships", headers=admin, json=member).status_code == 200
+    assert matches() == (1, [asset["id"]])
+    assert portal.delete("/api/workspace/memberships", headers=admin, params=member).status_code == 200
+    assert matches() == (0, [])
 
 
 def test_provider_stops_and_reopens_new_applications(portal):
@@ -564,3 +561,172 @@ def test_product_with_unsupported_contract_stays_out_of_catalog(portal):
     url = _register(portal, owner, draft)
     search = portal.get("/api/catalog-page", headers=user, params={"q": draft["name"]}).json()
     assert [r["id"] for r in search["items"]] == [url.rsplit("/", 1)[1]]
+
+
+def test_updated_terms_require_fresh_consent(portal):
+    """利用条件の表示後に規約を更新した場合、古い版への同意では申請を受け付けず、新版への同意を保存する。"""
+    owner = headers(portal, "provider")
+    user = headers(portal, "consumer")
+    draft = _draft()
+    draft["offers"] = {"sandbox": {"route": "auto", "terms": "初版規約"}}
+    url = _register(portal, owner, draft)
+    before = portal.get(url, headers=user).json()
+    old_version = before["offers"]["sandbox"]["version"]
+    draft["offers"]["sandbox"]["terms"] = "改訂した利用規約"
+    edited = portal.put(url, headers=owner, params={"revision": before["revision"]}, json=draft)
+    assert edited.status_code == 200
+    published = portal.put(f"{url}/publication", headers=owner, params={"published": True})
+    assert published.status_code == 200
+    current = portal.get(url, headers=user).json()["offers"]["sandbox"]
+    assert current["version"] != old_version and current["terms"] == "改訂した利用規約"
+    submit = {
+        "project": "finance",
+        "environment": "sandbox",
+        "reason": "集計",
+        "terms_accepted": True,
+        "offer_version": old_version,
+    }
+    stale = portal.post(f"{url}/requests", headers=user, json=submit)
+    assert stale.status_code == 409 and stale.json()["detail"]
+    refreshed = portal.post(
+        f"{url}/requests", headers=user, json={**submit, "offer_version": current["version"]}
+    )
+    assert refreshed.status_code == 201
+    record = refreshed.json()
+    assert record["status"] == "approved" and record["application"]["version"] == current["version"]
+    assert record["application"]["terms"] == current["terms"] and record["application"]["terms_accepted"]
+
+
+def test_personal_workspace_solicits_and_uses_a_single_api(portal):
+    """チームに所属していない利用者も個人ワークスペースで申請し、本人用の認証情報で承認された商品を呼べる。"""
+    owner = headers(portal, "provider")
+    user = headers(portal, "auditor")
+    identity = portal.get("/api/me", headers=user).json()
+    project, subject = identity["personal_project"], identity["subject"]
+    draft = _draft()
+    draft["offers"] = {"sandbox": {"route": "auto"}}
+    url = _register(portal, owner, draft)
+    product = portal.get(url, headers=user).json()
+    body = {
+        "project": project,
+        "environment": "sandbox",
+        "personal": True,
+        "reason": "本人作業",
+        "offer_version": product["offers"]["sandbox"]["version"],
+    }
+    application = portal.post(f"{url}/requests", headers=user, json=body)
+    assert application.status_code == 201
+    assert application.json()["status"] == "approved" and application.json()["subject"] == subject
+    options = portal.get("/api/credentials/options", headers=user, params={"project": project})
+    assert options.status_code == 200
+    assert any(item["id"] == product["id"] for item in options.json()["assets"])
+    issued = portal.post(
+        "/api/credentials",
+        headers=user,
+        json={
+            "mode": "bearer",
+            "kind": "personal",
+            "project": project,
+            "name": "個人専用",
+            "api_ids": [product["id"]],
+        },
+    )
+    assert issued.status_code == 201
+    credential = issued.json()
+    assert credential["project"] == project and credential["kind"] == "personal"
+    call = portal.get(
+        f"/api/invoke/{product['slug']}/sandbox/{project}/days",
+        headers={"Authorization": f"Bearer {credential['access_token']}"},
+    )
+    assert call.status_code == 200
+
+
+@pytest.mark.parametrize(
+    "role, title, expected_status",
+    [
+        pytest.param(
+            "担当",
+            "主任",
+            "pending",
+            id="manual-review",
+            marks=pytest.mark.case_detail("役職が指定条件に一致しなければ提供者の判断を待つ"),
+        ),
+        pytest.param(
+            "主任",
+            "主任",
+            "approved",
+            id="matching-title",
+            marks=pytest.mark.case_detail("所属の役職が指定条件に一致すれば自動承認する"),
+        ),
+    ],
+)
+def test_title_based_auto_approval(portal, role, title, expected_status):
+    """提供者が役職を自動承認条件にすると、申請者の実際の所属上の役職に応じて審査結果が変わる。"""
+    admin = headers(portal, "admin")
+    owner = headers(portal, "provider")
+    user = headers(portal, "consumer")
+    subject = portal.get("/api/me", headers=user).json()["subject"]
+    assert (
+        portal.put(
+            "/api/workspace/units/office",
+            headers=admin,
+            json={"kind": "department", "name": "業務推進部"},
+        ).status_code
+        == 200
+    )
+    assert (
+        portal.put(
+            "/api/workspace/memberships",
+            headers=admin,
+            json={"unit_id": "office", "subject": subject, "title": role},
+        ).status_code
+        == 200
+    )
+    url = _register(portal, owner, _draft())
+    asset = portal.get(url, headers=owner).json()
+    configured = portal.put(
+        f"{url}/policy",
+        headers=owner,
+        params={"revision": asset["revision"]},
+        json={"auto_titles": [title]},
+    )
+    assert configured.status_code == 200 and configured.json()["auto_titles"] == [title]
+    requested = portal.post(
+        f"{url}/requests",
+        headers=user,
+        json={"project": "finance", "environment": "sandbox", "reason": "担当業務"},
+    )
+    assert requested.status_code == 201 and requested.json()["status"] == expected_status
+
+
+def test_personal_approval_as_shared_project_member(portal):
+    """プロジェクト内で本人限定の承認を得た人は、チームの承認がなくても本人限定キーで利用できる。"""
+    owner = headers(portal, "provider")
+    user = headers(portal, "consumer")
+    draft = _draft()
+    draft["offers"] = {"sandbox": {"route": "auto"}}
+    url = _register(portal, owner, draft)
+    asset = portal.get(url, headers=user).json()
+    applied = portal.post(
+        f"{url}/requests",
+        headers=user,
+        json={
+            "personal": True,
+            "project": "finance",
+            "environment": "sandbox",
+            "reason": "個人作業",
+            "offer_version": asset["offers"]["sandbox"]["version"],
+        },
+    )
+    assert applied.status_code == 201 and applied.json()["status"] == "approved"
+    issued = portal.post(
+        "/api/keys",
+        headers=user,
+        json={"name": "本人限定", "kind": "personal", "project": "finance", "api_ids": [asset["id"]]},
+    )
+    assert issued.status_code == 201
+    result = portal.get(
+        f"/api/invoke/{asset['slug']}/sandbox/finance/days",
+        headers={**user, "X-API-Key": issued.json()["secret"]},
+    )
+    assert result.status_code == 200
