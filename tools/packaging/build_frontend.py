@@ -78,9 +78,9 @@ def bundle_styles(source: Path, dist: Path) -> None:
     with (dist / "ui.css").open("a", encoding="utf-8") as bundle:
         # 既存シートのカスケードを保ち、追加シートはパス順に連結する。
         order = (
+            "list_layout.css",
             "login.css",
             "guide.css",
-            "list_layout.css",
             "listing_detail.css",
             "logs.css",
             "workspace.css",
