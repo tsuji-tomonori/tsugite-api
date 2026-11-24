@@ -2,11 +2,11 @@
 
 判定　合格
 
-対象コミット　`3b3b95b91ac4a7521e19f5f4ca46ddef76f74135`
+対象コミット　`9a2088d8c854dae9b01bb1e76dc4a8081b914924`
 
 ## 実行したテストと証跡
 
-- 成功　デモの提供者と利用者が公開・申請・承認・実行・権限取消を画面で完了できる（12.649 秒）　`tests/e2e/browser/test_portal.py::test_user_flow`
+- 成功　デモの提供者と利用者が公開・申請・承認・実行・権限取消を画面で完了できる（12.330 秒）　`tests/e2e/browser/test_portal.py::test_user_flow`
   - ![提供者が保存した公開前の下書き](../screenshots/demo/draft.png)
 
 [テスト実行記録（JUnit XML）](%E6%8F%90%E4%BE%9B%E8%80%85%E3%81%AF%E3%80%81API%E3%82%92%E5%87%BA%E5%93%81%E3%81%99%E3%82%8B%E3%81%A8%E3%81%8D%E3%80%81%E4%B8%8B%E6%9B%B8%E3%81%8D%E3%82%92%E7%99%BB%E9%8C%B2%E3%81%A7%E3%81%8D%E3%82%8B.xml)
