@@ -127,10 +127,11 @@ def list_members(
             )
         next_cursor = page.get("PaginationToken", "")
     profiles = directory_profiles(db, (row["subject"] for row in rows))
-    for row in rows:
-        subject = row["subject"]
-        row.update(directory_fields(profiles.get(subject), accounts.get(subject)))
-    return {"items": rows, "next": next_cursor, "projects": projects(db)}
+    items = [
+        {**row, **directory_fields(profiles.get(row["subject"]), accounts.get(row["subject"]))}
+        for row in rows
+    ]
+    return {"items": items, "next": next_cursor, "projects": projects(db)}
 
 
 def undo_invitation(username):
