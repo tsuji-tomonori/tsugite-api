@@ -8,6 +8,7 @@ dependencies = []
 members = ["packages/*", "tests/e2e", "tools"]
 
 [tool.uv.sources]
+tsugite-model = { workspace = true }
 tsugite-agent = { workspace = true }
 tsugite-backend = { workspace = true }
 tsugite-database = { workspace = true }
@@ -19,13 +20,6 @@ constraint-dependencies = ["pydantic>=2,<3", "sqlalchemy>=2,<3", "aws-cdk-lib>=2
 
 [dependency-groups]
 quality-docs = ["pyyaml"]
-model-sdk = ["boto3"]
-decision-model = [
-    { include-group = "model-sdk" },
-    "onnxruntime==1.32.0; python_version == '3.14'",
-    "numpy==2.4.0; python_version == '3.14'",
-    "tokenizers==0.22.2; python_version == '3.14'",
-]
 dev = ["pytest>=9", "pytest-given", "ruff", "pytest-cov", "pyright", "mypy", "pytestarch", "pip-audit"]
 
 [tool.pytest.ini_options]
@@ -33,7 +27,7 @@ addopts = ["-p", "tests.support.pytest_cases"]
 junit_family = "xunit1"
 markers = ["case_detail(text): パラメーターごとの条件や期待結果を日本語で示す"]
 pythonpath = ["packages/agent/src", "packages/backend/src", "packages/database/src", "packages/infra", "."]
-testpaths = ["packages/agent/tests", "tests/architecture", "packages/backend/tests", "packages/frontend/tests", "packages/infra/tests", "packages/database/tests", "tests/e2e/browser", "tools/tests"]
+testpaths = ["packages/agent/tests", "packages/model/tests", "tests/architecture", "packages/backend/tests", "packages/frontend/tests", "packages/infra/tests", "packages/database/tests", "tests/e2e/browser", "tools/tests"]
 
 [tool.coverage.run]
 branch = true
@@ -43,7 +37,8 @@ source = [
     "packages/database/src/tsugite_db",
     "packages/frontend/src/web_app",
     "packages/infra",
-    "packages/agent/src/agent",
+    "packages/agent/src",
+    "packages/model/src",
 ]
 omit = ["*/tests/*", "*/cdk.out/*", "*/__pycache__/*"]
 
@@ -59,8 +54,8 @@ extend-exclude = ["build", "cdk.out", "dist", "artifacts"]
 select = ["E4", "E7", "E9", "F", "I", "F631", "PT011", "PT012"]
 
 [tool.pyright]
-include = ["packages/agent","packages/backend/src/app","packages/database/src/tsugite_db"]
-extraPaths = ["packages/agent/src","packages/agent/src/agent/models","packages/backend/src","packages/backend/src/app/core","packages/database/src"]
+include = ["packages/agent","packages/model","packages/backend/src/app","packages/database/src/tsugite_db"]
+extraPaths = ["packages/agent/src","packages/model/src","packages/backend/src","packages/backend/src/app/core","packages/database/src"]
 pythonVersion = "3.14"
 strict = ["packages/database/src/tsugite_db/models.py", "packages/backend/src/app/apis/schemas.py"]
 

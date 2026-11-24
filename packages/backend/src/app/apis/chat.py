@@ -3,12 +3,12 @@ from threading import Lock
 from typing import Literal
 from uuid import UUID
 
-from agent import jobs
-from agent.retrieval import NO_MATCH, ask, manual_sources
+import chat_jobs as jobs
 from app.apis.catalog.catalog.router import visible_collection
 from app.apis.catalog.common import DB, User, listing
 from app.apis.schemas import Input, Listing
 from botocore.exceptions import BotoCoreError, ClientError
+from chat_retrieval import NO_MATCH, ask, manual_sources
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 

@@ -38,7 +38,7 @@ def test_chat_uses_separate_on_demand_python_functions(tmp_path):
     template.has_resource_properties(
         "AWS::Lambda::Function",
         {
-            "Handler": "agent.jobs.handler",
+            "Handler": "chat_jobs.handler",
             "Runtime": "python3.15",
             "ReservedConcurrentExecutions": Match.absent(),
         },

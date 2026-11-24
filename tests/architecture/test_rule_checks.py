@@ -14,20 +14,20 @@ from .test_documents import japanese_title
 def test_boundary_checker_rejects_cross_layer_imports():
     """各層の違反をインポートの別名・相対参照・完全修飾名でも行番号付きで報告する。"""
     cases = (
-        ("packages/backend/src/app/main.py", "from agent import models as m", "モデル"),
+        ("packages/backend/src/app/main.py", "import decision as m", "モデル"),
         ("packages/database/migrations/env.py", "from app.main import app", "バックエンド"),
         (
             "packages/frontend/src/web_app/client.py",
             "from packages.database.src.tsugite_db import models",
             "データベース",
         ),
-        ("packages/infra/app.py", "import agent.jobs as worker", "エージェント"),
-        ("packages/infra/app.py", "from packages.agent.src.agent import jobs", "エージェント"),
-        ("packages/agent/src/agent/jobs.py", "from .models import completion", "モデル"),
-        ("packages/agent/src/agent/models/completion.py", "from .. import jobs", "エージェント"),
-        ("packages/agent/src/agent/retrieval.py", "from web_app import chat_views", "フロント"),
-        ("packages/agent/src/agent/retrieval.py", "import tools.packaging.build_chat", "開発ツール"),
-        ("packages/agent/src/agent/models/runtime.py", "import aws_cdk", "インフラ"),
+        ("packages/infra/app.py", "import chat_jobs as worker", "エージェント"),
+        ("packages/infra/app.py", "from packages.agent.src import chat_jobs", "エージェント"),
+        ("packages/agent/src/chat_jobs.py", "from packages.model.src import completion", "モデル"),
+        ("packages/model/src/completion.py", "import chat_jobs as jobs", "エージェント"),
+        ("packages/agent/src/chat_retrieval.py", "from web_app import chat_views", "フロント"),
+        ("packages/agent/src/chat_retrieval.py", "import tools.packaging.build_chat", "開発ツール"),
+        ("packages/model/src/runtime.py", "import aws_cdk", "インフラ"),
         ("tools/packaging/build_chat.py", "from packages.backend.tests import conftest", "テスト"),
     )
     for path, source, target in cases:
@@ -39,12 +39,12 @@ def test_boundary_checker_rejects_cross_layer_imports():
 def test_boundary_checker_accepts_supported_collaboration():
     """APIのジョブ受付、エージェントのガイド共有、モデル内の参照を許可する。"""
     for path, source in (
-        ("packages/backend/src/app/main.py", "from agent import jobs"),
+        ("packages/backend/src/app/main.py", "import chat_jobs as jobs"),
         (
-            "packages/agent/src/agent/retrieval.py",
+            "packages/agent/src/chat_retrieval.py",
             "from packages.frontend.src.web_app.guide_content import GUIDES",
         ),
-        ("packages/agent/src/agent/models/completion.py", "from . import runtime"),
+        ("packages/model/src/completion.py", "import runtime"),
     ):
         assert dependency_violations(Path(path), source) == []
 
@@ -65,7 +65,7 @@ def test_document_checker_uses_title_outside_code_examples():
 def test_project_discovery_includes_new_components(tmp_path):
     """新しい配下の文書と生成設計書を自動で検査し、ビルドの一時コピーを除外する。"""
     sources = (
-        "packages/agent/src/agent/models/README.md",
+        "packages/model/src/README.md",
         "docs/generated/apis/detail.md",
         "new/README.md",
     )

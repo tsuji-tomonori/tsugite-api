@@ -181,7 +181,7 @@ def test_member_partial_deletion(monkeypatch):
 
 def test_model_worker_error_has_request_context(monkeypatch):
     """モデル呼び出しの失敗を元のAPI・画面・利用者に結び付け、質問本文を記録しない。"""
-    from agent import jobs
+    import chat_jobs as jobs
 
     sink = Mock(level=0)
     monkeypatch.setattr(logger, "handlers", [sink])

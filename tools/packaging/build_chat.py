@@ -9,7 +9,7 @@ from pathlib import Path
 from zipfile import ZipFile
 
 ROOT = Path(__file__).resolve().parents[2]
-MODELS = ROOT / "packages/agent/src/agent/models"
+MODELS = ROOT / "packages/model/src"
 BUILD = ROOT / "build"
 LLAMA_RELEASE = "b12246"
 LLAMA_COMMIT = "78ffbaa18533c2ed51eab2ef5ae0702330efc3e9"

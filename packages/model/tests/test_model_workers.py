@@ -10,7 +10,7 @@ from unittest.mock import Mock
 import pytest
 
 ROOT = Path(__file__).resolve().parents[3]
-MODELS = ROOT / "packages/agent/src/agent/models"
+MODELS = ROOT / "packages/model/src"
 
 
 def load_worker(name, monkeypatch, **dependencies):

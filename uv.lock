@@ -15,6 +15,7 @@ members = [
     "tsugite-e2e",
     "tsugite-frontend",
     "tsugite-infra",
+    "tsugite-model",
     "tsugite-tools",
 ]
 constraints = [
@@ -2294,12 +2295,6 @@ version = "0.1.0"
 source = { virtual = "." }
 
 [package.dev-dependencies]
-decision-model = [
-    { name = "boto3" },
-    { name = "numpy", marker = "python_full_version < '3.15'" },
-    { name = "onnxruntime", marker = "python_full_version < '3.15'" },
-    { name = "tokenizers", marker = "python_full_version < '3.15'" },
-]
 dev = [
     { name = "mypy" },
     { name = "pip-audit" },
@@ -2310,9 +2305,6 @@ dev = [
     { name = "pytestarch" },
     { name = "ruff" },
 ]
-model-sdk = [
-    { name = "boto3" },
-]
 quality-docs = [
     { name = "pyyaml" },
 ]
@@ -2320,12 +2312,6 @@ quality-docs = [
 [package.metadata]
 
 [package.metadata.requires-dev]
-decision-model = [
-    { name = "boto3" },
-    { name = "numpy", marker = "python_full_version == '3.14.*'", specifier = "==2.4.0" },
-    { name = "onnxruntime", marker = "python_full_version == '3.14.*'", specifier = "==1.32.0" },
-    { name = "tokenizers", marker = "python_full_version == '3.14.*'", specifier = "==0.22.2" },
-]
 dev = [
     { name = "mypy" },
     { name = "pip-audit" },
@@ -2336,7 +2322,6 @@ dev = [
     { name = "pytestarch" },
     { name = "ruff" },
 ]
-model-sdk = [{ name = "boto3" }]
 quality-docs = [{ name = "pyyaml" }]
 
 [[package]]
@@ -2449,6 +2434,30 @@ requires-dist = [
     { name = "cdk-nag", specifier = ">=2.36,<3" },
     { name = "constructs", specifier = ">=10,<11" },
 ]
+
+[[package]]
+name = "tsugite-model"
+version = "0.1.0"
+source = { editable = "packages/model" }
+dependencies = [
+    { name = "boto3" },
+]
+
+[package.optional-dependencies]
+decision = [
+    { name = "numpy", marker = "python_full_version < '3.15'" },
+    { name = "onnxruntime", marker = "python_full_version < '3.15'" },
+    { name = "tokenizers", marker = "python_full_version < '3.15'" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "boto3" },
+    { name = "numpy", marker = "python_full_version == '3.14.*' and extra == 'decision'", specifier = "==2.4.0" },
+    { name = "onnxruntime", marker = "python_full_version == '3.14.*' and extra == 'decision'", specifier = "==1.32.0" },
+    { name = "tokenizers", marker = "python_full_version == '3.14.*' and extra == 'decision'", specifier = "==0.22.2" },
+]
+provides-extras = ["decision"]
 
 [[package]]
 name = "tsugite-tools"

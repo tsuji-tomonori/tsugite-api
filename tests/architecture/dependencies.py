@@ -2,10 +2,11 @@
 
 import ast
 from importlib.util import resolve_name
+from pathlib import Path
 
 # モデルはエージェントと別のLambdaとして配布するため、長い接頭辞から判定する。
 MODULES = {
-    "agent.models": "モデル",
+    "model": "モデル",
     "agent": "エージェント",
     "app": "バックエンド",
     "tsugite_db": "データベース",
@@ -16,10 +17,17 @@ MODULES = {
 }
 PACKAGE_MODULES = {
     "agent": "agent",
+    "model": "model",
     "backend": "app",
     "database": "tsugite_db",
     "frontend": "web_app",
     "infra": "infra_app",
+}
+# Lambda ZIP の直下に配置するモジュールの import 名を実ファイルから取得する。
+FLAT_MODULES = {
+    path.stem: f"{package}.{path.stem}"
+    for package in ("agent", "model")
+    for path in (Path(__file__).resolve().parents[2] / "packages" / package / "src").glob("*.py")
 }
 # SDKの境界も検査し、画面でのDB接続や実行用コードへのCDKの混入を検出する。
 LIBRARIES = {
@@ -52,11 +60,15 @@ def canonical(module):
         tail = parts[2:]
         if tail[:1] == ["tests"]:
             return ".".join(tail)
+        if parts[1] in {"agent", "model"} and tail[:1] == ["src"]:
+            return ".".join((prefix, *tail[1:]))
         if tail[:2] == ["src", prefix]:
             tail = tail[2:]
         return ".".join((prefix, *tail))
     if parts[:2] == ["src", "infra_app"]:
         return ".".join(parts[1:])
+    if parts[0] in FLAT_MODULES:
+        return ".".join((FLAT_MODULES[parts[0]], *parts[1:]))
     return module
 
 
@@ -101,7 +113,7 @@ def dependency_violations(path, source):
         if target is None or target == owner or target in ALLOWED[owner]:
             continue
         # チャット検索だけがブラウザーに依存しないガイド本文と検索関数を共有する。
-        if module == "agent.retrieval" and imported.split(".")[:2] in (
+        if module == "agent.chat_retrieval" and imported.split(".")[:2] in (
             ["web_app", "guide_content"],
             ["web_app", "guide_search"],
         ):

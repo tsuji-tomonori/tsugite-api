@@ -3,7 +3,7 @@ from pathlib import Path
 
 from tools.ci import ci_scope as ci
 
-SUITES = [ci.AGENT, ci.BACKEND, ci.DATABASE, ci.FRONTEND, ci.INFRA, ci.BROWSER, ci.TOOLS]
+SUITES = [ci.AGENT, ci.MODEL, ci.BACKEND, ci.DATABASE, ci.FRONTEND, ci.INFRA, ci.BROWSER, ci.TOOLS]
 
 
 def cached_report(folder):
@@ -131,8 +131,8 @@ def test_coverage_includes_all_runtime_layers_and_unexecuted_files(tmp_path, mon
         "packages/frontend/src/web_app/app.py",
         "packages/infra/src/infra_app/stack.py",
         "packages/infra/app.py",
-        "packages/agent/src/agent/worker.py",
-        "packages/agent/src/agent/models/nested/inference.py",
+        "packages/agent/src/worker.py",
+        "packages/model/src/nested/inference.py",
     ]
     for name in [*sources, "packages/infra/tests/test_stack.py", "packages/infra/cdk.out/asset/copy.py"]:
         file = tmp_path / name
@@ -205,9 +205,13 @@ def test_agent_sources_select_agent_consumers_and_deployment_checks(tmp_path):
     cached_report(tmp_path)
     suites = [*SUITES, ci.ARCHITECTURE]
     (tmp_path / "coverage-parts" / ci.part_name(ci.ARCHITECTURE)).touch()
-    for path in ("jobs.py", "models/decision.py", "models/manifest.json"):
-        plan = ci.select(["packages/agent/src/agent/" + path], suites, tmp_path)
-        assert set(plan["suites"]) == {ci.AGENT, ci.BACKEND, ci.ARCHITECTURE, ci.BROWSER, ci.INFRA}
+    for path, expected in (
+        ("packages/agent/src/chat_jobs.py", {ci.AGENT, ci.BACKEND, ci.BROWSER}),
+        ("packages/model/src/decision.py", {ci.MODEL}),
+        ("packages/model/src/manifest.json", {ci.MODEL}),
+    ):
+        plan = ci.select([path], suites, tmp_path)
+        assert set(plan["suites"]) == expected | {ci.ARCHITECTURE, ci.INFRA}
         assert all(plan[key] for key in ("types", "aws", "synth", "audit"))
         assert not plan["full"]
 
@@ -220,7 +224,7 @@ def test_moved_agent_reuses_only_aggregate_baseline(monkeypatch):
         base = Path(folder)
         marker = base / ci.POLICY_FILE
         marker.parent.mkdir()
-        marker.write_text(check_coverage.coverage_policy(legacy_agent=True))
+        marker.write_text(check_coverage.coverage_policy(previous_agent_root="packages/agent/src/agent"))
         (base / "coverage.xml").write_text('<coverage lines-covered="9" lines-valid="10"/>')
         assert not ci.compatible_coverage(base)
         return True
@@ -278,3 +282,29 @@ def test_template_plan_never_bootstraps_coverage(tmp_path, monkeypatch):
     assert not any(result[key] for key in ("setup", "coverage", "chromium", "aws", "synth"))
     lines = (tmp_path / "outputs").read_text().splitlines()
     assert "missing=[]" in lines and "coverage_base=abc" in lines
+
+
+def test_parallel_package_reports_are_combined_without_rerunning(tmp_path, monkeypatch):
+    """並列ジョブで取得した両パッケージのJUnitとカバレッジを再実行せず全体に合算する。"""
+    import json
+
+    monkeypatch.chdir(tmp_path)
+    ci.PARTS.mkdir(parents=True)
+    suites = [ci.AGENT, ci.MODEL, ci.BACKEND]
+    packages = [Path(suite).parent.name for suite in suites if suite in ci.parallel_packages()]
+    assert packages == ["agent", "model"]
+    (ci.ARTIFACTS / "ci-plan.json").write_text(json.dumps({"packages": packages, "suites": suites}))
+    for suite in suites:
+        name = ci.part_name(suite)
+        (ci.PARTS / name).write_bytes(b"coverage")
+        (ci.ARTIFACTS / name).with_suffix(".xml").write_text(f'<testsuite name="{suite}"/>')
+    remaining, commands = [], []
+    monkeypatch.setattr(ci, "run_parts", remaining.extend)
+    monkeypatch.setattr(ci, "configured_suites", lambda: suites)
+    monkeypatch.setattr(ci.subprocess, "run", lambda args, check: commands.append(args))
+    monkeypatch.setattr(ci, "write_coverage_report", lambda path: None)
+    ci.run_suites()
+    assert remaining == [ci.BACKEND]
+    assert commands[0][-3:] == [str(ci.PARTS / ci.part_name(suite)) for suite in suites]
+    report = ci.ElementTree.parse(ci.ARTIFACTS / "junit.xml")
+    assert [row.attrib["name"] for row in report.iter("testsuite")] == suites
