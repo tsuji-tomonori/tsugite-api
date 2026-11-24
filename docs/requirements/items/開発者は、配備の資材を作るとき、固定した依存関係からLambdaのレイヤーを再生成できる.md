@@ -1,0 +1,26 @@
+# **開発者**は、**配備**の資材を作るとき、固定した依存関係からLambdaの**レイヤー**を再生成できる
+
+## 背景
+
+**レイヤー**（Lambda関数と別に配布するライブラリの集合）を複数の関数が使う。
+
+## なぜ必要か
+
+関数コードと依存ライブラリの配備差分を判別するため。
+
+## 決めた方針
+
+ロックした依存関係からレイヤーを作る。同じ入力から再生成したZIPは同じハッシュになり、関数コードだけの変更では依存レイヤーは変わらない。
+
+### 受入テスト
+
+- 受入テスト `tools/tests/test_lambda_layer.py::test_layer_rebuild_is_reproducible`
+- 受入テスト `packages/infra/tests/test_cdk_regression.py::test_backend_layer_changes_only_with_dependencies`
+
+## 却下した方針
+
+却下の記録なし。
+
+### 変更履歴
+
+- 2026-11-25 #17 の再現可能なレイヤー配布を受入条件にした。

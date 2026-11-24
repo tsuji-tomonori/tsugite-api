@@ -1,6 +1,6 @@
 # Tsugite API · 継手API
 
-社内のAPIを一か所で探し、プロジェクト単位で利用を申請できるカタログです。[目的と要件](docs/requirements/README.md)
+社内のAPIを一か所で探し、プロジェクト全員または本人を対象に利用を申請できるカタログです。[目的と要件](docs/requirements/README.md)
 
 ## 手元で試す
 
@@ -103,7 +103,7 @@ CIはPRで設計書を生成して成果物に含めます。既定ブランチ�
 
 「所属部署が承認 → 提供者が承認」を選ぶと、申請者の所属部署またはその上位部署のリーダーに届き、承認後に提供者に届きます。「承認者と順番を指定」では、特定部署を含む段階を順番に追加できます。最後の承認で、申請した商品・環境に利用権が発生します。既存商品の「商品共通の承認ルール」はこれまでどおり利用できます。
 
-商品画面の「API操作一覧」で操作を開くと、パラメータを入力して承認済みの環境で呼び出せます。使える認証情報がまだない場合は、API Docsで短期Bearerを発行して実行できます。「公開版の変更履歴」を開くと、API版、OpenAPI仕様版、操作やモデルの差分、提供者の変更説明を表で確認できます。AWSでは正規化したJSONを非公開のバージョニング有効S3バケットに保存し、ポータルの表示と実行にはDB側の検証済み定義を使用します。
+商品画面の「API操作一覧」で操作を開くと、パラメータを入力して承認済みの環境で呼び出せます。使える認証情報がまだない場合は、初回の実行時にその商品専用の個人認証情報を発行します。API Docsは本人のログイン情報と選択した認証情報を使って短期トークンを取得します。「公開版の変更履歴」を開くと、API版、OpenAPI仕様版、操作やモデルの差分、提供者の変更説明を表で確認できます。AWSでは正規化したJSONを非公開のバージョニング有効S3バケットに保存し、ポータルの表示と実行にはDB側の検証済み定義を使用します。
 
 ## AWSで使う
 
@@ -111,7 +111,7 @@ main へのマージを起点に自動配備するには、[GitHub Actions の�
 
 Python CDKでCloudFront、非公開S3、API Gateway、Lambda、Cognito、Aurora DSQLを構築します。フロントはPuePyとPyScript、APIはFastAPI、DB変更はAlembicです。Pythonのブラウザ実行環境とCSSも同じ配信元に配置します。
 
-CDKをブートストラップ済みのAWS環境で `task synth` が構成を合成し、`task deploy` が配備とDB移行を行います。初回は在庫照会Lambdaが検証用の接続先になります。提供者をCognitoの `own-supply`、利用者を `use-finance`、全体監査担当者を `audit` グループに追加してください。
+CDKをブートストラップ済みのAWS環境で `task synth` が構成を合成し、`task deploy` が配備とDB移行を行います。サンプルを含めると、検証・準本番・本番に12商品を扱うLambdaをそれぞれ配備します。提供者をCognitoの `own-supply`、利用者を `use-finance`、全体監査担当者を `audit` グループに追加してください。
 
 独自の接続先は [設定例](docs/examples/bindings.json) を編集し、`task deploy -- --bindings ファイル名` で指定します。Lambdaは `kind` に `lambda`、`address` に関数ARNを指定します。HTTPSは必要に応じて `secret_arn` に接続用BearerトークンのSecrets Manager ARNを指定し、提供元でも呼び出しを制限します。委任された接続先の配下なら、提供チームが画面でベースパスと [OpenAPI](docs/examples/stock.openapi.json) を登録できます。
 

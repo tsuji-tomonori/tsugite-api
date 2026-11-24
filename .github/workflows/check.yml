@@ -1,6 +1,7 @@
 name: Verify
 on:
   pull_request:
+    types: [opened, synchronize, reopened, edited]
     branches: [main]
 permissions:
   contents: read
@@ -37,9 +38,11 @@ jobs:
       #: 各要件に実在する受入テストと証跡の取得方法が定義されている。
       - name: 要件別の受入テスト定義を検査
         run: python3 -m tools.testing.requirement_evidence --check
-      #: 要件文・必須の節・共通語彙を検査する。feat ブランチには新しい要件が1件以上ある。
-      - name: 要件一覧と用語一覧を生成し、feat ブランチの新規要件を検査
+      #: 機能追加には新しい要件があり、変更した要件には日付と変更理由がある。
+      - name: 要件一覧と用語一覧を生成し、機能追加と要件の変更履歴を検査
         env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
           HEAD_BRANCH: ${{ github.head_ref }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: python3 tools/design/requirements.py --branch "$HEAD_BRANCH" --base "$BASE_SHA"
