@@ -6,7 +6,7 @@ DELETE `/api/workspace/memberships`
 
 [API一覧](README.md) · [CRUD一覧](../db/crud.md)
 
-共通 · `unassign_api_workspace_memberships_delete` · [unassign:211](../../../packages/backend/src/app/apis/governance/directory.py#L211)
+共通 · `unassign_api_workspace_memberships_delete` · [unassign:176](../../../packages/backend/src/app/apis/governance/directory.py#L176)
 
 ## 入力
 
@@ -55,11 +55,11 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| [利用者の組織所属](../db/database.md#affiliations) | affiliations | C | レコードを追加 | db.add | [unassign:226](../../../packages/backend/src/app/apis/governance/directory.py#L226) |
-| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 主キーで取得 | db.get | [unassign:223](../../../packages/backend/src/app/apis/governance/directory.py#L223) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | C | レコードを追加 | db.add | [unassign:191](../../../packages/backend/src/app/apis/governance/directory.py#L191) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 主キーで取得 | db.get | [unassign:188](../../../packages/backend/src/app/apis/governance/directory.py#L188) |
 | [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:105](../../../packages/backend/src/app/core/workspace.py#L105) |
-| [利用者の組織所属](../db/database.md#affiliations) | affiliations | U | 所属が有効かを設定 | active に代入 | [unassign:227](../../../packages/backend/src/app/apis/governance/directory.py#L227) |
-| [監査履歴](../db/database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [audit:54](../../../packages/backend/src/app/apis/governance/directory.py#L54) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | U | 所属が有効かを設定 | active に代入 | [unassign:192](../../../packages/backend/src/app/apis/governance/directory.py#L192) |
+| [監査履歴](../db/database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [audit:19](../../../packages/backend/src/app/apis/governance/directory.py#L19) |
 | [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:30](../../../packages/backend/src/app/core/workspace.py#L30) |
 | [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:54](../../../packages/backend/src/app/core/workspace.py#L54) |
 | [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:123](../../../packages/backend/src/app/core/auth.py#L123) |

@@ -6,7 +6,7 @@ GET `/api/invoke/{key}/{environment}/{project}/{tail}`
 
 [API一覧](README.md) · [CRUD一覧](../db/crud.md)
 
-転送用（公開スキーマ外） · `invoke_api_invoke__key___environment___project___tail__get` · [invoke:111](../../../packages/backend/src/app/apis/gateway.py#L111)
+転送用（公開スキーマ外） · `invoke_api_invoke__key___environment___project___tail__get` · [invoke:112](../../../packages/backend/src/app/apis/gateway.py#L112)
 
 転送先に登録されたOpenAPIの操作に従います。短期アクセストークン（tst_）、共有キー、または登録済みマシンクライアントのCognitoアクセストークンをBearerで渡します。短期トークンには追加のキーヘッダーを併用できません。本人限定キーを使う場合は本人のトークンとX-API-Key、ポータルで選択したキーを使う場合は本人のトークンとX-Tsugite-Key-Idを渡します。
 
@@ -56,26 +56,26 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | R | 主キーで取得 | db.get | [authorize:62](../../../packages/backend/src/app/apis/gateway.py#L62) |
-| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | R | 主キーで取得 | db.get | [authorize:70](../../../packages/backend/src/app/apis/gateway.py#L70) |
+| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | R | 主キーで取得 | db.get | [authorize:63](../../../packages/backend/src/app/apis/gateway.py#L63) |
+| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | R | 主キーで取得 | db.get | [authorize:71](../../../packages/backend/src/app/apis/gateway.py#L71) |
 | [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:105](../../../packages/backend/src/app/core/workspace.py#L105) |
-| [API呼び出し件数の監視設定](../db/database.md#alert_rules) | alert_rules | R | 主キーで取得 | db.get | [admit:106](../../../packages/backend/src/app/apis/governance/alerts.py#L106) |
-| [API呼び出し件数の監視設定](../db/database.md#alert_rules) | alert_rules | U | 更新 | update | [admit:112](../../../packages/backend/src/app/apis/governance/alerts.py#L112) |
-| [API認証情報](../db/database.md#api_keys) | api_keys | R | 主キーで取得 | db.get | [authorize:64](../../../packages/backend/src/app/apis/gateway.py#L64) |
-| [API認証情報](../db/database.md#api_keys) | api_keys | R | 主キーで取得 | db.get | [invocation_actor:179](../../../packages/backend/src/app/apis/governance/keys.py#L179) |
+| [API呼び出し件数の監視設定](../db/database.md#alert_rules) | alert_rules | R | 主キーで取得 | db.get | [admit:79](../../../packages/backend/src/app/apis/governance/alerts.py#L79) |
+| [API呼び出し件数の監視設定](../db/database.md#alert_rules) | alert_rules | U | 更新 | update | [admit:85](../../../packages/backend/src/app/apis/governance/alerts.py#L85) |
+| [API認証情報](../db/database.md#api_keys) | api_keys | R | 主キーで取得 | db.get | [authorize:65](../../../packages/backend/src/app/apis/gateway.py#L65) |
+| [API認証情報](../db/database.md#api_keys) | api_keys | R | 主キーで取得 | db.get | [invocation_actor:163](../../../packages/backend/src/app/apis/governance/keys.py#L163) |
 | [API認証情報](../db/database.md#api_keys) | api_keys | R | 主キーで取得 | db.get | [resolve:81](../../../packages/backend/src/app/core/access_token.py#L81) |
 | [API認証情報](../db/database.md#api_keys) | api_keys | R | 主キーで取得 | db.get | [check_operation:67](../../../packages/backend/src/app/core/credential_policy.py#L67) |
-| [API呼び出し識別名](../db/database.md#asset_routes) | asset_routes | R | 検索 | select | [invocation_asset:52](../../../packages/backend/src/app/apis/gateway.py#L52) |
-| [APIカタログ](../db/database.md#assets) | assets | R | 主キーで取得 | db.get | [record:32](../../../packages/backend/src/app/apis/catalog/common.py#L32) |
-| [監査履歴](../db/database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [event:17](../../../packages/backend/src/app/apis/catalog/common.py#L17) |
+| [API呼び出し識別名](../db/database.md#asset_routes) | asset_routes | R | 検索 | select | [invocation_asset:53](../../../packages/backend/src/app/apis/gateway.py#L53) |
+| [APIカタログ](../db/database.md#assets) | assets | R | 主キーで取得 | db.get | [record:25](../../../packages/backend/src/app/core/catalog.py#L25) |
+| [監査履歴](../db/database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [event:10](../../../packages/backend/src/app/core/catalog.py#L10) |
 | [認証情報の利用制限](../db/database.md#credential_rules) | credential_rules | R | 検索 | select | [check_operation:90](../../../packages/backend/src/app/core/credential_policy.py#L90) |
 | [認証情報の利用制限](../db/database.md#credential_rules) | credential_rules | R | 主キーで取得 | db.get | [individual:29](../../../packages/backend/src/app/core/credential_policy.py#L29) |
 | [認証情報の利用制限](../db/database.md#credential_rules) | credential_rules | R | 主キーで取得 | db.get | [minutes:34](../../../packages/backend/src/app/core/credential_policy.py#L34) |
 | [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:30](../../../packages/backend/src/app/core/workspace.py#L30) |
 | [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:54](../../../packages/backend/src/app/core/workspace.py#L54) |
-| [API呼び出し履歴](../db/database.md#invocation_logs) | invocation_logs | C | レコードを追加 | db.add | [log_result:133](../../../packages/backend/src/app/apis/gateway.py#L133) |
+| [API呼び出し履歴](../db/database.md#invocation_logs) | invocation_logs | C | レコードを追加 | db.add | [log_result:134](../../../packages/backend/src/app/apis/gateway.py#L134) |
 | [API呼び出しと組織の対応](../db/database.md#invocation_units) | invocation_units | C | レコードを追加 | db.add | [attribute:158](../../../packages/backend/src/app/core/workspace.py#L158) |
-| [通知](../db/database.md#notices) | notices | C | レコードを追加 | db.add | [admit:136](../../../packages/backend/src/app/apis/governance/alerts.py#L136) |
+| [通知](../db/database.md#notices) | notices | C | レコードを追加 | db.add | [admit:109](../../../packages/backend/src/app/apis/governance/alerts.py#L109) |
 | [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:123](../../../packages/backend/src/app/core/auth.py#L123) |
 | [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:91](../../../packages/backend/src/app/core/workspace.py#L91) |
 
@@ -89,9 +89,6 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 <details><summary>解析した関数・依存</summary>
 
-- `app.apis.catalog.common.event`
-- `app.apis.catalog.common.record`
-- `app.apis.catalog.common.right_id`
 - `app.apis.gateway.authorize`
 - `app.apis.gateway.invocation_asset`
 - `app.apis.gateway.invoke`
@@ -107,6 +104,9 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 - `app.core.auth.check_member`
 - `app.core.auth.identify`
 - `app.core.auth.keyset`
+- `app.core.catalog.event`
+- `app.core.catalog.record`
+- `app.core.catalog.right_id`
 - `app.core.config.local_demo`
 - `app.core.config.settings`
 - `app.core.config.targets`

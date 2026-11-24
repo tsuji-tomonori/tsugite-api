@@ -6,7 +6,7 @@ GET `/api/workspace`
 
 [API一覧](README.md) · [CRUD一覧](../db/crud.md)
 
-共通 · `workspace_api_workspace_get` · [workspace:115](../../../packages/backend/src/app/apis/governance/directory.py#L115)
+共通 · `workspace_api_workspace_get` · [workspace:80](../../../packages/backend/src/app/apis/governance/directory.py#L80)
 
 ## 入力
 
@@ -65,15 +65,15 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [roster:76](../../../packages/backend/src/app/apis/governance/directory.py#L76) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [roster:41](../../../packages/backend/src/app/apis/governance/directory.py#L41) |
 | [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:105](../../../packages/backend/src/app/core/workspace.py#L105) |
 | [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:30](../../../packages/backend/src/app/core/workspace.py#L30) |
 | [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:54](../../../packages/backend/src/app/core/workspace.py#L54) |
 | [利用者プロフィール](../db/database.md#portal_member_profiles) | portal_member_profiles | R | 検索 | select | [directory_profiles:36](../../../packages/backend/src/app/core/member_profiles.py#L36) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 検索 | select | [roster:70](../../../packages/backend/src/app/apis/governance/directory.py#L70) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 検索 | select | [roster:80](../../../packages/backend/src/app/apis/governance/directory.py#L80) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [roster:85](../../../packages/backend/src/app/apis/governance/directory.py#L85) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [roster:101](../../../packages/backend/src/app/apis/governance/directory.py#L101) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 検索 | select | [roster:35](../../../packages/backend/src/app/apis/governance/directory.py#L35) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 検索 | select | [roster:45](../../../packages/backend/src/app/apis/governance/directory.py#L45) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [roster:50](../../../packages/backend/src/app/apis/governance/directory.py#L50) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [roster:66](../../../packages/backend/src/app/apis/governance/directory.py#L66) |
 | [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:123](../../../packages/backend/src/app/core/auth.py#L123) |
 | [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 検索 | select | [directory_accounts:44](../../../packages/backend/src/app/core/member_profiles.py#L44) |
 | [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:91](../../../packages/backend/src/app/core/workspace.py#L91) |

@@ -67,7 +67,7 @@ def test_measured_source_invalidates_suites_that_executed_it(tmp_path):
     """計測対象コードの変更時は以前に実行行を記録した層も再計測する。"""
     cached_report(tmp_path)
     (tmp_path / "coverage-parts" / ci.part_name(ci.INFRA)).write_bytes(b"measured")
-    plan = ci.select(["packages/database/src/tsugite_db/models.py"], SUITES, tmp_path)
+    plan = ci.select(["packages/database/src/tsugite_db/models/assets.py"], SUITES, tmp_path)
     assert set(plan["suites"]) == {ci.AGENT, ci.BACKEND, ci.DATABASE, ci.INFRA, ci.BROWSER, ci.TOOLS}
     assert plan["design"] and plan["types"] and plan["aws"]
 

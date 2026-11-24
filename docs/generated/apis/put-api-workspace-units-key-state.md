@@ -6,7 +6,7 @@ PUT `/api/workspace/units/{key}/state`
 
 [API一覧](README.md) · [CRUD一覧](../db/crud.md)
 
-共通 · `change_state_api_workspace_units__key__state_put` · [change_state:235](../../../packages/backend/src/app/apis/governance/directory.py#L235)
+共通 · `change_state_api_workspace_units__key__state_put` · [change_state:200](../../../packages/backend/src/app/apis/governance/directory.py#L200)
 
 ## 入力
 
@@ -69,11 +69,11 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
 | [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:105](../../../packages/backend/src/app/core/workspace.py#L105) |
-| [監査履歴](../db/database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [audit:54](../../../packages/backend/src/app/apis/governance/directory.py#L54) |
-| [組織階層](../db/database.md#directory_tree) | directory_tree | C | レコードを追加 | db.add | [save_tree:154](../../../packages/backend/src/app/apis/governance/directory.py#L154) |
+| [監査履歴](../db/database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [audit:19](../../../packages/backend/src/app/apis/governance/directory.py#L19) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | C | レコードを追加 | db.add | [save_tree:119](../../../packages/backend/src/app/apis/governance/directory.py#L119) |
 | [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:30](../../../packages/backend/src/app/core/workspace.py#L30) |
 | [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:54](../../../packages/backend/src/app/core/workspace.py#L54) |
-| [組織階層](../db/database.md#directory_tree) | directory_tree | U | 部署・プロジェクトの階層データ（JSON）を設定 | units に代入 | [save_tree:155](../../../packages/backend/src/app/apis/governance/directory.py#L155) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | U | 部署・プロジェクトの階層データ（JSON）を設定 | units に代入 | [save_tree:120](../../../packages/backend/src/app/apis/governance/directory.py#L120) |
 | [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:123](../../../packages/backend/src/app/core/auth.py#L123) |
 | [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:91](../../../packages/backend/src/app/core/workspace.py#L91) |
 

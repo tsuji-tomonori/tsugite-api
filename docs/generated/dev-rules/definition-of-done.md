@@ -21,7 +21,7 @@
 | --- | --- | --- | --- |
 | サンプルAPI | `packages/sample_api/src/sample_api/database.py` | サンプルAPI、アーキテクチャ、バックエンド、インフラ、ブラウザーE2E | Ruff（書式・静的解析）、API設計書・契約の生成、依存関係・CDK監査、CDK合成・インフラ文書生成、AWSエミュレーターE2E |
 | エージェント・推論モデル | `packages/agent/src/agent/jobs.py` | エージェント・推論モデル、アーキテクチャ、バックエンド、インフラ、ブラウザーE2E | Ruff（書式・静的解析）、型検査、依存関係・CDK監査、CDK合成・インフラ文書生成、AWSエミュレーターE2E |
-| バックエンド | `packages/backend/src/app/apis/catalog/apply/router.py` | エージェント・推論モデル、アーキテクチャ、バックエンド、ブラウザーE2E、開発ツール | Ruff（書式・静的解析）、型検査、API設計書・契約の生成、CDK合成・インフラ文書生成、AWSエミュレーターE2E |
+| バックエンド | `packages/backend/src/app/apis/catalog/apply.py` | エージェント・推論モデル、アーキテクチャ、バックエンド、ブラウザーE2E、開発ツール | Ruff（書式・静的解析）、型検査、API設計書・契約の生成、CDK合成・インフラ文書生成、AWSエミュレーターE2E |
 | フロントエンド | `packages/frontend/src/web_app/actions/activity.py` | アーキテクチャ、フロントエンド、ブラウザーE2E | Ruff（書式・静的解析）、型検査、CDK合成・インフラ文書生成、AWSエミュレーターE2E |
 | インフラ | `packages/infra/src/components/bindings.py` | アーキテクチャ、インフラ | Ruff（書式・静的解析）、依存関係・CDK監査、CDK合成・インフラ文書生成、AWSエミュレーターE2E |
 | データベース | `packages/database/src/tsugite_db/design_names.py` | エージェント・推論モデル、アーキテクチャ、バックエンド、データベース、ブラウザーE2E、開発ツール | Ruff（書式・静的解析）、型検査、API設計書・契約の生成、CDK合成・インフラ文書生成、AWSエミュレーターE2E |
@@ -62,8 +62,8 @@
 | --- | --- |
 | Ruff | `E4`、`E7`、`E9`、`F`、`I`、`F631`、`PT011`、`PT012` |
 | Pyright | `packages/agent`、`packages/backend/src/app`、`packages/database/src/tsugite_db` |
-| Pyright（strict） | `packages/database/src/tsugite_db/models.py`、`packages/backend/src/app/apis/schemas.py` |
-| mypy（strict=True） | `packages/database/src/tsugite_db/models.py`、`packages/backend/src/app/apis/schemas.py` |
+| Pyright（strict） | `packages/database/src/tsugite_db/models`、`packages/backend/src/app/schemas/catalog.py`、`packages/backend/src/app/schemas/base.py` |
+| mypy（strict=True） | `packages/database/src/tsugite_db/models`、`packages/backend/src/app/schemas/catalog.py`、`packages/backend/src/app/schemas/base.py` |
 | フロントエンドのmypy（strict=True） | `packages/frontend/src/web_app`、`packages/frontend/tests` |
 
 ## テストが確認する条件と期待結果
@@ -97,12 +97,13 @@
 | 応答しない生成プロセスを停止し、同じモデルをCPUで再起動して準備完了を待つ。 | — | [test_model_process_recovers_from_failed_health_check](../../../packages/agent/tests/test_model_workers.py#L105) |
 | 埋め込みモデルと長さ制限付きトークナイザーを初回だけ読み込む。 | — | [test_embedding_load_reuses_cpu_model_and_tokenizer](../../../packages/agent/tests/test_model_workers.py#L125) |
 
-### アーキテクチャ（38項目）
+### アーキテクチャ（39項目）
 
 | 確認内容 | 条件別の確認内容 | テスト定義 |
 | --- | --- | --- |
 | DB層はHTTPのルーターに依存しない | — | [test_persistence_has_no_http_dependencies](../../../tests/architecture/test_boundaries.py#L4) |
 | 公開操作のOpenAPI IDと実装が対応する | — | [test_published_operations_have_stable_ids](../../../tests/architecture/test_boundaries.py#L14) |
+| 各テーブルと同名のファイルにモデルを1件置き、全モデルを共通のメタデータに登録する。 | — | [test_model_files_match_registered_tables](../../../tests/architecture/test_boundaries.py#L26) |
 | 全層の単体テスト・アーキテクチャテスト・E2Eに簡潔な日本語の説明がある。 | — | [test_test_cases_have_japanese_descriptions](../../../tests/architecture/test_case_descriptions.py#L18) |
 | 各パッケージの依存宣言から逆依存をたどり、変更元と利用側の単体テストを選ぶ。 | — | [test_workspace_dependency_changes_verify_consumers](../../../tests/architecture/test_ci_scope.py#L15) |
 | 実装が他の配布単位から読み込むモジュールを解析し、変更時に利用側のテストが選ばれる。 | — | [test_imported_modules_verify_their_actual_consumers](../../../tests/architecture/test_ci_scope.py#L43) |

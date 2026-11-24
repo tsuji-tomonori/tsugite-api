@@ -6,7 +6,7 @@ GET `/api/audit`
 
 [API一覧](README.md) · [CRUD一覧](../db/crud.md)
 
-共通 · `audit` · [audit:16](../../../packages/backend/src/app/apis/catalog/audit/router.py#L16)
+共通 · `audit` · [audit:16](../../../packages/backend/src/app/apis/catalog/audit.py#L16)
 
 ## 入力
 
@@ -69,10 +69,10 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
 | [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:105](../../../packages/backend/src/app/core/workspace.py#L105) |
-| [監査履歴](../db/database.md#audit_events) | audit_events | R | 検索 | select | [audit:32](../../../packages/backend/src/app/apis/catalog/audit/router.py#L32) |
+| [監査履歴](../db/database.md#audit_events) | audit_events | R | 検索 | select | [audit:32](../../../packages/backend/src/app/apis/catalog/audit.py#L32) |
 | [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:30](../../../packages/backend/src/app/core/workspace.py#L30) |
 | [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:54](../../../packages/backend/src/app/core/workspace.py#L54) |
-| [API呼び出し履歴](../db/database.md#invocation_logs) | invocation_logs | R | 検索 | select | [audit:41](../../../packages/backend/src/app/apis/catalog/audit/router.py#L41) |
+| [API呼び出し履歴](../db/database.md#invocation_logs) | invocation_logs | R | 検索 | select | [audit:41](../../../packages/backend/src/app/apis/catalog/audit.py#L41) |
 | [API呼び出しと組織の対応](../db/database.md#invocation_units) | invocation_units | R | 検索 | select | [led_calls:12](../../../packages/backend/src/app/core/log_visibility.py#L12) |
 | [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:123](../../../packages/backend/src/app/core/auth.py#L123) |
 | [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:91](../../../packages/backend/src/app/core/workspace.py#L91) |
@@ -85,7 +85,7 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 <details><summary>解析した関数・依存</summary>
 
-- `app.apis.catalog.audit.router.audit`
+- `app.apis.catalog.audit.audit`
 - `app.core.auth.check_member`
 - `app.core.auth.current`
 - `app.core.auth.human`

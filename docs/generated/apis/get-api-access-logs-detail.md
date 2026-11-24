@@ -74,7 +74,7 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 | [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:30](../../../packages/backend/src/app/core/workspace.py#L30) |
 | [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:54](../../../packages/backend/src/app/core/workspace.py#L54) |
 | [API呼び出し履歴](../db/database.md#invocation_logs) | invocation_logs | R | 検索 | select | [access_log_detail:153](../../../packages/backend/src/app/apis/governance/observability.py#L153) |
-| [API呼び出しと組織の対応](../db/database.md#invocation_units) | invocation_units | R | 検索 | select | [unit_condition:305](../../../packages/backend/src/app/apis/governance/directory.py#L305) |
+| [API呼び出しと組織の対応](../db/database.md#invocation_units) | invocation_units | R | 検索 | select | [unit_condition:270](../../../packages/backend/src/app/apis/governance/directory.py#L270) |
 | [API呼び出しと組織の対応](../db/database.md#invocation_units) | invocation_units | R | 検索 | select | [led_calls:12](../../../packages/backend/src/app/core/log_visibility.py#L12) |
 | [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:123](../../../packages/backend/src/app/core/auth.py#L123) |
 | [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:91](../../../packages/backend/src/app/core/workspace.py#L91) |

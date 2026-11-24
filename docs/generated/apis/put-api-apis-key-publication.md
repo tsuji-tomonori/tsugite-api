@@ -6,7 +6,7 @@ PUT `/api/apis/{key}/publication`
 
 [API一覧](README.md) · [CRUD一覧](../db/crud.md)
 
-共通 · `publish` · [publish:35](../../../packages/backend/src/app/apis/catalog/publish/router.py#L35)
+共通 · `publish` · [publish:36](../../../packages/backend/src/app/apis/catalog/publish.py#L36)
 
 ## 入力
 
@@ -63,15 +63,15 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
 | [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:105](../../../packages/backend/src/app/core/workspace.py#L105) |
-| [APIカタログ](../db/database.md#assets) | assets | R | 主キーで取得 | db.get | [record:32](../../../packages/backend/src/app/apis/catalog/common.py#L32) |
-| [APIカタログ](../db/database.md#assets) | assets | U | カタログで公開中かを設定 | published に代入 | [publish:59](../../../packages/backend/src/app/apis/catalog/publish/router.py#L59) |
-| [監査履歴](../db/database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [event:17](../../../packages/backend/src/app/apis/catalog/common.py#L17) |
+| [APIカタログ](../db/database.md#assets) | assets | R | 主キーで取得 | db.get | [record:25](../../../packages/backend/src/app/core/catalog.py#L25) |
+| [APIカタログ](../db/database.md#assets) | assets | U | カタログで公開中かを設定 | published に代入 | [publish:60](../../../packages/backend/src/app/apis/catalog/publish.py#L60) |
+| [監査履歴](../db/database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [event:10](../../../packages/backend/src/app/core/catalog.py#L10) |
 | [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:30](../../../packages/backend/src/app/core/workspace.py#L30) |
 | [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:54](../../../packages/backend/src/app/core/workspace.py#L54) |
 | [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:123](../../../packages/backend/src/app/core/auth.py#L123) |
 | [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:91](../../../packages/backend/src/app/core/workspace.py#L91) |
-| [商品別API仕様の公開履歴](../db/database.md#spec_releases) | spec_releases | C | レコードを追加 | db.add | [record_release:51](../../../packages/backend/src/app/apis/catalog/releases.py#L51) |
-| [商品別API仕様の公開履歴](../db/database.md#spec_releases) | spec_releases | R | 検索 | select | [record_release:33](../../../packages/backend/src/app/apis/catalog/releases.py#L33) |
+| [商品別API仕様の公開履歴](../db/database.md#spec_releases) | spec_releases | C | レコードを追加 | db.add | [record_release:51](../../../packages/backend/src/app/core/releases.py#L51) |
+| [商品別API仕様の公開履歴](../db/database.md#spec_releases) | spec_releases | R | 検索 | select | [record_release:33](../../../packages/backend/src/app/core/releases.py#L33) |
 
 ### AWSサービス
 
@@ -84,23 +84,23 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 <details><summary>解析した関数・依存</summary>
 
-- `app.apis.catalog.common.event`
-- `app.apis.catalog.common.listing`
-- `app.apis.catalog.common.record`
-- `app.apis.catalog.publish.router.publish`
-- `app.apis.catalog.releases.entries`
-- `app.apis.catalog.releases.fingerprint`
-- `app.apis.catalog.releases.record_release`
+- `app.apis.catalog.publish.publish`
 - `app.core.auth.check_member`
 - `app.core.auth.current`
 - `app.core.auth.human`
 - `app.core.auth.identify`
 - `app.core.auth.keyset`
+- `app.core.catalog.event`
+- `app.core.catalog.listing`
+- `app.core.catalog.record`
 - `app.core.config.local_demo`
 - `app.core.config.settings`
 - `app.core.config.targets`
 - `app.core.diagnostics.asset_object`
 - `app.core.openapi.path_items`
+- `app.core.releases.entries`
+- `app.core.releases.fingerprint`
+- `app.core.releases.record_release`
 - `app.core.workspace.ancestry`
 - `app.core.workspace.configured_projects`
 - `app.core.workspace.populate`

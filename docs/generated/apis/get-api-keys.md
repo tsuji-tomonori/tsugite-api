@@ -6,7 +6,7 @@ GET `/api/keys`
 
 [API一覧](README.md) · [CRUD一覧](../db/crud.md)
 
-共通 · `list_keys_api_keys_get` · [list_keys:58](../../../packages/backend/src/app/apis/governance/keys.py#L58)
+共通 · `list_keys_api_keys_get` · [list_keys:42](../../../packages/backend/src/app/apis/governance/keys.py#L42)
 
 ## 入力
 
@@ -53,7 +53,7 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
 | [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:105](../../../packages/backend/src/app/core/workspace.py#L105) |
-| [API認証情報](../db/database.md#api_keys) | api_keys | R | 検索 | select | [list_keys:59](../../../packages/backend/src/app/apis/governance/keys.py#L59) |
+| [API認証情報](../db/database.md#api_keys) | api_keys | R | 検索 | select | [list_keys:43](../../../packages/backend/src/app/apis/governance/keys.py#L43) |
 | [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:30](../../../packages/backend/src/app/core/workspace.py#L30) |
 | [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:54](../../../packages/backend/src/app/core/workspace.py#L54) |
 | [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:123](../../../packages/backend/src/app/core/auth.py#L123) |

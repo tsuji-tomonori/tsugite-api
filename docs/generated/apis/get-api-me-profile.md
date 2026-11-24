@@ -6,7 +6,7 @@ GET `/api/me/profile`
 
 [API一覧](README.md) · [CRUD一覧](../db/crud.md)
 
-共通 · `my_profile_api_me_profile_get` · [my_profile:93](../../../packages/backend/src/app/apis/governance/profiles.py#L93)
+共通 · `my_profile_api_me_profile_get` · [my_profile:86](../../../packages/backend/src/app/apis/governance/profiles.py#L86)
 
 ## 入力
 
@@ -47,8 +47,8 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 | [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:105](../../../packages/backend/src/app/core/workspace.py#L105) |
 | [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:30](../../../packages/backend/src/app/core/workspace.py#L30) |
 | [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:54](../../../packages/backend/src/app/core/workspace.py#L54) |
-| [利用者プロフィール](../db/database.md#portal_member_profiles) | portal_member_profiles | R | 主キーで取得 | db.get | [my_profile:95](../../../packages/backend/src/app/apis/governance/profiles.py#L95) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [existing_account:28](../../../packages/backend/src/app/apis/governance/profiles.py#L28) |
+| [利用者プロフィール](../db/database.md#portal_member_profiles) | portal_member_profiles | R | 主キーで取得 | db.get | [my_profile:88](../../../packages/backend/src/app/apis/governance/profiles.py#L88) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [existing_account:21](../../../packages/backend/src/app/apis/governance/profiles.py#L21) |
 | [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:123](../../../packages/backend/src/app/core/auth.py#L123) |
 | [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:91](../../../packages/backend/src/app/core/workspace.py#L91) |
 
