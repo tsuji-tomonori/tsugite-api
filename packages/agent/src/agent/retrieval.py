@@ -6,8 +6,8 @@ from collections import defaultdict
 
 from app.core.catalog_rank import normalize, rank_assets, terms
 
-from packages.frontend.src.web_app.guide_content import GUIDES, audiences
-from packages.frontend.src.web_app.guide_search import search as search_guides
+from packages.frontend.src.web_app.content.guide_content import GUIDES, audiences
+from packages.frontend.src.web_app.content.guide_search import search as search_guides
 
 TOPICS = {
     "catalog": (

@@ -41,11 +41,12 @@ tasks:
       - '{{.RUN}} ruff format .'
   types:
     desc: 型検査
-    cmds: ['uv run --locked --all-packages --group decision-model pyright', '{{.RUN}} mypy']
+    cmds: ['uv run --locked --all-packages --group decision-model pyright', '{{.RUN}} mypy', '{{.RUN}} mypy --config-file packages/frontend/pyproject.toml']
   docs:
     desc: APIとインフラの設計書を更新
     cmds:
       - task: docs:api
+      - task: docs:samples
       - task: docs:infra
   docs:quality:
     desc: PRの検査項目と対象ブランチのカバレッジ基準から完了の定義を生成
@@ -59,6 +60,9 @@ tasks:
   docs:infra:render:
     desc: 合成済みCloudFormationテンプレートをMarkdownに変換
     cmds: ['{{.RUN}} python -m tools.design.infrastructure']
+  docs:samples:
+    desc: 商品ごとのOpenAPI YAMLをFastAPIから生成
+    cmds: ['{{.RUN}} python -m tools.design.sample_openapi']
   docs:api:
     desc: OpenAPI仕様とSQL・AWSのCRUD設計書をMarkdownに出力
     cmds: ['{{.RUN}} python -m tools.design.generate']
@@ -132,6 +136,9 @@ tasks:
   test:database:
     desc: DBマイグレーションテスト
     cmds: ['{{.RUN}} pytest -q packages/database/tests {{.CLI_ARGS}}']
+  test:samples:
+    desc: 商品別の契約とLambda応答を検証
+    cmds: ['{{.RUN}} pytest -q packages/sample_api/tests {{.CLI_ARGS}}']
   test:infra:
     desc: CDKの単体テスト
     cmds: ['{{.RUN}} pytest -q packages/infra/tests {{.CLI_ARGS}}']
@@ -170,6 +177,7 @@ tasks:
       - task: synth
       - task: contracts
       - task: docs:api
+      - task: docs:samples
       - task: docs:infra:render
       - task: audit
       - task: test

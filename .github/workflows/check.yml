@@ -120,14 +120,14 @@ jobs:
       #: 配布物をビルドし、CDKからCloudFormationテンプレートを合成できる。
       - run: task synth
         if: steps.scope.outputs.synth == 'true'
-      #: 依存ロックまたはビルダーの変更時は、再生成した3つのLambda LayerのSHA-256が一致する。
+      #: 依存ロックまたはビルダーの変更時は、再生成したLambda依存パッケージのSHA-256が一致する。
       - name: 同じロックから再ビルドしたLambda LayerのSHA-256を照合
         if: steps.scope.outputs.synth == 'true'
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
           if ! git diff --quiet "$BASE_SHA...HEAD" -- uv.lock tools/packaging/build_backend.py tools/packaging/build_chat.py; then
-            sha256sum build/runtime-layer.zip build/decision-model-layer.zip build/model-sdk-layer.zip > "$RUNNER_TEMP/runtime-layer.sha256"
+            sha256sum build/sample-api-layer.zip build/runtime-layer.zip build/decision-model-layer.zip build/model-sdk-layer.zip > "$RUNNER_TEMP/runtime-layer.sha256"
             uv run --locked --all-packages python tools/packaging/build_backend.py
             sha256sum --check "$RUNNER_TEMP/runtime-layer.sha256"
           fi
@@ -140,6 +140,12 @@ jobs:
       #: OpenAPI・テーブル定義・API設計書を生成できる。
       - run: task contracts docs:api
         if: steps.scope.outputs.design == 'true'
+      #: 商品別のOpenAPI YAMLをFastAPIから再生成し、コミット済みの仕様と一致する。
+      - name: 商品別OpenAPIの生成と差分検査
+        if: steps.scope.outputs.design == 'true'
+        run: |
+          task docs:samples
+          test -z "$(git status --porcelain -- docs/generated/sample-api)"
       #: CDKの監査結果を出力し、Lambda実行時依存に対するpip-auditが通る。
       - run: task audit
         if: steps.scope.outputs.audit == 'true'

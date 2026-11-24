@@ -1,27 +1,18 @@
 import json
 from typing import Annotated
 
-from app.apis import outputs
-from app.apis.catalog.common import DB, User
 from app.apis.governance.directory import audit
 from app.apis.governance.members import administrator
-from app.apis.schemas import Input
 from app.core.metadata import BUILTIN_FIELDS
+from app.dependencies import DB, User
+from app.schemas import outputs
+from app.schemas.metadata import MetadataSettings
 from fastapi import APIRouter, HTTPException, Path, Request
-from pydantic import Field
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import StaleDataError
 from tsugite_db.models import DirectoryTree
 
 router = APIRouter()
-
-
-#: 利用者メタデータの項目設定
-class MetadataSettings(Input):
-    #: 画面に表示する項目名
-    label: str = Field(min_length=1, max_length=120)
-    #: 値の名称を全利用者に公開するか
-    public_values: bool = False
 
 
 #: メタデータ項目の表示名と選択肢の公開範囲を設定する

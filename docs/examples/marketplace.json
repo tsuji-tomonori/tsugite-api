@@ -1,8 +1,98 @@
 [
-  {"name":"倉庫在庫","slug":"warehouse-stock","summary":"SKUごとの在庫数を確認し、棚卸しと引当の差異を調べます。","method":"GET","path":"/items","environment":"production"},
-  {"name":"配送追跡","slug":"parcel-tracking","summary":"送り状番号に対応する荷物の配送状況を照会します。","method":"GET","path":"/parcels/JP17","environment":"sandbox"},
-  {"name":"為替レート","slug":"exchange-rates","summary":"円換算に使う基準通貨と適用レートを取得します。","method":"GET","path":"/rates/JPY","environment":"production"},
-  {"name":"店舗ディレクトリ","slug":"store-directory","summary":"店舗コード、所在地、営業エリアを一覧で取得します。","method":"GET","path":"/stores","environment":"sandbox"},
-  {"name":"発注受付","slug":"purchase-orders","summary":"購買依頼を送信し、受け付けた注文の番号を取得します。","method":"POST","path":"/orders","environment":"production"},
-  {"name":"営業日カレンダー","slug":"business-calendar","summary":"次の営業日を照会して、出荷予定日を計算します。","method":"GET","path":"/calendar/next","environment":"sandbox"}
+  {
+    "name": "倉庫在庫",
+    "slug": "warehouse-stock",
+    "summary": "SKUごとの在庫数を確認し、棚卸しと引当の差異を調べます。",
+    "method": "GET",
+    "path": "/items",
+    "environment": "production"
+  },
+  {
+    "name": "配送追跡",
+    "slug": "parcel-tracking",
+    "summary": "送り状番号に対応する荷物の配送状況を照会します。",
+    "method": "GET",
+    "path": "/parcels/JP17",
+    "environment": "sandbox"
+  },
+  {
+    "name": "為替レート",
+    "slug": "exchange-rates",
+    "summary": "円換算に使う基準通貨と適用レートを取得します。",
+    "method": "GET",
+    "path": "/rates/JPY",
+    "environment": "production"
+  },
+  {
+    "name": "店舗ディレクトリ",
+    "slug": "store-directory",
+    "summary": "店舗コード、所在地、営業エリアを一覧で取得します。",
+    "method": "GET",
+    "path": "/stores",
+    "environment": "sandbox"
+  },
+  {
+    "name": "発注受付",
+    "slug": "purchase-orders",
+    "summary": "購買依頼を送信し、受け付けた注文の番号を取得します。",
+    "method": "POST",
+    "path": "/orders",
+    "environment": "production"
+  },
+  {
+    "name": "営業日カレンダー",
+    "slug": "business-calendar",
+    "summary": "次の営業日を照会して、出荷予定日を計算します。",
+    "method": "GET",
+    "path": "/calendar/next",
+    "environment": "sandbox"
+  },
+  {
+    "name": "図書貸出",
+    "slug": "library-loans",
+    "summary": "貸出を図書館や返却までの日数で検索します。",
+    "method": "GET",
+    "path": "/loans",
+    "environment": "production"
+  },
+  {
+    "name": "降水観測",
+    "slug": "weather-stations",
+    "summary": "降水観測を流域や降水量（mm）で検索します。",
+    "method": "GET",
+    "path": "/observations",
+    "environment": "sandbox"
+  },
+  {
+    "name": "会議室台帳",
+    "slug": "meeting-rooms",
+    "summary": "会議室を建物や定員で検索します。",
+    "method": "GET",
+    "path": "/rooms",
+    "environment": "production"
+  },
+  {
+    "name": "列車運行",
+    "slug": "rail-services",
+    "summary": "列車を路線や遅延時間（分）で検索します。",
+    "method": "GET",
+    "path": "/trains",
+    "environment": "sandbox"
+  },
+  {
+    "name": "電力使用量",
+    "slug": "power-meters",
+    "summary": "電力計を設置場所や消費電力量（kWh）で検索します。",
+    "method": "GET",
+    "path": "/meters",
+    "environment": "production"
+  },
+  {
+    "name": "美術館収蔵品",
+    "slug": "museum-collection",
+    "summary": "収蔵品を展示室や制作年で検索します。",
+    "method": "GET",
+    "path": "/exhibits",
+    "environment": "sandbox"
+  }
 ]

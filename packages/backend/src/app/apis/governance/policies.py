@@ -1,37 +1,13 @@
 import json
-from typing import Literal
 
-from app.apis.catalog.common import DB, User, event, record
-from app.apis.schemas import Input
+from app.core.catalog import event, record
 from app.core.metadata import BUILTIN_FIELDS, metadata_fields
 from app.core.workspace import policy, units
+from app.dependencies import DB, User
+from app.schemas.policies import Policy
 from fastapi import APIRouter, HTTPException, Request
-from pydantic import Field
 
 router = APIRouter()
-
-
-#: APIの公開範囲と承認条件
-class Policy(Input):
-    #: APIの公開範囲
-    visibility: Literal[
-        #: 全体公開
-        "all",
-        #: 限定公開
-        "restricted",
-    ] = "all"
-    #: 閲覧を許可するプロジェクト
-    projects: list[str] = Field(default_factory=list)
-    #: 閲覧を許可する部署
-    departments: list[str] = Field(default_factory=list)
-    #: 閲覧を許可する任意メタデータの値
-    metadata_values: list[str] = Field(default_factory=list)
-    #: 自動承認の対象部署
-    auto_departments: list[str] = Field(default_factory=list)
-    #: 自動承認の対象役職
-    auto_titles: list[str] = Field(default_factory=list)
-    #: 承認を委任する部署
-    delegates: list[str] = Field(default_factory=list)
 
 
 #: APIの公開範囲と申請の承認条件を確認する

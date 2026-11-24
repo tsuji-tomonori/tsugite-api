@@ -4,9 +4,9 @@
 
 POST `/api/requests/{key}/{project}/{environment}`
 
-[API一覧](../README.md) · [CRUD一覧](../crud.md)
+[API一覧](README.md) · [CRUD一覧](../db/crud.md)
 
-共通 · `decide` · [decide:20](../../../packages/backend/src/app/apis/catalog/decide/router.py#L20)
+共通 · `decide` · [decide:21](../../../packages/backend/src/app/apis/catalog/decide.py#L21)
 
 ## 入力
 
@@ -25,7 +25,7 @@ POST `/api/requests/{key}/{project}/{environment}`
 
 | Content-Type | スキーマ |
 | --- | --- |
-| application/json | [利用申請への処理指示（Decision）](../schemas.md#decision) |
+| application/json | [利用申請への処理指示（Decision）](../db/schemas.md#decision) |
 
 #### application/json の項目
 
@@ -39,8 +39,8 @@ POST `/api/requests/{key}/{project}/{environment}`
 
 | ステータス | 説明 | 形式・条件 | スキーマ |
 | --- | --- | --- | --- |
-| 200 | 正常に処理できました | application/json | [API利用申請と審査状態（Right）](../schemas.md#right) |
-| 422 | 入力内容が条件を満たしていません | application/json | [リクエスト入力エラー（HTTPValidationError）](../schemas.md#httpvalidationerror) |
+| 200 | 正常に処理できました | application/json | [API利用申請と審査状態（Right）](../db/schemas.md#right) |
+| 422 | 入力内容が条件を満たしていません | application/json | [リクエスト入力エラー（HTTPValidationError）](../db/schemas.md#httpvalidationerror) |
 
 ### 200 application/json の項目
 
@@ -55,10 +55,10 @@ POST `/api/requests/{key}/{project}/{environment}`
 | 申請者の識別子 | applicant | 任意 | 文字列 または 空値 |
 | カタログ掲載APIの名称 | asset_name | 任意 | 文字列、既定値 `""` |
 | 審査・取消の理由 | decision_reason | 任意 | 文字列 または 空値 |
-| 申請時に保存した利用条件・回答・審査履歴 | application | 任意 | [申請時点の利用条件と審査記録（ApplicationEvidence）](../schemas.md#applicationevidence) |
+| 申請時に保存した利用条件・回答・審査履歴 | application | 任意 | [申請時点の利用条件と審査記録（ApplicationEvidence）](../db/schemas.md#applicationevidence) |
 | 申請の承認経路 | application.route | 任意 | 文字列 |
 | 承認担当の順序 | application.steps | 任意 | 配列 / 文字列 |
-| 段階ごとの審査結果 | application.decisions | 任意 | 配列 / [承認段階ごとの審査記録（ReviewStep）](../schemas.md#reviewstep) |
+| 段階ごとの審査結果 | application.decisions | 任意 | 配列 / [承認段階ごとの審査記録（ReviewStep）](../db/schemas.md#reviewstep) |
 | この段階の審査日時 | application.decisions[].at | 必須 | 文字列 |
 | この段階の承認担当 | application.decisions[].stage | 必須 | 文字列 |
 | 審査を行った利用者 | application.decisions[].actor | 必須 | 文字列 |
@@ -78,14 +78,14 @@ POST `/api/requests/{key}/{project}/{environment}`
 
 | 項目の和名 | 物理名 | 指定 | 型・制約 |
 | --- | --- | --- | --- |
-| 入力エラーの明細一覧 | detail | 任意 | 配列 / [入力エラーの項目別明細（ValidationError）](../schemas.md#validationerror) |
+| 入力エラーの明細一覧 | detail | 任意 | 配列 / [入力エラーの項目別明細（ValidationError）](../db/schemas.md#validationerror) |
 | 入力エラーの発生箇所 | detail[].loc | 必須 | 配列 / 文字列 または 整数 |
 | 入力エラーの説明 | detail[].msg | 必須 | 文字列 |
 | 入力エラーの分類コード | detail[].type | 必須 | 文字列 |
 | エラーになった入力値 | detail[].input | 任意 | 任意の型 |
 | 入力エラーの補足情報 | detail[].ctx | 任意 | オブジェクト |
 
-実装・認証依存で送出し得るHTTPエラー（エラーの詳細を示す `detail` を含むJSON）　401, 403, 404, 409。
+実装・認証依存で送出し得るHTTPエラー（エラーの詳細を示す `detail` を含むJSON）　401, 403, 404, 409, 503。
 
 AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugite-Origin` を付与します。共通ミドルウェアは通常のAPI応答にリクエスト識別子 `X-Request-ID` とキャッシュへの保存を禁止する `Cache-Control: no-store` を付けます。Lambdaのオリジン検証に失敗すると403、DBの競合は409、DB操作エラーは409または503です。
 
@@ -95,20 +95,21 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| [API利用申請・利用権](../database.md#access_rights) | access_rights | R | 主キーで取得 | db.get | [decide:35](../../../packages/backend/src/app/apis/catalog/decide/router.py#L35) |
-| [API利用申請・利用権](../database.md#access_rights) | access_rights | U | 現在の承認担当を設定 | stage に代入 | [decide:63](../../../packages/backend/src/app/apis/catalog/decide/router.py#L63) |
-| [API利用申請・利用権](../database.md#access_rights) | access_rights | U | 現在の承認担当を設定 | stage に代入 | [decide:67](../../../packages/backend/src/app/apis/catalog/decide/router.py#L67) |
-| [API利用申請・利用権](../database.md#access_rights) | access_rights | U | 申請時の回答・利用条件・審査履歴（JSON）を設定 | submission に代入 | [decide:68](../../../packages/backend/src/app/apis/catalog/decide/router.py#L68) |
-| [API利用申請・利用権](../database.md#access_rights) | access_rights | U | 現在の承認担当を設定 | stage に代入 | [decide:70](../../../packages/backend/src/app/apis/catalog/decide/router.py#L70) |
-| [API利用申請・利用権](../database.md#access_rights) | access_rights | U | 利用申請の審査状態を設定 | status に代入 | [decide:71](../../../packages/backend/src/app/apis/catalog/decide/router.py#L71) |
-| [API利用申請・利用権](../database.md#access_rights) | access_rights | U | 審査・取消の理由を設定 | decision_note に代入 | [decide:72](../../../packages/backend/src/app/apis/catalog/decide/router.py#L72) |
-| [利用者の組織所属](../database.md#affiliations) | affiliations | R | 検索 | select | [delegated:134](../../../packages/backend/src/app/core/workspace.py#L134) |
-| [利用者の組織所属](../database.md#affiliations) | affiliations | R | 検索 | select | [populate:69](../../../packages/backend/src/app/core/workspace.py#L69) |
-| [APIカタログ](../database.md#assets) | assets | R | 主キーで取得 | db.get | [record:31](../../../packages/backend/src/app/apis/catalog/common.py#L31) |
-| [監査履歴](../database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [event:16](../../../packages/backend/src/app/apis/catalog/common.py#L16) |
-| [組織階層](../database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
-| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:121](../../../packages/backend/src/app/core/auth.py#L121) |
-| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:56](../../../packages/backend/src/app/core/workspace.py#L56) |
+| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | R | 主キーで取得 | db.get | [decide:36](../../../packages/backend/src/app/apis/catalog/decide.py#L36) |
+| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | U | 現在の承認担当を設定 | stage に代入 | [decide:65](../../../packages/backend/src/app/apis/catalog/decide.py#L65) |
+| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | U | 現在の承認担当を設定 | stage に代入 | [decide:69](../../../packages/backend/src/app/apis/catalog/decide.py#L69) |
+| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | U | 申請時の回答・利用条件・審査履歴（JSON）を設定 | submission に代入 | [decide:70](../../../packages/backend/src/app/apis/catalog/decide.py#L70) |
+| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | U | 現在の承認担当を設定 | stage に代入 | [decide:72](../../../packages/backend/src/app/apis/catalog/decide.py#L72) |
+| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | U | 利用申請の審査状態を設定 | status に代入 | [decide:73](../../../packages/backend/src/app/apis/catalog/decide.py#L73) |
+| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | U | 審査・取消の理由を設定 | decision_note に代入 | [decide:74](../../../packages/backend/src/app/apis/catalog/decide.py#L74) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [delegated:170](../../../packages/backend/src/app/core/workspace.py#L170) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:105](../../../packages/backend/src/app/core/workspace.py#L105) |
+| [APIカタログ](../db/database.md#assets) | assets | R | 主キーで取得 | db.get | [record:25](../../../packages/backend/src/app/core/catalog.py#L25) |
+| [監査履歴](../db/database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [event:10](../../../packages/backend/src/app/core/catalog.py#L10) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:30](../../../packages/backend/src/app/core/workspace.py#L30) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:54](../../../packages/backend/src/app/core/workspace.py#L54) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:123](../../../packages/backend/src/app/core/auth.py#L123) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:91](../../../packages/backend/src/app/core/workspace.py#L91) |
 
 ### AWSサービス
 
@@ -118,25 +119,26 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 <details><summary>解析した関数・依存</summary>
 
-- `app.apis.catalog.common.event`
-- `app.apis.catalog.common.record`
-- `app.apis.catalog.common.right_id`
-- `app.apis.catalog.decide.router.decide`
-- `app.apis.catalog.offers.can_review`
+- `app.apis.catalog.decide.decide`
 - `app.core.auth.check_member`
 - `app.core.auth.current`
 - `app.core.auth.human`
 - `app.core.auth.identify`
 - `app.core.auth.keyset`
+- `app.core.catalog.event`
+- `app.core.catalog.record`
+- `app.core.catalog.right_id`
 - `app.core.config.local_demo`
 - `app.core.config.settings`
+- `app.core.offers.can_review`
 - `app.core.workspace.ancestry`
 - `app.core.workspace.configured_projects`
 - `app.core.workspace.delegated`
 - `app.core.workspace.policy`
 - `app.core.workspace.populate`
+- `app.core.workspace.project_ids`
+- `app.core.workspace.retired_units`
 - `app.core.workspace.units`
-- `tsugite_db.models.now`
 - `tsugite_db.session.engine`
 - `tsugite_db.session.session`
 

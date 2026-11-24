@@ -22,7 +22,7 @@ def assert_layout(page: Page) -> None:
     ):
         assert min(bar) >= 24, bar
     # 日本語と英数字で代替フォントが異なっても、同じ行の文字は縦方向に重なる。
-    headings = page.locator(".crumb a, .resource-table thead th")
+    headings = page.locator(".crumb a:visible, .resource-table thead th:visible")
     for heading in headings.all():
         assert heading.evaluate("""el => {
             const range = document.createRange();
@@ -67,7 +67,7 @@ def inspect_screen(page: Page, case: pytest.Item, role: str, label: str) -> None
 def inspect_details(page: Page, label: str, case: pytest.Item, role: str) -> None:
     # 一覧から実際に開ける項目を使い、商品・組織の詳細と全ガイドの画面例も確認する。
     if label == "使い方ガイド":
-        selector = ".guide-grid a"
+        selector = "#guide-grid a"
     elif label == "APIカタログ":
         selector = ".asset-title"
     elif label in {"部署", "プロジェクト"}:
@@ -77,7 +77,9 @@ def inspect_details(page: Page, label: str, case: pytest.Item, role: str) -> Non
     entries = page.locator(selector).evaluate_all(
         "els => els.map(el => [el.getAttribute('href'), el.textContent])"
     )
-    if label != "使い方ガイド":
+    if label == "使い方ガイド":
+        assert entries, label
+    else:
         entries = entries[:1]
     for path, name in entries:
         page.locator(f'.content a[href="{path}"]').first.click()

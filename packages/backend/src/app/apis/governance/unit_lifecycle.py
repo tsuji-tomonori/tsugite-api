@@ -2,12 +2,13 @@
 
 import json
 
-from app.apis import outputs
-from app.apis.catalog.common import DB, User, right_id
 from app.apis.governance.directory import audit, roster, save_tree
 from app.apis.governance.members import administrator
-from app.apis.schemas import Input
+from app.core.catalog import right_id
 from app.core.workspace import ancestry, configured_projects, project_ids, retired_units, units
+from app.dependencies import DB, User
+from app.schemas import outputs
+from app.schemas.unit_lifecycle import Transfer
 from fastapi import APIRouter, HTTPException, Request
 from sqlalchemy import select
 from tsugite_db.models import (
@@ -21,12 +22,6 @@ from tsugite_db.models import (
 )
 
 router = APIRouter()
-
-
-#: 組織の移管先
-class Transfer(Input):
-    #: 移管先の部署またはプロジェクトの識別子
-    destination: str
 
 
 def conflict(message):

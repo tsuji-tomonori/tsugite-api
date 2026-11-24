@@ -15,6 +15,7 @@ members = [
     "tsugite-e2e",
     "tsugite-frontend",
     "tsugite-infra",
+    "tsugite-sample-api",
     "tsugite-tools",
 ]
 constraints = [
@@ -2448,6 +2449,23 @@ requires-dist = [
     { name = "aws-cdk-lib", specifier = ">=2.220,<3" },
     { name = "cdk-nag", specifier = ">=2.36,<3" },
     { name = "constructs", specifier = ">=10,<11" },
+]
+
+[[package]]
+name = "tsugite-sample-api"
+version = "0.1.0"
+source = { editable = "packages/sample_api" }
+dependencies = [
+    { name = "fastapi" },
+    { name = "mangum" },
+    { name = "pydantic" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "fastapi" },
+    { name = "mangum" },
+    { name = "pydantic", specifier = ">=2" },
 ]
 
 [[package]]
