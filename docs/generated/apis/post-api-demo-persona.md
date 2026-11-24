@@ -4,9 +4,9 @@
 
 POST `/api/demo/{persona}`
 
-[API一覧](../README.md) · [CRUD一覧](../crud.md)
+[API一覧](README.md) · [CRUD一覧](../db/crud.md)
 
-デモ限定 · `local_login_api_demo__persona__post` · [local_login:97](../../../packages/backend/src/app/main.py#L97)
+デモ限定 · `local_login_api_demo__persona__post` · [local_login:47](../../../packages/backend/src/app/main.py#L47)
 
 ## 入力
 
@@ -24,8 +24,8 @@ POST `/api/demo/{persona}`
 
 | ステータス | 説明 | 形式・条件 | スキーマ |
 | --- | --- | --- | --- |
-| 200 | 正常に処理できました | application/json | [デモログインの認証結果（DemoToken）](../schemas.md#demotoken) |
-| 422 | 入力内容が条件を満たしていません | application/json | [リクエスト入力エラー（HTTPValidationError）](../schemas.md#httpvalidationerror) |
+| 200 | 正常に処理できました | application/json | [デモログインの認証結果（DemoToken）](../db/schemas.md#demotoken) |
+| 422 | 入力内容が条件を満たしていません | application/json | [リクエスト入力エラー（HTTPValidationError）](../db/schemas.md#httpvalidationerror) |
 
 ### 200 application/json の項目
 
@@ -37,7 +37,7 @@ POST `/api/demo/{persona}`
 
 | 項目の和名 | 物理名 | 指定 | 型・制約 |
 | --- | --- | --- | --- |
-| 入力エラーの明細一覧 | detail | 任意 | 配列 / [入力エラーの項目別明細（ValidationError）](../schemas.md#validationerror) |
+| 入力エラーの明細一覧 | detail | 任意 | 配列 / [入力エラーの項目別明細（ValidationError）](../db/schemas.md#validationerror) |
 | 入力エラーの発生箇所 | detail[].loc | 必須 | 配列 / 文字列 または 整数 |
 | 入力エラーの説明 | detail[].msg | 必須 | 文字列 |
 | 入力エラーの分類コード | detail[].type | 必須 | 文字列 |
@@ -54,7 +54,7 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| [ポータル利用者](../database.md#portal_members) | portal_members | R | 検索 | select | [demo_token:55](../../../packages/backend/src/app/core/auth.py#L55) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 検索 | select | [demo_token:55](../../../packages/backend/src/app/core/auth.py#L55) |
 
 ### AWSサービス
 

@@ -4,7 +4,7 @@
 
 PUT `/api/alerts`
 
-[API一覧](../README.md) · [CRUD一覧](../crud.md)
+[API一覧](README.md) · [CRUD一覧](../db/crud.md)
 
 共通 · `save_rule_api_alerts_put` · [save_rule:46](../../../packages/backend/src/app/apis/governance/alerts.py#L46)
 
@@ -20,7 +20,7 @@ PUT `/api/alerts`
 
 | Content-Type | スキーマ |
 | --- | --- |
-| application/json | [呼び出し件数の監視条件（Rule）](../schemas.md#rule) |
+| application/json | [呼び出し件数の監視条件（Rule）](../db/schemas.md#rule) |
 
 #### application/json の項目
 
@@ -38,8 +38,8 @@ PUT `/api/alerts`
 
 | ステータス | 説明 | 形式・条件 | スキーマ |
 | --- | --- | --- | --- |
-| 200 | 保存した監視ルールの識別子（id） | application/json | [登録した項目の識別子（Identifier）](../schemas.md#identifier) |
-| 422 | 入力内容が条件を満たしていません | application/json | [リクエスト入力エラー（HTTPValidationError）](../schemas.md#httpvalidationerror) |
+| 200 | 保存した監視ルールの識別子（id） | application/json | [登録した項目の識別子（Identifier）](../db/schemas.md#identifier) |
+| 422 | 入力内容が条件を満たしていません | application/json | [リクエスト入力エラー（HTTPValidationError）](../db/schemas.md#httpvalidationerror) |
 
 ### 200 application/json の項目
 
@@ -51,14 +51,14 @@ PUT `/api/alerts`
 
 | 項目の和名 | 物理名 | 指定 | 型・制約 |
 | --- | --- | --- | --- |
-| 入力エラーの明細一覧 | detail | 任意 | 配列 / [入力エラーの項目別明細（ValidationError）](../schemas.md#validationerror) |
+| 入力エラーの明細一覧 | detail | 任意 | 配列 / [入力エラーの項目別明細（ValidationError）](../db/schemas.md#validationerror) |
 | 入力エラーの発生箇所 | detail[].loc | 必須 | 配列 / 文字列 または 整数 |
 | 入力エラーの説明 | detail[].msg | 必須 | 文字列 |
 | 入力エラーの分類コード | detail[].type | 必須 | 文字列 |
 | エラーになった入力値 | detail[].input | 任意 | 任意の型 |
 | 入力エラーの補足情報 | detail[].ctx | 任意 | オブジェクト |
 
-実装・認証依存で送出し得るHTTPエラー（エラーの詳細を示す `detail` を含むJSON）　401, 403, 404, 422。
+実装・認証依存で送出し得るHTTPエラー（エラーの詳細を示す `detail` を含むJSON）　401, 403, 404, 422, 503。
 
 AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugite-Origin` を付与します。共通ミドルウェアは通常のAPI応答にリクエスト識別子 `X-Request-ID` とキャッシュへの保存を禁止する `Cache-Control: no-store` を付けます。Lambdaのオリジン検証に失敗すると403、DBの競合は409、DB操作エラーは409または503です。
 
@@ -68,18 +68,19 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| [API利用申請・利用権](../database.md#access_rights) | access_rights | R | 検索 | select | [save_rule:52](../../../packages/backend/src/app/apis/governance/alerts.py#L52) |
-| [利用者の組織所属](../database.md#affiliations) | affiliations | R | 検索 | select | [populate:69](../../../packages/backend/src/app/core/workspace.py#L69) |
-| [API呼び出し件数の監視設定](../database.md#alert_rules) | alert_rules | C | レコードを追加 | db.add | [save_rule:64](../../../packages/backend/src/app/apis/governance/alerts.py#L64) |
-| [API呼び出し件数の監視設定](../database.md#alert_rules) | alert_rules | R | 主キーで取得 | db.get | [save_rule:61](../../../packages/backend/src/app/apis/governance/alerts.py#L61) |
-| [API呼び出し件数の監視設定](../database.md#alert_rules) | alert_rules | U | 指定されたカラムの値を更新 | setattr による属性更新 | [save_rule:66](../../../packages/backend/src/app/apis/governance/alerts.py#L66) |
-| [API呼び出し件数の監視設定](../database.md#alert_rules) | alert_rules | U | 現在の集計区間の呼び出し件数を設定 | calls に代入 | [save_rule:67](../../../packages/backend/src/app/apis/governance/alerts.py#L67) |
-| [API呼び出し件数の監視設定](../database.md#alert_rules) | alert_rules | U | 現在の集計区間の番号を設定 | window に代入 | [save_rule:67](../../../packages/backend/src/app/apis/governance/alerts.py#L67) |
-| [APIカタログ](../database.md#assets) | assets | R | 主キーで取得 | db.get | [record:31](../../../packages/backend/src/app/apis/catalog/common.py#L31) |
-| [監査履歴](../database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [event:16](../../../packages/backend/src/app/apis/catalog/common.py#L16) |
-| [組織階層](../database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
-| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:121](../../../packages/backend/src/app/core/auth.py#L121) |
-| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:56](../../../packages/backend/src/app/core/workspace.py#L56) |
+| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | R | 検索 | select | [save_rule:52](../../../packages/backend/src/app/apis/governance/alerts.py#L52) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:105](../../../packages/backend/src/app/core/workspace.py#L105) |
+| [API呼び出し件数の監視設定](../db/database.md#alert_rules) | alert_rules | C | レコードを追加 | db.add | [save_rule:64](../../../packages/backend/src/app/apis/governance/alerts.py#L64) |
+| [API呼び出し件数の監視設定](../db/database.md#alert_rules) | alert_rules | R | 主キーで取得 | db.get | [save_rule:61](../../../packages/backend/src/app/apis/governance/alerts.py#L61) |
+| [API呼び出し件数の監視設定](../db/database.md#alert_rules) | alert_rules | U | 指定されたカラムの値を更新 | setattr による属性更新 | [save_rule:66](../../../packages/backend/src/app/apis/governance/alerts.py#L66) |
+| [API呼び出し件数の監視設定](../db/database.md#alert_rules) | alert_rules | U | 現在の集計区間の呼び出し件数を設定 | calls に代入 | [save_rule:67](../../../packages/backend/src/app/apis/governance/alerts.py#L67) |
+| [API呼び出し件数の監視設定](../db/database.md#alert_rules) | alert_rules | U | 現在の集計区間の番号を設定 | window に代入 | [save_rule:67](../../../packages/backend/src/app/apis/governance/alerts.py#L67) |
+| [APIカタログ](../db/database.md#assets) | assets | R | 主キーで取得 | db.get | [record:32](../../../packages/backend/src/app/apis/catalog/common.py#L32) |
+| [監査履歴](../db/database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [event:17](../../../packages/backend/src/app/apis/catalog/common.py#L17) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:30](../../../packages/backend/src/app/core/workspace.py#L30) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:54](../../../packages/backend/src/app/core/workspace.py#L54) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:123](../../../packages/backend/src/app/core/auth.py#L123) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:91](../../../packages/backend/src/app/core/workspace.py#L91) |
 
 ### AWSサービス
 
@@ -103,6 +104,8 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 - `app.core.workspace.ancestry`
 - `app.core.workspace.configured_projects`
 - `app.core.workspace.populate`
+- `app.core.workspace.project_ids`
+- `app.core.workspace.retired_units`
 - `app.core.workspace.units`
 - `tsugite_db.session.engine`
 - `tsugite_db.session.session`

@@ -4,9 +4,9 @@
 
 POST `/api/apis`
 
-[API一覧](../README.md) · [CRUD一覧](../crud.md)
+[API一覧](README.md) · [CRUD一覧](../db/crud.md)
 
-共通 · `register` · [register:51](../../../packages/backend/src/app/apis/catalog/register/router.py#L51)
+共通 · `register` · [register:61](../../../packages/backend/src/app/apis/catalog/register/router.py#L61)
 
 ## 入力
 
@@ -20,7 +20,7 @@ POST `/api/apis`
 
 | Content-Type | スキーマ |
 | --- | --- |
-| application/json | [APIのカタログ登録内容（Register）](../schemas.md#register) |
+| application/json | [APIをカタログへ新規登録する入力（NewListing）](../db/schemas.md#newlisting) |
 
 #### application/json の項目
 
@@ -32,29 +32,31 @@ POST `/api/apis`
 | 環境別の接続先 | targets | 必須 | オブジェクト（キーに対応する値は文字列）、最小項目数 `1`、最大項目数 `3` |
 | 接続先APIの基底パス | base_path | 任意 | 文字列、最大文字数 `300`、正規表現 `"^(?:/[A-Za-z0-9_-]+)*$"`、既定値 `""` |
 | 提供者が登録したOpenAPI仕様 | spec | 必須 | オブジェクト |
-| 提供環境ごとの利用条件 | offers | 任意 | オブジェクト（キーに対応する値は[環境別の利用条件・承認設定（Offer）](../schemas.md#offer)） または 空値 |
+| 提供環境ごとの利用条件 | offers | 任意 | オブジェクト（キーに対応する値は[環境別の利用条件・承認設定（Offer）](../db/schemas.md#offer)） または 空値 |
 | 申請者に表示する案内 | offers[任意のキー].instructions | 任意 | 文字列、最大文字数 `4000`、既定値 `""` |
 | 利用規約の本文 | offers[任意のキー].terms | 任意 | 文字列、最大文字数 `8000`、既定値 `""` |
 | 申請の承認経路 | offers[任意のキー].route | 任意 | 文字列、既定値 `"provider"`、指定値 従来方式（`legacy`）、自動承認（`auto`）、提供者（`provider`）、部署（`department`）、部署承認後に提供者が承認（`department_provider`）、個別指定の承認経路（`custom`） |
 | 承認担当の順序 | offers[任意のキー].steps | 任意 | 配列 / 文字列、正規表現 `"^(provider\|department\|unit/[a-z][a-z0-9-]{0,62})$"`、最大要素数 `12` |
-| 追加の申請項目 | offers[任意のキー].fields | 任意 | 配列 / [利用申請の追加質問（ApplicationField）](../schemas.md#applicationfield)、最大要素数 `20` |
+| 追加の申請項目 | offers[任意のキー].fields | 任意 | 配列 / [利用申請の追加質問（ApplicationField）](../db/schemas.md#applicationfield)、最大要素数 `20` |
 | 申請画面の質問名 | offers[任意のキー].fields[].label | 必須 | 文字列、最小文字数 `1`、最大文字数 `100` |
 | 回答が必須か | offers[任意のキー].fields[].required | 任意 | 真偽値、既定値 `true` |
 | 申請で受理する回答の候補 | offers[任意のキー].fields[].allowed_values | 任意 | 配列 / 文字列、最小文字数 `1`、最大文字数 `500`、最大要素数 `100` |
 | 公開版の変更説明 | release_note | 任意 | 文字列、最大文字数 `2000`、既定値 `""` |
+| 呼び出しURLで使う一意なAPI識別名 | slug | 必須 | 文字列、最小文字数 `1`、最大文字数 `63`、正規表現 `"^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"` |
 
 ## レスポンス
 
 | ステータス | 説明 | 形式・条件 | スキーマ |
 | --- | --- | --- | --- |
-| 201 | 正常に処理できました | application/json | [カタログ掲載APIの概要（Listing）](../schemas.md#listing) |
-| 422 | 入力内容が条件を満たしていません | application/json | [リクエスト入力エラー（HTTPValidationError）](../schemas.md#httpvalidationerror) |
+| 201 | 正常に処理できました | application/json | [カタログ掲載APIの概要（Listing）](../db/schemas.md#listing) |
+| 422 | 入力内容が条件を満たしていません | application/json | [リクエスト入力エラー（HTTPValidationError）](../db/schemas.md#httpvalidationerror) |
 
 ### 201 application/json の項目
 
 | 項目の和名 | 物理名 | 指定 | 型・制約 |
 | --- | --- | --- | --- |
 | カタログ掲載APIの識別子 | id | 必須 | 文字列 |
+| 呼び出しURLで使うAPI識別名 | slug | 任意 | 文字列 または 空値 |
 | API名 | name | 必須 | 文字列 |
 | 提供プロジェクトの識別子 | owner | 必須 | 文字列 |
 | APIの用途・概要 | summary | 必須 | 文字列 |
@@ -66,14 +68,14 @@ POST `/api/apis`
 
 | 項目の和名 | 物理名 | 指定 | 型・制約 |
 | --- | --- | --- | --- |
-| 入力エラーの明細一覧 | detail | 任意 | 配列 / [入力エラーの項目別明細（ValidationError）](../schemas.md#validationerror) |
+| 入力エラーの明細一覧 | detail | 任意 | 配列 / [入力エラーの項目別明細（ValidationError）](../db/schemas.md#validationerror) |
 | 入力エラーの発生箇所 | detail[].loc | 必須 | 配列 / 文字列 または 整数 |
 | 入力エラーの説明 | detail[].msg | 必須 | 文字列 |
 | 入力エラーの分類コード | detail[].type | 必須 | 文字列 |
 | エラーになった入力値 | detail[].input | 任意 | 任意の型 |
 | 入力エラーの補足情報 | detail[].ctx | 任意 | オブジェクト |
 
-実装・認証依存で送出し得るHTTPエラー（エラーの詳細を示す `detail` を含むJSON）　401, 403, 422, 503。
+実装・認証依存で送出し得るHTTPエラー（エラーの詳細を示す `detail` を含むJSON）　401, 403, 409, 422, 503。
 
 AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugite-Origin` を付与します。共通ミドルウェアは通常のAPI応答にリクエスト識別子 `X-Request-ID` とキャッシュへの保存を禁止する `Cache-Control: no-store` を付けます。Lambdaのオリジン検証に失敗すると403、DBの競合は409、DB操作エラーは409または503です。
 
@@ -83,12 +85,14 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| [利用者の組織所属](../database.md#affiliations) | affiliations | R | 検索 | select | [populate:69](../../../packages/backend/src/app/core/workspace.py#L69) |
-| [APIカタログ](../database.md#assets) | assets | C | レコードを追加 | db.add | [register:68](../../../packages/backend/src/app/apis/catalog/register/router.py#L68) |
-| [監査履歴](../database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [event:16](../../../packages/backend/src/app/apis/catalog/common.py#L16) |
-| [組織階層](../database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
-| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:121](../../../packages/backend/src/app/core/auth.py#L121) |
-| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:56](../../../packages/backend/src/app/core/workspace.py#L56) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:105](../../../packages/backend/src/app/core/workspace.py#L105) |
+| [API呼び出し識別名](../db/database.md#asset_routes) | asset_routes | R | 検索 | select | [assign_slug:24](../../../packages/backend/src/app/apis/catalog/register/router.py#L24) |
+| [APIカタログ](../db/database.md#assets) | assets | C | レコードを追加 | db.add | [register:78](../../../packages/backend/src/app/apis/catalog/register/router.py#L78) |
+| [監査履歴](../db/database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [event:17](../../../packages/backend/src/app/apis/catalog/common.py#L17) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:30](../../../packages/backend/src/app/core/workspace.py#L30) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:54](../../../packages/backend/src/app/core/workspace.py#L54) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:123](../../../packages/backend/src/app/core/auth.py#L123) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:91](../../../packages/backend/src/app/core/workspace.py#L91) |
 
 ### AWSサービス
 
@@ -102,6 +106,7 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 - `app.apis.catalog.common.allowed_spec`
 - `app.apis.catalog.common.event`
 - `app.apis.catalog.common.listing`
+- `app.apis.catalog.register.router.assign_slug`
 - `app.apis.catalog.register.router.register`
 - `app.apis.catalog.register.router.validated_spec`
 - `app.core.auth.check_member`
@@ -112,10 +117,14 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 - `app.core.config.local_demo`
 - `app.core.config.settings`
 - `app.core.config.targets`
+- `app.core.diagnostics.asset_object`
 - `app.core.workspace.ancestry`
 - `app.core.workspace.configured_projects`
 - `app.core.workspace.populate`
+- `app.core.workspace.project_ids`
+- `app.core.workspace.retired_units`
 - `app.core.workspace.units`
+- `app.core.workspace.workspace_targets`
 - `app.integrations.spec_archive.archive_spec`
 - `app.integrations.spec_archive.canonical`
 - `tsugite_db.models.new_id`

@@ -4,9 +4,9 @@
 
 GET `/api/apis/{key}`
 
-[API一覧](../README.md) · [CRUD一覧](../crud.md)
+[API一覧](README.md) · [CRUD一覧](../db/crud.md)
 
-共通 · `detail` · [detail:18](../../../packages/backend/src/app/apis/catalog/detail/router.py#L18)
+共通 · `detail` · [detail:17](../../../packages/backend/src/app/apis/catalog/detail/router.py#L17)
 
 ## 入力
 
@@ -24,31 +24,33 @@ GET `/api/apis/{key}`
 
 | ステータス | 説明 | 形式・条件 | スキーマ |
 | --- | --- | --- | --- |
-| 200 | 正常に処理できました | application/json | [カタログ掲載APIの詳細（Detail）](../schemas.md#detail) |
-| 422 | 入力内容が条件を満たしていません | application/json | [リクエスト入力エラー（HTTPValidationError）](../schemas.md#httpvalidationerror) |
+| 200 | 正常に処理できました | application/json | [カタログ掲載APIの詳細（Detail）](../db/schemas.md#detail) |
+| 422 | 入力内容が条件を満たしていません | application/json | [リクエスト入力エラー（HTTPValidationError）](../db/schemas.md#httpvalidationerror) |
 
 ### 200 application/json の項目
 
 | 項目の和名 | 物理名 | 指定 | 型・制約 |
 | --- | --- | --- | --- |
 | カタログ掲載APIの識別子 | id | 必須 | 文字列 |
+| 呼び出しURLで使うAPI識別名 | slug | 任意 | 文字列 または 空値 |
 | API名 | name | 必須 | 文字列 |
 | 提供プロジェクトの識別子 | owner | 必須 | 文字列 |
 | APIの用途・概要 | summary | 必須 | 文字列 |
 | 利用できる提供環境 | environments | 必須 | 配列 / 文字列、指定値 検証環境（`sandbox`）、準本番環境（`staging`）、本番環境（`production`） |
 | カタログで公開中か | published | 必須 | 真偽値 |
 | 更新時の競合検出に使う版番号 | revision | 必須 | 整数 |
-| 提供環境ごとの利用条件 | offers | 任意 | オブジェクト（キーに対応する値は[公開中の環境別利用条件（PublishedOffer）](../schemas.md#publishedoffer)） |
+| 管理者が全環境の呼び出しを停止しているか | suspended | 任意 | 真偽値、既定値 `false` |
+| 提供環境ごとの利用条件 | offers | 任意 | オブジェクト（キーに対応する値は[公開中の環境別利用条件（PublishedOffer）](../db/schemas.md#publishedoffer)） |
 | 申請者に表示する案内 | offers[任意のキー].instructions | 任意 | 文字列 |
 | 利用規約の本文 | offers[任意のキー].terms | 任意 | 文字列 |
 | 申請の承認経路 | offers[任意のキー].route | 任意 | 文字列 |
 | 承認担当の順序 | offers[任意のキー].steps | 任意 | 配列 / 文字列 |
-| 追加の申請項目 | offers[任意のキー].fields | 任意 | 配列 / [商品に表示する申請項目（PublishedQuestion）](../schemas.md#publishedquestion) |
+| 追加の申請項目 | offers[任意のキー].fields | 任意 | 配列 / [商品に表示する申請項目（PublishedQuestion）](../db/schemas.md#publishedquestion) |
 | 申請画面の質問名 | offers[任意のキー].fields[].label | 必須 | 文字列 |
 | 回答が必須か | offers[任意のキー].fields[].required | 必須 | 真偽値 |
 | 申請で受理する回答の候補 | offers[任意のキー].fields[].allowed_values | 任意 | 配列 / 文字列 |
 | 申請条件の版番号 | offers[任意のキー].version | 任意 | 文字列 |
-| API仕様の公開履歴 | releases | 任意 | 配列 / [API仕様の公開版（ReleaseEntry）](../schemas.md#releaseentry) |
+| API仕様の公開履歴 | releases | 任意 | 配列 / [API仕様の公開版（ReleaseEntry）](../db/schemas.md#releaseentry) |
 | 商品内の公開版番号 | releases[].number | 必須 | 整数 |
 | 仕様を公開した日時 | releases[].published_at | 必須 | 文字列 |
 | 商品APIのバージョン | releases[].api_version | 必須 | 文字列 |
@@ -67,14 +69,14 @@ GET `/api/apis/{key}`
 
 | 項目の和名 | 物理名 | 指定 | 型・制約 |
 | --- | --- | --- | --- |
-| 入力エラーの明細一覧 | detail | 任意 | 配列 / [入力エラーの項目別明細（ValidationError）](../schemas.md#validationerror) |
+| 入力エラーの明細一覧 | detail | 任意 | 配列 / [入力エラーの項目別明細（ValidationError）](../db/schemas.md#validationerror) |
 | 入力エラーの発生箇所 | detail[].loc | 必須 | 配列 / 文字列 または 整数 |
 | 入力エラーの説明 | detail[].msg | 必須 | 文字列 |
 | 入力エラーの分類コード | detail[].type | 必須 | 文字列 |
 | エラーになった入力値 | detail[].input | 任意 | 任意の型 |
 | 入力エラーの補足情報 | detail[].ctx | 任意 | オブジェクト |
 
-実装・認証依存で送出し得るHTTPエラー（エラーの詳細を示す `detail` を含むJSON）　401, 403, 404。
+実装・認証依存で送出し得るHTTPエラー（エラーの詳細を示す `detail` を含むJSON）　401, 403, 404, 503。
 
 AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugite-Origin` を付与します。共通ミドルウェアは通常のAPI応答にリクエスト識別子 `X-Request-ID` とキャッシュへの保存を禁止する `Cache-Control: no-store` を付けます。Lambdaのオリジン検証に失敗すると403、DBの競合は409、DB操作エラーは409または503です。
 
@@ -84,14 +86,15 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| [API利用申請・利用権](../database.md#access_rights) | access_rights | R | 検索 | select | [detail:26](../../../packages/backend/src/app/apis/catalog/detail/router.py#L26) |
-| [利用者の組織所属](../database.md#affiliations) | affiliations | R | 検索 | select | [populate:69](../../../packages/backend/src/app/core/workspace.py#L69) |
-| [APIカタログ](../database.md#assets) | assets | R | 主キーで取得 | db.get | [record:31](../../../packages/backend/src/app/apis/catalog/common.py#L31) |
-| [認証情報の利用制限](../database.md#credential_rules) | credential_rules | R | 主キーで取得 | db.get | [individual:28](../../../packages/backend/src/app/core/credential_policy.py#L28) |
-| [組織階層](../database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
-| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:121](../../../packages/backend/src/app/core/auth.py#L121) |
-| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:56](../../../packages/backend/src/app/core/workspace.py#L56) |
-| [商品別API仕様の公開履歴](../database.md#spec_releases) | spec_releases | R | 検索 | select | [history:63](../../../packages/backend/src/app/apis/catalog/releases.py#L63) |
+| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | R | 検索 | select | [detail:25](../../../packages/backend/src/app/apis/catalog/detail/router.py#L25) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:105](../../../packages/backend/src/app/core/workspace.py#L105) |
+| [APIカタログ](../db/database.md#assets) | assets | R | 主キーで取得 | db.get | [record:32](../../../packages/backend/src/app/apis/catalog/common.py#L32) |
+| [認証情報の利用制限](../db/database.md#credential_rules) | credential_rules | R | 主キーで取得 | db.get | [individual:29](../../../packages/backend/src/app/core/credential_policy.py#L29) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:30](../../../packages/backend/src/app/core/workspace.py#L30) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:54](../../../packages/backend/src/app/core/workspace.py#L54) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:123](../../../packages/backend/src/app/core/auth.py#L123) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:91](../../../packages/backend/src/app/core/workspace.py#L91) |
+| [商品別API仕様の公開履歴](../db/database.md#spec_releases) | spec_releases | R | 検索 | select | [history:64](../../../packages/backend/src/app/apis/catalog/releases.py#L64) |
 
 ### AWSサービス
 
@@ -115,11 +118,14 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 - `app.core.config.local_demo`
 - `app.core.config.settings`
 - `app.core.credential_policy.individual`
+- `app.core.diagnostics.asset_object`
 - `app.core.workspace.allowed_audience`
 - `app.core.workspace.ancestry`
 - `app.core.workspace.configured_projects`
 - `app.core.workspace.policy`
 - `app.core.workspace.populate`
+- `app.core.workspace.project_ids`
+- `app.core.workspace.retired_units`
 - `app.core.workspace.units`
 - `tsugite_db.session.engine`
 - `tsugite_db.session.session`
