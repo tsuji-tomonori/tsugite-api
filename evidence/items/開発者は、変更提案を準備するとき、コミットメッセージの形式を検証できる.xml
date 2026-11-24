@@ -1,0 +1,2 @@
+<?xml version='1.0' encoding='utf-8'?>
+<testsuite name="開発者は、変更提案を準備するとき、コミットメッセージの形式を検証できる"><testcase classname="tools.tests.test_delivery_contracts" name="test_commit_message_hook" file="tools/tests/test_delivery_contracts.py" line="11" time="0.066"><properties><property name="nodeid" value="tools/tests/test_delivery_contracts.py::test_commit_message_hook" /><property name="variants" value="1" /><property name="case_description" value="コミットフックが規約に沿った件名を許可し、規約外の件名を理由付きで拒否する。" /></properties></testcase></testsuite>
