@@ -25,6 +25,14 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
+        "metadata",
+        "任意属性の役職を既存の自動承認条件に含める",
+        "packages/backend/src/app/core/workspace.py",
+        "if kind not in BUILTIN_FIELDS:\n            continue",
+        "if kind not in BUILTIN_FIELDS:\n            titles.add(m.title)\n            continue",
+        "packages/backend/tests/test_user_metadata.py::test_metadata_groups_and_visibility",
+    ),
+    Mutation(
         "database",
         "公開履歴テーブルのモデル登録を外す",
         "packages/database/src/tsugite_db/models/__init__.py",

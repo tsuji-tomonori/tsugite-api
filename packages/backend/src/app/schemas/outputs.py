@@ -36,8 +36,24 @@ class VisibleTarget(TypedDict):
     environment: str
 
 
+#: 利用者のメタデータ項目
+class MetadataField(TypedDict):
+    #: メタデータのキー
+    key: str
+    #: 項目の表示名
+    label: str
+    #: 業務機能で使用中のデータパーツか
+    builtin: bool
+    #: 値の名称を全利用者に公開するか
+    public_values: bool
+
+
 #: ログイン利用者の所属と権限
 class Profile(TypedDict):
+    #: ナビゲーションに表示するメタデータ項目
+    metadata_fields: list[MetadataField]
+    #: 本人のメタデータ（項目キーごとの値の識別子）
+    metadata: dict[str, list[str]]
     #: 管理者が参照できるプロジェクト
     known_projects: list[str]
     #: 管理者が参照できるプロジェクトの識別子と表示名の対応
@@ -150,13 +166,8 @@ class MemberPage(TypedDict):
 class Unit(TypedDict):
     #: 部署・プロジェクトの識別子
     id: str
-    #: 組織の種類（部署・プロジェクト）
-    kind: Literal[
-        #: 部署
-        "department",
-        #: プロジェクト
-        "project",
-    ]
+    #: 所属先を分類するメタデータのキー
+    kind: str
     #: 部署・プロジェクト名
     name: str
     #: 親部署の識別子
@@ -179,6 +190,8 @@ class Affiliation(Person):
 
 #: 組織構成と利用者の所属一覧
 class Workspace(TypedDict):
+    #: 設定可能なメタデータ項目
+    metadata_fields: list[MetadataField]
     #: 全体管理者か
     admin: bool
     #: 部署・プロジェクトの一覧

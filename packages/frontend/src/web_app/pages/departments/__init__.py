@@ -9,7 +9,7 @@ SCREENS = (
         "部署",
         lambda: list_heading("departments"),
         load_workspace,
-        group="ワークスペース",
+        group="メタデータ",
         order=60,
         own_heading=True,
     ),

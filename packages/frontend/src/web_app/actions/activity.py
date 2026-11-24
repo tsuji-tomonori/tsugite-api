@@ -34,7 +34,7 @@ async def load_dimensions(scope: str = "metrics") -> None:
     ctx["workspace"] = await organization_api.workspace()
     allowed = ctx["workspace"]["leads"]
     if scope == "audit" and ctx["me"].get("auditor"):
-        allowed = [u["id"] for u in ctx["workspace"]["units"]]
+        allowed = [u["id"] for u in ctx["workspace"]["units"] if u["kind"] in ("department", "project")]
     if scope == "personal" or ctx["filters"]["unit"] not in allowed:
         ctx["filters"]["unit"] = ""
     params = {"unit": ctx["filters"]["unit"]}

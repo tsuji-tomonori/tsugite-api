@@ -22,7 +22,7 @@ async def change_suspension(asset: dict[str, Any]) -> None:
 async def save_policy(asset: dict[str, Any]) -> None:
     """公開範囲を版番号付きで保存する。"""
     data: dict[str, Any] = {"visibility": value("policy-visibility")}
-    for key in ("projects", "departments", "auto_departments", "delegates"):
+    for key in ("projects", "departments", "auto_departments", "delegates", "metadata_values"):
         fields = document.querySelectorAll('input[name="policy-' + key + '"]:checked')
         data[key] = [str(fields.item(i).value) for i in range(fields.length)]
     data["auto_titles"] = [

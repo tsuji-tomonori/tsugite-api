@@ -8,7 +8,7 @@ from .base import Base
 class Affiliation(Base):
     """組織別の所属記録
 
-    利用者1人と所属先1組織の組み合わせごとに、役職と管理権限を保存します。
+    利用者とメタデータの値の組み合わせごとに、グループ内の役職とリーダー権限を保存します。
     """
 
     __tablename__ = "affiliations"

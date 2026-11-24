@@ -72,3 +72,8 @@ async def profile(endpoint: str) -> dict[str, Any]:
 async def update_profile(endpoint: str, data: dict[str, Any]) -> dict[str, Any]:
     """対象者のプロフィールを更新する。"""
     return await client.request_object(endpoint, "PATCH", data)
+
+
+async def save_field(key: str, data: dict[str, Any]) -> None:
+    """メタデータ項目の設定を保存する。"""
+    await client.api("/workspace/metadata/" + quote(key, safe=""), "PUT", data)

@@ -75,7 +75,11 @@ def filter_form(
                 (u["id"], u["name"])
                 for u in workspace.get("units", [])
                 if u["id"] in workspace.get("leads", [])
-                or (scope == "audit" and ctx["me"].get("auditor"))
+                or (
+                    scope == "audit"
+                    and ctx["me"].get("auditor")
+                    and u["kind"] in ("department", "project")
+                )
             ]
             if choices and scope != "personal":
                 choice("unit", "集計する部署・プロジェクト", [("", "閲覧できる全範囲")] + choices)
