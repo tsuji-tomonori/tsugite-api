@@ -24,10 +24,10 @@ def cdk_test_assets(tmp_path, monkeypatch):
         (root / "build" / f"{name}-layer.zip").write_bytes(name.encode())
     (root / "deploy/config").mkdir(parents=True)
     copyfile(stack.ROOT / "deploy/config/http.toml", root / "deploy/config/http.toml")
-    (root / "packages/agent/src/agent/models").mkdir(parents=True)
+    (root / "packages/model/src").mkdir(parents=True)
     copyfile(
-        chat.ROOT / "packages/agent/src/agent/models/manifest.json",
-        root / "packages/agent/src/agent/models/manifest.json",
+        chat.ROOT / "packages/model/src/manifest.json",
+        root / "packages/model/src/manifest.json",
     )
     monkeypatch.setattr(bindings, "ROOT", root)
     monkeypatch.setattr(stack, "ROOT", root)

@@ -84,12 +84,12 @@ def test_emulator_and_model_manifest_verify_deployment_inputs(tmp_path):
     suites = ci.configured_suites()
     for path in (
         "packages/infra/cdk.json",
-        "packages/agent/src/agent/models/manifest.json",
+        "packages/model/src/manifest.json",
         "tests/e2e/aws/test_portal.py",
     ):
         plan = ci.select([path], suites, tmp_path)
         assert plan["aws"] and plan["synth"] and plan["chromium"], path
-    assert ci.INFRA in ci.affected("packages/agent/src/agent/models/manifest.json", suites)
+    assert ci.INFRA in ci.affected("packages/model/src/manifest.json", suites)
 
 
 def test_workflow_runs_expensive_steps_only_for_selected_outputs():
@@ -106,3 +106,10 @@ def test_workflow_runs_expensive_steps_only_for_selected_outputs():
         assert steps[command] == f"steps.scope.outputs.{output} == 'true'", command
     run_suites = "uv run --locked --all-packages python -m tools.ci.ci_scope --run-suites"
     assert steps[run_suites] == "steps.scope.outputs.suites != '[]'"
+
+    jobs = workflow["jobs"]
+    assert (
+        jobs["package"]["strategy"]["matrix"]["package"]
+        == "${{ fromJSON(needs.plan.outputs.packages) }}"
+    )
+    assert {"plan", "package"} == set(jobs["test"]["needs"])

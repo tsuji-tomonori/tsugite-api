@@ -10,7 +10,7 @@
 | --- | --- |
 | 全体の最低行カバレッジ | 84%以上 |
 | 比較元からの低下幅 | 1ポイント以内 |
-| 計測対象 | `packages/backend/src/app`、`packages/database/src/tsugite_db`、`packages/frontend/src/web_app`、`packages/infra`、`packages/sample_api/src/sample_api`、`packages/agent/src/agent` |
+| 計測対象 | `packages/backend/src/app`、`packages/database/src/tsugite_db`、`packages/frontend/src/web_app`、`packages/infra`、`packages/sample_api/src/sample_api`、`packages/agent/src`、`packages/model/src` |
 | 計測から除くパターン | `*/tests/*`、`*/cdk.out/*`、`*/__pycache__/*` |
 
 ## 分野別の変更と必要な検査
@@ -20,11 +20,12 @@
 | 分野 | 変更ファイルの例 | 合格が必要なテスト | 追加の検査・生成 |
 | --- | --- | --- | --- |
 | サンプルAPI | `packages/sample_api/src/sample_api/database.py` | サンプルAPI、アーキテクチャ、バックエンド、インフラ、ブラウザーE2E | Ruff（書式・静的解析）、API設計書・契約の生成、依存関係・CDK監査、CDK合成・インフラ文書生成、AWSエミュレーターE2E |
-| エージェント・推論モデル | `packages/agent/src/agent/jobs.py` | エージェント・推論モデル、アーキテクチャ、バックエンド、インフラ、ブラウザーE2E | Ruff（書式・静的解析）、型検査、依存関係・CDK監査、CDK合成・インフラ文書生成、AWSエミュレーターE2E |
-| バックエンド | `packages/backend/src/app/apis/catalog/apply.py` | エージェント・推論モデル、アーキテクチャ、バックエンド、ブラウザーE2E、開発ツール | Ruff（書式・静的解析）、型検査、API設計書・契約の生成、CDK合成・インフラ文書生成、AWSエミュレーターE2E |
+| エージェント | `packages/agent/src/chat_jobs.py` | エージェント、アーキテクチャ、バックエンド、インフラ、ブラウザーE2E | Ruff（書式・静的解析）、型検査、依存関係・CDK監査、CDK合成・インフラ文書生成、AWSエミュレーターE2E |
+| 推論モデル | `packages/model/src/completion.py` | 推論モデル、アーキテクチャ、インフラ | Ruff（書式・静的解析）、型検査、依存関係・CDK監査、CDK合成・インフラ文書生成、AWSエミュレーターE2E |
+| バックエンド | `packages/backend/src/app/apis/catalog/apply.py` | エージェント、アーキテクチャ、バックエンド、ブラウザーE2E、開発ツール | Ruff（書式・静的解析）、型検査、API設計書・契約の生成、CDK合成・インフラ文書生成、AWSエミュレーターE2E |
 | フロントエンド | `packages/frontend/src/web_app/actions/activity.py` | アーキテクチャ、フロントエンド、ブラウザーE2E | Ruff（書式・静的解析）、型検査、CDK合成・インフラ文書生成、AWSエミュレーターE2E |
 | インフラ | `packages/infra/src/components/bindings.py` | アーキテクチャ、インフラ | Ruff（書式・静的解析）、依存関係・CDK監査、CDK合成・インフラ文書生成、AWSエミュレーターE2E |
-| データベース | `packages/database/src/tsugite_db/design_names.py` | エージェント・推論モデル、アーキテクチャ、バックエンド、データベース、ブラウザーE2E、開発ツール | Ruff（書式・静的解析）、型検査、API設計書・契約の生成、CDK合成・インフラ文書生成、AWSエミュレーターE2E |
+| データベース | `packages/database/src/tsugite_db/design_names.py` | エージェント、アーキテクチャ、バックエンド、データベース、ブラウザーE2E、開発ツール | Ruff（書式・静的解析）、型検査、API設計書・契約の生成、CDK合成・インフラ文書生成、AWSエミュレーターE2E |
 
 ## CIの検査項目と実行条件
 
@@ -32,36 +33,38 @@
 
 | 検査 | 確認内容 | 実行条件 |
 | --- | --- | --- |
-| [完了の定義を生成](../../../.github/workflows/check.yml#L26) | 分野別のテスト定義と有効なカバレッジ基準から完了の定義を生成できる。 | すべてのPR |
-| [要件別の受入テスト定義を検査](../../../.github/workflows/check.yml#L38) | 各要件に実在する受入テストと証跡の取得方法が定義されている。 | すべてのPR |
-| [要件一覧と用語一覧を生成し、feat ブランチの新規要件を検査](../../../.github/workflows/check.yml#L41) | 要件文・必須の節・共通語彙を検査する。feat ブランチには新しい要件が1件以上ある。 | すべてのPR |
-| [Markdown文書の表題を検証](../../../.github/workflows/check.yml#L77) | 文書の最初のレベル1見出しに日本語がある。 | `steps.scope.outputs.documents == 'true'` |
-| [変更ファイルの文字コードと改行を検査](../../../.github/workflows/check.yml#L81) | 変更したテキストはUTF-8（BOMなし）・LFで、末尾の改行が1つある。 | `steps.scope.outputs.full != 'true'` |
-| [task lint](../../../.github/workflows/check.yml#L97) | 全体のRuff書式検査・静的解析と、Git管理対象のテキスト検査が通る。 | `steps.scope.outputs.full == 'true'` |
-| [変更したPythonファイルの書式と静的検査](../../../.github/workflows/check.yml#L100) | 追加・変更したPythonファイルにRuffの書式違反やルール違反がない。 | `steps.scope.outputs.lint == 'true' && steps.scope.outputs.full != 'true'` |
-| [task types](../../../.github/workflows/check.yml#L109) | 設定対象のPyrightとmypyの型検査がともに通る。 | `steps.scope.outputs.types == 'true'` |
-| [task test:hooks](../../../.github/workflows/check.yml#L112) | Gitフックが機密情報を含むコミットや保護対象ブランチへの不正なプッシュを拒否する。 | `steps.scope.outputs.hooks == 'true'` |
-| [task synth](../../../.github/workflows/check.yml#L121) | 配布物をビルドし、CDKからCloudFormationテンプレートを合成できる。 | `steps.scope.outputs.synth == 'true'` |
-| [同じロックから再ビルドしたLambda LayerのSHA-256を照合](../../../.github/workflows/check.yml#L124) | 依存ロックまたはビルダーの変更時は、再生成したLambda依存パッケージのSHA-256が一致する。 | `steps.scope.outputs.synth == 'true'` |
-| [uv run --locked --all-packages python tools/packaging/build_frontend.py](../../../.github/workflows/check.yml#L135) | フロントエンドの配布物を生成できる。 | `steps.scope.outputs.frontend_build == 'true'` |
-| [task docs:infra:render](../../../.github/workflows/check.yml#L138) | 合成済みテンプレートからリソース一覧とパラメーターシートを生成できる。 | `steps.scope.outputs.synth == 'true'` |
-| [task contracts docs:api](../../../.github/workflows/check.yml#L141) | OpenAPI・テーブル定義・API設計書を生成できる。 | `steps.scope.outputs.design == 'true'` |
-| [商品別OpenAPIの生成と差分検査](../../../.github/workflows/check.yml#L144) | 商品別のOpenAPI YAMLをFastAPIから再生成し、コミット済みの仕様と一致する。 | `steps.scope.outputs.design == 'true'` |
-| [task audit](../../../.github/workflows/check.yml#L150) | CDKの監査結果を出力し、Lambda実行時依存に対するpip-auditが通る。 | `steps.scope.outputs.audit == 'true'` |
-| [対象テストを実行し、全体カバレッジを集計](../../../.github/workflows/check.yml#L153) | 差分に応じて選ばれたテストが成功し、比較元の計測結果と合わせて全体を集計できる。 | `steps.scope.outputs.suites != '[]'` |
-| [task test:aws](../../../.github/workflows/check.yml#L158) | AWSエミュレーターで対象のE2Eが成功する。 | `${{ !cancelled() && (success() \|\| steps.suites.outcome == 'failure') && steps.scope.outputs.aws == 'true' && steps.scope.outputs.aws_portal_only != 'true' }}` |
-| [task test:aws -- -k test_cognito_browser](../../../.github/workflows/check.yml#L161) | ポータルに限定した検証ではCognitoを使うブラウザーテストが成功する。 | `${{ !cancelled() && (success() \|\| steps.suites.outcome == 'failure') && steps.scope.outputs.aws_portal_only == 'true' }}` |
-| [行カバレッジをブランチルールと照合](../../../.github/workflows/check.yml#L164) | 全体の行カバレッジが、対象ブランチの下限と許容低下幅を満たす。 | `steps.scope.outputs.coverage == 'true'` |
-| [カバレッジと成果物へのリンクをCIの概要に表示](../../../.github/workflows/check.yml#L182) | 行カバレッジとXML成果物へのリンクをCIの概要で確認できる。 | `steps.coverage_artifact.outcome == 'success'` |
-| [今回のJUnit・画面証跡から要件別の合否を判定](../../../.github/workflows/check.yml#L191) | 今回の実行対象となった要件について、JUnit結果と指定された証跡から合否を判定できる。 | `${{ !cancelled() }}` |
-| [Build screenshot report](../../../.github/workflows/check.yml#L207) | JUnit結果とスクリーンショットからレポートを生成できる。 | `${{ !cancelled() && steps.scope.outputs.report == 'true' && hashFiles('artifacts/junit.xml') != '' }}` |
+| [完了の定義を生成](../../../.github/workflows/check.yml#L28) | 分野別のテスト定義と有効なカバレッジ基準から完了の定義を生成できる。 | すべてのPR |
+| [要件別の受入テスト定義を検査](../../../.github/workflows/check.yml#L40) | 各要件に実在する受入テストと証跡の取得方法が定義されている。 | すべてのPR |
+| [要件一覧と用語一覧を生成し、feat ブランチの新規要件を検査](../../../.github/workflows/check.yml#L43) | 要件文・必須の節・共通語彙を検査する。feat ブランチには新しい要件が1件以上ある。 | すべてのPR |
+| [パッケージの単体テストを実行](../../../.github/workflows/check.yml#L103) | 対象パッケージのテストを独立したジョブで実行し、JUnitとカバレッジを記録する。 | `needs.plan.outputs.packages != '[]'` |
+| [Markdown文書の表題を検証](../../../.github/workflows/check.yml#L147) | 文書の最初のレベル1見出しに日本語がある。 | `${{ !cancelled() }}` かつ `steps.scope.outputs.documents == 'true'` |
+| [変更ファイルの文字コードと改行を検査](../../../.github/workflows/check.yml#L151) | 変更したテキストはUTF-8（BOMなし）・LFで、末尾の改行が1つある。 | `${{ !cancelled() }}` かつ `steps.scope.outputs.full != 'true'` |
+| [task lint](../../../.github/workflows/check.yml#L167) | 全体のRuff書式検査・静的解析と、Git管理対象のテキスト検査が通る。 | `${{ !cancelled() }}` かつ `steps.scope.outputs.full == 'true'` |
+| [変更したPythonファイルの書式と静的検査](../../../.github/workflows/check.yml#L170) | 追加・変更したPythonファイルにRuffの書式違反やルール違反がない。 | `${{ !cancelled() }}` かつ `steps.scope.outputs.lint == 'true' && steps.scope.outputs.full != 'true'` |
+| [task types](../../../.github/workflows/check.yml#L179) | 設定対象のPyrightとmypyの型検査がともに通る。 | `${{ !cancelled() }}` かつ `steps.scope.outputs.types == 'true'` |
+| [task test:hooks](../../../.github/workflows/check.yml#L182) | Gitフックが機密情報を含むコミットや保護対象ブランチへの不正なプッシュを拒否する。 | `${{ !cancelled() }}` かつ `steps.scope.outputs.hooks == 'true'` |
+| [task synth](../../../.github/workflows/check.yml#L191) | 配布物をビルドし、CDKからCloudFormationテンプレートを合成できる。 | `${{ !cancelled() }}` かつ `steps.scope.outputs.synth == 'true'` |
+| [同じロックから再ビルドしたLambda LayerのSHA-256を照合](../../../.github/workflows/check.yml#L194) | 依存ロックまたはビルダーの変更時は、再生成したLambda依存パッケージのSHA-256が一致する。 | `${{ !cancelled() }}` かつ `steps.scope.outputs.synth == 'true'` |
+| [uv run --locked --all-packages python tools/packaging/build_frontend.py](../../../.github/workflows/check.yml#L205) | フロントエンドの配布物を生成できる。 | `${{ !cancelled() }}` かつ `steps.scope.outputs.frontend_build == 'true'` |
+| [task docs:infra:render](../../../.github/workflows/check.yml#L208) | 合成済みテンプレートからリソース一覧とパラメーターシートを生成できる。 | `${{ !cancelled() }}` かつ `steps.scope.outputs.synth == 'true'` |
+| [task contracts docs:api](../../../.github/workflows/check.yml#L211) | OpenAPI・テーブル定義・API設計書を生成できる。 | `${{ !cancelled() }}` かつ `steps.scope.outputs.design == 'true'` |
+| [商品別OpenAPIの生成と差分検査](../../../.github/workflows/check.yml#L214) | 商品別のOpenAPI YAMLをFastAPIから再生成し、コミット済みの仕様と一致する。 | `${{ !cancelled() }}` かつ `steps.scope.outputs.design == 'true'` |
+| [task audit](../../../.github/workflows/check.yml#L220) | CDKの監査結果を出力し、Lambda実行時依存に対するpip-auditが通る。 | `${{ !cancelled() }}` かつ `steps.scope.outputs.audit == 'true'` |
+| [対象テストを実行し、全体カバレッジを集計](../../../.github/workflows/check.yml#L223) | 差分に応じて選ばれたテストが成功し、比較元の計測結果と合わせて全体を集計できる。 | `${{ !cancelled() }}` かつ `steps.scope.outputs.suites != '[]'` |
+| [task test:aws](../../../.github/workflows/check.yml#L228) | AWSエミュレーターで対象のE2Eが成功する。 | `${{ !cancelled() }}` かつ `${{ !cancelled() && (success() \|\| steps.suites.outcome == 'failure') && steps.scope.outputs.aws == 'true' && steps.scope.outputs.aws_portal_only != 'true' }}` |
+| [task test:aws -- -k test_cognito_browser](../../../.github/workflows/check.yml#L231) | ポータルに限定した検証ではCognitoを使うブラウザーテストが成功する。 | `${{ !cancelled() }}` かつ `${{ !cancelled() && (success() \|\| steps.suites.outcome == 'failure') && steps.scope.outputs.aws_portal_only == 'true' }}` |
+| [行カバレッジをブランチルールと照合](../../../.github/workflows/check.yml#L234) | 全体の行カバレッジが、対象ブランチの下限と許容低下幅を満たす。 | `${{ !cancelled() }}` かつ `steps.scope.outputs.coverage == 'true'` |
+| [カバレッジと成果物へのリンクをCIの概要に表示](../../../.github/workflows/check.yml#L252) | 行カバレッジとXML成果物へのリンクをCIの概要で確認できる。 | `${{ !cancelled() }}` かつ `steps.coverage_artifact.outcome == 'success'` |
+| [今回のJUnit・画面証跡から要件別の合否を判定](../../../.github/workflows/check.yml#L261) | 今回の実行対象となった要件について、JUnit結果と指定された証跡から合否を判定できる。 | `${{ !cancelled() }}` かつ `${{ !cancelled() }}` |
+| [Build screenshot report](../../../.github/workflows/check.yml#L277) | JUnit結果とスクリーンショットからレポートを生成できる。 | `${{ !cancelled() }}` かつ `${{ !cancelled() && steps.scope.outputs.report == 'true' && hashFiles('artifacts/junit.xml') != '' }}` |
+| [検証計画と並列ジョブの結果を確認](../../../.github/workflows/check.yml#L292) | 差分判定に成功し、選択されたすべてのパッケージが検証に合格している。 | `${{ !cancelled() }}` かつ `${{ !cancelled() }}` |
 
 ### 静的解析の設定
 
 | ツール | ルール・対象 |
 | --- | --- |
 | Ruff | `E4`、`E7`、`E9`、`F`、`I`、`F631`、`PT011`、`PT012` |
-| Pyright | `packages/agent`、`packages/backend/src/app`、`packages/database/src/tsugite_db` |
+| Pyright | `packages/agent`、`packages/model`、`packages/backend/src/app`、`packages/database/src/tsugite_db` |
 | Pyright（strict） | `packages/database/src/tsugite_db/models`、`packages/backend/src/app/schemas/catalog.py`、`packages/backend/src/app/schemas/base.py` |
 | mypy（strict=True） | `packages/database/src/tsugite_db/models`、`packages/backend/src/app/schemas/catalog.py`、`packages/backend/src/app/schemas/base.py` |
 | フロントエンドのmypy（strict=True） | `packages/frontend/src/web_app`、`packages/frontend/tests` |
@@ -78,7 +81,7 @@
 | 12商品で5つの業務操作とヘルスチェックを実行し、商品境界とLambda応答を照合する。 | — | [test_each_product_operation_through_lambda](../../../packages/sample_api/tests/test_products.py#L28) |
 | 在庫サンプルが操作に応じたステータスとJSON応答を返す。 | 登録されている商品の在庫一覧を返す<br>指定した商品の在庫を返す<br>未登録の商品は該当なしと返す | [test_stock_response](../../../packages/sample_api/tests/test_stock_lambda.py#L33) |
 
-### エージェント・推論モデル（14項目）
+### エージェント（8項目）
 
 | 確認内容 | 条件別の確認内容 | テスト定義 |
 | --- | --- | --- |
@@ -90,12 +93,17 @@
 | 対象外と判定した質問はおすすめという語を含んでも検索・生成を呼ばない。 | — | [test_strong_outside_decision_prevents_tools_and_generation](../../../packages/agent/tests/test_agent_retrieval.py#L53) |
 | 指示の上書きを拒否し、質問の語が含まれない生成クエリは元の質問に戻す。 | — | [test_agent_blocks_prompt_instructions_and_keeps_query_grounded](../../../packages/agent/tests/test_agent_retrieval.py#L69) |
 | 生成クエリだけに一致する商品は意味検索の候補から外す。 | — | [test_rewritten_similarity_needs_support_from_original_question](../../../packages/agent/tests/test_agent_retrieval.py#L80) |
-| 重複する入力の埋め込みを再利用し、空のバッチは推論前に拒否する。 | — | [test_embedding_reuses_vectors_and_validates_batch](../../../packages/agent/tests/test_model_workers.py#L29) |
-| 検索モデルへの選択肢を許可された操作に限定し、候補が空ならモデルを呼び出さない。 | — | [test_completion_limits_tool_choices](../../../packages/agent/tests/test_model_workers.py#L50) |
-| モデルのハッシュが異なる場合は一時ファイルを破棄し、正しいモデルを取得した後は再利用する。 | — | [test_model_download_verifies_digest_before_reuse](../../../packages/agent/tests/test_model_workers.py#L63) |
-| 起動済みの生成モデルを再利用し、提示した資料の範囲と決定的な生成条件を渡す。 | — | [test_generation_returns_grounded_result_from_warm_process](../../../packages/agent/tests/test_model_workers.py#L82) |
-| 応答しない生成プロセスを停止し、同じモデルをCPUで再起動して準備完了を待つ。 | — | [test_model_process_recovers_from_failed_health_check](../../../packages/agent/tests/test_model_workers.py#L105) |
-| 埋め込みモデルと長さ制限付きトークナイザーを初回だけ読み込む。 | — | [test_embedding_load_reuses_cpu_model_and_tokenizer](../../../packages/agent/tests/test_model_workers.py#L125) |
+
+### 推論モデル（6項目）
+
+| 確認内容 | 条件別の確認内容 | テスト定義 |
+| --- | --- | --- |
+| 重複する入力の埋め込みを再利用し、空のバッチは推論前に拒否する。 | — | [test_embedding_reuses_vectors_and_validates_batch](../../../packages/model/tests/test_model_workers.py#L29) |
+| 検索モデルへの選択肢を許可された操作に限定し、候補が空ならモデルを呼び出さない。 | — | [test_completion_limits_tool_choices](../../../packages/model/tests/test_model_workers.py#L50) |
+| モデルのハッシュが異なる場合は一時ファイルを破棄し、正しいモデルを取得した後は再利用する。 | — | [test_model_download_verifies_digest_before_reuse](../../../packages/model/tests/test_model_workers.py#L63) |
+| 起動済みの生成モデルを再利用し、提示した資料の範囲と決定的な生成条件を渡す。 | — | [test_generation_returns_grounded_result_from_warm_process](../../../packages/model/tests/test_model_workers.py#L82) |
+| 応答しない生成プロセスを停止し、同じモデルをCPUで再起動して準備完了を待つ。 | — | [test_model_process_recovers_from_failed_health_check](../../../packages/model/tests/test_model_workers.py#L105) |
+| 埋め込みモデルと長さ制限付きトークナイザーを初回だけ読み込む。 | — | [test_embedding_load_reuses_cpu_model_and_tokenizer](../../../packages/model/tests/test_model_workers.py#L125) |
 
 ### アーキテクチャ（39項目）
 
@@ -141,7 +149,7 @@
 | 正常な説明を受け付け、英語だけの説明・複数行・短すぎる説明を検出する。 | — | [test_case_explanation_requires_one_japanese_sentence](../../../tests/architecture/test_rule_checks.py#L96) |
 | 三つの役割がそろった配布物は通過し、一つでも定義が欠けると失敗する。 | — | [test_model_distribution_requires_all_three_roles](../../../tests/architecture/test_rule_checks.py#L103) |
 
-### バックエンド（56項目）
+### バックエンド（58項目）
 
 | 確認内容 | 条件別の確認内容 | テスト定義 |
 | --- | --- | --- |
@@ -201,6 +209,8 @@
 | 閲覧可能なOpenAPIタグの説明だけを意味検索に使う | — | [test_visible_openapi_tags_supply_custom_meaning](../../../packages/backend/tests/test_search_rank.py#L32) |
 | 管理者だけが空の部署を子から削除でき、廃止した識別子は再作成できない。 | — | [test_unit_retirement](../../../packages/backend/tests/test_unit_lifecycle.py#L4) |
 | 提供・利用を既存プロジェクトへ移管し、公開状態・旧URLと新URLでの認証済み呼び出しを確認する。 | — | [test_project_transfer](../../../packages/backend/tests/test_unit_lifecycle.py#L24) |
+| 任意属性は所属単位で閲覧でき、グループのリーダーや役職を業務権限に引き継がない。 | — | [test_metadata_groups_and_visibility](../../../packages/backend/tests/test_user_metadata.py#L4) |
+| 限定公開の任意属性条件を移管時に引き継ぎ、所属を解除すると閲覧できなくなる。 | — | [test_metadata_audience_and_transfer](../../../packages/backend/tests/test_user_metadata.py#L63) |
 
 ### フロントエンド（44項目）
 
@@ -244,7 +254,7 @@
 | API呼び出しには登録済み画面の識別子だけを付加する。 | — | [test_request_carries_screen](../../../packages/frontend/tests/test_screen_logs.py#L33) |
 | 独立した画面ファイルを追加すると配布物に入り、URLからデータ取得と描画までできる。 | — | [test_new_screen_is_packaged_loaded_and_rendered](../../../packages/frontend/tests/test_screen_registry.py#L17) |
 | 既存の固定・詳細URLを解決し、役割に応じたメニューを従来の順序で表示する。 | — | [test_existing_routes_and_role_menus](../../../packages/frontend/tests/test_screen_registry.py#L71) |
-| 別の画面が登録済みのURLを使うと重複したパスを示して失敗する。 | — | [test_duplicate_screen_path_is_rejected](../../../packages/frontend/tests/test_screen_registry.py#L105) |
+| 別の画面が登録済みのURLを使うと重複したパスを示して失敗する。 | — | [test_duplicate_screen_path_is_rejected](../../../packages/frontend/tests/test_screen_registry.py#L104) |
 | 部署を10件ずつ表示し、次ページとプロジェクト一覧では該当する対象だけを開ける。 | — | [test_directory_pages_filter_before_paginating](../../../packages/frontend/tests/test_workspace_screens.py#L48) |
 | 直接所属の利用者をメールアドレス・名前・担当ロールに分け、管理者にだけ操作列を表示する。 | — | [test_direct_members_have_aligned_table_columns](../../../packages/frontend/tests/test_workspace_screens.py#L66) |
 | 権限と種類が一致する対象だけの利用統計を取得し、管理者専用の編集フォームを分離する。 | — | [test_scoped_monitor_and_edit_routes](../../../packages/frontend/tests/test_workspace_screens.py#L120) |
@@ -274,7 +284,7 @@
 | DB定義がモデルと一致し、旧版のデータを移行できる | — | [test_schema_matches_models_and_replays](../../../packages/database/tests/test_migrations.py#L10) |
 | Aurora DSQL 接続では Amazon ルート CA を含むバンドルで証明書とホスト名を検証する。 | — | [test_dsql_uses_a_bundled_ca_for_full_tls_verification](../../../packages/database/tests/test_session.py#L8) |
 
-### ブラウザーE2E（27項目）
+### ブラウザーE2E（28項目）
 
 | 確認内容 | 条件別の確認内容 | テスト定義 |
 | --- | --- | --- |
@@ -283,6 +293,7 @@
 | 提供者が公開・自動承認・委任の条件を保存し、部署リーダーが個人申請を画面から却下する | — | [test_provider_policy_console](../../../tests/e2e/browser/test_delegation_console.py#L13) |
 | 6種類の権限で全メニューを開き、狭幅と広幅で余白・操作領域・横あふれを検査する。 | — | [test_role_screen_layout](../../../tests/e2e/browser/test_layout.py#L94) |
 | 管理者が招待時に氏名を入力し、本人の表示名とともに兼務先に表示して監査を確認する。 | — | [test_member_profile_management](../../../tests/e2e/browser/test_member_profile_console.py#L16) |
+| 雇用区分を登録して利用者に割り当てると本人のプロフィールに値が表示される。 | — | [test_metadata_assignment_console](../../../tests/e2e/browser/test_metadata_console.py#L11) |
 | 提供者が利用者の操作を選び、送料1,400円のHTTPS応答と権限変更直後の転送停止を照合する | — | [test_person_operation_console](../../../tests/e2e/browser/test_operation_console.py#L15) |
 | デモの提供者と利用者が公開・申請・承認・実行・権限取消を画面で完了できる | — | [test_user_flow](../../../tests/e2e/browser/test_portal.py#L26) |
 | ホームで商品と手順を調べ、運営への問い合わせを明示的に送信できる。 | — | [test_home_chat_and_inquiry](../../../tests/e2e/browser/test_portal.py#L31) |
@@ -306,7 +317,7 @@
 | finance の利用者には所属先が1件だけ表示され、未所属の詳細URLを開いても情報は表示されない | — | [test_consumer_project_directory](../../../tests/e2e/browser/test_workspace_console.py#L212) |
 | 管理画面で部署を移管して子部署を引き継ぎ、未使用の子部署を削除できる。 | — | [test_retire_workspace_units](../../../tests/e2e/browser/test_workspace_console.py#L237) |
 
-### 開発ツール（56項目）
+### 開発ツール（57項目）
 
 | 確認内容 | 条件別の確認内容 | テスト定義 |
 | --- | --- | --- |
@@ -333,9 +344,10 @@
 | 旧形式または異なる計測条件の結果は再利用せず、同じ条件の結果だけを使う。 | — | [test_cache_requires_same_coverage_policy](../../../tools/tests/test_ci_scope.py#L178) |
 | 比較元でブラウザーのタイムアウトだけが起きた場合に限り再計測する。 | — | [test_baseline_retry_requires_only_browser_timeouts](../../../tools/tests/test_ci_scope.py#L189) |
 | エージェントとモデルの変更で単体・API結合・構造・型・配布物の検査を選ぶ。 | — | [test_agent_sources_select_agent_consumers_and_deployment_checks](../../../tools/tests/test_ci_scope.py#L204) |
-| 移動前と同じ範囲の総カバレッジを比較に使い、古いパスのスイート別結果は再利用しない。 | — | [test_moved_agent_reuses_only_aggregate_baseline](../../../tools/tests/test_ci_scope.py#L216) |
-| 間接依存の更新は利用パッケージに絞り、移動した依存は変更前と変更後の両方を検証する。 | — | [test_lock_changes_follow_transitive_old_and_new_consumers](../../../tools/tests/test_ci_scope.py#L233) |
-| PRテンプレートだけの差分はキャッシュがなくても準備やテストを起動せず、空の計測を公開しない。 | — | [test_template_plan_never_bootstraps_coverage](../../../tools/tests/test_ci_scope.py#L262) |
+| 移動前と同じ範囲の総カバレッジを比較に使い、古いパスのスイート別結果は再利用しない。 | — | [test_moved_agent_reuses_only_aggregate_baseline](../../../tools/tests/test_ci_scope.py#L220) |
+| 間接依存の更新は利用パッケージに絞り、移動した依存は変更前と変更後の両方を検証する。 | — | [test_lock_changes_follow_transitive_old_and_new_consumers](../../../tools/tests/test_ci_scope.py#L237) |
+| PRテンプレートだけの差分はキャッシュがなくても準備やテストを起動せず、空の計測を公開しない。 | — | [test_template_plan_never_bootstraps_coverage](../../../tools/tests/test_ci_scope.py#L266) |
+| 並列ジョブで取得した両パッケージのJUnitとカバレッジを再実行せず全体に合算する。 | — | [test_parallel_package_reports_are_combined_without_rerunning](../../../tools/tests/test_ci_scope.py#L288) |
 | 検査の直前の説明と実行条件を対応付け、シェル文字列内の偽コメントを無視する。 | — | [test_workflow_comments_follow_steps](../../../tools/tests/test_completion.py#L8) |
 | ブランチの下限・低下幅を合成し、非同期テストとクラスの説明を定義行から取得する。 | — | [test_rule_changes_and_test_edits_reach_document](../../../tools/tests/test_completion.py#L28) |
 | 旧方式で測った成果物は比較元に階層付き画面がなく計測器の他の部分が一致するときだけ使う。 | — | [test_flat_baseline_requires_equivalent_file_selection](../../../tools/tests/test_coverage_baseline.py#L6) |
