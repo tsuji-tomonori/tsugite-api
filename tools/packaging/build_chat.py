@@ -9,7 +9,7 @@ from pathlib import Path
 from zipfile import ZipFile
 
 ROOT = Path(__file__).resolve().parents[2]
-MODELS = ROOT / "packages/agent/src/agent/models"
+MODELS = ROOT / "packages/model/src"
 BUILD = ROOT / "build"
 LLAMA_RELEASE = "b12246"
 LLAMA_COMMIT = "78ffbaa18533c2ed51eab2ef5ae0702330efc3e9"
@@ -23,7 +23,7 @@ def stage():
         if target.exists():
             shutil.rmtree(target)
         target.mkdir(parents=True)
-        for name in (entry, "runtime.py", "manifest.json"):
+        for name in (entry, "model_runtime.py", "manifest.json"):
             shutil.copy2(MODELS / name, target)
         shutil.copy2(ROOT / "packages/backend/src/app/core/log_record.py", target)
 

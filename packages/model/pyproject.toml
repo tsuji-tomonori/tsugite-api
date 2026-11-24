@@ -1,0 +1,23 @@
+[project]
+name = "tsugite-model"
+version = "0.1.0"
+requires-python = ">=3.14,<3.16"
+dependencies = ["boto3"]
+
+[project.optional-dependencies]
+decision = [
+    "onnxruntime==1.32.0; python_version == '3.14'",
+    "numpy==2.4.0; python_version == '3.14'",
+    "tokenizers==0.22.2; python_version == '3.14'",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+only-include = ["src"]
+sources = ["src"]
+
+[tool.tsugite.verify]
+label = "推論モデル"

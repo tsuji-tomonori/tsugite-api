@@ -9,7 +9,9 @@ concurrency:
   group: verify-pr-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 jobs:
-  test:
+  plan:
+    outputs:
+      packages: ${{ steps.scope.outputs.packages }}
     permissions:
       contents: read
       actions: read
@@ -76,6 +78,74 @@ jobs:
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: python3 -m tools.ci.ci_scope --base "$BASE_SHA"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: verify-plan
+          path: |
+            artifacts/ci-plan.json
+            artifacts/coverage-parts/
+            artifacts/coverage.xml
+          if-no-files-found: error
+
+  package:
+    name: Verify ${{ matrix.package }}
+    needs: plan
+    if: needs.plan.outputs.packages != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package: ${{ fromJSON(needs.plan.outputs.packages) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@v6
+      #: 対象パッケージのテストを独立したジョブで実行し、JUnitとカバレッジを記録する。
+      - name: パッケージの単体テストを実行
+        env:
+          PACKAGE: ${{ matrix.package }}
+        run: uv run --locked --package "tsugite-$PACKAGE" --group dev python -m tools.ci.ci_coverage_parts "packages/$PACKAGE/tests"
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: verify-package-${{ matrix.package }}
+          path: |
+            artifacts/packages-*
+            artifacts/coverage-parts/
+          if-no-files-found: error
+
+  test:
+    needs: [plan, package]
+    if: ${{ !cancelled() }}
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@v6
+      - uses: actions/download-artifact@v4
+        with:
+          name: verify-plan
+          path: artifacts
+      - uses: actions/download-artifact@v4
+        if: needs.plan.outputs.packages != '[]'
+        with:
+          pattern: verify-package-*
+          merge-multiple: true
+          path: artifacts
+      # 実行準備
+      - name: 検証計画を読み込む
+        id: scope
+        run: python3 -c 'import json; from tools.ci.ci_scope import write_outputs; write_outputs(json.load(open("artifacts/ci-plan.json")))'
       #: 文書の最初のレベル1見出しに日本語がある。
       - name: Markdown文書の表題を検証
         if: steps.scope.outputs.documents == 'true'
@@ -220,3 +290,18 @@ jobs:
             packages/infra/cdk.out/*.template.json
             ${{ steps.scope.outputs.synth == 'true' && 'docs/generated/infra/' || '' }}
             ${{ steps.scope.outputs.design == 'true' && 'docs/generated/' || '' }}
+
+      #: 差分判定に成功し、選択されたすべてのパッケージが検証に合格している。
+      - name: 検証計画と並列ジョブの結果を確認
+        if: ${{ !cancelled() }}
+        env:
+          PLAN_RESULT: ${{ needs.plan.result }}
+          PACKAGE_RESULT: ${{ needs.package.result }}
+          PACKAGES: ${{ needs.plan.outputs.packages }}
+        run: |
+          test "$PLAN_RESULT" = success
+          if [ "$PACKAGES" = '[]' ]; then
+            test "$PACKAGE_RESULT" = skipped
+          else
+            test "$PACKAGE_RESULT" = success
+          fi

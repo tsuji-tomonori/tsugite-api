@@ -7,7 +7,7 @@ from pathlib import Path
 from time import monotonic, sleep
 from urllib.request import Request, urlopen
 
-from runtime import logged_model, model_failure, model_file
+from model_runtime import logged_model, model_failure, model_file
 
 HOST = "http://127.0.0.1:18080"
 process = None

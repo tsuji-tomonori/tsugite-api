@@ -90,7 +90,7 @@ def test_pull_request_checks_requirements_and_evidence():
     """PRの本文変更でも要件差分を検査し、同一コミットで受入テストの証跡を生成する。"""
     workflow = yaml.load((ROOT / ".github/workflows/check.yml").read_text(), Loader=yaml.BaseLoader)
     assert "edited" in workflow["on"]["pull_request"]["types"]
-    steps = workflow["jobs"]["test"]["steps"]
+    steps = [step for job in workflow["jobs"].values() for step in job["steps"]]
     gate = next(step for step in steps if "tools/design/requirements.py --branch" in step.get("run", ""))
     assert "if" not in gate
     assert gate["env"]["PR_TITLE"] == "${{ github.event.pull_request.title }}"
