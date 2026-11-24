@@ -1,9 +1,12 @@
 # 個人・監査担当のアクセスログと詳細の照合を、表示要件とログAPIの契約に基づいて検証する。
 
 import asyncio
+import json
+from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
 import pytest
+from test_components import render
 from test_required_people_support import Module, Record, content, member, row_with
 
 
@@ -124,7 +127,6 @@ def test_access_log_table_initial_disclosure(
     portal_module: Module, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """アクセスログ一覧の検索条件は閉じた状態で、結果表には記録と詳細へのリンクを表示する。"""
-    from test_components import render
 
     ui = portal_module("runtime.portal_ui")
     logs = portal_module("components.logs")
@@ -146,9 +148,6 @@ def test_access_log_table_initial_disclosure(
 
 def test_open_log_detail_and_support(portal_module: Module, monkeypatch: pytest.MonkeyPatch) -> None:
     """詳細で応答と実行者を確認し、選んだリクエストIDを付けて問い合わせを始められる。"""
-    from types import SimpleNamespace
-
-    from test_components import render
 
     ui = portal_module("runtime.portal_ui")
     logs = portal_module("components.logs")
@@ -186,7 +185,6 @@ def test_log_pagination_scope(
     portal_module: Module, monkeypatch: pytest.MonkeyPatch, scope: str, auditor: bool
 ) -> None:
     """本人と監査担当のログは20件ずつ表示し、次ページにも同じ閲覧範囲を適用する。"""
-    from test_components import render
 
     ui = portal_module("runtime.portal_ui")
     api = portal_module("apis.activity")
@@ -216,8 +214,6 @@ def test_log_pagination_scope(
 
 def test_audit_filter_and_download(portal_module: Module, monkeypatch: pytest.MonkeyPatch) -> None:
     """業務監査で指定したリクエストIDと操作を一覧取得とJSON Lines保存の両方に使用する。"""
-    import json
-    from types import SimpleNamespace
 
     actions = portal_module("actions.audit")
     page = portal_module("pages.operation_history.data")
@@ -239,8 +235,10 @@ def test_audit_filter_and_download(portal_module: Module, monkeypatch: pytest.Mo
         and int(params["offset"]) == 0
     )
     saved: list[tuple[list[str], str]] = []
+
     class Parts(list[str]):
         """ブラウザーの配列に文字列を追加する。"""
+
         def push(self, value: str) -> None:
             self.append(value)
 
@@ -256,3 +254,24 @@ def test_audit_filter_and_download(portal_module: Module, monkeypatch: pytest.Mo
     assert saved and saved[0][1].endswith(".jsonl")
     assert get.await_args.args[0]["request_id"] == "trace-441"
     assert json.loads("".join(saved[0][0]))["request_id"] == "trace-441"
+
+
+def test_department_audit_detail_scope(portal_module: Module, monkeypatch: pytest.MonkeyPatch) -> None:
+    """部署リーダーが監査履歴の行を開くと、部署と監査範囲を付けて照会し、詳細に対象リクエストを表示する。"""
+    ui = portal_module("runtime.portal_ui")
+    actions = portal_module("actions.logs")
+    views = portal_module("components.logs")
+    service = portal_module("apis.activity")
+    current = dict(member(), leads=["dept-operations"])
+    ui.ctx.update(me=current)
+    request = AsyncMock(return_value=log_record(status=503, error_code="UPSTREAM_UNAVAILABLE"))
+    monkeypatch.setattr(service, "log_detail", request)
+    path = actions.detail_path("trace-441", "dept-operations", audit=True)
+    monkeypatch.setattr(
+        portal_module("js").window, "location", SimpleNamespace(hash="#/" + path), raising=False
+    )
+    asyncio.run(actions.load_detail(path))
+    request.assert_awaited_once_with("trace-441", "dept-operations", "audit")
+    dom = render(views.detail_view)[1]
+    for label in ("trace-441", "UPSTREAM_UNAVAILABLE", "503", "operator-77"):
+        assert label in content(dom)

@@ -69,11 +69,11 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:106](../../../packages/backend/src/app/core/workspace.py#L106) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:107](../../../packages/backend/src/app/core/workspace.py#L107) |
 | [APIカタログ](../db/database.md#assets) | assets | R | 検索 | select | [visible_collection:10](../../../packages/backend/src/app/core/catalog_visibility.py#L10) |
-| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:31](../../../packages/backend/src/app/core/workspace.py#L31) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
 | [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:55](../../../packages/backend/src/app/core/workspace.py#L55) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:124](../../../packages/backend/src/app/core/auth.py#L124) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:126](../../../packages/backend/src/app/core/auth.py#L126) |
 | [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:92](../../../packages/backend/src/app/core/workspace.py#L92) |
 
 ### AWSサービス

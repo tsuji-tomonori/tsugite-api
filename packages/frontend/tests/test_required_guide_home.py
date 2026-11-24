@@ -409,3 +409,169 @@ def test_log_question_and_inquiry_refer_to_the_same_request(
     assert submit.await_args is not None
     body = submit.await_args.args[1]
     assert field.value in body and request_id in body
+
+
+def test_waiting_for_a_chat_answer_prevents_a_second_submission(
+    portal_module: PortalModule,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """回答の作成中は送信を無効にし、同じ質問を二重受付せずに結果を表示する。"""
+    chat = portal_module("components.chat_views")
+    events = BrowserEvents(monkeypatch)
+    window = Mock()
+    window.location.hash = "#/home"
+    job = str(uuid4())
+    window.crypto.randomUUID.return_value = job
+    field = Mock(value="申請の手順を知りたい", scrollHeight=42)
+    window.document.getElementById.return_value = field
+    monkeypatch.setattr(chat, "window", window)
+    monkeypatch.setattr(chat, "document", window.document)
+    accept = AsyncMock(return_value={"job_id": job})
+    monkeypatch.setattr(chat.messages_api, "chat", accept)
+    state: dict[str, Any] = {}
+    _, dom = render(chat.home, state, Mock())
+    form = dom.getElementsByTagName("form")[0]
+
+    async def send_and_complete() -> None:
+        waiting, release = asyncio.Event(), asyncio.Event()
+
+        async def answer(_job: str) -> dict[str, str]:
+            waiting.set()
+            await release.wait()
+            return {"kind": "manual", "answer": "申請画面を開きます。"}
+
+        monkeypatch.setattr(chat, "wait_for_result", answer)
+        events.dispatch(form, "submit", Mock())
+        await asyncio.wait_for(waiting.wait(), timeout=2)
+        _, busy = render(chat.home, state, Mock())
+        try:
+            assert busy.getElementsByTagName("input")[0].hasAttribute("disabled")
+            events.dispatch(form, "submit", Mock())
+        finally:
+            release.set()
+            await finish_browser_tasks()
+
+    asyncio.run(send_and_complete())
+    accept.assert_awaited_once()
+    _, result = render(chat.home, state, Mock())
+    assert "申請画面を開きます。" in visible_text(result)
+
+
+def test_failed_inquiry_can_be_reviewed_before_the_user_retries(
+    portal_module: PortalModule,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """問い合わせ送信が一時的に失敗したら、内容とエラーを残し利用者による再送を受け付ける。"""
+    chat = portal_module("components.chat_views")
+    events = BrowserEvents(monkeypatch)
+    window = Mock()
+    window.location.hash = "#/home"
+    note = "提供元の担当者へ仕様を確認したい。"
+    field = Mock(value=note, scrollHeight=42)
+    window.document.getElementById.return_value = field
+    monkeypatch.setattr(chat, "window", window)
+    monkeypatch.setattr(chat, "document", window.document)
+    submit = AsyncMock(side_effect=[RuntimeError("ただいま受付できません"), "example-receipt"])
+    monkeypatch.setattr(chat, "post_inquiry", submit)
+    state: dict[str, Any] = {}
+
+    def draw() -> None:
+        chat.home(state, Mock(), inquiry_only=True)
+
+    _, dom = render(draw)
+    textarea = dom.getElementsByTagName("textarea")[0]
+    events.dispatch(textarea, "input", Mock(target=field))
+
+    async def send(form: Any) -> None:
+        events.dispatch(form, "submit", Mock())
+        await finish_browser_tasks()
+
+    asyncio.run(send(dom.getElementsByTagName("form")[0]))
+    _, retry = render(draw)
+    assert "ただいま受付できません" in visible_text(retry)
+    assert note in visible_text(retry.getElementsByTagName("textarea")[0])
+    submit.assert_awaited_once()
+    asyncio.run(send(retry.getElementsByTagName("form")[0]))
+    assert [call.args[1] for call in submit.await_args_list] == [note, note]
+    _, accepted = render(draw)
+    assert "example-receipt" in visible_text(accepted)
+
+
+def test_chat_pending_too_long_returns_a_retry_message(
+    portal_module: PortalModule, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """回答が長時間作成中のままなら待機を終え、あとで再試行できるよう案内する。"""
+    messages = portal_module("apis.messages")
+    monkeypatch.setattr(asyncio, "sleep", AsyncMock())
+    pending = AsyncMock(side_effect=[{"kind": "pending"}] * 500)
+    monkeypatch.setattr(messages, "get_answer", pending)
+    result = asyncio.run(messages.wait_for_result(str(uuid4())))
+    assert result["kind"] == "error" and "時間" in result["answer"]
+    assert "再度" in result["answer"]
+
+
+def test_late_reply_preserves_the_readers_new_page(
+    portal_module: PortalModule, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """チャットの回答を待つ間に別画面に移った場合、遅れて届く回答で現在の画面を描画し直さない。"""
+    views = portal_module("components.chat_views")
+    window = Mock()
+    document = Mock()
+    window.location.hash = "#/guide"
+    monkeypatch.setattr(views, "window", window)
+    monkeypatch.setattr(views, "document", document)
+    render_page = Mock()
+    views.refresh(render_page, "home")
+    render_page.assert_not_called()
+    window.location.hash = "#/home"
+    document.getElementById.return_value = None
+    views.refresh(render_page, "home")
+    render_page.assert_called_once()
+
+
+def test_an_inquiry_being_submitted_cannot_be_sent_twice(
+    portal_module: PortalModule,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """受付を待つ間に同じ問い合わせの送信操作が重なっても、受付は一件にとどまる。"""
+    chat = portal_module("components.chat_views")
+    events = BrowserEvents(monkeypatch)
+    window = Mock()
+    window.location.hash = "#/home"
+    field = Mock(value="提供予定日を確認したい。", scrollHeight=42)
+    window.document.getElementById.return_value = field
+    monkeypatch.setattr(chat, "window", window)
+    monkeypatch.setattr(chat, "document", window.document)
+    state: dict[str, Any] = {}
+
+    def draw() -> None:
+        chat.home(state, Mock(), inquiry_only=True)
+
+    _, dom = render(draw)
+    form = dom.getElementsByTagName("form")[0]
+    events.dispatch(dom.getElementsByTagName("textarea")[0], "input", Mock(target=field))
+
+    async def send() -> None:
+        received, release = asyncio.Event(), asyncio.Event()
+
+        async def pending(_state: dict[str, Any], _question: str) -> str:
+            received.set()
+            await release.wait()
+            return "example-inquiry"
+
+        submit = AsyncMock(side_effect=pending)
+        monkeypatch.setattr(chat, "post_inquiry", submit)
+        events.dispatch(form, "submit", Mock())
+        await asyncio.wait_for(received.wait(), timeout=2)
+        try:
+            _, busy = render(draw)
+            assert any(button.hasAttribute("disabled") for button in busy.getElementsByTagName("button"))
+            events.dispatch(form, "submit", Mock())
+        finally:
+            release.set()
+            await finish_browser_tasks()
+        submit.assert_awaited_once()
+
+    asyncio.run(send())
+    _, result = render(draw)
+    assert "example-inquiry" in visible_text(result)

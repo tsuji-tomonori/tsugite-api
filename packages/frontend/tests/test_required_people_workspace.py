@@ -1,8 +1,13 @@
 # 部署・プロジェクトの一覧と所属を、画面仕様と組織APIの応答契約に基づいて検証する。
 
+import asyncio
+from types import SimpleNamespace
+from unittest.mock import AsyncMock
+from urllib.parse import parse_qs
+
 import pytest
 from test_components import render
-from test_required_people_support import Module, content, person, unit, workspace
+from test_required_people_support import Buttons, Module, content, member, person, unit, workspace
 
 
 @pytest.mark.parametrize(
@@ -179,7 +184,6 @@ def test_detail_from_directory(
     heading: str,
 ) -> None:
     """一覧の名称リンクを開くと対象組織の所属と状態をその場で確認できる。"""
-    from types import SimpleNamespace
 
     ui = portal_module("runtime.portal_ui")
     view = portal_module("components.workspace")
@@ -223,9 +227,6 @@ def test_save_membership_for_selected_unit(
     portal_module: Module, monkeypatch: pytest.MonkeyPatch, is_new: bool, leader: bool, subject: str
 ) -> None:
     """所属編集画面で保存すると対象者、組織、役職とリーダー権限を指定して所属を更新する。"""
-    from unittest.mock import AsyncMock
-
-    from test_required_people_support import Buttons
 
     views = portal_module("components.workspace_members")
     ctrl = portal_module("components.controls")
@@ -257,9 +258,6 @@ def test_save_membership_for_selected_unit(
 
 def test_edit_project_label_and_parent(portal_module: Module, monkeypatch: pytest.MonkeyPatch) -> None:
     """プロジェクトの基本設定を保存すると表示名と管轄部署を同じプロジェクトに反映する。"""
-    from unittest.mock import AsyncMock
-
-    from test_required_people_support import Buttons
 
     views = portal_module("components.workspace_views")
     ctrl = portal_module("components.controls")
@@ -301,8 +299,6 @@ def test_workspace_use_state(
     portal_module: Module, monkeypatch: pytest.MonkeyPatch, before: bool, expected: bool
 ) -> None:
     """リーダーが部署の利用を停止・再開すると、その部署に新しい利用状態を適用する。"""
-    import asyncio
-    from unittest.mock import AsyncMock
 
     actions = portal_module("actions.workspace")
     monkeypatch.setattr(portal_module("js").window, "confirm", lambda _: True, raising=False)
@@ -349,9 +345,6 @@ def test_confirm_organization_retirement(
     portal_module: Module, monkeypatch: pytest.MonkeyPatch, operation: str, confirm: bool
 ) -> None:
     """部署の移管・削除では対象を確認し、確定された操作だけを組織APIに送る。"""
-    from unittest.mock import AsyncMock
-
-    from test_required_people_support import Buttons
 
     view = portal_module("components.workspace_views")
     api = portal_module("apis.organization")
@@ -397,10 +390,6 @@ def test_remove_membership_from_detail(
     portal_module: Module, monkeypatch: pytest.MonkeyPatch, confirm: bool
 ) -> None:
     """所属詳細に表示された解除操作を確定した場合だけ、選んだ組織と利用者の関連を解除する。"""
-    from urllib.parse import parse_qs
-    from unittest.mock import AsyncMock
-
-    from test_required_people_support import Buttons
 
     views = portal_module("components.workspace_members")
     ctrl = portal_module("components.controls")
@@ -431,9 +420,6 @@ def test_load_more_candidates_for_membership(
     portal_module: Module, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """管理者が所属候補を読み込むと、追加の登録ユーザーを対象組織の所属先に選べる。"""
-    from unittest.mock import AsyncMock
-
-    from test_required_people_support import Buttons
 
     view = portal_module("components.workspace_members")
     ctrl = portal_module("components.controls")
@@ -477,3 +463,124 @@ def test_empty_project_directory(portal_module: Module) -> None:
     )[1]
     assert "0 件" in content(dom)
     assert not dom.getElementsByTagName("tr")
+
+
+@pytest.mark.parametrize(
+    ("path", "expected"),
+    [
+        pytest.param(
+            "projects/create",
+            "名称",
+            id="create",
+            marks=pytest.mark.case_detail("作成画面で新しいプロジェクトの名称を入力する"),
+        ),
+        pytest.param(
+            "projects/edit/stock",
+            "棚卸移行",
+            id="edit",
+            marks=pytest.mark.case_detail("対象プロジェクトの現在の基本設定から編集を始める"),
+        ),
+        pytest.param(
+            "projects/member/stock",
+            "所属を保存",
+            id="add-member",
+            marks=pytest.mark.case_detail("所属追加の画面から既存利用者を選べる"),
+        ),
+        pytest.param(
+            "projects/member/stock/u-1",
+            "調査班長",
+            id="edit-member",
+            marks=pytest.mark.case_detail("所属編集の画面から対象者の役職を確認する"),
+        ),
+        pytest.param(
+            "projects/monitor/stock",
+            "棚卸明細",
+            id="monitor",
+            marks=pytest.mark.case_detail(
+                "モニタリング画面で選択したプロジェクトのAPI利用実績を取得する"
+            ),
+        ),
+    ],
+)
+def test_workspace_screens_load_selected_project(
+    portal_module: Module, monkeypatch: pytest.MonkeyPatch, path: str, expected: str
+) -> None:
+    """管理画面のリンク先が対象組織の情報を読み込み、選んだ仕事に対応する画面を表示する。"""
+
+    ui = portal_module("runtime.portal_ui")
+    pages = portal_module("routing.screen_registry")
+    org = portal_module("apis.organization")
+    js = portal_module("js")
+    project = unit("stock", "棚卸移行", "project")
+    analyst = dict(
+        person("u-1", "担当者", "analyst@example.test"), title="調査班長", unit_id="stock", leader=True
+    )
+    data = workspace([project], [analyst], admin=True)
+    session = member(admin=True)
+    ui.ctx.update(me=session)
+    monkeypatch.setattr(js.window, "location", SimpleNamespace(hash="#/" + path), raising=False)
+    monkeypatch.setattr(org, "workspace", AsyncMock(return_value=data))
+    get_usage = AsyncMock(
+        return_value={
+            "unit_id": "stock",
+            "members": [analyst],
+            "calls": 41,
+            "errors": 1,
+            "by_project": [{"project": "stock", "calls": 41}],
+            "by_api": [{"asset_id": "inv", "name": "棚卸明細", "calls": 41}],
+        }
+    )
+    monkeypatch.setattr(org, "unit_usage", get_usage)
+    screen = pages.resolve(path)
+    asyncio.run(screen.load_data(path))
+    dom = render(screen.view)[1]
+    assert expected in dom.toxml()
+    if path == "projects/monitor/stock":
+        get_usage.assert_awaited_once()
+
+
+@pytest.mark.parametrize(
+    ("label", "kind"),
+    [
+        pytest.param(
+            "部署",
+            "department",
+            id="department",
+            marks=pytest.mark.case_detail("上位部署を持つ新しい部署を作成する"),
+        ),
+        pytest.param(
+            "プロジェクト",
+            "project",
+            id="project",
+            marks=pytest.mark.case_detail("管轄部署を持つ新しいプロジェクトを作成する"),
+        ),
+    ],
+)
+def test_create_named_organization(
+    portal_module: Module, monkeypatch: pytest.MonkeyPatch, label: str, kind: str
+) -> None:
+    """新規作成では利用者が指定した識別子・名称と親部署を選んだ組織種別で保存する。"""
+
+    view = portal_module("components.workspace_views")
+    api = portal_module("apis.organization")
+    ctrl = portal_module("components.controls")
+    buttons = Buttons(ctrl)
+    parent = unit("head", "管理本部")
+    tree = {"head": parent}
+    root = "projects" if kind == "project" else "departments"
+    monkeypatch.setattr(view, "btn", buttons)
+    monkeypatch.setattr(view, "go", AsyncMock())
+    values = {"org-unit-id": "shipment", "org-unit-name": "物流改革", "org-parent": "head"}
+    monkeypatch.setattr(view, "value", values.__getitem__)
+    save = AsyncMock(return_value=unit("shipment", "物流改革", kind, "head"))
+    monkeypatch.setattr(api, "save_unit", save)
+    render(view.unit_editor, root, kind, label, tree, view.unit_paths(tree))
+    buttons.click("保存")
+    assert save.await_args is not None
+    key, data = save.await_args.args
+    assert (
+        key == "shipment"
+        and data["kind"] == kind
+        and data["parent"] == "head"
+        and data["name"] == "物流改革"
+    )

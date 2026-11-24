@@ -54,7 +54,7 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 検索 | select | [demo_token:56](../../../packages/backend/src/app/core/auth.py#L56) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 検索 | select | [demo_token:58](../../../packages/backend/src/app/core/auth.py#L58) |
 
 ### AWSサービス
 

@@ -1,4 +1,6 @@
 # 発行条件の選択と正規の発行操作を、認証情報の利用手順と公開API仕様に照らして検証する。
+
+from types import SimpleNamespace
 from typing import Any
 from unittest.mock import AsyncMock
 
@@ -258,10 +260,11 @@ def test_manage_issued_credential(
     dom = render(page.keys_view)[1]
     new_value = result.get("access_token") or result["client_secret"]
     assert new_value in dom.toxml()
-    from types import SimpleNamespace
 
     copy = AsyncMock()
-    monkeypatch.setattr(js.window, "navigator", SimpleNamespace(clipboard=SimpleNamespace(writeText=copy)), raising=False)
+    monkeypatch.setattr(
+        js.window, "navigator", SimpleNamespace(clipboard=SimpleNamespace(writeText=copy)), raising=False
+    )
     buttons.click("クライアントシークレットをコピー" if mode == "app" else "アクセストークンをコピー")
     copy.assert_awaited_once_with(new_value)
     buttons.click("秘密の表示を閉じる")
@@ -398,7 +401,6 @@ def test_issue_legacy_key(
     portal_module: Module, monkeypatch: pytest.MonkeyPatch, kind: str, scope: str, assets: list[str]
 ) -> None:
     """従来キーの発行フォームが選択した範囲で発行し、受け取ったキーを利用者に提示する。"""
-    from types import SimpleNamespace
 
     page = portal_module("components.keys")
     api = portal_module("apis.access")
@@ -438,7 +440,9 @@ def test_issue_legacy_key(
     issued_page = render(page.keys_view)[1]
     assert "tsu_example_value" in issued_page.toxml()
     copy = AsyncMock()
-    monkeypatch.setattr(js.window, "navigator", SimpleNamespace(clipboard=SimpleNamespace(writeText=copy)), raising=False)
+    monkeypatch.setattr(
+        js.window, "navigator", SimpleNamespace(clipboard=SimpleNamespace(writeText=copy)), raising=False
+    )
     buttons.click("キーをコピー")
     copy.assert_awaited_once_with("tsu_example_value")
     buttons.click("表示を閉じる")
@@ -483,7 +487,6 @@ def test_change_credential_scope(
     visible: bool,
 ) -> None:
     """認証方式と対象範囲を変更すると、その方式で指定できる利用者・API操作の欄を表示する。"""
-    from types import SimpleNamespace
 
     view = portal_module("components.credential_views")
     ctrl = portal_module("components.controls")
@@ -678,7 +681,6 @@ def test_change_expiry_updates_refresh_bounds(
     portal_module: Module, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """有効期間を短くすると更新開始を指定できる上限も同じ期間までに短くなる。"""
-    from types import SimpleNamespace
 
     view = portal_module("components.credential_views")
     ctrl = portal_module("components.controls")
@@ -716,3 +718,97 @@ def test_change_expiry_updates_refresh_bounds(
     )
     changed["cred-ttl"](SimpleNamespace(target=ttl))
     assert int(refresh.max) == 12
+
+
+@pytest.mark.parametrize(
+    ("active", "expected"),
+    [
+        pytest.param(
+            True,
+            "有効",
+            id="active",
+            marks=pytest.mark.case_detail("有効な共有キーにプロジェクト全体の呼び出し方を表示する"),
+        ),
+        pytest.param(
+            False,
+            "失効",
+            id="revoked",
+            marks=pytest.mark.case_detail("失効済みの共有キーを一覧で識別できる"),
+        ),
+    ],
+)
+def test_shared_legacy_key_status_and_usage(portal_module: Module, active: bool, expected: str) -> None:
+    """共有キーの一覧で利用状態と対象APIを確認し、有効な間は呼び出し方を参照できる。"""
+    keys = portal_module("components.keys")
+    ui = portal_module("runtime.portal_ui")
+    data = dict(issued("legacy", revoked=not active), kind="shared", api_ids=[], name="共同棚卸")
+    ui.ctx.update(
+        me=member(),
+        workspace=workspace([unit("stock", "在庫管理", "project")]),
+        key_assets=[],
+        keys=[data],
+    )
+    dom = render(keys.keys_view)[1]
+    row = row_with(dom, "共同棚卸")
+    assert "共有" in content(row) and expected in content(row) and "在庫管理" in content(row)
+    if active:
+        assert row.getElementsByTagName("details")
+    else:
+        assert not row.getElementsByTagName("button")
+
+
+def test_missing_target_on_specific_legacy_key(
+    portal_module: Module, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """個別APIを選ぶ本人限定キーでAPIを指定し忘れた場合、選択を求めて発行を止める。"""
+    page = portal_module("components.keys")
+    ui = portal_module("runtime.portal_ui")
+    api = portal_module("apis.access")
+    controls = portal_module("components.controls")
+    ui.ctx.update(
+        me=member(),
+        workspace=workspace([unit("stock", "在庫移行", "project")]),
+        keys=[],
+        key_assets=[{"name": "棚卸API", "id": "inv"}],
+    )
+    buttons = Buttons(controls)
+    monkeypatch.setattr(page, "btn", buttons)
+    values = {
+        "key-name": "棚卸",
+        "key-project": "stock",
+        "key-kind": "personal",
+        "key-scope": "selected",
+    }
+    monkeypatch.setattr(page, "value", values.__getitem__)
+    monkeypatch.setattr(
+        page, "document", SimpleNamespace(getElementById=lambda _: SimpleNamespace(checked=False))
+    )
+    create = AsyncMock()
+    monkeypatch.setattr(api, "create_key", create)
+    render(page.keys_view)
+    with pytest.raises(ValueError, match="API"):
+        buttons.click("キーを発行")
+    create.assert_not_awaited()
+
+
+def test_cancel_application_secret_rotation(
+    portal_module: Module, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """シークレット更新を取りやめた場合は既存のクライアント資格の更新を要求しない。"""
+    ui = portal_module("runtime.portal_ui")
+    access = portal_module("apis.access")
+    views = portal_module("components.keys")
+    buttons = Buttons(portal_module("components.controls"))
+    ui.ctx.update(
+        me=member(),
+        workspace=workspace([unit("stock", "在庫管理", "project")]),
+        keys=[issued("app")],
+        key_assets=[{"name": "棚卸", "id": "inventory"}],
+    )
+    monkeypatch.setattr(views, "btn", buttons)
+    monkeypatch.setattr(portal_module("js").window, "confirm", lambda _: False, raising=False)
+    rotate = AsyncMock()
+    monkeypatch.setattr(access, "rotate", rotate)
+    render(views.keys_view)
+    buttons.click("シークレットを更新")
+    rotate.assert_not_awaited()

@@ -169,3 +169,50 @@ def test_role_navigation(
     paths = {screen.path for screens in groups.values() for screen in screens}
     assert present <= paths
     assert paths.isdisjoint(absent)
+
+
+@pytest.mark.parametrize(
+    ("user", "can_open"),
+    [
+        pytest.param(
+            profile(owner=True),
+            True,
+            id="provider",
+            marks=pytest.mark.case_detail(
+                "提供者が出品ガイドを開けば、その場から提供APIの管理画面へ進める。"
+            ),
+        ),
+        pytest.param(
+            profile(),
+            False,
+            id="reader",
+            marks=pytest.mark.case_detail(
+                "利用者も出品の見本を読めるが、担当外の管理操作には進めない。"
+            ),
+        ),
+    ],
+)
+def test_provider_guide_keeps_its_sample_separate_from_the_real_management_screen(
+    portal_module: PortalModule,
+    user: dict[str, Any],
+    can_open: bool,
+) -> None:
+    """提供者のガイドでは誰でも見本を読め、担当者にだけ操作画面への入口を表示する。"""
+    import asyncio
+
+    guide = portal_module("components.guide_views")
+    registry = portal_module("routing.screen_registry")
+    titles = {key: screen.title for key, screen in registry.screens().items()}
+    go = AsyncMock()
+    button = Mock()
+    _, dom = render(guide.article, "publish", user, titles, go, button, registry.guide_examples())
+    assert dom.getElementsByTagName("figure")
+    go.assert_not_awaited()
+    actions = [call.args for call in button.call_args_list if "inventory" in call.args]
+    if can_open:
+        assert len(actions) == 1
+        _, navigate, destination = actions[0]
+        asyncio.run(navigate(destination))
+        go.assert_awaited_once_with("inventory")
+    else:
+        assert not actions

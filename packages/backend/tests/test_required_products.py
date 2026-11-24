@@ -8,10 +8,14 @@ from tests.support.catalog import headers
 
 def _draft():
     return {
-        "owner": "supply", "name": "配送日照会", "summary": "出荷日を調べる",
-        "slug": "delivery-calendar", "targets": {"sandbox": "sample-sandbox"},
+        "owner": "supply",
+        "name": "配送日照会",
+        "summary": "出荷日を調べる",
+        "slug": "delivery-calendar",
+        "targets": {"sandbox": "sample-sandbox"},
         "spec": {
-            "openapi": "3.1.0", "info": {"title": "配送", "version": "1.0"},
+            "openapi": "3.1.0",
+            "info": {"title": "配送", "version": "1.0"},
             "paths": {"/days": {"get": {"responses": {"200": {"description": "配送日"}}}}},
         },
     }
@@ -35,16 +39,24 @@ def test_automatic_offer_requires_terms_and_registered_answer(portal):
     label = "実施番号"
     draft["offers"] = {
         "sandbox": {
-            "instructions": "実施番号を入力してください。", "terms": terms, "route": "auto",
+            "instructions": "実施番号を入力してください。",
+            "terms": terms,
+            "route": "auto",
             "fields": [{"label": label, "required": True, "allowed_values": ["TEST-07"]}],
         }
     }
     url = _register(portal, owner, draft)
     offer = portal.get(url, headers=user).json()["offers"]["sandbox"]
-    assert offer["terms"] == terms and offer["instructions"] == draft["offers"]["sandbox"]["instructions"]
+    assert (
+        offer["terms"] == terms and offer["instructions"] == draft["offers"]["sandbox"]["instructions"]
+    )
     application = {
-        "project": "finance", "environment": "sandbox", "reason": "検証",
-        "offer_version": offer["version"], "answers": {label: "TEST-07"}, "terms_accepted": True,
+        "project": "finance",
+        "environment": "sandbox",
+        "reason": "検証",
+        "offer_version": offer["version"],
+        "answers": {label: "TEST-07"},
+        "terms_accepted": True,
     }
     for correction in ({"terms_accepted": False}, {"answers": {}}, {"answers": {label: "未登録"}}):
         refused = portal.post(f"{url}/requests", headers=user, json={**application, **correction})
@@ -61,8 +73,22 @@ def test_automatic_offer_requires_terms_and_registered_answer(portal):
 @pytest.mark.parametrize(
     "personal, action, status",
     [
-        pytest.param(False, "reject", "rejected", id="team-rejection", marks=pytest.mark.case_detail("提供者がプロジェクトの申請を却下すると理由が残り再申請できる")),
-        pytest.param(True, "withdraw", "withdrawn", id="individual-withdrawal", marks=pytest.mark.case_detail("申請者が本人の申請を取り下げると理由が残り再申請できる")),
+        pytest.param(
+            False,
+            "reject",
+            "rejected",
+            id="team-rejection",
+            marks=pytest.mark.case_detail(
+                "提供者がプロジェクトの申請を却下すると理由が残り再申請できる"
+            ),
+        ),
+        pytest.param(
+            True,
+            "withdraw",
+            "withdrawn",
+            id="individual-withdrawal",
+            marks=pytest.mark.case_detail("申請者が本人の申請を取り下げると理由が残り再申請できる"),
+        ),
     ],
 )
 def test_request_decision_and_reapplication(portal, personal, action, status):
@@ -71,7 +97,12 @@ def test_request_decision_and_reapplication(portal, personal, action, status):
     user = headers(portal, "consumer")
     url = _register(portal, owner, _draft())
     asset_id = url.rsplit("/", 1)[1]
-    application = {"project": "finance", "environment": "sandbox", "reason": "初回の試験", "personal": personal}
+    application = {
+        "project": "finance",
+        "environment": "sandbox",
+        "reason": "初回の試験",
+        "personal": personal,
+    }
     submitted = portal.post(f"{url}/requests", headers=user, json=application)
     assert submitted.status_code == 201
     right = submitted.json()
@@ -129,11 +160,15 @@ def test_project_transfer_with_established_usage(portal):
     subject = portal.get("/api/me", headers=user).json()["subject"]
     for project in ("original", "successor"):
         created = portal.put(
-            f"/api/workspace/units/{project}", headers=admin, json={"kind": "project", "name": project},
+            f"/api/workspace/units/{project}",
+            headers=admin,
+            json={"kind": "project", "name": project},
         )
         assert created.status_code == 200
     added = portal.put(
-        "/api/workspace/memberships", headers=admin, json={"subject": subject, "unit_id": "original", "leader": True},
+        "/api/workspace/memberships",
+        headers=admin,
+        json={"subject": subject, "unit_id": "original", "leader": True},
     )
     assert added.status_code == 200
     draft = _draft()
@@ -142,23 +177,44 @@ def test_project_transfer_with_established_usage(portal):
     asset_id = url.rsplit("/", 1)[1]
     policy_url = f"{url}/policy"
     revision = portal.get(url, headers=owner).json()["revision"]
-    result = portal.put(policy_url, headers=owner, params={"revision": revision}, json={"visibility": "restricted", "projects": ["original"]})
+    result = portal.put(
+        policy_url,
+        headers=owner,
+        params={"revision": revision},
+        json={"visibility": "restricted", "projects": ["original"]},
+    )
     assert result.status_code == 200, result.json()
     offer = portal.get(url, headers=user).json()["offers"]["sandbox"]
     requested = portal.post(
-        f"{url}/requests", headers=user, json={
-            "project": "original", "environment": "sandbox", "reason": "月次集計", "offer_version": offer["version"],
+        f"{url}/requests",
+        headers=user,
+        json={
+            "project": "original",
+            "environment": "sandbox",
+            "reason": "月次集計",
+            "offer_version": offer["version"],
         },
     )
     assert requested.status_code == 201 and requested.json()["status"] == "approved"
     rule = {
-        "asset_id": asset_id, "project": "original", "environment": "sandbox",
-        "threshold": 54, "minutes": 60, "stop": False,
+        "asset_id": asset_id,
+        "project": "original",
+        "environment": "sandbox",
+        "threshold": 54,
+        "minutes": 60,
+        "stop": False,
     }
     assert portal.put("/api/alerts", headers=owner, json=rule).status_code == 200
-    assert portal.put("/api/credential-limits/units/original", headers=user, json={"max_minutes": 33}).status_code == 200
+    assert (
+        portal.put(
+            "/api/credential-limits/units/original", headers=user, json={"max_minutes": 33}
+        ).status_code
+        == 200
+    )
     assert portal.delete("/api/workspace/units/original", headers=admin).status_code == 409
-    moved = portal.post("/api/workspace/units/original/transfer", headers=admin, json={"destination": "successor"})
+    moved = portal.post(
+        "/api/workspace/units/original/transfer", headers=admin, json={"destination": "successor"}
+    )
     assert moved.status_code == 200, moved.json()
     profile = portal.get("/api/me", headers=user).json()
     assert "successor" in profile["projects"] and "original" not in profile["projects"]
@@ -166,15 +222,26 @@ def test_project_transfer_with_established_usage(portal):
     current = portal.get("/api/requests", headers=user, params={"asset_id": asset_id}).json()
     assert any(row["project"] == "successor" and row["status"] == "approved" for row in current)
     alerts = portal.get("/api/alerts", headers=owner).json()
-    assert any(row["project"] == "successor" and row["asset_id"] == asset_id and row["threshold"] == 54 for row in alerts)
+    assert any(
+        row["project"] == "successor" and row["asset_id"] == asset_id and row["threshold"] == 54
+        for row in alerts
+    )
     assert portal.get("/api/credential-limits/units/successor", headers=user).json()["max_minutes"] == 33
 
 
 @pytest.mark.parametrize(
     "route",
     [
-        pytest.param("department_provider", id="department-then-provider", marks=pytest.mark.case_detail("所属部署の上位リーダーから提供者へ回す")),
-        pytest.param("custom", id="explicit-department", marks=pytest.mark.case_detail("指定部署のリーダーから提供者へ回す")),
+        pytest.param(
+            "department_provider",
+            id="department-then-provider",
+            marks=pytest.mark.case_detail("所属部署の上位リーダーから提供者へ回す"),
+        ),
+        pytest.param(
+            "custom",
+            id="explicit-department",
+            marks=pytest.mark.case_detail("指定部署のリーダーから提供者へ回す"),
+        ),
     ],
 )
 def test_two_stage_review(portal, route):
@@ -183,14 +250,21 @@ def test_two_stage_review(portal, route):
     owner = headers(portal, "provider")
     leader = headers(portal, "auditor")
     user = headers(portal, "consumer")
-    for key, parent, actor, is_leader in (("review-board", "", leader, True), ("staff", "review-board", user, False)):
+    for key, parent, actor, is_leader in (
+        ("review-board", "", leader, True),
+        ("staff", "review-board", user, False),
+    ):
         unit = portal.put(
-            f"/api/workspace/units/{key}", headers=admin, json={"kind": "department", "name": key, "parent": parent},
+            f"/api/workspace/units/{key}",
+            headers=admin,
+            json={"kind": "department", "name": key, "parent": parent},
         )
         assert unit.status_code == 200
         subject = portal.get("/api/me", headers=actor).json()["subject"]
         added = portal.put(
-            "/api/workspace/memberships", headers=admin, json={"subject": subject, "unit_id": key, "leader": is_leader},
+            "/api/workspace/memberships",
+            headers=admin,
+            json={"subject": subject, "unit_id": key, "leader": is_leader},
         )
         assert added.status_code == 200
     draft = _draft()
@@ -200,17 +274,27 @@ def test_two_stage_review(portal, route):
     url = _register(portal, owner, draft)
     offer = portal.get(url, headers=user).json()["offers"]["sandbox"]
     submitted = portal.post(
-        f"{url}/requests", headers=user,
-        json={"project": "finance", "environment": "sandbox", "reason": "導入", "offer_version": offer["version"]},
+        f"{url}/requests",
+        headers=user,
+        json={
+            "project": "finance",
+            "environment": "sandbox",
+            "reason": "導入",
+            "offer_version": offer["version"],
+        },
     )
     assert submitted.status_code == 201
     current = submitted.json()
     assert current["status"] == "pending"
-    for actor, reason, status in ((leader, "部内確認済み", "pending"), (owner, "提供準備完了", "approved")):
+    for actor, reason, status in (
+        (leader, "部内確認済み", "pending"),
+        (owner, "提供準備完了", "approved"),
+    ):
         incoming = portal.get("/api/requests", headers=actor, params={"incoming": True}).json()
         assert any(row["id"] == current["id"] for row in incoming)
         response = portal.post(
-            f"/api/requests/{current['id']}", headers=actor,
+            f"/api/requests/{current['id']}",
+            headers=actor,
             json={"action": "approve", "revision": current["revision"], "reason": reason},
         )
         assert response.status_code == 200
@@ -228,15 +312,21 @@ def test_visible_catalog_moves_with_department_membership(portal):
     user = headers(portal, "consumer")
     subject = portal.get("/api/me", headers=user).json()["subject"]
     for key, parent in (("service", ""), ("local-team", "service")):
-        assert portal.put(
-            f"/api/workspace/units/{key}", headers=admin,
-            json={"kind": "department", "name": key, "parent": parent},
-        ).status_code == 200
+        assert (
+            portal.put(
+                f"/api/workspace/units/{key}",
+                headers=admin,
+                json={"kind": "department", "name": key, "parent": parent},
+            ).status_code
+            == 200
+        )
     draft = _draft()
     url = _register(portal, owner, draft)
     asset = portal.get(url, headers=owner).json()
     selected = portal.put(
-        f"{url}/policy", headers=owner, params={"revision": asset["revision"]},
+        f"{url}/policy",
+        headers=owner,
+        params={"revision": asset["revision"]},
         json={"visibility": "restricted", "departments": ["service"]},
     )
     assert selected.status_code == 200
@@ -249,9 +339,14 @@ def test_visible_catalog_moves_with_department_membership(portal):
         assert (asset["id"] in [item["id"] for item in page["items"]]) is belongs
         assert page["total"] == int(belongs)
         if belongs:
-            assert portal.delete("/api/workspace/memberships", headers=admin, params=member).status_code == 200
+            assert (
+                portal.delete("/api/workspace/memberships", headers=admin, params=member).status_code
+                == 200
+            )
         elif not page["total"]:
-            assert portal.put("/api/workspace/memberships", headers=admin, json=member).status_code == 200
+            assert (
+                portal.put("/api/workspace/memberships", headers=admin, json=member).status_code == 200
+            )
 
 
 def test_provider_stops_and_reopens_new_applications(portal):
@@ -260,13 +355,28 @@ def test_provider_stops_and_reopens_new_applications(portal):
     user = headers(portal, "consumer")
     admin = headers(portal, "admin")
     subject = portal.get("/api/me", headers=user).json()["subject"]
-    assert portal.put("/api/workspace/units/pilot", headers=admin, json={"kind": "project", "name": "試験"}).status_code == 200
-    assert portal.put("/api/workspace/memberships", headers=admin, json={"subject": subject, "unit_id": "pilot"}).status_code == 200
+    assert (
+        portal.put(
+            "/api/workspace/units/pilot", headers=admin, json={"kind": "project", "name": "試験"}
+        ).status_code
+        == 200
+    )
+    assert (
+        portal.put(
+            "/api/workspace/memberships", headers=admin, json={"subject": subject, "unit_id": "pilot"}
+        ).status_code
+        == 200
+    )
     draft = _draft()
     draft["offers"] = {"sandbox": {"route": "auto"}}
     url = _register(portal, owner, draft)
     asset = portal.get(url, headers=user).json()
-    body = {"project": "finance", "environment": "sandbox", "reason": "日程確認", "offer_version": asset["offers"]["sandbox"]["version"]}
+    body = {
+        "project": "finance",
+        "environment": "sandbox",
+        "reason": "日程確認",
+        "offer_version": asset["offers"]["sandbox"]["version"],
+    }
     initial = portal.post(f"{url}/requests", headers=user, json=body)
     assert initial.status_code == 201 and initial.json()["status"] == "approved"
     status = portal.put(f"{url}/publication", headers=owner, params={"published": False})
@@ -279,7 +389,11 @@ def test_provider_stops_and_reopens_new_applications(portal):
     reopened = portal.put(f"{url}/publication", headers=owner, params={"published": True})
     assert reopened.status_code == 200
     offer = portal.get(url, headers=user).json()["offers"]["sandbox"]
-    next_request = portal.post(f"{url}/requests", headers=user, json={**body, "project": "pilot", "offer_version": offer["version"]})
+    next_request = portal.post(
+        f"{url}/requests",
+        headers=user,
+        json={**body, "project": "pilot", "offer_version": offer["version"]},
+    )
     assert next_request.status_code == 201 and next_request.json()["status"] == "approved"
 
 
@@ -291,7 +405,10 @@ def test_revision_conflict_does_not_remove_published_product(portal):
     url = _register(portal, owner, draft)
     original = portal.get(url, headers=user).json()
     updated = portal.put(
-        url, headers=owner, params={"revision": original["revision"]}, json={**draft, "name": "配送営業日照会"},
+        url,
+        headers=owner,
+        params={"revision": original["revision"]},
+        json={**draft, "name": "配送営業日照会"},
     )
     assert updated.status_code == 200 and updated.json()["published"]
     stale = portal.delete(url, headers=owner, params={"revision": original["revision"]})
@@ -310,21 +427,140 @@ def test_department_transfer_preserves_visibility_and_auto_approval(portal):
     owner = headers(portal, "provider")
     user = headers(portal, "consumer")
     for key, parent in (("former", ""), ("combined", ""), ("local", "former")):
-        assert portal.put(
-            f"/api/workspace/units/{key}", headers=admin, json={"name": key, "kind": "department", "parent": parent},
-        ).status_code == 200
+        assert (
+            portal.put(
+                f"/api/workspace/units/{key}",
+                headers=admin,
+                json={"name": key, "kind": "department", "parent": parent},
+            ).status_code
+            == 200
+        )
     subject = portal.get("/api/me", headers=user).json()["subject"]
-    assert portal.put("/api/workspace/memberships", headers=admin, json={"subject": subject, "unit_id": "local"}).status_code == 200
+    assert (
+        portal.put(
+            "/api/workspace/memberships", headers=admin, json={"subject": subject, "unit_id": "local"}
+        ).status_code
+        == 200
+    )
     url = _register(portal, owner, _draft())
     revision = portal.get(url, headers=owner).json()["revision"]
-    policy = {"visibility": "restricted", "departments": ["former"], "auto_departments": ["former"], "delegates": ["former"]}
+    policy = {
+        "visibility": "restricted",
+        "departments": ["former"],
+        "auto_departments": ["former"],
+        "delegates": ["former"],
+    }
     updated = portal.put(f"{url}/policy", headers=owner, params={"revision": revision}, json=policy)
     assert updated.status_code == 200
-    moved = portal.post("/api/workspace/units/former/transfer", headers=admin, json={"destination": "combined"})
+    moved = portal.post(
+        "/api/workspace/units/former/transfer", headers=admin, json={"destination": "combined"}
+    )
     assert moved.status_code == 200 and moved.json()["removed"]
     current = portal.get(f"{url}/policy", headers=owner).json()
     assert current["departments"] == current["auto_departments"] == current["delegates"] == ["combined"]
     detail = portal.get(url, headers=user)
     assert detail.status_code == 200
-    submitted = portal.post(f"{url}/requests", headers=user, json={"project": "finance", "environment": "sandbox", "reason": "集計"})
+    submitted = portal.post(
+        f"{url}/requests",
+        headers=user,
+        json={"project": "finance", "environment": "sandbox", "reason": "集計"},
+    )
     assert submitted.status_code == 201 and submitted.json()["status"] == "approved"
+
+
+def test_overlapping_project_grants_do_not_overwrite_decisions(portal):
+    """同じ商品の利用申請が両方のプロジェクトにある場合、移管競合は承認結果や理由を上書きしない。"""
+    admin = headers(portal, "admin")
+    user = headers(portal, "consumer")
+    owner = headers(portal, "provider")
+    url = _register(portal, owner, _draft())
+    asset_id = url.rsplit("/", 1)[1]
+    subject = portal.get("/api/me", headers=user).json()["subject"]
+    snapshots = {}
+    for project in ("office-one", "office-two"):
+        assert (
+            portal.put(
+                f"/api/workspace/units/{project}",
+                headers=admin,
+                json={"name": project, "kind": "project"},
+            ).status_code
+            == 200
+        )
+        assert (
+            portal.put(
+                "/api/workspace/memberships",
+                headers=admin,
+                json={"subject": subject, "unit_id": project},
+            ).status_code
+            == 200
+        )
+        result = portal.post(
+            f"{url}/requests",
+            headers=user,
+            json={"project": project, "environment": "sandbox", "reason": project},
+        )
+        assert result.status_code == 201
+        right = result.json()
+        if project == "office-one":
+            response = portal.post(
+                f"/api/requests/{right['id']}",
+                headers=owner,
+                json={"action": "approve", "revision": right["revision"], "reason": "受付済み"},
+            )
+            assert response.status_code == 200
+            right = response.json()
+        snapshots[project] = (right["id"], right["status"], right["reason"], right["revision"])
+    removed = portal.delete(
+        "/api/workspace/memberships", headers=admin, params={"subject": subject, "unit_id": "office-two"}
+    )
+    assert removed.status_code == 200 and removed.json()["removed"]
+    moved = portal.post(
+        "/api/workspace/units/office-one/transfer", headers=admin, json={"destination": "office-two"}
+    )
+    assert moved.status_code == 409 and moved.json()["detail"]
+    provider_view = portal.get(
+        "/api/requests", headers=owner, params={"incoming": True, "asset_id": asset_id}
+    ).json()
+    assert {
+        r["project"]: (r["id"], r["status"], r["reason"], r["revision"]) for r in provider_view
+    } == snapshots
+
+
+def test_existing_api_settings_survive_project_transfer(portal):
+    """提供プロジェクトの組織を移管しても既存商品の公開名と提供の責任を後継組織から確認できる。"""
+    owner = headers(portal, "provider")
+    admin = headers(portal, "admin")
+    user = headers(portal, "consumer")
+    url = _register(portal, owner, _draft())
+    before = portal.get(url, headers=user).json()
+    assert (
+        portal.put(
+            "/api/workspace/units/successor",
+            headers=admin,
+            json={"name": "後継提供組織", "kind": "project"},
+        ).status_code
+        == 200
+    )
+    moved = portal.post(
+        "/api/workspace/units/supply/transfer", headers=admin, json={"destination": "successor"}
+    )
+    assert moved.status_code == 200, moved.json()
+    after = portal.get(url, headers=user)
+    assert after.status_code == 200
+    item = after.json()
+    assert item["owner"] == "successor"
+    assert (item["id"], item["slug"], item["published"]) == (before["id"], before["slug"], True)
+
+
+def test_product_with_unsupported_contract_stays_out_of_catalog(portal):
+    """対応対象外のOpenAPI形式を登録しようとしても、公開カタログに不完全な商品は追加されない。"""
+    owner = headers(portal, "provider")
+    user = headers(portal, "consumer")
+    draft = _draft()
+    draft["spec"] = {"swagger": "2.0", "info": {"title": "旧形式", "version": "1"}, "paths": {}}
+    invalid = portal.post("/api/apis", headers=owner, json=draft)
+    assert invalid.status_code == 422 and invalid.json()["detail"]
+    draft["spec"] = _draft()["spec"]
+    url = _register(portal, owner, draft)
+    search = portal.get("/api/catalog-page", headers=user, params={"q": draft["name"]}).json()
+    assert [r["id"] for r in search["items"]] == [url.rsplit("/", 1)[1]]

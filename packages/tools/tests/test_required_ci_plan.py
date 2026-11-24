@@ -20,7 +20,15 @@ def project(tmp_path, monkeypatch):
     monkeypatch.setenv("GITHUB_OUTPUT", str(tmp_path / "outputs"))
     monkeypatch.setenv("GITHUB_REPOSITORY", "example/project")
     monkeypatch.setenv("BASE_BRANCH", "main")
-    monkeypatch.delenv("COVERAGE_PROCESS_START", raising=False)
+    # この作業ツリーで合算する計測は、外側のパッケージ単体テストの記録先と分ける。
+    monkeypatch.setenv("COVERAGE_FILE", str(tmp_path / ".coverage"))
+    for inherited in (
+        "COVERAGE_PROCESS_START",
+        "COV_CORE_SOURCE",
+        "COV_CORE_CONFIG",
+        "COV_CORE_DATAFILE",
+    ):
+        monkeypatch.delenv(inherited, raising=False)
     (tmp_path / "runner").mkdir()
     suites = ["packages/frontend/tests", "packages/tools/tests"]
     (tmp_path / "pyproject.toml").write_text(

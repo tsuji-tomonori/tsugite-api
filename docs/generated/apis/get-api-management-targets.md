@@ -47,12 +47,12 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 | --- | --- | --- | --- | --- | --- |
 | [API利用申請・利用権](../db/database.md#access_rights) | access_rights | R | テーブルを結合 | join | [management_targets:331](../../../packages/backend/src/app/apis/governance/observability.py#L331) |
 | [API利用申請・利用権](../db/database.md#access_rights) | access_rights | R | 検索 | select | [management_targets:331](../../../packages/backend/src/app/apis/governance/observability.py#L331) |
-| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:106](../../../packages/backend/src/app/core/workspace.py#L106) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:107](../../../packages/backend/src/app/core/workspace.py#L107) |
 | [APIカタログ](../db/database.md#assets) | assets | R | テーブルを結合 | join | [management_targets:331](../../../packages/backend/src/app/apis/governance/observability.py#L331) |
 | [APIカタログ](../db/database.md#assets) | assets | R | 検索 | select | [management_targets:331](../../../packages/backend/src/app/apis/governance/observability.py#L331) |
-| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:31](../../../packages/backend/src/app/core/workspace.py#L31) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
 | [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:55](../../../packages/backend/src/app/core/workspace.py#L55) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:124](../../../packages/backend/src/app/core/auth.py#L124) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:126](../../../packages/backend/src/app/core/auth.py#L126) |
 | [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:92](../../../packages/backend/src/app/core/workspace.py#L92) |
 
 ### AWSサービス

@@ -7,8 +7,16 @@ from tests.support.catalog import headers
 @pytest.mark.parametrize(
     "role",
     [
-        pytest.param("consumer", id="consumer", marks=pytest.mark.case_detail("利用者として招待して会員一覧に反映する")),
-        pytest.param("provider", id="provider", marks=pytest.mark.case_detail("提供者として招待して会員一覧に反映する")),
+        pytest.param(
+            "consumer",
+            id="consumer",
+            marks=pytest.mark.case_detail("利用者として招待して会員一覧に反映する"),
+        ),
+        pytest.param(
+            "provider",
+            id="provider",
+            marks=pytest.mark.case_detail("提供者として招待して会員一覧に反映する"),
+        ),
     ],
 )
 def test_invitation_profile_and_retirement(portal, role):
@@ -16,8 +24,11 @@ def test_invitation_profile_and_retirement(portal, role):
     admin = headers(portal, "admin")
     project = portal.get("/api/members", headers=admin).json()["projects"][0]
     invitation = {
-        "email": f"new-{role}@example.com", "project": project, "role": role,
-        "full_name": "企画 太郎", "display_name": "たろう",
+        "email": f"new-{role}@example.com",
+        "project": project,
+        "role": role,
+        "full_name": "企画 太郎",
+        "display_name": "たろう",
     }
     response = portal.post("/api/members", headers=admin, json=invitation)
     assert response.status_code == 201
@@ -50,12 +61,17 @@ def test_invitation_profile_and_retirement(portal, role):
     assert len(listed) == 1 and listed[0]["role"] == role
     workspace = portal.get("/api/workspace", headers=admin).json()
     assert any(
-        m["subject"] == subject and m["unit_id"] == project and m["display_name"] == "企画担当"
-        and m["full_name"] == invitation["full_name"] and m["email"] == invitation["email"]
+        m["subject"] == subject
+        and m["unit_id"] == project
+        and m["display_name"] == "企画担当"
+        and m["full_name"] == invitation["full_name"]
+        and m["email"] == invitation["email"]
         for m in workspace["memberships"]
     )
     removed = portal.delete(
-        f"/api/members/{subject}", params={"username": person["username"]}, headers=admin,
+        f"/api/members/{subject}",
+        params={"username": person["username"]},
+        headers=admin,
     )
     assert removed.status_code == 200
     assert removed.json()["deleted"]
@@ -75,16 +91,20 @@ def test_self_edit_conflict_and_clear(portal):
     profile = changed.json()
     assert profile["revision"] > original["revision"]
     assert all(profile[key] == value for key, value in names.items())
-    audit = portal.get("/api/audit", headers=auditor, params={"request_id": changed.headers["x-request-id"]})
-    assert audit.status_code == 200
-    assert any(
-        row["actor"] == row["target_subject"] == original["subject"] for row in audit.json()
+    audit = portal.get(
+        "/api/audit", headers=auditor, params={"request_id": changed.headers["x-request-id"]}
     )
-    conflict = portal.patch(url, headers=user, json={"full_name": "別の氏名", "revision": original["revision"]})
+    assert audit.status_code == 200
+    assert any(row["actor"] == row["target_subject"] == original["subject"] for row in audit.json())
+    conflict = portal.patch(
+        url, headers=user, json={"full_name": "別の氏名", "revision": original["revision"]}
+    )
     assert conflict.status_code == 409
     assert portal.get(url, headers=user).json() == profile
     cleared = portal.patch(
-        url, headers=user, json={"full_name": None, "display_name": None, "revision": profile["revision"]},
+        url,
+        headers=user,
+        json={"full_name": None, "display_name": None, "revision": profile["revision"]},
     )
     assert cleared.status_code == 200
     assert cleared.json()["full_name"] is None and cleared.json()["display_name"] is None

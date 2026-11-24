@@ -1,10 +1,13 @@
 # 合成したFastAPIの公開仕様で、和名・制約・参照・設計不備の位置を検証する。
+from copy import deepcopy
+from functools import partial
 from typing import Annotated
 
 import pytest
 from app.design_names import PortalAPI, localize
 from app.schemas import outputs
-from fastapi import Depends, FastAPI, Path, Query
+from fastapi import APIRouter, Depends, FastAPI, Path, Query
+from pydantic import BaseModel
 
 
 def report_limit(
@@ -126,3 +129,109 @@ def test_missing_query_label_identifies_the_route_and_parameter():
     with pytest.raises(ValueError, match="unknown_filter") as exc:
         localize(app.openapi(), app.routes, strict=True)
     assert "/usage" in str(exc.value)
+
+
+def test_normal_openapi_keeps_unlabelled_extensions_and_non_operation_metadata():
+    """通常のOpenAPI生成は和名のない外部スキーマや追加メタデータを保持し、既知の操作を利用できる。"""
+
+    class VendorCount(BaseModel):
+        value: int
+
+    api = PortalAPI()
+
+    @api.get("/external", response_model=VendorCount, description="外部ベンダーから受けた件数")
+    def vendor_count():
+        return VendorCount(value=0)
+
+    schema = api.openapi()
+    original = deepcopy(schema)
+    operation = schema["paths"]["/external"]["get"]
+    assert operation["description"] == "外部ベンダーから受けた件数"
+    assert operation["responses"]["200"]["content"]["application/json"]["schema"]["$ref"].endswith(
+        "/VendorCount"
+    )
+    spec = schema["components"]["schemas"]["VendorCount"]
+    assert spec["properties"]["value"]["type"] == "integer"
+    assert spec["required"] == ["value"]
+    localize(schema, api.routes)
+    assert schema == original
+
+
+def test_routing_prefixes_preserve_parameter_context_and_explicit_descriptions():
+    """同じルーターを異なる接頭辞で公開しても各経路の和名、クエリの制約と明示した説明を保持する。"""
+    inventory = APIRouter()
+
+    #: 在庫の閾値を照会する
+    @inventory.get("/threshold")
+    def threshold(
+        #: 残数の上限
+        ceiling: Annotated[int, Query(description="この件数を超えた倉庫を除外", ge=0)] = 3,
+    ):
+        return ceiling
+
+    app = PortalAPI()
+    for prefix in ("/internal", "/partner"):
+        app.include_router(inventory, prefix=prefix)
+    document = app.openapi()
+    for route in ("/internal/threshold", "/partner/threshold"):
+        operation = document["paths"][route]["get"]
+        assert operation["summary"] == "在庫の閾値を照会する"
+        (parameter,) = operation["parameters"]
+        assert parameter["x-ja-name"] == parameter["schema"]["title"] == "残数の上限"
+        assert parameter["description"] == "この件数を超えた倉庫を除外"
+        assert parameter["schema"]["minimum"] == 0
+
+
+def test_external_callable_keeps_published_schema_and_common_path_parameters():
+    """ソースを参照できない外部ハンドラーでは手動の操作説明と経路共通パラメータを保持する。"""
+    app = PortalAPI()
+
+    def extension(code: int, enabled: bool):
+        return {"code": code, "enabled": enabled}
+
+    app.add_api_route(
+        "/extension",
+        partial(extension, enabled=True),
+        methods=["GET"],
+        summary="外部連携の照会",
+        description="連携先で定義したコードを確認する",
+    )
+    document = app.openapi()
+    path = document["paths"]["/extension"]
+    common = [{"in": "header", "name": "X-Request-ID", "required": False, "schema": {"type": "string"}}]
+    path["parameters"] = deepcopy(common)
+    path["summary"] = "外部連携"
+    path["servers"] = [{"url": "/gateway"}]
+    document["components"]["schemas"]["ExternalFeature"] = True
+    localize(document, app.routes)
+    assert path["parameters"] == common and path["servers"] == [{"url": "/gateway"}]
+    assert path["summary"] == "外部連携"
+    assert path["get"]["summary"] == "外部連携の照会"
+    assert path["get"]["description"] == "連携先で定義したコードを確認する"
+    assert document["components"]["schemas"]["ExternalFeature"] is True
+
+
+def test_openapi_ignores_hidden_routes_and_preserves_model_refs_for_each_mount():
+    """公開対象外の補助ルートは設計に出さず、複数の公開先で同じ応答モデルの参照を維持する。"""
+    reports = APIRouter()
+
+    @reports.get("/private", include_in_schema=False)
+    def internal_status():
+        return {"ok": True}
+
+    #: 組織の所属を確認する
+    @reports.get("/members", response_model=list[outputs.Affiliation])
+    def members():
+        return []
+
+    app = PortalAPI()
+    app.include_router(reports, prefix="/first")
+    app.include_router(reports, prefix="/second")
+    schema = app.openapi()
+    assert set(schema["paths"]) == {"/first/members", "/second/members"}
+    for item in schema["paths"].values():
+        response = item["get"]["responses"]["200"]["content"]["application/json"]["schema"]
+        assert response["items"] == {"$ref": "#/components/schemas/Affiliation"}
+    assert (
+        schema["components"]["schemas"]["Affiliation"]["properties"]["active"]["title"] == "所属が有効か"
+    )

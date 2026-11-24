@@ -61,10 +61,10 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 | [API利用申請・利用権](../db/database.md#access_rights) | access_rights | U | 現在の承認担当を設定 | stage に代入 | [pending_steps:83](../../../packages/backend/src/app/apis/governance/unit_lifecycle.py#L83) |
 | [利用者の組織所属](../db/database.md#affiliations) | affiliations | D | レコードを削除 | db.delete | [migrate_references:126](../../../packages/backend/src/app/apis/governance/unit_lifecycle.py#L126) |
 | [利用者の組織所属](../db/database.md#affiliations) | affiliations | D | レコードを削除 | db.delete | [move_record:43](../../../packages/backend/src/app/apis/governance/unit_lifecycle.py#L43) |
-| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [roster:43](../../../packages/backend/src/app/apis/governance/directory.py#L43) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [roster:44](../../../packages/backend/src/app/apis/governance/directory.py#L44) |
 | [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [migrate_references:115](../../../packages/backend/src/app/apis/governance/unit_lifecycle.py#L115) |
 | [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 主キーで取得 | db.get | [migrate_references:116](../../../packages/backend/src/app/apis/governance/unit_lifecycle.py#L116) |
-| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:106](../../../packages/backend/src/app/core/workspace.py#L106) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:107](../../../packages/backend/src/app/core/workspace.py#L107) |
 | [利用者の組織所属](../db/database.md#affiliations) | affiliations | U | 所属先での役職名を設定 | title に代入 | [migrate_references:123](../../../packages/backend/src/app/apis/governance/unit_lifecycle.py#L123) |
 | [利用者の組織所属](../db/database.md#affiliations) | affiliations | U | 所属先の管理権限があるかを設定 | leader に代入 | [migrate_references:124](../../../packages/backend/src/app/apis/governance/unit_lifecycle.py#L124) |
 | [利用者の組織所属](../db/database.md#affiliations) | affiliations | U | 所属が有効かを設定 | active に代入 | [migrate_references:125](../../../packages/backend/src/app/apis/governance/unit_lifecycle.py#L125) |
@@ -76,21 +76,21 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 | [APIカタログ](../db/database.md#assets) | assets | U | 提供プロジェクトの識別子を設定 | owner に代入 | [asset_references:55](../../../packages/backend/src/app/apis/governance/unit_lifecycle.py#L55) |
 | [APIカタログ](../db/database.md#assets) | assets | U | 公開範囲と承認条件（JSON）を設定 | policy に代入 | [asset_references:61](../../../packages/backend/src/app/apis/governance/unit_lifecycle.py#L61) |
 | [APIカタログ](../db/database.md#assets) | assets | U | 環境別の申請項目・利用規約・承認経路（JSON）を設定 | offers に代入 | [asset_references:69](../../../packages/backend/src/app/apis/governance/unit_lifecycle.py#L69) |
-| [監査履歴](../db/database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [audit:21](../../../packages/backend/src/app/apis/governance/directory.py#L21) |
+| [監査履歴](../db/database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [audit:22](../../../packages/backend/src/app/apis/governance/directory.py#L22) |
 | [認証情報の利用制限](../db/database.md#credential_rules) | credential_rules | D | レコードを削除 | db.delete | [move_record:43](../../../packages/backend/src/app/apis/governance/unit_lifecycle.py#L43) |
 | [認証情報の利用制限](../db/database.md#credential_rules) | credential_rules | R | 主キーで取得 | db.get | [migrate_references:106](../../../packages/backend/src/app/apis/governance/unit_lifecycle.py#L106) |
-| [組織階層](../db/database.md#directory_tree) | directory_tree | C | レコードを追加 | db.add | [save_tree:121](../../../packages/backend/src/app/apis/governance/directory.py#L121) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | C | レコードを追加 | db.add | [save_tree:127](../../../packages/backend/src/app/apis/governance/directory.py#L127) |
 | [組織階層](../db/database.md#directory_tree) | directory_tree | C | レコードを追加 | db.add | [retire:158](../../../packages/backend/src/app/apis/governance/unit_lifecycle.py#L158) |
 | [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retire:155](../../../packages/backend/src/app/apis/governance/unit_lifecycle.py#L155) |
-| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:31](../../../packages/backend/src/app/core/workspace.py#L31) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
 | [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:55](../../../packages/backend/src/app/core/workspace.py#L55) |
-| [組織階層](../db/database.md#directory_tree) | directory_tree | U | 部署・プロジェクトの階層データ（JSON）を設定 | units に代入 | [save_tree:122](../../../packages/backend/src/app/apis/governance/directory.py#L122) |
-| [組織階層](../db/database.md#directory_tree) | directory_tree | U | 部署・プロジェクトの階層データ（JSON）を設定 | units に代入 | [retire:159](../../../packages/backend/src/app/apis/governance/unit_lifecycle.py#L159) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 検索 | select | [roster:37](../../../packages/backend/src/app/apis/governance/directory.py#L37) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 検索 | select | [roster:47](../../../packages/backend/src/app/apis/governance/directory.py#L47) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [roster:52](../../../packages/backend/src/app/apis/governance/directory.py#L52) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [roster:68](../../../packages/backend/src/app/apis/governance/directory.py#L68) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:124](../../../packages/backend/src/app/core/auth.py#L124) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | U | 項目定義、値の階層または移管先のデータ（JSON）を設定 | units に代入 | [save_tree:128](../../../packages/backend/src/app/apis/governance/directory.py#L128) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | U | 項目定義、値の階層または移管先のデータ（JSON）を設定 | units に代入 | [retire:159](../../../packages/backend/src/app/apis/governance/unit_lifecycle.py#L159) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 検索 | select | [roster:38](../../../packages/backend/src/app/apis/governance/directory.py#L38) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 検索 | select | [roster:48](../../../packages/backend/src/app/apis/governance/directory.py#L48) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [roster:53](../../../packages/backend/src/app/apis/governance/directory.py#L53) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [roster:69](../../../packages/backend/src/app/apis/governance/directory.py#L69) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:126](../../../packages/backend/src/app/core/auth.py#L126) |
 | [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:92](../../../packages/backend/src/app/core/workspace.py#L92) |
 
 ### AWSサービス

@@ -11,17 +11,22 @@ def test_lifetime_inheritance_and_reset(portal):
     subject = portal.get("/api/me", headers=user).json()["subject"]
     for key, kind, parent in (("lab", "department", ""), ("study", "project", "lab")):
         created = portal.put(
-            f"/api/workspace/units/{key}", headers=admin, json={"kind": kind, "name": key, "parent": parent},
+            f"/api/workspace/units/{key}",
+            headers=admin,
+            json={"kind": kind, "name": key, "parent": parent},
         )
         assert created.status_code == 200
         assigned = portal.put(
-            "/api/workspace/memberships", headers=admin,
+            "/api/workspace/memberships",
+            headers=admin,
             json={"subject": subject, "unit_id": key, "leader": True},
         )
         assert assigned.status_code == 200
     for key, minutes in (("lab", 30), ("study", 10)):
         configured = portal.put(
-            f"/api/credential-limits/units/{key}", headers=user, json={"max_minutes": minutes},
+            f"/api/credential-limits/units/{key}",
+            headers=user,
+            json={"max_minutes": minutes},
         )
         assert configured.status_code == 200
         assert configured.json()["max_minutes"] == minutes
@@ -49,7 +54,9 @@ def test_provider_changes_and_clears_individual_operations(portal):
     operations = policies["operations"]
     assert operations
     for selection in ([operations[0]], [], None):
-        update = portal.put(policy_url, headers=owner, json={"subject": subject, "operations": selection})
+        update = portal.put(
+            policy_url, headers=owner, json={"subject": subject, "operations": selection}
+        )
         assert update.status_code == 200 and update.json()["operations"] == selection
         permissions = portal.get(policy_url, headers=owner).json()["permissions"]
         detail = portal.get(url, headers=user).json()
@@ -62,8 +69,18 @@ def test_provider_changes_and_clears_individual_operations(portal):
 @pytest.mark.parametrize(
     "stop",
     [
-        pytest.param(False, id="notify", marks=pytest.mark.case_detail("通知のみなら上限到達後も呼び出せて、通知は一回に限られる")),
-        pytest.param(True, id="stop", marks=pytest.mark.case_detail("停止ありなら上限到達の次の呼び出しを止め、設定の更新で再開する")),
+        pytest.param(
+            False,
+            id="notify",
+            marks=pytest.mark.case_detail("通知のみなら上限到達後も呼び出せて、通知は一回に限られる"),
+        ),
+        pytest.param(
+            True,
+            id="stop",
+            marks=pytest.mark.case_detail(
+                "停止ありなら上限到達の次の呼び出しを止め、設定の更新で再開する"
+            ),
+        ),
     ],
 )
 def test_alert_threshold_and_counter_reset(portal, stop):
@@ -72,7 +89,8 @@ def test_alert_threshold_and_counter_reset(portal, stop):
     user = headers(portal, "consumer")
     asset_id, _, invoke_url = approved(portal, owner, user)
     issued = portal.post(
-        "/api/keys", headers=user,
+        "/api/keys",
+        headers=user,
         json={"name": "配送件数", "kind": "personal", "project": "finance", "api_ids": [asset_id]},
     )
     assert issued.status_code == 201
@@ -83,8 +101,12 @@ def test_alert_threshold_and_counter_reset(portal, stop):
         for t in targets
     )
     rule = {
-        "asset_id": asset_id, "project": "finance", "environment": "sandbox",
-        "threshold": 1, "minutes": 1440, "stop": stop,
+        "asset_id": asset_id,
+        "project": "finance",
+        "environment": "sandbox",
+        "threshold": 1,
+        "minutes": 1440,
+        "stop": stop,
     }
     configured = portal.put("/api/alerts", headers=owner, json=rule)
     assert configured.status_code == 200

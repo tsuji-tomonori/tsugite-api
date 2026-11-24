@@ -6,7 +6,7 @@ PUT `/api/workspace/memberships`
 
 [API一覧](README.md) · [CRUD一覧](../db/crud.md)
 
-共通 · `assign_api_workspace_memberships_put` · [assign:158](../../../packages/backend/src/app/apis/governance/directory.py#L158)
+共通 · `assign_api_workspace_memberships_put` · [assign:167](../../../packages/backend/src/app/apis/governance/directory.py#L167)
 
 ## 入力
 
@@ -68,17 +68,17 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| [利用者の組織所属](../db/database.md#affiliations) | affiliations | C | レコードを追加 | db.add | [assign:170](../../../packages/backend/src/app/apis/governance/directory.py#L170) |
-| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 主キーで取得 | db.get | [assign:167](../../../packages/backend/src/app/apis/governance/directory.py#L167) |
-| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:106](../../../packages/backend/src/app/core/workspace.py#L106) |
-| [利用者の組織所属](../db/database.md#affiliations) | affiliations | U | 所属が有効かを設定 | active に代入 | [assign:171](../../../packages/backend/src/app/apis/governance/directory.py#L171) |
-| [利用者の組織所属](../db/database.md#affiliations) | affiliations | U | 所属先の管理権限があるかを設定 | leader に代入 | [assign:171](../../../packages/backend/src/app/apis/governance/directory.py#L171) |
-| [利用者の組織所属](../db/database.md#affiliations) | affiliations | U | 所属先での役職名を設定 | title に代入 | [assign:171](../../../packages/backend/src/app/apis/governance/directory.py#L171) |
-| [監査履歴](../db/database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [audit:21](../../../packages/backend/src/app/apis/governance/directory.py#L21) |
-| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:31](../../../packages/backend/src/app/core/workspace.py#L31) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | C | レコードを追加 | db.add | [assign:179](../../../packages/backend/src/app/apis/governance/directory.py#L179) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 主キーで取得 | db.get | [assign:176](../../../packages/backend/src/app/apis/governance/directory.py#L176) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:107](../../../packages/backend/src/app/core/workspace.py#L107) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | U | 所属が有効かを設定 | active に代入 | [assign:180](../../../packages/backend/src/app/apis/governance/directory.py#L180) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | U | 所属先の管理権限があるかを設定 | leader に代入 | [assign:180](../../../packages/backend/src/app/apis/governance/directory.py#L180) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | U | 所属先での役職名を設定 | title に代入 | [assign:180](../../../packages/backend/src/app/apis/governance/directory.py#L180) |
+| [監査履歴](../db/database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [audit:22](../../../packages/backend/src/app/apis/governance/directory.py#L22) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
 | [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:55](../../../packages/backend/src/app/core/workspace.py#L55) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [assign:163](../../../packages/backend/src/app/apis/governance/directory.py#L163) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:124](../../../packages/backend/src/app/core/auth.py#L124) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [assign:172](../../../packages/backend/src/app/apis/governance/directory.py#L172) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:126](../../../packages/backend/src/app/core/auth.py#L126) |
 | [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:92](../../../packages/backend/src/app/core/workspace.py#L92) |
 
 ### AWSサービス

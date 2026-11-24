@@ -6,7 +6,7 @@ PUT `/api/workspace/units/{key}/state`
 
 [API一覧](README.md) · [CRUD一覧](../db/crud.md)
 
-共通 · `change_state_api_workspace_units__key__state_put` · [change_state:203](../../../packages/backend/src/app/apis/governance/directory.py#L203)
+共通 · `change_state_api_workspace_units__key__state_put` · [change_state:212](../../../packages/backend/src/app/apis/governance/directory.py#L212)
 
 ## 入力
 
@@ -42,7 +42,7 @@ PUT `/api/workspace/units/{key}/state`
 | 項目の和名 | 物理名 | 指定 | 型・制約 |
 | --- | --- | --- | --- |
 | 部署・プロジェクトの識別子 | id | 必須 | 文字列 |
-| 組織の種類（部署・プロジェクト） | kind | 必須 | 文字列、指定値 部署（`department`）、プロジェクト（`project`） |
+| 所属先を分類するメタデータのキー | kind | 必須 | 文字列 |
 | 部署・プロジェクト名 | name | 必須 | 文字列 |
 | 親部署の識別子 | parent | 必須 | 文字列 |
 | 組織の利用を停止中か | stopped | 必須 | 真偽値 |
@@ -68,13 +68,13 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:106](../../../packages/backend/src/app/core/workspace.py#L106) |
-| [監査履歴](../db/database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [audit:21](../../../packages/backend/src/app/apis/governance/directory.py#L21) |
-| [組織階層](../db/database.md#directory_tree) | directory_tree | C | レコードを追加 | db.add | [save_tree:121](../../../packages/backend/src/app/apis/governance/directory.py#L121) |
-| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:31](../../../packages/backend/src/app/core/workspace.py#L31) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:107](../../../packages/backend/src/app/core/workspace.py#L107) |
+| [監査履歴](../db/database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [audit:22](../../../packages/backend/src/app/apis/governance/directory.py#L22) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | C | レコードを追加 | db.add | [save_tree:127](../../../packages/backend/src/app/apis/governance/directory.py#L127) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
 | [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:55](../../../packages/backend/src/app/core/workspace.py#L55) |
-| [組織階層](../db/database.md#directory_tree) | directory_tree | U | 部署・プロジェクトの階層データ（JSON）を設定 | units に代入 | [save_tree:122](../../../packages/backend/src/app/apis/governance/directory.py#L122) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:124](../../../packages/backend/src/app/core/auth.py#L124) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | U | 項目定義、値の階層または移管先のデータ（JSON）を設定 | units に代入 | [save_tree:128](../../../packages/backend/src/app/apis/governance/directory.py#L128) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:126](../../../packages/backend/src/app/core/auth.py#L126) |
 | [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:92](../../../packages/backend/src/app/core/workspace.py#L92) |
 
 ### AWSサービス

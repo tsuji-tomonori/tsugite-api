@@ -17,14 +17,20 @@ def test_profile_reads_only_the_allowed_member(
     member = {"email": "user@example.test", "full_name": "氏名", "display_name": "表示", "revision": 3}
     api = AsyncMock(return_value=member)
     monkeypatch.setattr(profile.organization_api, "profile", api)
+    directory = AsyncMock(
+        return_value={"units": [], "memberships": [], "my_units": [], "metadata_fields": []}
+    )
+    monkeypatch.setattr(profile.organization_api, "workspace", directory)
     screen = portal_module("components.profile")
-    state: dict[str, Any] = {"me": {"admin": False}}
+    state: dict[str, Any] = {"me": {"admin": False, "subject": "user"}}
     monkeypatch.setattr(profile, "ctx", state)
     monkeypatch.setattr(screen, "ctx", state)
     page = "member-profile/other"
     monkeypatch.setattr(screen, "route", lambda: page)
+    monkeypatch.setattr(profile, "route", lambda: page)
     asyncio.run(profile.load_profile(page))
     api.assert_not_awaited()
+    directory.assert_not_awaited()
     dom = render(screen.view)[1]
     assert "権限が必要" in dom.toxml()
     assert not dom.getElementsByTagName("input")

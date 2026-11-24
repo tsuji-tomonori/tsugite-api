@@ -70,15 +70,15 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:106](../../../packages/backend/src/app/core/workspace.py#L106) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:107](../../../packages/backend/src/app/core/workspace.py#L107) |
 | [監査履歴](../db/database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [member_event:39](../../../packages/backend/src/app/apis/governance/members.py#L39) |
-| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:31](../../../packages/backend/src/app/core/workspace.py#L31) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
 | [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:55](../../../packages/backend/src/app/core/workspace.py#L55) |
 | [利用者プロフィール](../db/database.md#portal_member_profiles) | portal_member_profiles | C | レコードを追加 | db.add | [edit:77](../../../packages/backend/src/app/apis/governance/profiles.py#L77) |
 | [利用者プロフィール](../db/database.md#portal_member_profiles) | portal_member_profiles | R | 主キーで取得 | db.get | [edit:66](../../../packages/backend/src/app/apis/governance/profiles.py#L66) |
 | [利用者プロフィール](../db/database.md#portal_member_profiles) | portal_member_profiles | U | 指定されたカラムの値を更新 | setattr による属性更新 | [edit:79](../../../packages/backend/src/app/apis/governance/profiles.py#L79) |
 | [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [existing_account:22](../../../packages/backend/src/app/apis/governance/profiles.py#L22) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:124](../../../packages/backend/src/app/core/auth.py#L124) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:126](../../../packages/backend/src/app/core/auth.py#L126) |
 | [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:92](../../../packages/backend/src/app/core/workspace.py#L92) |
 
 ### AWSサービス

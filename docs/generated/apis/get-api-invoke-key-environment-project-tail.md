@@ -58,7 +58,7 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 | --- | --- | --- | --- | --- | --- |
 | [API利用申請・利用権](../db/database.md#access_rights) | access_rights | R | 主キーで取得 | db.get | [authorize:64](../../../packages/backend/src/app/apis/gateway.py#L64) |
 | [API利用申請・利用権](../db/database.md#access_rights) | access_rights | R | 主キーで取得 | db.get | [authorize:72](../../../packages/backend/src/app/apis/gateway.py#L72) |
-| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:106](../../../packages/backend/src/app/core/workspace.py#L106) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:107](../../../packages/backend/src/app/core/workspace.py#L107) |
 | [API呼び出し件数の監視設定](../db/database.md#alert_rules) | alert_rules | R | 主キーで取得 | db.get | [admit:80](../../../packages/backend/src/app/apis/governance/alerts.py#L80) |
 | [API呼び出し件数の監視設定](../db/database.md#alert_rules) | alert_rules | U | 更新 | update | [admit:86](../../../packages/backend/src/app/apis/governance/alerts.py#L86) |
 | [API認証情報](../db/database.md#api_keys) | api_keys | R | 主キーで取得 | db.get | [authorize:66](../../../packages/backend/src/app/apis/gateway.py#L66) |
@@ -71,12 +71,12 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 | [認証情報の利用制限](../db/database.md#credential_rules) | credential_rules | R | 検索 | select | [check_operation:91](../../../packages/backend/src/app/core/credential_policy.py#L91) |
 | [認証情報の利用制限](../db/database.md#credential_rules) | credential_rules | R | 主キーで取得 | db.get | [individual:30](../../../packages/backend/src/app/core/credential_policy.py#L30) |
 | [認証情報の利用制限](../db/database.md#credential_rules) | credential_rules | R | 主キーで取得 | db.get | [minutes:35](../../../packages/backend/src/app/core/credential_policy.py#L35) |
-| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:31](../../../packages/backend/src/app/core/workspace.py#L31) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
 | [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:55](../../../packages/backend/src/app/core/workspace.py#L55) |
 | [API呼び出し履歴](../db/database.md#invocation_logs) | invocation_logs | C | レコードを追加 | db.add | [log_result:135](../../../packages/backend/src/app/apis/gateway.py#L135) |
-| [API呼び出しと組織の対応](../db/database.md#invocation_units) | invocation_units | C | レコードを追加 | db.add | [attribute:159](../../../packages/backend/src/app/core/workspace.py#L159) |
+| [API呼び出しと組織の対応](../db/database.md#invocation_units) | invocation_units | C | レコードを追加 | db.add | [attribute:171](../../../packages/backend/src/app/core/workspace.py#L171) |
 | [通知](../db/database.md#notices) | notices | C | レコードを追加 | db.add | [admit:110](../../../packages/backend/src/app/apis/governance/alerts.py#L110) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:124](../../../packages/backend/src/app/core/auth.py#L124) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:126](../../../packages/backend/src/app/core/auth.py#L126) |
 | [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:92](../../../packages/backend/src/app/core/workspace.py#L92) |
 
 ### AWSサービス

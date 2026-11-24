@@ -22,8 +22,15 @@ class TrialBrowser:
         """利用者が操作できるHTML要素の状態を返す。"""
         if identifier not in self.elements:
             self.elements[identifier] = SimpleNamespace(
-                value="", disabled=False, isConnected=True, hidden=False, textContent="", dataset=SimpleNamespace(),
-                classList=SimpleNamespace(add=Mock(), remove=Mock()), setAttribute=Mock(), removeAttribute=Mock(),
+                value="",
+                disabled=False,
+                isConnected=True,
+                hidden=False,
+                textContent="",
+                dataset=SimpleNamespace(),
+                classList=SimpleNamespace(add=Mock(), remove=Mock()),
+                setAttribute=Mock(),
+                removeAttribute=Mock(),
             )
         return self.elements[identifier]
 
@@ -44,7 +51,9 @@ class TrialBrowser:
 
 
 @pytest.fixture
-def trial(portal_module: Callable[[str], Any], monkeypatch: pytest.MonkeyPatch) -> tuple[Any, TrialBrowser]:
+def trial(
+    portal_module: Callable[[str], Any], monkeypatch: pytest.MonkeyPatch
+) -> tuple[Any, TrialBrowser]:
     """API Docsのボタンとクリップボードを操作できるテスト用ブラウザーを準備する。"""
     import js
 
@@ -52,8 +61,18 @@ def trial(portal_module: Callable[[str], Any], monkeypatch: pytest.MonkeyPatch) 
     docs = portal_module("components.api_docs")
     monkeypatch.setattr(docs, "t", browser)
     monkeypatch.setattr(docs, "document", SimpleNamespace(getElementById=browser.element))
-    monkeypatch.setattr(js.window, "location", SimpleNamespace(origin="https://portal.example", hash="#/api/stock"), raising=False)
-    monkeypatch.setattr(js.window, "navigator", SimpleNamespace(clipboard=SimpleNamespace(writeText=browser.clipboard)), raising=False)
+    monkeypatch.setattr(
+        js.window,
+        "location",
+        SimpleNamespace(origin="https://portal.example", hash="#/api/stock"),
+        raising=False,
+    )
+    monkeypatch.setattr(
+        js.window,
+        "navigator",
+        SimpleNamespace(clipboard=SimpleNamespace(writeText=browser.clipboard)),
+        raising=False,
+    )
     browser.element("trial-key").value = "0"
     browser.element("trial-param-0").value = "商品 1"
     browser.element("trial-body").value = '{"stock": 12}'
@@ -69,30 +88,52 @@ def show_trial(docs: Any, key: dict[str, Any] | None, issue: Any = None) -> None
     body = {"required": True, "content": {"application/json": {"schema": {"type": "object"}}}}
 
     def view() -> None:
-        docs.try_operation({}, asset, bindings, "POST", "/items/{sku}", params, body, "trial", issue_key=issue)
+        docs.try_operation(
+            {}, asset, bindings, "POST", "/items/{sku}", params, body, "trial", issue_key=issue
+        )
 
     render(view)
 
 
-@pytest.mark.parametrize("existing", [
-    pytest.param(True, id="existing", marks=pytest.mark.case_detail("既存の認証情報を使って短期トークンで実行する")),
-    pytest.param(False, id="first-use", marks=pytest.mark.case_detail("初回の実行で商品専用の認証情報を発行する")),
-])
-def test_api_docs_runs_and_copies_curl(trial: tuple[Any, TrialBrowser], monkeypatch: pytest.MonkeyPatch, existing: bool) -> None:
+@pytest.mark.parametrize(
+    "existing",
+    [
+        pytest.param(
+            True,
+            id="existing",
+            marks=pytest.mark.case_detail("既存の認証情報を使って短期トークンで実行する"),
+        ),
+        pytest.param(
+            False,
+            id="first-use",
+            marks=pytest.mark.case_detail("初回の実行で商品専用の認証情報を発行する"),
+        ),
+    ],
+)
+def test_api_docs_runs_and_copies_curl(
+    trial: tuple[Any, TrialBrowser], monkeypatch: pytest.MonkeyPatch, existing: bool
+) -> None:
     """操作を押すと選択した環境とプロジェクトへ認証付きで送り、応答・照合ID・コピー用curlを表示する。"""
     docs, browser = trial
     key = {"id": "stock-key"}
     issue = AsyncMock(return_value=key)
     auth = AsyncMock(return_value={"Authorization": "Bearer temporary-example"})
     monkeypatch.setattr(docs, "credential_headers", auth)
-    result = SimpleNamespace(status=201, headers={"x-request-id": "trace-17"}, string=AsyncMock(return_value="在庫登録完了"))
+    result = SimpleNamespace(
+        status=201, headers={"x-request-id": "trace-17"}, string=AsyncMock(return_value="在庫登録完了")
+    )
 
     async def completed(url: str, **options: Any) -> Any:
         assert browser.element("submit").disabled
         assert "実行中" in browser.element("submit").textContent
-        assert url == "https://portal.example/api/invoke/stock/sandbox/finance/items/%E5%95%86%E5%93%81%201"
+        assert (
+            url == "https://portal.example/api/invoke/stock/sandbox/finance/items/%E5%95%86%E5%93%81%201"
+        )
         assert options["method"] == "POST" and options["body"] == '{"stock": 12}'
-        assert options["headers"] == {"Content-Type": "application/json", "Authorization": "Bearer temporary-example"}
+        assert options["headers"] == {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer temporary-example",
+        }
         return result
 
     send = AsyncMock(side_effect=completed)
@@ -115,16 +156,39 @@ def test_api_docs_runs_and_copies_curl(trial: tuple[Any, TrialBrowser], monkeypa
     browser.clipboard.assert_awaited_once_with(command)
 
 
-@pytest.mark.parametrize(("identifier", "value", "detail"), [
-    pytest.param("trial-param-0", "", "sku", id="missing-sku",
-                 marks=pytest.mark.case_detail("必須のパスパラメータを空にした場合は項目名を案内する")),
-    pytest.param("trial-body", "", "本文", id="missing-body",
-                 marks=pytest.mark.case_detail("必須のJSON本文が空なら送信せずに本文の入力を求める")),
-    pytest.param("trial-body", "{", "JSON", id="invalid-json",
-                 marks=pytest.mark.case_detail("JSONとして成立しない本文では送信前に形式を案内する")),
-])
-def test_trial_explains_unusable_input(trial: tuple[Any, TrialBrowser], monkeypatch: pytest.MonkeyPatch,
-                                      identifier: str, value: str, detail: str) -> None:
+@pytest.mark.parametrize(
+    ("identifier", "value", "detail"),
+    [
+        pytest.param(
+            "trial-param-0",
+            "",
+            "sku",
+            id="missing-sku",
+            marks=pytest.mark.case_detail("必須のパスパラメータを空にした場合は項目名を案内する"),
+        ),
+        pytest.param(
+            "trial-body",
+            "",
+            "本文",
+            id="missing-body",
+            marks=pytest.mark.case_detail("必須のJSON本文が空なら送信せずに本文の入力を求める"),
+        ),
+        pytest.param(
+            "trial-body",
+            "{",
+            "JSON",
+            id="invalid-json",
+            marks=pytest.mark.case_detail("JSONとして成立しない本文では送信前に形式を案内する"),
+        ),
+    ],
+)
+def test_trial_explains_unusable_input(
+    trial: tuple[Any, TrialBrowser],
+    monkeypatch: pytest.MonkeyPatch,
+    identifier: str,
+    value: str,
+    detail: str,
+) -> None:
     """必須入力の不足や本文の形式不正は送信前に知らせ、修正して再実行できる。"""
     docs, browser = trial
     send = AsyncMock()
@@ -134,4 +198,49 @@ def test_trial_explains_unusable_input(trial: tuple[Any, TrialBrowser], monkeypa
     asyncio.run(browser.click("認証して実行"))
     assert detail in browser.element("trial-response").textContent
     assert not browser.element("submit").disabled
+    send.assert_not_awaited()
+
+
+def test_trial_shows_error_response_without_request_id(
+    trial: tuple[Any, TrialBrowser], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """任意本文を空で送った呼び出しでもエラー本文と応答コードを示し、照合IDがなければ監査への入口を隠す。"""
+    docs, browser = trial
+    result = SimpleNamespace(status=404, headers={}, string=AsyncMock(return_value="棚が見つかりません"))
+    send = AsyncMock(return_value=result)
+    monkeypatch.setattr(docs, "fetch", send)
+    monkeypatch.setattr(
+        docs, "credential_headers", AsyncMock(return_value={"Authorization": "Bearer temporary-example"})
+    )
+    browser.element("trial-body").value = ""
+    asset = {"id": "stock", "name": "在庫"}
+    bindings = [({"id": "key"}, "sandbox", "finance", "finance")]
+    render(
+        docs.try_operation,
+        {},
+        asset,
+        bindings,
+        "POST",
+        "/search",
+        [],
+        {"required": False, "content": {"text/plain": {}}},
+        "trial",
+    )
+    asyncio.run(browser.click("認証して実行"))
+    assert send.await_args is not None and "body" not in send.await_args.kwargs
+    result_text = browser.element("trial-response").textContent
+    assert "404" in result_text and "棚が見つかりません" in result_text
+    assert browser.element("trial-audit").hidden
+
+
+def test_busy_execute_button_prevents_duplicate_request(
+    trial: tuple[Any, TrialBrowser], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """実行中に同じボタンをもう一度押しても、同じ在庫の更新を重複して送信しない。"""
+    docs, browser = trial
+    send = AsyncMock()
+    monkeypatch.setattr(docs, "fetch", send)
+    show_trial(docs, {"id": "stock-key"})
+    browser.element("submit").disabled = True
+    asyncio.run(browser.click("認証して実行"))
     send.assert_not_awaited()

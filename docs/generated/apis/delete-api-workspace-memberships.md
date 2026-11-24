@@ -6,7 +6,7 @@ DELETE `/api/workspace/memberships`
 
 [API一覧](README.md) · [CRUD一覧](../db/crud.md)
 
-共通 · `unassign_api_workspace_memberships_delete` · [unassign:179](../../../packages/backend/src/app/apis/governance/directory.py#L179)
+共通 · `unassign_api_workspace_memberships_delete` · [unassign:188](../../../packages/backend/src/app/apis/governance/directory.py#L188)
 
 ## 入力
 
@@ -55,14 +55,14 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| [利用者の組織所属](../db/database.md#affiliations) | affiliations | C | レコードを追加 | db.add | [unassign:194](../../../packages/backend/src/app/apis/governance/directory.py#L194) |
-| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 主キーで取得 | db.get | [unassign:191](../../../packages/backend/src/app/apis/governance/directory.py#L191) |
-| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:106](../../../packages/backend/src/app/core/workspace.py#L106) |
-| [利用者の組織所属](../db/database.md#affiliations) | affiliations | U | 所属が有効かを設定 | active に代入 | [unassign:195](../../../packages/backend/src/app/apis/governance/directory.py#L195) |
-| [監査履歴](../db/database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [audit:21](../../../packages/backend/src/app/apis/governance/directory.py#L21) |
-| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:31](../../../packages/backend/src/app/core/workspace.py#L31) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | C | レコードを追加 | db.add | [unassign:203](../../../packages/backend/src/app/apis/governance/directory.py#L203) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 主キーで取得 | db.get | [unassign:200](../../../packages/backend/src/app/apis/governance/directory.py#L200) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:107](../../../packages/backend/src/app/core/workspace.py#L107) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | U | 所属が有効かを設定 | active に代入 | [unassign:204](../../../packages/backend/src/app/apis/governance/directory.py#L204) |
+| [監査履歴](../db/database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [audit:22](../../../packages/backend/src/app/apis/governance/directory.py#L22) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
 | [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:55](../../../packages/backend/src/app/core/workspace.py#L55) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:124](../../../packages/backend/src/app/core/auth.py#L124) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:126](../../../packages/backend/src/app/core/auth.py#L126) |
 | [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:92](../../../packages/backend/src/app/core/workspace.py#L92) |
 
 ### AWSサービス

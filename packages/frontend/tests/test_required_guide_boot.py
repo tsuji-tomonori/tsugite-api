@@ -88,3 +88,38 @@ def test_notification_poll_updates_signed_in_readers_badge(
         browser_app.messages_api.unread.await_count,
         browser_app.document.mock_calls,
     )
+
+
+@pytest.mark.parametrize(
+    ("authenticated", "hidden"),
+    [
+        pytest.param(
+            False,
+            False,
+            id="signed-out",
+            marks=pytest.mark.case_detail("未ログインなら利用者個人の未読件数を取りに行かない。"),
+        ),
+        pytest.param(
+            True,
+            True,
+            id="hidden",
+            marks=pytest.mark.case_detail("バックグラウンドの画面では未読表示の取得を待つ。"),
+        ),
+    ],
+)
+def test_only_a_visible_authenticated_screen_polls_personal_notices(
+    browser_app: Any,
+    monkeypatch: pytest.MonkeyPatch,
+    authenticated: bool,
+    hidden: bool,
+) -> None:
+    """未ログインまたはページが非表示のとき、ベルの個人別件数の更新を待機する。"""
+    monkeypatch.setitem(browser_app.ctx, "me", profile() if authenticated else None)
+    browser_app.document.hidden = hidden
+    browser_app.document.visibilityState = "hidden" if hidden else "visible"
+    fetch = AsyncMock(return_value={"unread": 1})
+    monkeypatch.setattr(browser_app.messages_api, "unread", fetch)
+    monkeypatch.setattr(asyncio, "sleep", AsyncMock(side_effect=[None, asyncio.CancelledError()]))
+    with pytest.raises(asyncio.CancelledError):
+        asyncio.run(browser_app.poll_badge())
+    fetch.assert_not_awaited()

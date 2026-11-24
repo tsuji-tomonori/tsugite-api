@@ -6,7 +6,7 @@ GET `/api/me`
 
 [API一覧](README.md) · [CRUD一覧](../db/crud.md)
 
-共通 · `me` · [me:12](../../../packages/backend/src/app/apis/catalog/me.py#L12)
+共通 · `me` · [me:13](../../../packages/backend/src/app/apis/catalog/me.py#L13)
 
 ## 入力
 
@@ -28,6 +28,12 @@ GET `/api/me`
 
 | 項目の和名 | 物理名 | 指定 | 型・制約 |
 | --- | --- | --- | --- |
+| ナビゲーションに表示するメタデータ項目 | metadata_fields | 必須 | 配列 / [利用者のメタデータ項目（MetadataField）](../db/schemas.md#metadatafield) |
+| メタデータのキー | metadata_fields[].key | 必須 | 文字列 |
+| 項目の表示名 | metadata_fields[].label | 必須 | 文字列 |
+| 業務機能で使用中のデータパーツか | metadata_fields[].builtin | 必須 | 真偽値 |
+| 値の名称を全利用者に公開するか | metadata_fields[].public_values | 必須 | 真偽値 |
+| 本人のメタデータ（項目キーごとの値の識別子） | metadata | 必須 | オブジェクト（キーに対応する値は配列 / 文字列） |
 | 管理者が参照できるプロジェクト | known_projects | 必須 | 配列 / 文字列 |
 | 管理者が参照できるプロジェクトの識別子と表示名の対応 | known_project_labels | 任意 | オブジェクト（キーに対応する値は文字列） |
 | 個人用プロジェクトの識別子 | personal_project | 必須 | 文字列 |
@@ -53,10 +59,11 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:106](../../../packages/backend/src/app/core/workspace.py#L106) |
-| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:31](../../../packages/backend/src/app/core/workspace.py#L31) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:107](../../../packages/backend/src/app/core/workspace.py#L107) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [metadata_fields:17](../../../packages/backend/src/app/core/metadata.py#L17) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
 | [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:55](../../../packages/backend/src/app/core/workspace.py#L55) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:124](../../../packages/backend/src/app/core/auth.py#L124) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:126](../../../packages/backend/src/app/core/auth.py#L126) |
 | [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:92](../../../packages/backend/src/app/core/workspace.py#L92) |
 
 ### AWSサービス
@@ -76,6 +83,7 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 - `app.core.config.local_demo`
 - `app.core.config.settings`
 - `app.core.config.targets`
+- `app.core.metadata.metadata_fields`
 - `app.core.workspace.ancestry`
 - `app.core.workspace.configured_projects`
 - `app.core.workspace.populate`

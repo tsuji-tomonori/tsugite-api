@@ -367,3 +367,221 @@ def test_demo_login_lets_the_reader_choose_a_role_or_invited_user(
         "メールアドレス" in visible_text(label) and label.getElementsByTagName("input")
         for label in dom.getElementsByTagName("label")
     )
+
+
+@pytest.mark.parametrize(
+    ("input_error", "level", "message"),
+    [
+        pytest.param(
+            True,
+            "WARN",
+            "入力値を見直してください",
+            id="input",
+            marks=pytest.mark.case_detail(
+                "入力内容を見直すケースはWARNとし、操作をやり直せる状態に戻る。"
+            ),
+        ),
+        pytest.param(
+            False,
+            "ERROR",
+            "画面の読み込みに失敗しました",
+            id="render",
+            marks=pytest.mark.case_detail("予想しない画面エラーをERRORとし、利用者に結果を表示する。"),
+        ),
+    ],
+)
+def test_failed_ui_action_releases_the_page_and_reports_its_severity(
+    portal_module: PortalModule,
+    monkeypatch: pytest.MonkeyPatch,
+    input_error: bool,
+    level: str,
+    message: str,
+) -> None:
+    """画面操作の失敗を利用者と運用担当に伝え、再操作できる状態に戻す。"""
+    import json
+
+    ui = portal_module("runtime.portal_ui")
+    client = portal_module("apis.client")
+    window = Mock()
+    window.location.hash = "#/guide"
+    monkeypatch.setattr(ui, "document", window.document)
+    monkeypatch.setattr(ui, "window", window)
+    monkeypatch.setattr(client, "window", window)
+    store = Mock()
+    store.getItem.return_value = None
+    monkeypatch.setattr(client, "store", store)
+    monkeypatch.setattr(ui, "render", Mock())
+    error = client.InputError(message) if input_error else ValueError(message)
+
+    async def fail() -> None:
+        raise error
+
+    asyncio.run(ui.run(fail, trigger=Mock()))
+    assert ui.ctx["message"] == message and ui.ctx["busy"] is False
+    event = window.console.warn if input_error else window.console.error
+    assert json.loads(event.call_args.args[0])["level"] == level
+
+
+def test_navigation_refreshes_personal_profile_and_unread_count_after_login(
+    portal_module: PortalModule,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """ログイン後に別の画面に進むと、最新の所属と本人の未読件数を読み込む。"""
+    import js
+
+    nav = portal_module("routing.portal_navigation")
+    session = portal_module("apis.session")
+    messages = portal_module("apis.messages")
+    updated = dict(profile(), projects=["new-project"])
+    identity, unread = AsyncMock(return_value=updated), AsyncMock(return_value={"unread": 7})
+    monkeypatch.setattr(session, "me", identity)
+    monkeypatch.setattr(messages, "unread", unread)
+    monkeypatch.setattr(js.window, "location", SimpleNamespace(hash="#/guide"), raising=False)
+    monkeypatch.setitem(nav.ctx, "me", None)
+    asyncio.run(nav.load())
+    identity.assert_not_awaited()
+    unread.assert_not_awaited()
+    monkeypatch.setitem(nav.ctx, "me", profile())
+    asyncio.run(nav.load())
+    identity.assert_awaited_once()
+    unread.assert_awaited_once()
+    assert nav.ctx["me"]["projects"] == ["new-project"] and nav.ctx["badge"] == 7
+
+
+def test_totp_enrollment_can_retry_a_mistyped_code(
+    portal_module: PortalModule,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """認証アプリの初回登録でコードを間違えても、同じ登録画面で新しいコードを確認してログインできる。"""
+    auth = portal_module("apis.portal_auth")
+    flow = auth.PortalLogin(CONFIG)
+    request = AsyncMock(
+        side_effect=[
+            {"ChallengeName": "MFA_SETUP", "Session": "initial"},
+            {"SecretCode": "EXAMPLE", "Session": "registration"},
+            {"Status": "ERROR", "Session": "registration"},
+            {"Status": "SUCCESS", "Session": "verified"},
+            {"AuthenticationResult": {"AccessToken": "example-access"}},
+        ]
+    )
+    monkeypatch.setattr(auth, "request", request)
+    assert asyncio.run(flow.submit(username="guide-reader", password="example-password")) is None
+    with pytest.raises(auth.LoginError, match="確認コード"):
+        asyncio.run(flow.submit(code="111111"))
+    assert flow.step == "setup"
+    assert asyncio.run(flow.submit(code="222222")) == "example-access"
+    checks = [call for call in request.await_args_list if call.args[1] == "VerifySoftwareToken"]
+    assert [(call.kwargs["Session"], call.kwargs["UserCode"]) for call in checks] == [
+        ("registration", "111111"),
+        ("registration", "222222"),
+    ]
+
+
+@pytest.mark.parametrize(
+    ("path", "message", "is_error"),
+    [
+        pytest.param(
+            "guide",
+            "保存が完了しました",
+            False,
+            id="saved",
+            marks=pytest.mark.case_detail("操作完了のメッセージを現在の画面で確認できる。"),
+        ),
+        pytest.param(
+            "guide",
+            "現在は読み込めません",
+            True,
+            id="failure",
+            marks=pytest.mark.case_detail("操作に失敗しても画面に日本語で理由を示す。"),
+        ),
+        pytest.param(
+            "unlisted-page",
+            "",
+            False,
+            id="missing",
+            marks=pytest.mark.case_detail(
+                "ブックマークの画面が存在しない場合はガイドとメニューに戻れる。"
+            ),
+        ),
+    ],
+)
+def test_portal_feedback_and_missing_pages_preserve_navigation(
+    portal_module: PortalModule,
+    monkeypatch: pytest.MonkeyPatch,
+    path: str,
+    message: str,
+    is_error: bool,
+) -> None:
+    """処理結果や存在しないページを表示しても共通メニューから次の仕事へ移れる。"""
+    import js
+
+    shell = portal_module("runtime.portal_shell")
+    ui = portal_module("runtime.portal_ui")
+    window = Mock()
+    window.location.hash = "#/" + path
+    window.localStorage.getItem.return_value = "dark"
+    window.matchMedia.return_value.matches = False
+    monkeypatch.setattr(js.window, "location", window.location, raising=False)
+    monkeypatch.setattr(shell, "window", window)
+    monkeypatch.setattr(ui, "window", window)
+    for key, value in {
+        "config": CONFIG,
+        "me": profile(),
+        "nav_open": True,
+        "message": message,
+        "error": is_error,
+        "badge": 2,
+    }.items():
+        monkeypatch.setitem(ui.ctx, key, value)
+    _, dom = render(shell.Portal.populate, Mock())
+    content = visible_text(dom)
+    assert "APIカタログ" in content and "使い方ガイド" in content
+    if message:
+        assert message in content
+    else:
+        assert "画面が見つかりません" in content
+
+
+def test_forgot_password_link_can_return_to_the_original_login_form(
+    portal_module: PortalModule,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """パスワードを忘れた利用者は再設定フォームへ進み、コードを送る前にログインへ戻れる。"""
+    views = portal_module("components.login_views")
+    auth = portal_module("apis.portal_auth")
+    events = BrowserEvents(monkeypatch)
+    document = Mock()
+    document.getElementById.return_value = SimpleNamespace(value="guide-reader")
+    monkeypatch.setattr(views, "document", document)
+    identity = AsyncMock()
+    monkeypatch.setattr(auth, "request", identity)
+    flow = auth.PortalLogin(CONFIG)
+    state = {"config": CONFIG, "login_flow": flow, "message": ""}
+
+    def action(fn: Any, *args: Any) -> Any:
+        return lambda _event: asyncio.create_task(fn(*args))
+
+    async def follow(label: str) -> None:
+        _, dom = render(views.portal_form, state, action, Mock(), AsyncMock())
+        button = next(node for node in dom.getElementsByTagName("button") if label in visible_text(node))
+        events.dispatch(button, "click", Mock())
+        await finish_browser_tasks()
+
+    asyncio.run(follow("忘れた"))
+    assert flow.step == "forgot"
+    asyncio.run(follow("ログインに戻る"))
+    assert flow.step == "signin"
+    identity.assert_not_awaited()
+
+
+def test_header_search_opens_a_catalog_for_the_entered_words(
+    portal_module: PortalModule,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """ヘッダーから用途を検索すると、その語句を指定したカタログへ移る。"""
+    shell = portal_module("runtime.portal_shell")
+    monkeypatch.setattr(shell, "value", lambda _name: "倉庫別の在庫")
+    go = AsyncMock()
+    monkeypatch.setattr(shell, "go", go)
+    asyncio.run(shell.global_search())
+    go.assert_awaited_once_with("catalog", query="倉庫別の在庫")

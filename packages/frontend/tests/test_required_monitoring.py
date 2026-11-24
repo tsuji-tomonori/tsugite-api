@@ -2,12 +2,13 @@
 import asyncio
 from datetime import datetime, timedelta
 from types import SimpleNamespace
+from typing import Any
 from unittest.mock import AsyncMock, Mock
 from urllib.parse import parse_qs, urlsplit
 
 import pytest
 from test_components import render
-from test_required_people_support import content, member, unit, workspace
+from test_required_people_support import Module, content, member, unit, workspace
 
 
 @pytest.mark.parametrize(
@@ -25,7 +26,9 @@ from test_required_people_support import content, member, unit, workspace
         ),
     ],
 )
-def test_apply_monitoring_filters(portal_module, monkeypatch, chart):
+def test_apply_monitoring_filters(
+    portal_module: Module, monkeypatch: pytest.MonkeyPatch, chart: bool
+) -> None:
     """指定したUTC期間・API・環境・プロジェクト・応答コードを適用し、該当データを再読込する。"""
     filters = portal_module("components.activity_filters")
     activity = portal_module("actions.activity")
@@ -62,7 +65,7 @@ def test_apply_monitoring_filters(portal_module, monkeypatch, chart):
     refresh.assert_awaited_once()
 
 
-def test_relative_period_uses_utc(portal_module):
+def test_relative_period_uses_utc(portal_module: Module) -> None:
     """開始と終了を直接選ばない場合、選択した時間数を直近のUTC期間に変換する。"""
     activity = portal_module("actions.activity")
     activity.ctx["filters"].update(hours="168", start="", end="")
@@ -73,7 +76,9 @@ def test_relative_period_uses_utc(portal_module):
     assert end - start == timedelta(days=7)
 
 
-def test_metrics_page_loads_organization_filter_and_period(portal_module, monkeypatch):
+def test_metrics_page_loads_organization_filter_and_period(
+    portal_module: Module, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """集計画面の読込は組織の選択肢を取得し、期間とプロジェクトを保持してAPIの実績を表示用に渡す。"""
     loader = portal_module("pages.metrics.data")
     reload_options = AsyncMock()
@@ -83,6 +88,7 @@ def test_metrics_page_loads_organization_filter_and_period(portal_module, monkey
     api = AsyncMock(return_value=expected)
     monkeypatch.setattr(loader.activity_api, "metrics", api)
     asyncio.run(loader.load_metrics("/metrics"))
+    assert api.await_args is not None
     params = api.await_args.args[0]
     assert params["unit"] == "accounts" and params["project"] == "north"
     assert str(params["minutes"]) == "15" and params["start"] and params["end"]
@@ -128,20 +134,28 @@ def test_metrics_page_loads_organization_filter_and_period(portal_module, monkey
     ],
 )
 def test_monitoring_api_preserves_encoded_filter_values(
-    portal_module, monkeypatch, function, args, endpoint, params
-):
+    portal_module: Module,
+    monkeypatch: pytest.MonkeyPatch,
+    function: str,
+    args: tuple[Any, ...],
+    endpoint: str,
+    params: dict[str, str],
+) -> None:
     """URLの構成で日本語と予約文字を失わず、業務画面が指定した絞り込みを渡す。"""
     api = portal_module("apis.activity")
     dispatch = AsyncMock()
     for method in ("api", "request_object", "request_rows"):
         monkeypatch.setattr(api.client, method, dispatch)
     asyncio.run(getattr(api, function)(*args))
+    assert dispatch.await_args is not None
     address = urlsplit(dispatch.await_args.args[0])
     assert address.path == endpoint
     assert parse_qs(address.query) == {key: [value] for key, value in params.items()}
 
 
-def test_saved_file_uses_requested_filename_and_releases_url(portal_module, monkeypatch):
+def test_saved_file_uses_requested_filename_and_releases_url(
+    portal_module: Module, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """監査ファイルの保存を開始すると指定名のリンクを開き、一時URLを解放する。"""
     download = portal_module("runtime.portal_download")
     blob = object()
@@ -182,7 +196,9 @@ def test_saved_file_uses_requested_filename_and_releases_url(portal_module, monk
         ),
     ],
 )
-def test_available_monitoring_dimensions_follow_scope(portal_module, monkeypatch, scope, path):
+def test_available_monitoring_dimensions_follow_scope(
+    portal_module: Module, monkeypatch: pytest.MonkeyPatch, scope: str, path: str
+) -> None:
     """選択中の組織と閲覧範囲に合わせたAPIから絞り込み候補を取得する。"""
     mod = portal_module("actions.activity")
     me = member(admin=True)
@@ -194,6 +210,7 @@ def test_available_monitoring_dimensions_follow_scope(portal_module, monkeypatch
     dimensions = AsyncMock(return_value=candidates)
     monkeypatch.setattr(mod.activity_api, "dimensions", dimensions)
     asyncio.run(mod.load_dimensions(scope))
+    assert dimensions.await_args is not None
     endpoint, args = dimensions.await_args.args
     assert endpoint == path
     assert args["unit"] == ("" if scope == "personal" else "accounts")
@@ -232,8 +249,13 @@ def test_available_monitoring_dimensions_follow_scope(portal_module, monkeypatch
     ],
 )
 def test_dashboard_renders_personal_history_and_role_counts(
-    portal_module, monkeypatch, admin, provider, role, show_inventory
-):
+    portal_module: Module,
+    monkeypatch: pytest.MonkeyPatch,
+    admin: bool,
+    provider: bool,
+    role: str,
+    show_inventory: bool,
+) -> None:
     """ダッシュボードに役割別の件数、直近の個人履歴、UTC時間帯の実績を表示する。"""
     from test_required_people_logs import log_record
 
@@ -259,3 +281,197 @@ def test_dashboard_renders_personal_history_and_role_counts(
     assert role in text and "UTC" in text and "GET /items" in text
     assert all(str(counts[key]) in text for key in ["calls", "errors", "approved"])
     assert ("管理対象のAPI37" in text) == show_inventory
+
+
+@pytest.mark.parametrize(
+    ("filtered", "count", "offset"),
+    [
+        pytest.param(
+            False,
+            0,
+            0,
+            id="empty",
+            marks=pytest.mark.case_detail("未絞り込みで記録がないときは空の結果を説明する"),
+        ),
+        pytest.param(
+            True,
+            1,
+            0,
+            id="last-page",
+            marks=pytest.mark.case_detail("絞り込んだ1件を時刻・実行者・リクエストIDで照合できる"),
+        ),
+        pytest.param(
+            True,
+            50,
+            50,
+            id="middle-page",
+            marks=pytest.mark.case_detail("記録が続く途中のページには新旧両方向の操作を表示する"),
+        ),
+    ],
+)
+def test_audit_result_table_shows_context_and_pagination(
+    portal_module: Module, filtered: bool, count: int, offset: int
+) -> None:
+    """業務監査の一覧に検索条件・照合用の情報と、そのページで利用可能な移動を表示する。"""
+    audit = portal_module("components.audit")
+    rows = [
+        {
+            "at": "2026-01-11T11:09:00Z",
+            "actor": "auditor",
+            "action": "approve",
+            "target_subject": "applicant",
+            "owner": "finance",
+            "project": "sales",
+            "asset_id": "inventory",
+            "environment": "production",
+            "request_id": f"trace-{n}",
+            "detail": "承認理由を確認済み",
+        }
+        for n in range(count)
+    ]
+    audit.ctx.update(
+        audit_id="trace-0" if filtered else "", audit_action="", audit_offset=offset, rows=rows
+    )
+    _, dom = render(audit.audit_view)
+    text = content(dom)
+    assert ("絞り込み中" in text) == filtered
+    assert ("新しい記録" in text) == bool(offset)
+    assert ("以前の記録" in text) == (count == 50)
+    if rows:
+        assert all(
+            value in text
+            for value in (
+                "UTC",
+                "auditor",
+                "finance",
+                "sales",
+                "inventory",
+                "trace-0",
+                "承認理由を確認済み",
+            )
+        )
+    else:
+        assert "一致する記録はありません" in text
+
+
+def test_dashboard_retry_distinguishes_unavailable_summary_from_empty_personal_logs(
+    portal_module: Module,
+) -> None:
+    """集計が未取得で本人の履歴が空の場合、件数の取得失敗と呼び出しがないことを別々に示す。"""
+    view = portal_module("components.dashboard")
+    view.ctx.update(me=member(), dashboard=None, home_metrics=None, recent_logs=[])
+    _, dom = render(view.dashboard_view)
+    text = content(dom)
+    assert "件数を取得できません" in text and "メトリクスを取得できません" in text
+    assert "直近24時間の呼び出しはありません" in text and "再読み込み" in text
+
+
+@pytest.mark.parametrize(
+    "pages",
+    [
+        pytest.param(
+            1, id="single", marks=pytest.mark.case_detail("次の開始位置がなければ一度の取得で保存する")
+        ),
+        pytest.param(
+            3,
+            id="multiple",
+            marks=pytest.mark.case_detail("各応答の開始位置で取得を継続し全ページを順番どおり保存する"),
+        ),
+    ],
+)
+def test_access_export_uses_cursor_and_preserves_current_filter(
+    portal_module: Module, monkeypatch: pytest.MonkeyPatch, pages: int
+) -> None:
+    """アクセスログを表示中の期間・識別子で最後のページまで取得し、一つのJSON Linesに保存する。"""
+    import json
+
+    logs = portal_module("actions.logs")
+    period = {"start": "2026-06-23T23:00:00Z", "end": "2026-06-24T00:10:00Z", "project": "north"}
+    logs.ctx.update(access_id="request-監査", log_period=period)
+    records = [{"request_id": "request-監査", "sequence": n} for n in range(pages)]
+    cursor = [f"page-{i}" for i in range(1, pages)]
+    responses = [
+        SimpleNamespace(
+            ok=True,
+            js_response=SimpleNamespace(
+                headers={"x-next-cursor": cursor[n]} if n < len(cursor) else {},
+                blob=AsyncMock(return_value=json.dumps(record, ensure_ascii=False) + "\n"),
+            ),
+        )
+        for n, record in enumerate(records)
+    ]
+    calls: list[dict[str, str]] = []
+
+    async def download(query: dict[str, str]) -> SimpleNamespace:
+        calls.append(query.copy())
+        return responses[len(calls) - 1]
+
+    monkeypatch.setattr(logs.activity_api, "download_chunk", download)
+    parts: list[str] = []
+    browser = SimpleNamespace(
+        Array=SimpleNamespace(new=lambda: SimpleNamespace(push=parts.append)),
+        Blob=SimpleNamespace(new=lambda _: "".join(parts)),
+    )
+    monkeypatch.setattr(logs, "window", browser)
+    save = Mock()
+    monkeypatch.setattr(logs, "save_blob", save)
+    asyncio.run(logs.download_logs())
+    assert [query.get("cursor", "") for query in calls] == ["", *cursor]
+    assert all(
+        query["request_id"] == "request-監査" and period.items() <= query.items() for query in calls
+    )
+    payload, filename = save.call_args.args
+    assert filename.endswith(".jsonl") and [json.loads(line) for line in payload.splitlines()] == records
+
+
+@pytest.mark.parametrize(
+    ("page", "admin", "expected_scope"),
+    [
+        pytest.param(
+            "logs",
+            False,
+            "personal",
+            id="personal",
+            marks=pytest.mark.case_detail("利用者の一覧は本人範囲で取得する"),
+        ),
+        pytest.param(
+            "audit-logs",
+            True,
+            "audit",
+            id="authorized",
+            marks=pytest.mark.case_detail("管理者の監査一覧は監査範囲で取得する"),
+        ),
+        pytest.param(
+            "audit-logs",
+            False,
+            None,
+            id="outside-role",
+            marks=pytest.mark.case_detail("監査権限のない利用者には監査一覧の照会を発行しない"),
+        ),
+    ],
+)
+def test_log_navigation_requests_only_current_scope(
+    portal_module: Module,
+    monkeypatch: pytest.MonkeyPatch,
+    page: str,
+    admin: bool,
+    expected_scope: str | None,
+) -> None:
+    """個人・監査の一覧を切り替えたら以前の検索条件を解除し、閲覧可能な範囲だけを読み直す。"""
+    logs = portal_module("actions.logs")
+    logs.ctx.update(me=member(admin=admin), access_id="old-id", log_offset=60)
+    monkeypatch.setattr(logs, "route", lambda: page)
+    dimensions = AsyncMock()
+    records = AsyncMock(return_value=[])
+    monkeypatch.setattr(logs, "load_dimensions", dimensions)
+    monkeypatch.setattr(logs.activity_api, "logs", records)
+    asyncio.run(logs.load_logs(page))
+    if expected_scope is None:
+        records.assert_not_awaited()
+        dimensions.assert_not_awaited()
+    else:
+        dimensions.assert_awaited_once_with(expected_scope)
+        assert records.await_args is not None
+        params = records.await_args.args[0]
+        assert params["scope"] == expected_scope and params["offset"] == 0 and params["request_id"] == ""
+        assert logs.ctx["log_rows"] == []

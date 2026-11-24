@@ -104,3 +104,56 @@ def test_non_json_failure_retains_http_status(
     monkeypatch.setattr(client, "pyfetch", AsyncMock(return_value=response))
     with pytest.raises(client.ResponseError, match="503"):
         asyncio.run(client.api("/metrics"))
+
+
+@pytest.mark.parametrize(
+    ("status", "response", "message"),
+    [
+        pytest.param(
+            200,
+            {"Status": "SUCCESS"},
+            "",
+            id="confirmed",
+            marks=pytest.mark.case_detail("確認コードを認証APIへ直接送り成功を受け取る。"),
+        ),
+        pytest.param(
+            400,
+            {"__type": "CodeMismatchException"},
+            "確認コード",
+            id="mismatched-code",
+            marks=pytest.mark.case_detail("確認コードが違うときは新しいコードの入力を日本語で促す。"),
+        ),
+        pytest.param(
+            503,
+            {"message": "temporarily unavailable"},
+            "ログイン",
+            id="unavailable",
+            marks=pytest.mark.case_detail("認証サービスの一時障害は日本語で再ログインを案内する。"),
+        ),
+    ],
+)
+def test_user_pool_directly_receives_the_authenticator_code(
+    portal_module: PortalModule,
+    monkeypatch: pytest.MonkeyPatch,
+    status: int,
+    response: dict[str, str],
+    message: str,
+) -> None:
+    """認証コードはユーザープールに直接POSTし、失敗時には次の操作を日本語で案内する。"""
+    auth = portal_module("apis.portal_auth")
+    endpoint = "https://identity.example.test"
+    wire = AsyncMock(
+        return_value=Mock(status=status, ok=status == 200, json=AsyncMock(return_value=response))
+    )
+    monkeypatch.setattr(auth, "pyfetch", wire)
+    request = auth.request(endpoint, "VerifySoftwareToken", UserCode="123456")
+    if message:
+        with pytest.raises(auth.LoginError, match=message):
+            asyncio.run(request)
+    else:
+        assert asyncio.run(request) == response
+    wire.assert_awaited_once()
+    assert wire.await_args is not None
+    assert wire.await_args.args == (endpoint,)
+    assert wire.await_args.kwargs["method"] == "POST"
+    assert json.loads(wire.await_args.kwargs["body"]) == {"UserCode": "123456"}

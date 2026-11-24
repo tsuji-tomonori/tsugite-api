@@ -13,7 +13,10 @@ def _unit(portal, admin, key, kind, name, parent=""):
     assert response.status_code == 200
     result = response.json()
     assert (result["id"], result["kind"], result["name"], result["parent"]) == (
-        key, kind, name, parent,
+        key,
+        kind,
+        name,
+        parent,
     )
     return result
 
@@ -45,7 +48,8 @@ def test_direct_and_concurrent_memberships(portal):
     assert usage.json()["calls"] == usage.json()["errors"] == 0
     _assign(portal, admin, subject, "pilot", "主任", True)
     response = portal.delete(
-        "/api/workspace/memberships", headers=admin,
+        "/api/workspace/memberships",
+        headers=admin,
         params={"subject": subject, "unit_id": "planning"},
     )
     assert response.status_code == 200
@@ -60,8 +64,16 @@ def test_direct_and_concurrent_memberships(portal):
 @pytest.mark.parametrize(
     "kind",
     [
-        pytest.param("project", id="project", marks=pytest.mark.case_detail("プロジェクトの停止と再開を一覧に反映する")),
-        pytest.param("department", id="department", marks=pytest.mark.case_detail("部署の停止と再開を一覧に反映する")),
+        pytest.param(
+            "project",
+            id="project",
+            marks=pytest.mark.case_detail("プロジェクトの停止と再開を一覧に反映する"),
+        ),
+        pytest.param(
+            "department",
+            id="department",
+            marks=pytest.mark.case_detail("部署の停止と再開を一覧に反映する"),
+        ),
     ],
 )
 def test_unit_lifecycle(portal, kind):
@@ -85,8 +97,16 @@ def test_unit_lifecycle(portal, kind):
 @pytest.mark.parametrize(
     "kind",
     [
-        pytest.param("project", id="project", marks=pytest.mark.case_detail("プロジェクトの所属を移管先に引き継ぐ")),
-        pytest.param("department", id="department", marks=pytest.mark.case_detail("部署の所属と配下の組織を移管先に引き継ぐ")),
+        pytest.param(
+            "project",
+            id="project",
+            marks=pytest.mark.case_detail("プロジェクトの所属を移管先に引き継ぐ"),
+        ),
+        pytest.param(
+            "department",
+            id="department",
+            marks=pytest.mark.case_detail("部署の所属と配下の組織を移管先に引き継ぐ"),
+        ),
     ],
 )
 def test_transfer_of_affiliated_unit(portal, kind):
@@ -148,10 +168,28 @@ def test_in_use_department_requires_transfer(portal):
 @pytest.mark.parametrize(
     "destination",
     [
-        pytest.param("source", id="same-unit", marks=pytest.mark.case_detail("移管元自身を指定しても組織を消さない")),
-        pytest.param("child", id="descendant", marks=pytest.mark.case_detail("子孫の部署を移管先にして階層を循環させない")),
-        pytest.param("project", id="different-kind", marks=pytest.mark.case_detail("部署の後継にプロジェクトを指定した場合に部署の所属を維持する")),
-        pytest.param("unknown", id="missing", marks=pytest.mark.case_detail("未登録の移管先へ組織や所属を移さない")),
+        pytest.param(
+            "source",
+            id="same-unit",
+            marks=pytest.mark.case_detail("移管元自身を指定しても組織を消さない"),
+        ),
+        pytest.param(
+            "child",
+            id="descendant",
+            marks=pytest.mark.case_detail("子孫の部署を移管先にして階層を循環させない"),
+        ),
+        pytest.param(
+            "project",
+            id="different-kind",
+            marks=pytest.mark.case_detail(
+                "部署の後継にプロジェクトを指定した場合に部署の所属を維持する"
+            ),
+        ),
+        pytest.param(
+            "unknown",
+            id="missing",
+            marks=pytest.mark.case_detail("未登録の移管先へ組織や所属を移さない"),
+        ),
     ],
 )
 def test_invalid_transfer_preserves_directory(portal, destination):
@@ -163,7 +201,9 @@ def test_invalid_transfer_preserves_directory(portal, destination):
     _unit(portal, admin, "project", "project", "企画", "source")
     _assign(portal, admin, subject, "source", "担当", False)
     before = portal.get("/api/workspace", headers=admin).json()
-    invalid = portal.post("/api/workspace/units/source/transfer", headers=admin, json={"destination": destination})
+    invalid = portal.post(
+        "/api/workspace/units/source/transfer", headers=admin, json={"destination": destination}
+    )
     assert invalid.status_code in (404, 409, 422) and invalid.json()["detail"]
     after = portal.get("/api/workspace", headers=admin).json()
     assert after["units"] == before["units"] and after["memberships"] == before["memberships"]
@@ -179,7 +219,9 @@ def test_conflicting_transfer_keeps_both_projects(portal):
     _assign(portal, admin, consumer, "first", "主任", False)
     _assign(portal, admin, consumer, "second", "主任", False)
     _assign(portal, admin, provider, "second", "リーダー", True)
-    conflict = portal.post("/api/workspace/units/first/transfer", headers=admin, json={"destination": "second"})
+    conflict = portal.post(
+        "/api/workspace/units/first/transfer", headers=admin, json={"destination": "second"}
+    )
     assert conflict.status_code == 409 and conflict.json()["detail"]
     still_present = portal.get("/api/workspace/units/first/usage", headers=admin).json()["members"]
     assert [m["subject"] for m in still_present] == [consumer]
@@ -187,12 +229,16 @@ def test_conflicting_transfer_keeps_both_projects(portal):
     assert sorted(m["subject"] for m in destination) == sorted([consumer, provider])
 
     removed = portal.delete(
-        "/api/workspace/memberships", headers=admin, params={"subject": consumer, "unit_id": "second"},
+        "/api/workspace/memberships",
+        headers=admin,
+        params={"subject": consumer, "unit_id": "second"},
     )
     assert removed.status_code == 200 and removed.json()["removed"]
     listed = portal.get("/api/workspace/units/second/usage", headers=admin).json()["members"]
     assert not any(m["subject"] == consumer and m.get("active", True) for m in listed)
-    retried = portal.post("/api/workspace/units/first/transfer", headers=admin, json={"destination": "second"})
+    retried = portal.post(
+        "/api/workspace/units/first/transfer", headers=admin, json={"destination": "second"}
+    )
     assert retried.status_code == 200, retried.json()
     members = portal.get("/api/workspace/units/second/usage", headers=admin).json()["members"]
     assert sorted(m["subject"] for m in members if m.get("active", True)) == sorted([consumer, provider])
@@ -201,10 +247,22 @@ def test_conflicting_transfer_keeps_both_projects(portal):
 @pytest.mark.parametrize(
     "parent",
     [
-        pytest.param("division", id="self", marks=pytest.mark.case_detail("部署自身を親にする編集を拒否する")),
-        pytest.param("section", id="child", marks=pytest.mark.case_detail("子部署を親にする編集を拒否する")),
-        pytest.param("planning-project", id="project", marks=pytest.mark.case_detail("プロジェクトを部署の親にする編集を拒否する")),
-        pytest.param("unknown-division", id="missing", marks=pytest.mark.case_detail("存在しない部署への付け替えを拒否する")),
+        pytest.param(
+            "division", id="self", marks=pytest.mark.case_detail("部署自身を親にする編集を拒否する")
+        ),
+        pytest.param(
+            "section", id="child", marks=pytest.mark.case_detail("子部署を親にする編集を拒否する")
+        ),
+        pytest.param(
+            "planning-project",
+            id="project",
+            marks=pytest.mark.case_detail("プロジェクトを部署の親にする編集を拒否する"),
+        ),
+        pytest.param(
+            "unknown-division",
+            id="missing",
+            marks=pytest.mark.case_detail("存在しない部署への付け替えを拒否する"),
+        ),
     ],
 )
 def test_invalid_parent_keeps_hierarchy(portal, parent):
@@ -214,12 +272,17 @@ def test_invalid_parent_keeps_hierarchy(portal, parent):
     _unit(portal, admin, "section", "department", "管理課", "division")
     _unit(portal, admin, "planning-project", "project", "計画")
     response = portal.put(
-        "/api/workspace/units/division", headers=admin,
+        "/api/workspace/units/division",
+        headers=admin,
         json={"kind": "department", "name": "移管後名称", "parent": parent},
     )
     assert response.status_code in (409, 422) and response.json()["detail"]
     units = {item["id"]: item for item in portal.get("/api/workspace", headers=admin).json()["units"]}
-    assert (units["division"]["name"], units["division"]["parent"], units["section"]["parent"]) == ("本部", "", "division")
+    assert (units["division"]["name"], units["division"]["parent"], units["section"]["parent"]) == (
+        "本部",
+        "",
+        "division",
+    )
 
 
 def test_missing_membership_target(portal):
@@ -231,7 +294,61 @@ def test_missing_membership_target(portal):
     assert portal.delete("/api/workspace/units/closed-team", headers=admin).status_code == 200
     before = portal.get("/api/workspace", headers=user).json()["my_units"]
     response = portal.put(
-        "/api/workspace/memberships", headers=admin, json={"subject": subject, "unit_id": "closed-team"},
+        "/api/workspace/memberships",
+        headers=admin,
+        json={"subject": subject, "unit_id": "closed-team"},
     )
     assert response.status_code == 404 and response.json()["detail"]
     assert portal.get("/api/workspace", headers=user).json()["my_units"] == before
+
+
+def test_department_transfer_preserves_successor_leadership(portal):
+    """移管元で既に解除した所属があっても、後継部署で現在有効な役職とリーダー設定は保持される。"""
+    admin = headers(portal, "admin")
+    user = headers(portal, "consumer")
+    subject = portal.get("/api/me", headers=user).json()["subject"]
+    for key in ("former-dept", "successor-dept"):
+        _unit(portal, admin, key, "department", key)
+    _assign(portal, admin, subject, "former-dept", "旧担当", False)
+    _assign(portal, admin, subject, "successor-dept", "部長", True)
+    removed = portal.delete(
+        "/api/workspace/memberships",
+        headers=admin,
+        params={"subject": subject, "unit_id": "former-dept"},
+    )
+    assert removed.status_code == 200 and removed.json()["removed"]
+    moved = portal.post(
+        "/api/workspace/units/former-dept/transfer",
+        headers=admin,
+        json={"destination": "successor-dept"},
+    )
+    assert moved.status_code == 200 and moved.json()["removed"]
+    usage = portal.get("/api/workspace/units/successor-dept/usage", headers=user)
+    assert usage.status_code == 200
+    current = [m for m in usage.json()["members"] if m["subject"] == subject and m.get("active", True)]
+    assert [(m["title"], m["leader"]) for m in current] == [("部長", True)]
+
+
+def test_repeated_transfer_keeps_successor_membership(portal):
+    """移管済みの旧組織を再度指定しても、後継組織に引き継いだ所属を二重に移管しない。"""
+    admin = headers(portal, "admin")
+    user = headers(portal, "consumer")
+    subject = portal.get("/api/me", headers=user).json()["subject"]
+    _unit(portal, admin, "retiring", "project", "統合元")
+    _unit(portal, admin, "ongoing", "project", "統合先")
+    _assign(portal, admin, subject, "retiring", "担当", False)
+    url = "/api/workspace/units/retiring/transfer"
+    assert portal.post(url, headers=admin, json={"destination": "ongoing"}).json()["removed"]
+    repeated = portal.post(url, headers=admin, json={"destination": "ongoing"})
+    assert repeated.status_code in (200, 404)
+    view = portal.get("/api/workspace", headers=admin).json()["memberships"]
+    assert (
+        len(
+            [
+                m
+                for m in view
+                if m["subject"] == subject and m["unit_id"] == "ongoing" and m.get("active", True)
+            ]
+        )
+        == 1
+    )

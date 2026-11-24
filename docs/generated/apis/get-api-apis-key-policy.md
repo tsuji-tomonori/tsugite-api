@@ -6,7 +6,7 @@ GET `/api/apis/{key}/policy`
 
 [API一覧](README.md) · [CRUD一覧](../db/crud.md)
 
-共通 · `read_api_apis__key__policy_get` · [read:15](../../../packages/backend/src/app/apis/governance/policies.py#L15)
+共通 · `read_api_apis__key__policy_get` · [read:16](../../../packages/backend/src/app/apis/governance/policies.py#L16)
 
 ## 入力
 
@@ -34,6 +34,7 @@ GET `/api/apis/{key}/policy`
 | APIの公開範囲 | visibility | 任意 | 文字列、既定値 `"all"`、指定値 全体公開（`all`）、限定公開（`restricted`） |
 | 閲覧を許可するプロジェクト | projects | 任意 | 配列 / 文字列 |
 | 閲覧を許可する部署 | departments | 任意 | 配列 / 文字列 |
+| 閲覧を許可する任意メタデータの値 | metadata_values | 任意 | 配列 / 文字列 |
 | 自動承認の対象部署 | auto_departments | 任意 | 配列 / 文字列 |
 | 自動承認の対象役職 | auto_titles | 任意 | 配列 / 文字列 |
 | 承認を委任する部署 | delegates | 任意 | 配列 / 文字列 |
@@ -59,11 +60,11 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:106](../../../packages/backend/src/app/core/workspace.py#L106) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:107](../../../packages/backend/src/app/core/workspace.py#L107) |
 | [APIカタログ](../db/database.md#assets) | assets | R | 主キーで取得 | db.get | [record:26](../../../packages/backend/src/app/core/catalog.py#L26) |
-| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:31](../../../packages/backend/src/app/core/workspace.py#L31) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
 | [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:55](../../../packages/backend/src/app/core/workspace.py#L55) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:124](../../../packages/backend/src/app/core/auth.py#L124) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:126](../../../packages/backend/src/app/core/auth.py#L126) |
 | [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:92](../../../packages/backend/src/app/core/workspace.py#L92) |
 
 ### AWSサービス

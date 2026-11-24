@@ -339,3 +339,89 @@ def test_confirm_member_removal(
         delete.assert_awaited_once_with("former", "suzuki")
     else:
         delete.assert_not_awaited()
+
+
+def test_identify_members_without_optional_names(portal_module: Module) -> None:
+    """氏名のない利用者もログイン名とメールで識別でき、利用者・提供者の役割を確認できる。"""
+    ui = portal_module("runtime.portal_ui")
+    view = portal_module("components.members")
+    active = dict(
+        person("u-active", "suzuki", "new@example.test"), role="consumer", project="stock", deleted=False
+    )
+    removed = dict(
+        person("retired", "yamada", "retired@example.test"),
+        role="provider",
+        project="stock",
+        deleted=True,
+    )
+    ui.ctx.update(
+        me=member(admin=True),
+        members={"items": [active, removed], "next": "more", "projects": ["stock"]},
+    )
+    dom = render(view.members_view)[1]
+    first = row_with(dom, "new@example.test")
+    removed_row = row_with(dom, "retired@example.test")
+    assert any("削除" in content(b) for b in first.getElementsByTagName("button"))
+    assert "suzuki" in content(first) and "利用者" in content(first)
+    assert "yamada" in content(removed_row) and "提供者" in content(removed_row)
+
+
+def test_later_notification_page_offers_previous_page(portal_module: Module) -> None:
+    """既読通知の後続ページには前の通知に戻る操作と各通知の状態が表示される。"""
+    ui = portal_module("runtime.portal_ui")
+    notices = portal_module("components.notifications")
+    entries = [
+        {
+            "id": f"n{i}",
+            "project": "stock",
+            "sender": "運用窓口",
+            "at": "2026-04-07T03:08:09Z",
+            "title": f"事前案内{i}",
+            "body": "点検予定",
+            "unread": False,
+        }
+        for i in range(20)
+    ]
+    ui.ctx.update(me=member(), notice_offset=20, targets=[], notices={"unread": 0, "items": entries})
+    dom = render(notices.notices_view)[1]
+    assert "既読" in content(row_with(dom, "事前案内19"))
+    assert any("新しい通知" in content(b) for b in dom.getElementsByTagName("button"))
+
+
+def test_audit_history_paginates_filtered_records(
+    portal_module: Module, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """業務監査の次ページではリクエストIDと操作の条件を保ち、対象の記録を表示する。"""
+    actions = portal_module("actions.audit")
+    page = portal_module("pages.operation_history.data")
+    api = portal_module("apis.activity")
+    views = portal_module("components.audit")
+    ui = portal_module("runtime.portal_ui")
+    record = {
+        "action": "approve",
+        "at": "2026-04-07T03:08:09Z",
+        "actor": "owner",
+        "project": "stock",
+        "owner": "supply",
+        "asset_id": "inv",
+        "environment": "sandbox",
+        "detail": "承認済み",
+        "request_id": "trace-review",
+    }
+    ui.ctx.update(
+        me=dict(member(), auditor=True), audit_offset=0, audit_id="trace-review", audit_action="approve"
+    )
+    request = AsyncMock(return_value=[record])
+    monkeypatch.setattr(api, "audit", request)
+    monkeypatch.setattr(actions, "load", lambda: page.load_audit("operation-history"))
+    asyncio.run(actions.audit_page(20))
+    assert request.await_args is not None
+    params = request.await_args.args[0]
+    assert (
+        params["request_id"] == "trace-review"
+        and params["action"] == "approve"
+        and int(params["offset"]) == 20
+    )
+    dom = render(views.audit_view)[1]
+    assert "承認済み" in content(row_with(dom, "trace-review"))
+    assert any("新しい記録" in content(b) for b in dom.getElementsByTagName("button"))
