@@ -70,7 +70,7 @@ import chat_jobs as jobs
 from app.core.auth import Actor
 assert Path(jobs.__file__).resolve().is_relative_to(code)
 assert callable(jobs.handler)
-assert not any(Path(code, name).exists() for name in ("decision.py", "completion.py", "runtime.py", "manifest.json"))
+assert not any(Path(code, name).exists() for name in ("decision.py", "completion.py", "model_runtime.py", "manifest.json"))
 viewer = Actor("consumer", frozenset(), frozenset(), False, False)
 result = jobs.ask("APIキーを発行する手順を教えて", lambda: [], viewer, lambda *_: {})
 assert result["kind"] == "manual" and result["keys"]

@@ -27,7 +27,7 @@ def test_boundary_checker_rejects_cross_layer_imports():
         ("packages/model/src/completion.py", "import chat_jobs as jobs", "エージェント"),
         ("packages/agent/src/chat_retrieval.py", "from web_app import chat_views", "フロント"),
         ("packages/agent/src/chat_retrieval.py", "import tools.packaging.build_chat", "開発ツール"),
-        ("packages/model/src/runtime.py", "import aws_cdk", "インフラ"),
+        ("packages/model/src/model_runtime.py", "import aws_cdk", "インフラ"),
         ("tools/packaging/build_chat.py", "from packages.backend.tests import conftest", "テスト"),
     )
     for path, source, target in cases:
@@ -44,7 +44,7 @@ def test_boundary_checker_accepts_supported_collaboration():
             "packages/agent/src/chat_retrieval.py",
             "from packages.frontend.src.web_app.content.guide_content import GUIDES",
         ),
-        ("packages/model/src/completion.py", "import runtime"),
+        ("packages/model/src/completion.py", "import model_runtime"),
     ):
         assert dependency_violations(Path(path), source) == []
 

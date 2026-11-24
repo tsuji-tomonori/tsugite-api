@@ -23,7 +23,7 @@ def stage():
         if target.exists():
             shutil.rmtree(target)
         target.mkdir(parents=True)
-        for name in (entry, "runtime.py", "manifest.json"):
+        for name in (entry, "model_runtime.py", "manifest.json"):
             shutil.copy2(MODELS / name, target)
         shutil.copy2(ROOT / "packages/backend/src/app/core/log_record.py", target)
 

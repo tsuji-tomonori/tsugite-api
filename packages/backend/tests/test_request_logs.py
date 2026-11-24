@@ -220,7 +220,7 @@ def test_packaged_model_reports_weight_repair(tmp_path, monkeypatch, capsys):
         ).read_bytes()
     package = tmp_path / "chat-decision"
     monkeypatch.syspath_prepend(str(package))
-    spec = importlib.util.spec_from_file_location("model_runtime", package / "runtime.py")
+    spec = importlib.util.spec_from_file_location("model_runtime", package / "model_runtime.py")
     runtime = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(runtime)
     monkeypatch.setenv("MODEL_ROLE", "decision")

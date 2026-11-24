@@ -513,7 +513,7 @@ MUTATIONS = (
     Mutation(
         "model",
         "取得したモデルのチェックサムを検証しない",
-        "packages/model/src/runtime.py",
+        "packages/model/src/model_runtime.py",
         'if "sha256" in item:',
         "if False:",
         "packages/model/tests/test_model_workers.py::test_model_download_verifies_digest_before_reuse",
