@@ -57,11 +57,14 @@ def test_direct_members_have_aligned_table_columns(portal_module):
     """直接所属の利用者をメールアドレス・名前・担当ロールに分け、管理者にだけ操作列を表示する。"""
     data = directory()
     data["admin"] = True
-    data["users"] = [{"subject": "bob", "username": "bob"}]
+    data["users"] = [{"subject": "bob", "username": "legacy-bob"}]
     data["memberships"] = [
         {
             "subject": "alice",
-            "username": "long.alias@example.test",
+            "username": "alice",
+            "email": "long.alias@example.test",
+            "full_name": "高橋 美咲",
+            "display_name": "みさき",
             "unit_id": "p",
             "title": "在庫担当",
             "leader": True,
@@ -81,17 +84,20 @@ def test_direct_members_have_aligned_table_columns(portal_module):
     ]
     first, second = table.getElementsByTagName("tbody")[0].getElementsByTagName("tr")
     for row, email, name, role, subject in (
-        (first, "long.alias@example.test", "—", "リーダー", "alice"),
-        (second, "—", "bob", "メンバー", "bob"),
+        (first, "long.alias@example.test", "みさき", "リーダー", "alice"),
+        (second, "—", "—", "メンバー", "bob"),
     ):
         cells = row.getElementsByTagName("td")
         assert len(cells) == 4
-        assert [cell.firstChild.data for cell in cells[:2]] == [email, name]
+        assert cells[0].firstChild.data == email
+        assert cells[1].getElementsByTagName("span")[0].firstChild.data == name
         assert cells[2].getElementsByTagName("strong")[0].firstChild.data == role
         assert cells[3].getElementsByTagName("a")[0].getAttribute("href") == (
             "#/projects/member/p/" + subject
         )
         assert cells[3].getElementsByTagName("button")[0].firstChild.data == "所属を解除"
+    assert "高橋 美咲" in first.getElementsByTagName("td")[1].toxml()
+    assert "ログイン名 legacy-bob" in second.getElementsByTagName("td")[1].toxml()
     assert "在庫担当" in first.getElementsByTagName("td")[2].toxml()
 
     data["admin"] = False

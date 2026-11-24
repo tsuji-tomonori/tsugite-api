@@ -29,6 +29,13 @@ def test_access_boundaries(tmp_path, request):
     )
     template.resource_count_is("AWS::EC2::NatGateway", 0)
     template.resource_count_is("AWS::DSQL::Cluster", 1)
+    (schema,) = template.find_resources(
+        "AWS::CloudFormation::CustomResource", {"Properties": {"Revision": Match.any_value()}}
+    )
+    functions = template.find_resources("AWS::Lambda::Function")
+    for handler in ("app.main.handler", "app.authorizer.handler"):
+        (runtime,) = (f for f in functions.values() if f["Properties"].get("Handler") == handler)
+        assert schema in runtime["DependsOn"]
     template.has_resource_properties(
         "AWS::S3::Bucket",
         {

@@ -18,6 +18,8 @@ SCREENS = frozenset(
         "metrics",
         "logs",
         "members",
+        "profile",
+        "member-profile",
         "notifications",
         "alerts",
         "catalog",

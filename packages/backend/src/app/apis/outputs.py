@@ -100,12 +100,30 @@ class Unread(TypedDict):
     unread: int
 
 
+#: 所属先で表示する利用者の情報
+class PersonNames(TypedDict):
+    #: メールアドレス
+    email: str | None
+    #: 氏名
+    full_name: str | None
+    #: 表示名
+    display_name: str | None
+
+
 #: 利用者の識別情報
-class Person(TypedDict):
+class Person(PersonNames):
     #: 対象利用者の識別子
     subject: str
     #: ログイン名
     username: str
+
+
+#: 編集用の利用者プロフィール
+class MemberProfile(PersonNames):
+    #: 利用者の識別子
+    subject: str
+    #: 更新時に照合する版番号
+    revision: int
 
 
 #: ポータル利用者

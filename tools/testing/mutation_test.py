@@ -25,6 +25,22 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
+        "member-profile",
+        "氏名と表示名の更新で監査イベントを書き込まない",
+        "packages/backend/src/app/apis/governance/profiles.py",
+        'member_event(db, request, actor, action, subject, ", ".join(changes))',
+        "pass",
+        "packages/backend/tests/test_member_profiles.py::test_profile_edits_filter_directory_and_audit",
+    ),
+    Mutation(
+        "member-profile",
+        "所属一覧で名前と独立したメールアドレスを無視する",
+        "packages/frontend/src/web_app/workspace_members.py",
+        'email = person.get("email")',
+        "email = None",
+        "packages/frontend/tests/test_workspace_screens.py::test_direct_members_have_aligned_table_columns",
+    ),
+    Mutation(
         "audit-scope",
         "本人のアクセスログに同じプロジェクトの別人の呼び出しを含める",
         "packages/backend/src/app/apis/governance/observability.py",

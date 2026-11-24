@@ -40,7 +40,10 @@ def audit(
         if actor.leads:
             calls = select(AccessLog.request_id).where(led_calls(units(db), actor.leads))
             call_scope = call_scope | Event.request_id.in_(calls)
-        stmt = stmt.where((~invocation & business_scope) | (invocation & call_scope))
+        stmt = stmt.where(
+            ~Event.action.startswith("profile."),
+            (~invocation & business_scope) | (invocation & call_scope),
+        )
     if until:
         stmt = stmt.where(Event.at <= until.astimezone(UTC))
     if asset_id:
