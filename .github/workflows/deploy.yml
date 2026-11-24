@@ -42,6 +42,8 @@ jobs:
   deploy:
     if: needs.verify-merge.outputs.merged == 'true'
     needs: verify-merge
+    outputs:
+      deployed: ${{ steps.current.outputs.deploy }}
     environment: main
     runs-on: ubuntu-latest
     timeout-minutes: 60
@@ -106,3 +108,10 @@ jobs:
       - name: Deploy the CDK stack and run its database migration
         if: steps.current.outputs.deploy == 'true'
         run: uv run --locked --all-packages python -m tools.operations.manage deploy --require-approval never
+
+  deployed-e2e:
+    needs: deploy
+    if: needs.deploy.outputs.deployed == 'true'
+    permissions:
+      contents: read
+    uses: ./.github/workflows/deployed-e2e.yml

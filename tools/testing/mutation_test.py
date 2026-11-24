@@ -25,6 +25,14 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
+        "deployed-e2e",
+        "実環境でログインした利用者の識別子を照合しない",
+        "tests/e2e/deployed/account.py",
+        'and profile.get("subject") == subject',
+        "and True",
+        "tools/tests/test_deployed_account.py::test_only_expected_consumer",
+    ),
+    Mutation(
         "audit-scope",
         "本人のアクセスログに同じプロジェクトの別人の呼び出しを含める",
         "packages/backend/src/app/apis/governance/observability.py",
