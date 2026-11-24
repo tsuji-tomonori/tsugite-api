@@ -4,9 +4,9 @@
 
 GET `/api/workspace`
 
-[API一覧](../README.md) · [CRUD一覧](../crud.md)
+[API一覧](README.md) · [CRUD一覧](../db/crud.md)
 
-共通 · `workspace_api_workspace_get` · [workspace:110](../../../packages/backend/src/app/apis/governance/directory.py#L110)
+共通 · `workspace_api_workspace_get` · [workspace:115](../../../packages/backend/src/app/apis/governance/directory.py#L115)
 
 ## 入力
 
@@ -22,14 +22,14 @@ GET `/api/workspace`
 
 | ステータス | 説明 | 形式・条件 | スキーマ |
 | --- | --- | --- | --- |
-| 200 | 正常に処理できました | application/json | [組織構成と利用者の所属一覧（Workspace）](../schemas.md#workspace) |
+| 200 | 正常に処理できました | application/json | [組織構成と利用者の所属一覧（Workspace）](../db/schemas.md#workspace) |
 
 ### 200 application/json の項目
 
 | 項目の和名 | 物理名 | 指定 | 型・制約 |
 | --- | --- | --- | --- |
 | 全体管理者か | admin | 必須 | 真偽値 |
-| 部署・プロジェクトの一覧 | units | 必須 | 配列 / [部署・プロジェクトの登録情報（Unit）](../schemas.md#unit) |
+| 部署・プロジェクトの一覧 | units | 必須 | 配列 / [部署・プロジェクトの登録情報（Unit）](../db/schemas.md#unit) |
 | 部署・プロジェクトの識別子 | units[].id | 必須 | 文字列 |
 | 組織の種類（部署・プロジェクト） | units[].kind | 必須 | 文字列、指定値 部署（`department`）、プロジェクト（`project`） |
 | 部署・プロジェクト名 | units[].name | 必須 | 文字列 |
@@ -37,19 +37,25 @@ GET `/api/workspace`
 | 組織の利用を停止中か | units[].stopped | 必須 | 真偽値 |
 | 管理権限を持つ組織 | leads | 必須 | 配列 / 文字列 |
 | 自分が所属する組織 | my_units | 必須 | 配列 / 文字列 |
-| 利用者と組織の所属関係 | memberships | 必須 | 配列 / [利用者の所属情報（Affiliation）](../schemas.md#affiliation) |
+| 利用者と組織の所属関係 | memberships | 必須 | 配列 / [利用者の所属情報（Affiliation）](../db/schemas.md#affiliation) |
+| メールアドレス | memberships[].email | 必須 | 文字列 または 空値 |
+| 氏名 | memberships[].full_name | 必須 | 文字列 または 空値 |
+| 表示名 | memberships[].display_name | 必須 | 文字列 または 空値 |
 | 対象利用者の識別子 | memberships[].subject | 必須 | 文字列 |
 | ログイン名 | memberships[].username | 必須 | 文字列 |
 | 部署・プロジェクトの識別子 | memberships[].unit_id | 必須 | 文字列 |
 | 役職名 | memberships[].title | 必須 | 文字列 |
 | 所属先の管理者か | memberships[].leader | 必須 | 真偽値 |
 | 所属が有効か | memberships[].active | 任意 | 真偽値 |
-| 参照できる利用者 | users | 必須 | 配列 / [利用者の識別情報（Person）](../schemas.md#person) |
+| 参照できる利用者 | users | 必須 | 配列 / [利用者の識別情報（Person）](../db/schemas.md#person) |
+| メールアドレス | users[].email | 必須 | 文字列 または 空値 |
+| 氏名 | users[].full_name | 必須 | 文字列 または 空値 |
+| 表示名 | users[].display_name | 必須 | 文字列 または 空値 |
 | 対象利用者の識別子 | users[].subject | 必須 | 文字列 |
 | ログイン名 | users[].username | 必須 | 文字列 |
 | 役職一覧 | titles | 必須 | 配列 / 文字列 |
 
-実装・認証依存で送出し得るHTTPエラー（エラーの詳細を示す `detail` を含むJSON）　401, 403。
+実装・認証依存で送出し得るHTTPエラー（エラーの詳細を示す `detail` を含むJSON）　401, 403, 503。
 
 AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugite-Origin` を付与します。共通ミドルウェアは通常のAPI応答にリクエスト識別子 `X-Request-ID` とキャッシュへの保存を禁止する `Cache-Control: no-store` を付けます。Lambdaのオリジン検証に失敗すると403、DBの競合は409、DB操作エラーは409または503です。
 
@@ -59,15 +65,18 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| [利用者の組織所属](../database.md#affiliations) | affiliations | R | 検索 | select | [roster:75](../../../packages/backend/src/app/apis/governance/directory.py#L75) |
-| [利用者の組織所属](../database.md#affiliations) | affiliations | R | 検索 | select | [populate:69](../../../packages/backend/src/app/core/workspace.py#L69) |
-| [組織階層](../database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
-| [ポータル利用者](../database.md#portal_members) | portal_members | R | 検索 | select | [roster:69](../../../packages/backend/src/app/apis/governance/directory.py#L69) |
-| [ポータル利用者](../database.md#portal_members) | portal_members | R | 検索 | select | [roster:79](../../../packages/backend/src/app/apis/governance/directory.py#L79) |
-| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [roster:84](../../../packages/backend/src/app/apis/governance/directory.py#L84) |
-| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [roster:96](../../../packages/backend/src/app/apis/governance/directory.py#L96) |
-| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:121](../../../packages/backend/src/app/core/auth.py#L121) |
-| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:56](../../../packages/backend/src/app/core/workspace.py#L56) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [roster:76](../../../packages/backend/src/app/apis/governance/directory.py#L76) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:105](../../../packages/backend/src/app/core/workspace.py#L105) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:30](../../../packages/backend/src/app/core/workspace.py#L30) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:54](../../../packages/backend/src/app/core/workspace.py#L54) |
+| [利用者プロフィール](../db/database.md#portal_member_profiles) | portal_member_profiles | R | 検索 | select | [directory_profiles:36](../../../packages/backend/src/app/core/member_profiles.py#L36) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 検索 | select | [roster:70](../../../packages/backend/src/app/apis/governance/directory.py#L70) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 検索 | select | [roster:80](../../../packages/backend/src/app/apis/governance/directory.py#L80) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [roster:85](../../../packages/backend/src/app/apis/governance/directory.py#L85) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [roster:101](../../../packages/backend/src/app/apis/governance/directory.py#L101) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:123](../../../packages/backend/src/app/core/auth.py#L123) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 検索 | select | [directory_accounts:44](../../../packages/backend/src/app/core/member_profiles.py#L44) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:91](../../../packages/backend/src/app/core/workspace.py#L91) |
 
 ### AWSサービス
 
@@ -87,9 +96,14 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 - `app.core.auth.keyset`
 - `app.core.config.local_demo`
 - `app.core.config.settings`
+- `app.core.member_profiles.directory_accounts`
+- `app.core.member_profiles.directory_fields`
+- `app.core.member_profiles.directory_profiles`
 - `app.core.workspace.ancestry`
 - `app.core.workspace.configured_projects`
 - `app.core.workspace.populate`
+- `app.core.workspace.project_ids`
+- `app.core.workspace.retired_units`
 - `app.core.workspace.units`
 - `tsugite_db.session.engine`
 - `tsugite_db.session.session`

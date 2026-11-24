@@ -4,9 +4,9 @@
 
 GET `/api/metrics`
 
-[API一覧](../README.md) · [CRUD一覧](../crud.md)
+[API一覧](README.md) · [CRUD一覧](../db/crud.md)
 
-共通 · `metrics_api_metrics_get` · [metrics:170](../../../packages/backend/src/app/apis/governance/observability.py#L170)
+共通 · `metrics_api_metrics_get` · [metrics:242](../../../packages/backend/src/app/apis/governance/observability.py#L242)
 
 ## 入力
 
@@ -31,8 +31,8 @@ GET `/api/metrics`
 
 | ステータス | 説明 | 形式・条件 | スキーマ |
 | --- | --- | --- | --- |
-| 200 | 正常に処理できました | application/json | [期間別のAPI利用統計（Metrics）](../schemas.md#metrics) |
-| 422 | 入力内容が条件を満たしていません | application/json | [リクエスト入力エラー（HTTPValidationError）](../schemas.md#httpvalidationerror) |
+| 200 | 正常に処理できました | application/json | [期間別のAPI利用統計（Metrics）](../db/schemas.md#metrics) |
+| 422 | 入力内容が条件を満たしていません | application/json | [リクエスト入力エラー（HTTPValidationError）](../db/schemas.md#httpvalidationerror) |
 
 ### 200 application/json の項目
 
@@ -41,7 +41,7 @@ GET `/api/metrics`
 | 集計開始日時 | start | 必須 | 文字列、形式 `"date-time"` |
 | 集計終了日時 | end | 必須 | 文字列、形式 `"date-time"` |
 | 集計間隔（分） | minutes | 必須 | 整数 |
-| 集計区間ごとの実績 | points | 必須 | 配列 / [集計区間ごとの呼び出し実績（MetricPoint）](../schemas.md#metricpoint) |
+| 集計区間ごとの実績 | points | 必須 | 配列 / [集計区間ごとの呼び出し実績（MetricPoint）](../db/schemas.md#metricpoint) |
 | 集計区間の開始日時 | points[].at | 必須 | 文字列、形式 `"date-time"` |
 | 呼び出し件数 | points[].calls | 必須 | 整数 |
 | 成功応答件数 | points[].success | 必須 | 整数 |
@@ -54,14 +54,14 @@ GET `/api/metrics`
 
 | 項目の和名 | 物理名 | 指定 | 型・制約 |
 | --- | --- | --- | --- |
-| 入力エラーの明細一覧 | detail | 任意 | 配列 / [入力エラーの項目別明細（ValidationError）](../schemas.md#validationerror) |
+| 入力エラーの明細一覧 | detail | 任意 | 配列 / [入力エラーの項目別明細（ValidationError）](../db/schemas.md#validationerror) |
 | 入力エラーの発生箇所 | detail[].loc | 必須 | 配列 / 文字列 または 整数 |
 | 入力エラーの説明 | detail[].msg | 必須 | 文字列 |
 | 入力エラーの分類コード | detail[].type | 必須 | 文字列 |
 | エラーになった入力値 | detail[].input | 任意 | 任意の型 |
 | 入力エラーの補足情報 | detail[].ctx | 任意 | オブジェクト |
 
-実装・認証依存で送出し得るHTTPエラー（エラーの詳細を示す `detail` を含むJSON）　401, 403, 422。
+実装・認証依存で送出し得るHTTPエラー（エラーの詳細を示す `detail` を含むJSON）　401, 403, 422, 503。
 
 AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugite-Origin` を付与します。共通ミドルウェアは通常のAPI応答にリクエスト識別子 `X-Request-ID` とキャッシュへの保存を禁止する `Cache-Control: no-store` を付けます。Lambdaのオリジン検証に失敗すると403、DBの競合は409、DB操作エラーは409または503です。
 
@@ -71,12 +71,13 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| [利用者の組織所属](../database.md#affiliations) | affiliations | R | 検索 | select | [populate:69](../../../packages/backend/src/app/core/workspace.py#L69) |
-| [組織階層](../database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
-| [API呼び出し履歴](../database.md#invocation_logs) | invocation_logs | R | 検索 | select | [interval:68](../../../packages/backend/src/app/apis/governance/observability.py#L68) |
-| [API呼び出しと組織の対応](../database.md#invocation_units) | invocation_units | R | 検索 | select | [unit_condition:275](../../../packages/backend/src/app/apis/governance/directory.py#L275) |
-| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:121](../../../packages/backend/src/app/core/auth.py#L121) |
-| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:56](../../../packages/backend/src/app/core/workspace.py#L56) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:105](../../../packages/backend/src/app/core/workspace.py#L105) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:30](../../../packages/backend/src/app/core/workspace.py#L30) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:54](../../../packages/backend/src/app/core/workspace.py#L54) |
+| [API呼び出し履歴](../db/database.md#invocation_logs) | invocation_logs | R | 検索 | select | [interval:98](../../../packages/backend/src/app/apis/governance/observability.py#L98) |
+| [API呼び出しと組織の対応](../db/database.md#invocation_units) | invocation_units | R | 検索 | select | [unit_condition:305](../../../packages/backend/src/app/apis/governance/directory.py#L305) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:123](../../../packages/backend/src/app/core/auth.py#L123) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:91](../../../packages/backend/src/app/core/workspace.py#L91) |
 
 ### AWSサービス
 
@@ -89,6 +90,7 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 - `app.apis.governance.directory.manages`
 - `app.apis.governance.directory.unit_condition`
 - `app.apis.governance.observability.interval`
+- `app.apis.governance.observability.metric_rows`
 - `app.apis.governance.observability.metrics`
 - `app.apis.governance.observability.visible`
 - `app.core.auth.check_member`
@@ -102,6 +104,8 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 - `app.core.workspace.configured_projects`
 - `app.core.workspace.populate`
 - `app.core.workspace.private_project`
+- `app.core.workspace.project_ids`
+- `app.core.workspace.retired_units`
 - `app.core.workspace.units`
 - `tsugite_db.session.engine`
 - `tsugite_db.session.session`

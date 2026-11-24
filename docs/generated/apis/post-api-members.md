@@ -4,9 +4,9 @@
 
 POST `/api/members`
 
-[API一覧](../README.md) · [CRUD一覧](../crud.md)
+[API一覧](README.md) · [CRUD一覧](../db/crud.md)
 
-共通 · `invite_api_members_post` · [invite:111](../../../packages/backend/src/app/apis/governance/members.py#L111)
+共通 · `invite_api_members_post` · [invite:153](../../../packages/backend/src/app/apis/governance/members.py#L153)
 
 ## 入力
 
@@ -20,12 +20,14 @@ POST `/api/members`
 
 | Content-Type | スキーマ |
 | --- | --- |
-| application/json | [ポータル利用者の招待内容（Invitation）](../schemas.md#invitation) |
+| application/json | [ポータル利用者の招待内容（Invitation）](../db/schemas.md#invitation) |
 
 #### application/json の項目
 
 | 項目の和名 | 物理名 | 指定 | 型・制約 |
 | --- | --- | --- | --- |
+| 氏名 | full_name | 任意 | 文字列、最大文字数 `120` または 空値 |
+| 表示名 | display_name | 任意 | 文字列、最大文字数 `80` または 空値 |
 | 招待先メールアドレス | email | 必須 | 文字列、最大文字数 `150`、正規表現 `"^[^\\s@/]+@[^\\s@/]+\\.[^\\s@/]+$"` |
 | 招待先プロジェクトの識別子 | project | 必須 | 文字列 |
 | 利用者の役割 | role | 必須 | 文字列、指定値 利用者（`consumer`）、提供者（`provider`） |
@@ -34,13 +36,16 @@ POST `/api/members`
 
 | ステータス | 説明 | 形式・条件 | スキーマ |
 | --- | --- | --- | --- |
-| 201 | 正常に処理できました | application/json | [利用者の識別情報（Person）](../schemas.md#person) |
-| 422 | 入力内容が条件を満たしていません | application/json | [リクエスト入力エラー（HTTPValidationError）](../schemas.md#httpvalidationerror) |
+| 201 | 正常に処理できました | application/json | [利用者の識別情報（Person）](../db/schemas.md#person) |
+| 422 | 入力内容が条件を満たしていません | application/json | [リクエスト入力エラー（HTTPValidationError）](../db/schemas.md#httpvalidationerror) |
 
 ### 201 application/json の項目
 
 | 項目の和名 | 物理名 | 指定 | 型・制約 |
 | --- | --- | --- | --- |
+| メールアドレス | email | 必須 | 文字列 または 空値 |
+| 氏名 | full_name | 必須 | 文字列 または 空値 |
+| 表示名 | display_name | 必須 | 文字列 または 空値 |
 | 対象利用者の識別子 | subject | 必須 | 文字列 |
 | ログイン名 | username | 必須 | 文字列 |
 
@@ -48,14 +53,14 @@ POST `/api/members`
 
 | 項目の和名 | 物理名 | 指定 | 型・制約 |
 | --- | --- | --- | --- |
-| 入力エラーの明細一覧 | detail | 任意 | 配列 / [入力エラーの項目別明細（ValidationError）](../schemas.md#validationerror) |
+| 入力エラーの明細一覧 | detail | 任意 | 配列 / [入力エラーの項目別明細（ValidationError）](../db/schemas.md#validationerror) |
 | 入力エラーの発生箇所 | detail[].loc | 必須 | 配列 / 文字列 または 整数 |
 | 入力エラーの説明 | detail[].msg | 必須 | 文字列 |
 | 入力エラーの分類コード | detail[].type | 必須 | 文字列 |
 | エラーになった入力値 | detail[].input | 任意 | 任意の型 |
 | 入力エラーの補足情報 | detail[].ctx | 任意 | オブジェクト |
 
-実装・認証依存で送出し得るHTTPエラー（エラーの詳細を示す `detail` を含むJSON）　401, 403, 409, 422。
+実装・認証依存で送出し得るHTTPエラー（エラーの詳細を示す `detail` を含むJSON）　401, 403, 409, 422, 503。
 
 AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugite-Origin` を付与します。共通ミドルウェアは通常のAPI応答にリクエスト識別子 `X-Request-ID` とキャッシュへの保存を禁止する `Cache-Control: no-store` を付けます。Lambdaのオリジン検証に失敗すると403、DBの競合は409、DB操作エラーは409または503です。
 
@@ -65,23 +70,24 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| [利用者の組織所属](../database.md#affiliations) | affiliations | R | 検索 | select | [populate:69](../../../packages/backend/src/app/core/workspace.py#L69) |
-| [監査履歴](../database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [member_event:47](../../../packages/backend/src/app/apis/governance/members.py#L47) |
-| [組織階層](../database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
-| [ポータル利用者](../database.md#portal_members) | portal_members | C | レコードを追加 | db.add | [invite:144](../../../packages/backend/src/app/apis/governance/members.py#L144) |
-| [ポータル利用者](../database.md#portal_members) | portal_members | R | 検索 | select | [invite:116](../../../packages/backend/src/app/apis/governance/members.py#L116) |
-| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [invite:150](../../../packages/backend/src/app/apis/governance/members.py#L150) |
-| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:121](../../../packages/backend/src/app/core/auth.py#L121) |
-| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:56](../../../packages/backend/src/app/core/workspace.py#L56) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:105](../../../packages/backend/src/app/core/workspace.py#L105) |
+| [監査履歴](../db/database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [member_event:57](../../../packages/backend/src/app/apis/governance/members.py#L57) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:30](../../../packages/backend/src/app/core/workspace.py#L30) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:54](../../../packages/backend/src/app/core/workspace.py#L54) |
+| [利用者プロフィール](../db/database.md#portal_member_profiles) | portal_member_profiles | C | レコードを追加 | db.add | [invite:191](../../../packages/backend/src/app/apis/governance/members.py#L191) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | C | レコードを追加 | db.add | [invite:188](../../../packages/backend/src/app/apis/governance/members.py#L188) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 検索 | select | [invite:158](../../../packages/backend/src/app/apis/governance/members.py#L158) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [invite:200](../../../packages/backend/src/app/apis/governance/members.py#L200) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:123](../../../packages/backend/src/app/core/auth.py#L123) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:91](../../../packages/backend/src/app/core/workspace.py#L91) |
 
 ### AWSサービス
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| 利用者・グループの管理（Cognitoユーザープール） | cognito-idp | C | 利用者を作成 | admin_create_user | [invite:123](../../../packages/backend/src/app/apis/governance/members.py#L123) |
-| 利用者・グループの管理（Cognitoユーザープール） | cognito-idp | C | 利用者をグループに追加 | admin_add_user_to_group | [invite:135](../../../packages/backend/src/app/apis/governance/members.py#L135) |
-| 利用者・グループの管理（Cognitoユーザープール） | cognito-idp | D | 利用者を削除 | admin_delete_user | [invite:142](../../../packages/backend/src/app/apis/governance/members.py#L142) |
-| 利用者・グループの管理（Cognitoユーザープール） | cognito-idp | D | 利用者を削除 | admin_delete_user | [invite:152](../../../packages/backend/src/app/apis/governance/members.py#L152) |
+| 利用者・グループの管理（Cognitoユーザープール） | cognito-idp | C | 利用者を作成 | admin_create_user | [invite:165](../../../packages/backend/src/app/apis/governance/members.py#L165) |
+| 利用者・グループの管理（Cognitoユーザープール） | cognito-idp | C | 利用者をグループに追加 | admin_add_user_to_group | [invite:178](../../../packages/backend/src/app/apis/governance/members.py#L178) |
+| 利用者・グループの管理（Cognitoユーザープール） | cognito-idp | D | 招待に失敗した利用者を削除 | admin_delete_user | [undo_invitation:141](../../../packages/backend/src/app/apis/governance/members.py#L141) |
 | 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:53](../../../packages/backend/src/app/core/config.py#L53) |
 
 <details><summary>解析した関数・依存</summary>
@@ -91,6 +97,7 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 - `app.apis.governance.members.member_event`
 - `app.apis.governance.members.pool`
 - `app.apis.governance.members.projects`
+- `app.apis.governance.members.undo_invitation`
 - `app.core.auth.check_member`
 - `app.core.auth.current`
 - `app.core.auth.human`
@@ -98,11 +105,16 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 - `app.core.auth.keyset`
 - `app.core.config.local_demo`
 - `app.core.config.settings`
+- `app.core.member_profiles.directory_fields`
+- `app.core.member_profiles.set_directory_email`
 - `app.core.workspace.ancestry`
 - `app.core.workspace.configured_projects`
 - `app.core.workspace.populate`
+- `app.core.workspace.project_ids`
+- `app.core.workspace.retired_units`
 - `app.core.workspace.units`
 - `tsugite_db.models.new_id`
+- `tsugite_db.models.now`
 - `tsugite_db.session.engine`
 - `tsugite_db.session.session`
 

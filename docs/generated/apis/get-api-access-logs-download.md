@@ -4,9 +4,9 @@
 
 GET `/api/access-logs/download`
 
-[API一覧](../README.md) · [CRUD一覧](../crud.md)
+[API一覧](README.md) · [CRUD一覧](../db/crud.md)
 
-共通 · `download_api_access_logs_download_get` · [download:135](../../../packages/backend/src/app/apis/governance/observability.py#L135)
+共通 · `download_api_access_logs_download_get` · [download:187](../../../packages/backend/src/app/apis/governance/observability.py#L187)
 
 ## 入力
 
@@ -16,7 +16,8 @@ GET `/api/access-logs/download`
 | --- | --- | --- | --- | --- | --- | --- |
 | クエリ | リクエスト識別子 | request_id | 任意 | 文字列、既定値 `""` | form / true | — |
 | クエリ | 次のページの開始位置 | cursor | 任意 | 文字列、既定値 `""` | form / true | — |
-| クエリ | 集計対象の部署・プロジェクト識別子 | unit | 任意 | 文字列、既定値 `""` | form / true | — |
+| クエリ | 本人のアクセスログまたは権限内の監査履歴 | scope | 任意 | 文字列、既定値 `"personal"`、指定値 本人のアクセスログまたは権限内の監査履歴（`personal`）、本人のアクセスログまたは権限内の監査履歴（`audit`） | form / true | — |
+| クエリ | 監査対象の部署・プロジェクト識別子 | unit | 任意 | 文字列、既定値 `""` | form / true | — |
 | クエリ | 集計開始日時 | start | 任意 | 文字列、形式 `"date-time"` または 空値 | form / true | — |
 | クエリ | 集計終了日時 | end | 任意 | 文字列、形式 `"date-time"` または 空値 | form / true | — |
 | クエリ | 対象APIの識別子 | asset_id | 任意 | 文字列、既定値 `""` | form / true | — |
@@ -35,20 +36,20 @@ GET `/api/access-logs/download`
 | 200 | アクセスログ（1行1件のJSON） | application/x-ndjson | 文字列 |
 | 200 | 応答ヘッダー ダウンロード時の保存方法・ファイル名（Content-Disposition） | 保存用のファイル名 | 文字列 |
 | 200 | 応答ヘッダー 次のページの開始位置（X-Next-Cursor） | 次ページがある場合のみ | 文字列 |
-| 422 | 入力内容が条件を満たしていません | application/json | [リクエスト入力エラー（HTTPValidationError）](../schemas.md#httpvalidationerror) |
+| 422 | 入力内容が条件を満たしていません | application/json | [リクエスト入力エラー（HTTPValidationError）](../db/schemas.md#httpvalidationerror) |
 
 ### 422 application/json の項目
 
 | 項目の和名 | 物理名 | 指定 | 型・制約 |
 | --- | --- | --- | --- |
-| 入力エラーの明細一覧 | detail | 任意 | 配列 / [入力エラーの項目別明細（ValidationError）](../schemas.md#validationerror) |
+| 入力エラーの明細一覧 | detail | 任意 | 配列 / [入力エラーの項目別明細（ValidationError）](../db/schemas.md#validationerror) |
 | 入力エラーの発生箇所 | detail[].loc | 必須 | 配列 / 文字列 または 整数 |
 | 入力エラーの説明 | detail[].msg | 必須 | 文字列 |
 | 入力エラーの分類コード | detail[].type | 必須 | 文字列 |
 | エラーになった入力値 | detail[].input | 任意 | 任意の型 |
 | 入力エラーの補足情報 | detail[].ctx | 任意 | オブジェクト |
 
-実装・認証依存で送出し得るHTTPエラー（エラーの詳細を示す `detail` を含むJSON）　401, 403, 422。
+実装・認証依存で送出し得るHTTPエラー（エラーの詳細を示す `detail` を含むJSON）　401, 403, 422, 503。
 
 AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugite-Origin` を付与します。共通ミドルウェアは通常のAPI応答にリクエスト識別子 `X-Request-ID` とキャッシュへの保存を禁止する `Cache-Control: no-store` を付けます。Lambdaのオリジン検証に失敗すると403、DBの競合は409、DB操作エラーは409または503です。
 
@@ -58,12 +59,14 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| [利用者の組織所属](../database.md#affiliations) | affiliations | R | 検索 | select | [populate:69](../../../packages/backend/src/app/core/workspace.py#L69) |
-| [組織階層](../database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
-| [API呼び出し履歴](../database.md#invocation_logs) | invocation_logs | R | 検索 | select | [interval:68](../../../packages/backend/src/app/apis/governance/observability.py#L68) |
-| [API呼び出しと組織の対応](../database.md#invocation_units) | invocation_units | R | 検索 | select | [unit_condition:275](../../../packages/backend/src/app/apis/governance/directory.py#L275) |
-| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:121](../../../packages/backend/src/app/core/auth.py#L121) |
-| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:56](../../../packages/backend/src/app/core/workspace.py#L56) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:105](../../../packages/backend/src/app/core/workspace.py#L105) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:30](../../../packages/backend/src/app/core/workspace.py#L30) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:54](../../../packages/backend/src/app/core/workspace.py#L54) |
+| [API呼び出し履歴](../db/database.md#invocation_logs) | invocation_logs | R | 検索 | select | [interval:98](../../../packages/backend/src/app/apis/governance/observability.py#L98) |
+| [API呼び出しと組織の対応](../db/database.md#invocation_units) | invocation_units | R | 検索 | select | [unit_condition:305](../../../packages/backend/src/app/apis/governance/directory.py#L305) |
+| [API呼び出しと組織の対応](../db/database.md#invocation_units) | invocation_units | R | 検索 | select | [led_calls:12](../../../packages/backend/src/app/core/log_visibility.py#L12) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:123](../../../packages/backend/src/app/core/auth.py#L123) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:91](../../../packages/backend/src/app/core/workspace.py#L91) |
 
 ### AWSサービス
 
@@ -77,8 +80,8 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 - `app.apis.governance.directory.unit_condition`
 - `app.apis.governance.observability.download`
 - `app.apis.governance.observability.interval`
+- `app.apis.governance.observability.log_condition`
 - `app.apis.governance.observability.log_data`
-- `app.apis.governance.observability.visible`
 - `app.core.auth.check_member`
 - `app.core.auth.current`
 - `app.core.auth.human`
@@ -86,10 +89,15 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 - `app.core.auth.keyset`
 - `app.core.config.local_demo`
 - `app.core.config.settings`
+- `app.core.diagnostics.exported_invocation`
+- `app.core.log_record.identifier`
+- `app.core.log_record.log_record`
+- `app.core.log_visibility.led_calls`
 - `app.core.workspace.ancestry`
 - `app.core.workspace.configured_projects`
 - `app.core.workspace.populate`
-- `app.core.workspace.private_project`
+- `app.core.workspace.project_ids`
+- `app.core.workspace.retired_units`
 - `app.core.workspace.units`
 - `tsugite_db.session.engine`
 - `tsugite_db.session.session`
