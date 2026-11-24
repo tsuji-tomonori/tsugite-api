@@ -32,8 +32,8 @@ dev = ["pytest>=9", "pytest-given", "ruff", "pytest-cov", "pyright", "mypy", "py
 addopts = ["-p", "tests.support.pytest_cases"]
 junit_family = "xunit1"
 markers = ["case_detail(text): パラメーターごとの条件や期待結果を日本語で示す"]
-pythonpath = ["packages/agent/src", "packages/backend/src", "packages/database/src", "packages/infra", "."]
-testpaths = ["packages/agent/tests", "tests/architecture", "packages/backend/tests", "packages/frontend/tests", "packages/infra/tests", "packages/database/tests", "tests/e2e/browser", "tools/tests"]
+pythonpath = ["packages/sample_api/src", "packages/agent/src", "packages/backend/src", "packages/database/src", "."]
+testpaths = ["packages/sample_api/tests", "packages/agent/tests", "tests/architecture", "packages/backend/tests", "packages/frontend/tests", "packages/infra/tests", "packages/database/tests", "tests/e2e/browser", "tools/tests"]
 
 [tool.coverage.run]
 branch = true
@@ -43,6 +43,7 @@ source = [
     "packages/database/src/tsugite_db",
     "packages/frontend/src/web_app",
     "packages/infra",
+    "packages/sample_api/src/sample_api",
     "packages/agent/src/agent",
 ]
 omit = ["*/tests/*", "*/cdk.out/*", "*/__pycache__/*"]

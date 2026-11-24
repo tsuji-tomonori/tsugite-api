@@ -33,6 +33,8 @@ BACKEND = "packages/backend/tests"
 DATABASE = "packages/database/tests"
 #: フロントエンド
 FRONTEND = "packages/frontend/tests"
+#: サンプルAPI
+SAMPLE_API = "packages/sample_api/tests"
 #: インフラ
 INFRA = "packages/infra/tests"
 FULL = {"full"}
@@ -46,6 +48,11 @@ def affected(path, suites):
             return {suite, "types"} if suite in {AGENT, FRONTEND} else {suite}
     if path.startswith("docs/requirements/items/"):
         return FULL
+    if (
+        path.startswith(("packages/sample_api/", "docs/generated/sample-api/"))
+        or path == "tools/design/sample_openapi.py"
+    ):
+        return {SAMPLE_API, INFRA, BACKEND, BROWSER, "design", "audit", "aws"}
     if path.startswith("docs/generated/infra/") or path == "tools/design/infrastructure.py":
         return {TOOLS, "infra_design"}
     if path.startswith("docs/generated/"):

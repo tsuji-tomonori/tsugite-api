@@ -10,7 +10,7 @@
 | --- | --- |
 | 全体の最低行カバレッジ | 84%以上 |
 | 比較元からの低下幅 | 1ポイント以内 |
-| 計測対象 | `packages/backend/src/app`、`packages/database/src/tsugite_db`、`packages/frontend/src/web_app`、`packages/infra`、`packages/agent/src/agent` |
+| 計測対象 | `packages/backend/src/app`、`packages/database/src/tsugite_db`、`packages/frontend/src/web_app`、`packages/infra`、`packages/sample_api/src/sample_api`、`packages/agent/src/agent` |
 | 計測から除くパターン | `*/tests/*`、`*/cdk.out/*`、`*/__pycache__/*` |
 
 ## 分野別の変更と必要な検査
@@ -19,10 +19,11 @@
 
 | 分野 | 変更ファイルの例 | 合格が必要なテスト | 追加の検査・生成 |
 | --- | --- | --- | --- |
+| サンプルAPI | `packages/sample_api/src/sample_api/database.py` | サンプルAPI、アーキテクチャ、バックエンド、インフラ、ブラウザーE2E | Ruff（書式・静的解析）、API設計書・契約の生成、依存関係・CDK監査、CDK合成・インフラ文書生成、AWSエミュレーターE2E |
 | エージェント・推論モデル | `packages/agent/src/agent/jobs.py` | エージェント・推論モデル、アーキテクチャ、バックエンド、インフラ、ブラウザーE2E | Ruff（書式・静的解析）、型検査、依存関係・CDK監査、CDK合成・インフラ文書生成、AWSエミュレーターE2E |
 | バックエンド | `packages/backend/src/app/apis/catalog/apply.py` | エージェント・推論モデル、アーキテクチャ、バックエンド、ブラウザーE2E、開発ツール | Ruff（書式・静的解析）、型検査、API設計書・契約の生成、CDK合成・インフラ文書生成、AWSエミュレーターE2E |
 | フロントエンド | `packages/frontend/src/web_app/actions/activity.py` | アーキテクチャ、フロントエンド、ブラウザーE2E | Ruff（書式・静的解析）、型検査、CDK合成・インフラ文書生成、AWSエミュレーターE2E |
-| インフラ | `packages/infra/src/infra_app/bindings.py` | アーキテクチャ、インフラ | Ruff（書式・静的解析）、依存関係・CDK監査、CDK合成・インフラ文書生成、AWSエミュレーターE2E |
+| インフラ | `packages/infra/src/components/bindings.py` | アーキテクチャ、インフラ | Ruff（書式・静的解析）、依存関係・CDK監査、CDK合成・インフラ文書生成、AWSエミュレーターE2E |
 | データベース | `packages/database/src/tsugite_db/design_names.py` | エージェント・推論モデル、アーキテクチャ、バックエンド、データベース、ブラウザーE2E、開発ツール | Ruff（書式・静的解析）、型検査、API設計書・契約の生成、CDK合成・インフラ文書生成、AWSエミュレーターE2E |
 
 ## CIの検査項目と実行条件
@@ -41,18 +42,19 @@
 | [task types](../../../.github/workflows/check.yml#L109) | 設定対象のPyrightとmypyの型検査がともに通る。 | `steps.scope.outputs.types == 'true'` |
 | [task test:hooks](../../../.github/workflows/check.yml#L112) | Gitフックが機密情報を含むコミットや保護対象ブランチへの不正なプッシュを拒否する。 | `steps.scope.outputs.hooks == 'true'` |
 | [task synth](../../../.github/workflows/check.yml#L121) | 配布物をビルドし、CDKからCloudFormationテンプレートを合成できる。 | `steps.scope.outputs.synth == 'true'` |
-| [同じロックから再ビルドしたLambda LayerのSHA-256を照合](../../../.github/workflows/check.yml#L124) | 依存ロックまたはビルダーの変更時は、再生成した3つのLambda LayerのSHA-256が一致する。 | `steps.scope.outputs.synth == 'true'` |
+| [同じロックから再ビルドしたLambda LayerのSHA-256を照合](../../../.github/workflows/check.yml#L124) | 依存ロックまたはビルダーの変更時は、再生成したLambda依存パッケージのSHA-256が一致する。 | `steps.scope.outputs.synth == 'true'` |
 | [uv run --locked --all-packages python tools/packaging/build_frontend.py](../../../.github/workflows/check.yml#L135) | フロントエンドの配布物を生成できる。 | `steps.scope.outputs.frontend_build == 'true'` |
 | [task docs:infra:render](../../../.github/workflows/check.yml#L138) | 合成済みテンプレートからリソース一覧とパラメーターシートを生成できる。 | `steps.scope.outputs.synth == 'true'` |
 | [task contracts docs:api](../../../.github/workflows/check.yml#L141) | OpenAPI・テーブル定義・API設計書を生成できる。 | `steps.scope.outputs.design == 'true'` |
-| [task audit](../../../.github/workflows/check.yml#L144) | CDKの監査結果を出力し、Lambda実行時依存に対するpip-auditが通る。 | `steps.scope.outputs.audit == 'true'` |
-| [対象テストを実行し、全体カバレッジを集計](../../../.github/workflows/check.yml#L147) | 差分に応じて選ばれたテストが成功し、比較元の計測結果と合わせて全体を集計できる。 | `steps.scope.outputs.suites != '[]'` |
-| [task test:aws](../../../.github/workflows/check.yml#L152) | AWSエミュレーターで対象のE2Eが成功する。 | `${{ !cancelled() && (success() \|\| steps.suites.outcome == 'failure') && steps.scope.outputs.aws == 'true' && steps.scope.outputs.aws_portal_only != 'true' }}` |
-| [task test:aws -- -k test_cognito_browser](../../../.github/workflows/check.yml#L155) | ポータルに限定した検証ではCognitoを使うブラウザーテストが成功する。 | `${{ !cancelled() && (success() \|\| steps.suites.outcome == 'failure') && steps.scope.outputs.aws_portal_only == 'true' }}` |
-| [行カバレッジをブランチルールと照合](../../../.github/workflows/check.yml#L158) | 全体の行カバレッジが、対象ブランチの下限と許容低下幅を満たす。 | `steps.scope.outputs.coverage == 'true'` |
-| [カバレッジと成果物へのリンクをCIの概要に表示](../../../.github/workflows/check.yml#L176) | 行カバレッジとXML成果物へのリンクをCIの概要で確認できる。 | `steps.coverage_artifact.outcome == 'success'` |
-| [今回のJUnit・画面証跡から要件別の合否を判定](../../../.github/workflows/check.yml#L185) | 今回の実行対象となった要件について、JUnit結果と指定された証跡から合否を判定できる。 | `${{ !cancelled() }}` |
-| [Build screenshot report](../../../.github/workflows/check.yml#L201) | JUnit結果とスクリーンショットからレポートを生成できる。 | `${{ !cancelled() && steps.scope.outputs.report == 'true' && hashFiles('artifacts/junit.xml') != '' }}` |
+| [商品別OpenAPIの生成と差分検査](../../../.github/workflows/check.yml#L144) | 商品別のOpenAPI YAMLをFastAPIから再生成し、コミット済みの仕様と一致する。 | `steps.scope.outputs.design == 'true'` |
+| [task audit](../../../.github/workflows/check.yml#L150) | CDKの監査結果を出力し、Lambda実行時依存に対するpip-auditが通る。 | `steps.scope.outputs.audit == 'true'` |
+| [対象テストを実行し、全体カバレッジを集計](../../../.github/workflows/check.yml#L153) | 差分に応じて選ばれたテストが成功し、比較元の計測結果と合わせて全体を集計できる。 | `steps.scope.outputs.suites != '[]'` |
+| [task test:aws](../../../.github/workflows/check.yml#L158) | AWSエミュレーターで対象のE2Eが成功する。 | `${{ !cancelled() && (success() \|\| steps.suites.outcome == 'failure') && steps.scope.outputs.aws == 'true' && steps.scope.outputs.aws_portal_only != 'true' }}` |
+| [task test:aws -- -k test_cognito_browser](../../../.github/workflows/check.yml#L161) | ポータルに限定した検証ではCognitoを使うブラウザーテストが成功する。 | `${{ !cancelled() && (success() \|\| steps.suites.outcome == 'failure') && steps.scope.outputs.aws_portal_only == 'true' }}` |
+| [行カバレッジをブランチルールと照合](../../../.github/workflows/check.yml#L164) | 全体の行カバレッジが、対象ブランチの下限と許容低下幅を満たす。 | `steps.scope.outputs.coverage == 'true'` |
+| [カバレッジと成果物へのリンクをCIの概要に表示](../../../.github/workflows/check.yml#L182) | 行カバレッジとXML成果物へのリンクをCIの概要で確認できる。 | `steps.coverage_artifact.outcome == 'success'` |
+| [今回のJUnit・画面証跡から要件別の合否を判定](../../../.github/workflows/check.yml#L191) | 今回の実行対象となった要件について、JUnit結果と指定された証跡から合否を判定できる。 | `${{ !cancelled() }}` |
+| [Build screenshot report](../../../.github/workflows/check.yml#L207) | JUnit結果とスクリーンショットからレポートを生成できる。 | `${{ !cancelled() && steps.scope.outputs.report == 'true' && hashFiles('artifacts/junit.xml') != '' }}` |
 
 ### 静的解析の設定
 
@@ -67,6 +69,14 @@
 ## テストが確認する条件と期待結果
 
 分野ごとにテスト関数を1行ずつ掲載します。条件別の確認内容はテストに付けた日本語の説明から取得します。
+
+### サンプルAPI（3項目）
+
+| 確認内容 | 条件別の確認内容 | テスト定義 |
+| --- | --- | --- |
+| 全商品の出品仕様がFastAPIと一致し、再生成した各YAMLを同じ内容で公開できる。 | — | [test_generated_product_contracts](../../../packages/sample_api/tests/test_products.py#L11) |
+| 12商品で5つの業務操作とヘルスチェックを実行し、商品境界とLambda応答を照合する。 | — | [test_each_product_operation_through_lambda](../../../packages/sample_api/tests/test_products.py#L28) |
+| 在庫サンプルが操作に応じたステータスとJSON応答を返す。 | 登録されている商品の在庫一覧を返す<br>指定した商品の在庫を返す<br>未登録の商品は該当なしと返す | [test_stock_response](../../../packages/sample_api/tests/test_stock_lambda.py#L33) |
 
 ### エージェント・推論モデル（14項目）
 
@@ -131,7 +141,7 @@
 | 正常な説明を受け付け、英語だけの説明・複数行・短すぎる説明を検出する。 | — | [test_case_explanation_requires_one_japanese_sentence](../../../tests/architecture/test_rule_checks.py#L96) |
 | 三つの役割がそろった配布物は通過し、一つでも定義が欠けると失敗する。 | — | [test_model_distribution_requires_all_three_roles](../../../tests/architecture/test_rule_checks.py#L103) |
 
-### バックエンド（55項目）
+### バックエンド（56項目）
 
 | 確認内容 | 条件別の確認内容 | テスト定義 |
 | --- | --- | --- |
@@ -186,6 +196,7 @@
 | ポータル停止後のCognito障害では、操作した管理者と対象利用者を分けて復旧方法を記録する。 | — | [test_member_partial_deletion](../../../packages/backend/tests/test_request_logs.py#L127) |
 | モデル呼び出しの失敗を元のAPI・画面・利用者に結び付け、質問本文を記録しない。 | — | [test_model_worker_error_has_request_context](../../../packages/backend/tests/test_request_logs.py#L182) |
 | モデルにも同じJSON形式を同梱し、重み不一致時は復元作業を記録する。 | — | [test_packaged_model_reports_weight_repair](../../../packages/backend/tests/test_request_logs.py#L208) |
+| 旧版の出品を同じIDで更新し、再実行後も承認済みの商品がSQLiteの配送状況を返す。 | — | [test_seed_replaces_old_contract_and_calls_product](../../../packages/backend/tests/test_sample_catalog.py#L5) |
 | 語句・意味の両方で業務APIを検索し、同義語を含めて順位付けする | — | [test_hybrid_retrieval](../../../packages/backend/tests/test_search_rank.py#L17) |
 | 閲覧可能なOpenAPIタグの説明だけを意味検索に使う | — | [test_visible_openapi_tags_supply_custom_meaning](../../../packages/backend/tests/test_search_rank.py#L32) |
 | 管理者だけが空の部署を子から削除でき、廃止した識別子は再作成できない。 | — | [test_unit_retirement](../../../packages/backend/tests/test_unit_lifecycle.py#L4) |
@@ -240,7 +251,7 @@
 | 管理者にだけ移管・削除を表示し、移管先には同種の別組織だけを提示する。 | — | [test_unit_retirement_actions_are_admin_only](../../../packages/frontend/tests/test_workspace_screens.py#L155) |
 | プロジェクト単位の集計であることを案内し、所属メンバーを4列の表で表示する。 | — | [test_project_monitor_shows_members_as_a_table](../../../packages/frontend/tests/test_workspace_screens.py#L171) |
 
-### インフラ（11項目）
+### インフラ（10項目）
 
 | 確認内容 | 条件別の確認内容 | テスト定義 |
 | --- | --- | --- |
@@ -249,12 +260,11 @@
 | ロジック変更で関数だけが更新され、依存変更で共有Layerだけが更新される。 | — | [test_backend_layer_changes_only_with_dependencies](../../../packages/infra/tests/test_cdk_regression.py#L65) |
 | モデルコードの変更ではLayerが変わらず、判定依存の変更は生成モデルに波及しない。 | — | [test_model_layer_changes_are_isolated](../../../packages/infra/tests/test_cdk_regression.py#L104) |
 | 判定・ツール選択・生成の各関数の配備が完了してからDB移行を開始する。 | — | [test_schema_waits_for_chat_models](../../../packages/infra/tests/test_cdk_regression.py#L142) |
-| 常時稼働の構成を置かず、Lambdaのメモリ・タイムアウトとログ保存期間を制限する。 | — | [test_cost_drivers_are_bounded](../../../packages/infra/tests/test_cost.py#L8) |
-| チャット処理と3モデルを分離し、予約枠を要求せず所定のメモリと作業領域で実行する。 | — | [test_chat_uses_separate_on_demand_python_functions](../../../packages/infra/tests/test_cost.py#L32) |
-| 非公開S3、呼び出しの認可、キャッシュと配信の設定が設計どおりである | — | [test_access_boundaries](../../../packages/infra/tests/test_stack.py#L10) |
-| すべてのリソースに管理情報を付け、タグ対応リソースには同じ値を付ける | サンプル付きの標準構成を検証<br>独自プロジェクト構成を検証 | [test_every_resource_has_ownership](../../../packages/infra/tests/test_stack.py#L114) |
-| 既存リソースの論理IDと分割後の所属が対応する | — | [test_existing_resources_keep_their_logical_ids](../../../packages/infra/tests/test_stack.py#L149) |
-| 在庫サンプルが操作に応じたステータスとJSON応答を返す。 | 登録されている商品の在庫一覧を返す<br>指定した商品の在庫を返す<br>未登録の商品は該当なしと返す | [test_stock_response](../../../packages/infra/tests/test_stock_lambda.py#L34) |
+| 常時稼働の構成を置かず、Lambdaのメモリ・タイムアウトとログ保存期間を制限する。 | — | [test_cost_drivers_are_bounded](../../../packages/infra/tests/test_cost.py#L9) |
+| チャット処理と3モデルを分離し、予約枠を要求せず所定のメモリと作業領域で実行する。 | — | [test_chat_uses_separate_on_demand_python_functions](../../../packages/infra/tests/test_cost.py#L33) |
+| 非公開S3、呼び出しの認可、キャッシュと配信の設定が設計どおりである | — | [test_access_boundaries](../../../packages/infra/tests/test_stack.py#L11) |
+| すべてのリソースに管理情報を付け、タグ対応リソースには同じ値を付ける | サンプル付きの標準構成を検証<br>独自プロジェクト構成を検証 | [test_every_resource_has_ownership](../../../packages/infra/tests/test_stack.py#L115) |
+| 既存リソースの論理IDと分割後の所属が対応する | — | [test_existing_resources_keep_their_logical_ids](../../../packages/infra/tests/test_stack.py#L150) |
 
 ### データベース（3項目）
 
@@ -277,7 +287,7 @@
 | デモの提供者と利用者が公開・申請・承認・実行・権限取消を画面で完了できる | — | [test_user_flow](../../../tests/e2e/browser/test_portal.py#L26) |
 | ホームで商品と手順を調べ、運営への問い合わせを明示的に送信できる。 | — | [test_home_chat_and_inquiry](../../../tests/e2e/browser/test_portal.py#L31) |
 | 利用者が問い合わせ画面から送信すると受付番号が表示され、再訪しても回答待ちの履歴を確認できる。 | — | [test_submit_from_inquiries](../../../tests/e2e/browser/test_portal.py#L64) |
-| 6業務・20拠点の公開120件を全件照合し、PC・スマートフォンの検索とページ送りを確認する | — | [test_large_catalog](../../../tests/e2e/browser/test_portal.py#L97) |
+| 12業務・20拠点の公開240件を全件照合し、PC・スマートフォンの検索とページ送りを確認する | — | [test_large_catalog](../../../tests/e2e/browser/test_portal.py#L97) |
 | 11月の外観変更を反映した明暗テーマの文字コントラストとキーボード操作を確認する | — | [test_console_visual_modes](../../../tests/e2e/browser/test_portal.py#L172) |
 | 3役で利用状況、ユーザー管理、名称で選んだ宛先への通知、ログ保存、掲載終了を確認する。 | — | [test_governance_console](../../../tests/e2e/browser/test_portal.py#L277) |
 | スマートフォンでログインし、確認コードを入力して元のカタログへ戻れる。 | — | [test_portal_login_on_mobile](../../../tests/e2e/browser/test_portal.py#L414) |
@@ -288,9 +298,9 @@
 | 部署リーダーの判断が済むまで提供者は承認できず、最終承認後に呼び出しが成功する。 | — | [test_ordered_review](../../../tests/e2e/browser/test_requirement_flows.py#L106) |
 | 拒否を記録した対象APIを管理者が一時停止し、許可済みの呼び出しだけを対象別に止められる。 | — | [test_admin_stops_target_after_denial](../../../tests/e2e/browser/test_requirement_flows.py#L167) |
 | 利用者が2ページ目の1件を開き、同じリクエストIDで質問と問い合わせを送れる。 | — | [test_access_log_detail_and_support](../../../tests/e2e/browser/test_requirement_flows.py#L210) |
-| 部署リーダーが配下の別人の呼び出しを監査し、リーダー解除後は詳細を再表示できない。 | — | [test_lead_access_audit](../../../tests/e2e/browser/test_requirement_flows.py#L251) |
-| 監査担当が他の利用者のアクセスと業務監査を同じIDで照合し、両方の記録を保存できる。 | — | [test_auditor_cross_checks_exports](../../../tests/e2e/browser/test_requirement_flows.py#L291) |
-| 提供者が商品ごとのトークンの上限を短縮すると、利用者による上限超過の発行を拒否する。 | — | [test_provider_shortens_token_lifetime](../../../tests/e2e/browser/test_requirement_flows.py#L327) |
+| 部署リーダーが配下の別人の呼び出しを監査し、リーダー解除後は詳細を再表示できない。 | — | [test_lead_access_audit](../../../tests/e2e/browser/test_requirement_flows.py#L255) |
+| 監査担当が他の利用者のアクセスと業務監査を同じIDで照合し、両方の記録を保存できる。 | — | [test_auditor_cross_checks_exports](../../../tests/e2e/browser/test_requirement_flows.py#L295) |
+| 提供者が商品ごとのトークンの上限を短縮すると、利用者による上限超過の発行を拒否する。 | — | [test_provider_shortens_token_lifetime](../../../tests/e2e/browser/test_requirement_flows.py#L331) |
 | 役割と検索語で使い方を絞り込み、手順から対象画面を開ける | — | [test_usage_guide](../../../tests/e2e/browser/test_usage_guide.py#L13) |
 | 管理者が組織階層と兼務を設定し、リーダーがキー・利用状況・停止と再開を操作する | — | [test_workspace_key_console](../../../tests/e2e/browser/test_workspace_console.py#L29) |
 | finance の利用者には所属先が1件だけ表示され、未所属の詳細URLを開いても情報は表示されない | — | [test_consumer_project_directory](../../../tests/e2e/browser/test_workspace_console.py#L212) |
@@ -357,11 +367,11 @@
 | テーマ生成はCSSの文字列とコメントを除外し、入れ子の変数と代替値を取得する。 | — | [test_stylesheet_uses_only_variable_references](../../../tools/tests/test_stylesheet.py#L4) |
 | メール補完はドライランで保存せず、確認したsubだけのメールを更新し氏名を保持する。 | — | [test_sync_uses_verified_subject_and_preserves_names](../../../tools/tests/test_sync_member_emails.py#L17) |
 
-### AWSエミュレーターE2E（14項目）
+### AWSエミュレーターE2E（15項目）
 
 | 確認内容 | 条件別の確認内容 | テスト定義 |
 | --- | --- | --- |
-| AWS EmulatorのCognito利用者とシステムのトークンを発行し、HTTPS到達・拒否・秘密更新を確認する | — | [test_client_tokens_reach_https](../../../tests/e2e/aws/test_credential_tokens.py#L37) |
+| AWS EmulatorのCognito利用者とシステムのトークンを発行し、HTTPS到達・拒否・秘密更新を確認する | — | [test_client_tokens_reach_https](../../../tests/e2e/aws/test_credential_tokens.py#L39) |
 | 合成したテンプレートから移行 Lambda を構築し、関数 ZIP と依存 Layer を登録できる | — | [test_deploy_migration_lambda](../../../tests/e2e/aws/test_migration_deployment.py#L27) |
 | 配布する関数 ZIP と依存 Layer の組み合わせで移行処理が DSQL 方言で全リビジョンを適用し、再実行できる | — | [test_run_packaged_migration_on_postgresql](../../../tests/e2e/aws/test_migration_deployment.py#L78) |
 | 配備用コードとLayerだけでモデルを読み込み、外部パッケージの読み込み元を確認する。 | 判定用の依存からネイティブ推論ライブラリを読み込む<br>生成用の依存からモデル取得用SDKを読み込む | [test_model_imports_from_deployment_packages](../../../tests/e2e/aws/test_model_packages.py#L28) |
@@ -371,7 +381,8 @@
 | 6種類を個別に登録・公開・承認して実行し、HTTPSの受信・業務応答・監査記録を照合する | — | [test_marketplace_contracts](../../../tests/e2e/aws/test_portal.py#L346) |
 | 承認済みのHTTPS接続先が停止したとき、502と監査・アクセスログを同じIDで追跡できる | — | [test_upstream_unavailable](../../../tests/e2e/aws/test_portal.py#L415) |
 | AWS Emulatorで氏名付き招待と本人編集を行い、Cognitoの識別子とトークンが継続して使える。 | — | [test_cognito_member_lifecycle](../../../tests/e2e/aws/test_portal.py#L469) |
-| 構築したS3・API Gateway・Lambdaのタグを取得し、在庫APIが商品を返す | — | [test_deployed_resources](../../../tests/e2e/aws/test_resources.py#L9) |
-| DSQLクラスターが削除保護付きで稼働状態になる | — | [test_create_dsql_cluster](../../../tests/e2e/aws/test_resources.py#L67) |
-| 公開時にOpenAPI仕様の世代をS3に個別保存する | — | [test_openapi_archive_versions](../../../tests/e2e/aws/test_resources.py#L80) |
+| 構築したS3・API Gateway・Lambdaのタグを取得し、在庫APIが商品を返す | — | [test_deployed_resources](../../../tests/e2e/aws/test_resources.py#L12) |
+| DSQLクラスターが削除保護付きで稼働状態になる | — | [test_create_dsql_cluster](../../../tests/e2e/aws/test_resources.py#L72) |
+| 公開時にOpenAPI仕様の世代をS3に個別保存する | — | [test_openapi_archive_versions](../../../tests/e2e/aws/test_resources.py#L85) |
+| 登録済みのLambda配布ZIPをCPythonで実行し、全商品のヘルスチェックと業務応答を検証する。 | — | [test_packaged_sample_products](../../../tests/e2e/aws/test_resources.py#L101) |
 | EmulatorのCognitoと共有・本人キーでHTTPS接続先を呼び、別人・範囲外・失効を拒否する | — | [test_scoped_keys_reach_https](../../../tests/e2e/aws/test_scoped_keys.py#L60) |

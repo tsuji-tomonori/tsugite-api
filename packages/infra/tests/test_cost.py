@@ -2,7 +2,8 @@ from collections import Counter
 
 from aws_cdk import App, Environment
 from aws_cdk.assertions import Match, Template
-from src.infra_app.stack import CatalogStack
+
+from packages.infra.src.stack import CatalogStack
 
 
 def test_cost_drivers_are_bounded(tmp_path):

@@ -4,7 +4,8 @@ from pathlib import Path
 import pytest
 from aws_cdk import App, Environment
 from aws_cdk.assertions import Match, Template
-from src.infra_app.stack import CatalogStack
+
+from packages.infra.src.stack import CatalogStack
 
 
 def test_access_boundaries(tmp_path, request):
