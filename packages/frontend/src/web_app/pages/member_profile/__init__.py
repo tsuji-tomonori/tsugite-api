@@ -10,6 +10,6 @@ SCREENS = (
         view,
         load_profile,
         parent="members",
-        clear_on_load=("member_profile",),
+        clear_on_load=("member_profile", "profile_directory"),
     ),
 )

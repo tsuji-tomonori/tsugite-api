@@ -18,7 +18,12 @@ from components.controls import btn, field
 
 
 def policy_form(
-    asset: dict[str, Any], rules: dict[str, Any], tree: list[dict[str, Any]], *, expanded: bool = False
+    asset: dict[str, Any],
+    rules: dict[str, Any],
+    tree: list[dict[str, Any]],
+    *,
+    expanded: bool = False,
+    fields: tuple[()] | list[dict[str, Any]] = (),
 ) -> None:
     """公開範囲の編集欄を描画する。"""
     with t.details(classes="box", open=expanded):
@@ -47,6 +52,27 @@ def policy_form(
                                 checked=u["id"] in rules[key],
                             )
                             t.span(u["name"])
+        values = {u["id"]: u for u in tree}
+        field_labels = {f["key"]: f["label"] for f in fields if not f["builtin"] and f["public_values"]}
+        selected = set(rules.get("metadata_values", []))
+        choices = selected | {key for key, u in values.items() if u["kind"] in field_labels}
+        if choices:
+            with t.fieldset():
+                t.legend("公開先のメタデータ（いずれかの値に所属）")
+                for key in sorted(choices):
+                    unit = values.get(key, {})
+                    with t.label(classes="scope-choice"):
+                        t.input(
+                            type="checkbox",
+                            name="policy-metadata_values",
+                            value=key,
+                            checked=key in selected,
+                        )
+                        t.span(
+                            " / ".join(
+                                filter(None, [field_labels.get(unit.get("kind")), unit.get("name", key)])
+                            )
+                        )
         field(
             "自動承認する役職（複数はカンマ区切り）",
             "policy-titles",
@@ -95,7 +121,12 @@ def detail_page() -> None:
     t.p(a["owner"] + " · " + ("公開中" if a["published"] else "未掲載"), classes="muted")
     if a["owner"] in ctx["me"]["owners"]:
         publication_actions(a)
-        policy_form(a, ctx["policy"], ctx["policy_directory"]["units"])
+        policy_form(
+            a,
+            ctx["policy"],
+            ctx["policy_directory"]["units"],
+            fields=ctx["policy_directory"].get("metadata_fields", []),
+        )
         operation_views.provider_view(a, ctx, field, btn, load)
     with t.div(classes="btn-grouping docs-actions"):
         if a["published"]:

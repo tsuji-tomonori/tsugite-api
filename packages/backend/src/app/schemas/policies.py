@@ -18,6 +18,8 @@ class Policy(Input):
     projects: list[str] = Field(default_factory=list)
     #: 閲覧を許可する部署
     departments: list[str] = Field(default_factory=list)
+    #: 閲覧を許可する任意メタデータの値
+    metadata_values: list[str] = Field(default_factory=list)
     #: 自動承認の対象部署
     auto_departments: list[str] = Field(default_factory=list)
     #: 自動承認の対象役職

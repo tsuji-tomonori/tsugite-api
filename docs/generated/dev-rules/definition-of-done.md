@@ -149,7 +149,7 @@
 | 正常な説明を受け付け、英語だけの説明・複数行・短すぎる説明を検出する。 | — | [test_case_explanation_requires_one_japanese_sentence](../../../tests/architecture/test_rule_checks.py#L96) |
 | 三つの役割がそろった配布物は通過し、一つでも定義が欠けると失敗する。 | — | [test_model_distribution_requires_all_three_roles](../../../tests/architecture/test_rule_checks.py#L103) |
 
-### バックエンド（56項目）
+### バックエンド（58項目）
 
 | 確認内容 | 条件別の確認内容 | テスト定義 |
 | --- | --- | --- |
@@ -209,6 +209,8 @@
 | 閲覧可能なOpenAPIタグの説明だけを意味検索に使う | — | [test_visible_openapi_tags_supply_custom_meaning](../../../packages/backend/tests/test_search_rank.py#L32) |
 | 管理者だけが空の部署を子から削除でき、廃止した識別子は再作成できない。 | — | [test_unit_retirement](../../../packages/backend/tests/test_unit_lifecycle.py#L4) |
 | 提供・利用を既存プロジェクトへ移管し、公開状態・旧URLと新URLでの認証済み呼び出しを確認する。 | — | [test_project_transfer](../../../packages/backend/tests/test_unit_lifecycle.py#L24) |
+| 任意属性は所属単位で閲覧でき、グループのリーダーや役職を業務権限に引き継がない。 | — | [test_metadata_groups_and_visibility](../../../packages/backend/tests/test_user_metadata.py#L4) |
+| 限定公開の任意属性条件を移管時に引き継ぎ、所属を解除すると閲覧できなくなる。 | — | [test_metadata_audience_and_transfer](../../../packages/backend/tests/test_user_metadata.py#L63) |
 
 ### フロントエンド（44項目）
 
@@ -252,7 +254,7 @@
 | API呼び出しには登録済み画面の識別子だけを付加する。 | — | [test_request_carries_screen](../../../packages/frontend/tests/test_screen_logs.py#L33) |
 | 独立した画面ファイルを追加すると配布物に入り、URLからデータ取得と描画までできる。 | — | [test_new_screen_is_packaged_loaded_and_rendered](../../../packages/frontend/tests/test_screen_registry.py#L17) |
 | 既存の固定・詳細URLを解決し、役割に応じたメニューを従来の順序で表示する。 | — | [test_existing_routes_and_role_menus](../../../packages/frontend/tests/test_screen_registry.py#L71) |
-| 別の画面が登録済みのURLを使うと重複したパスを示して失敗する。 | — | [test_duplicate_screen_path_is_rejected](../../../packages/frontend/tests/test_screen_registry.py#L105) |
+| 別の画面が登録済みのURLを使うと重複したパスを示して失敗する。 | — | [test_duplicate_screen_path_is_rejected](../../../packages/frontend/tests/test_screen_registry.py#L104) |
 | 部署を10件ずつ表示し、次ページとプロジェクト一覧では該当する対象だけを開ける。 | — | [test_directory_pages_filter_before_paginating](../../../packages/frontend/tests/test_workspace_screens.py#L48) |
 | 直接所属の利用者をメールアドレス・名前・担当ロールに分け、管理者にだけ操作列を表示する。 | — | [test_direct_members_have_aligned_table_columns](../../../packages/frontend/tests/test_workspace_screens.py#L66) |
 | 権限と種類が一致する対象だけの利用統計を取得し、管理者専用の編集フォームを分離する。 | — | [test_scoped_monitor_and_edit_routes](../../../packages/frontend/tests/test_workspace_screens.py#L120) |
@@ -282,7 +284,7 @@
 | DB定義がモデルと一致し、旧版のデータを移行できる | — | [test_schema_matches_models_and_replays](../../../packages/database/tests/test_migrations.py#L10) |
 | Aurora DSQL 接続では Amazon ルート CA を含むバンドルで証明書とホスト名を検証する。 | — | [test_dsql_uses_a_bundled_ca_for_full_tls_verification](../../../packages/database/tests/test_session.py#L8) |
 
-### ブラウザーE2E（27項目）
+### ブラウザーE2E（28項目）
 
 | 確認内容 | 条件別の確認内容 | テスト定義 |
 | --- | --- | --- |
@@ -291,6 +293,7 @@
 | 提供者が公開・自動承認・委任の条件を保存し、部署リーダーが個人申請を画面から却下する | — | [test_provider_policy_console](../../../tests/e2e/browser/test_delegation_console.py#L13) |
 | 6種類の権限で全メニューを開き、狭幅と広幅で余白・操作領域・横あふれを検査する。 | — | [test_role_screen_layout](../../../tests/e2e/browser/test_layout.py#L94) |
 | 管理者が招待時に氏名を入力し、本人の表示名とともに兼務先に表示して監査を確認する。 | — | [test_member_profile_management](../../../tests/e2e/browser/test_member_profile_console.py#L16) |
+| 雇用区分を登録して利用者に割り当てると本人のプロフィールに値が表示される。 | — | [test_metadata_assignment_console](../../../tests/e2e/browser/test_metadata_console.py#L11) |
 | 提供者が利用者の操作を選び、送料1,400円のHTTPS応答と権限変更直後の転送停止を照合する | — | [test_person_operation_console](../../../tests/e2e/browser/test_operation_console.py#L15) |
 | デモの提供者と利用者が公開・申請・承認・実行・権限取消を画面で完了できる | — | [test_user_flow](../../../tests/e2e/browser/test_portal.py#L26) |
 | ホームで商品と手順を調べ、運営への問い合わせを明示的に送信できる。 | — | [test_home_chat_and_inquiry](../../../tests/e2e/browser/test_portal.py#L31) |
