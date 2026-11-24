@@ -26,6 +26,30 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
+        "frontend",
+        "認証情報の初期更新時刻を有効期間の5分前に固定する",
+        "packages/frontend/src/web_app/components/credential_views.py",
+        "default_ttl * 3 // 4",
+        "default_ttl - 5",
+        "packages/frontend/tests/test_required_people_credentials.py::test_credential_modes_and_validity",
+    ),
+    Mutation(
+        "backend",
+        "解除済みの所属を移管の競合に含める",
+        "packages/backend/src/app/apis/governance/unit_lifecycle.py",
+        "elif row.active and destination.active:",
+        "elif row.active:",
+        "packages/backend/tests/test_required_workspace.py::test_conflicting_transfer_keeps_both_projects",
+    ),
+    Mutation(
+        "backend",
+        "名簿の一時障害を予期しない障害として返す",
+        "packages/backend/src/app/apis/governance/members.py",
+        '503, "利用者を確認できませんでした。',
+        '500, "利用者を確認できませんでした。',
+        "packages/backend/tests/test_required_member_directory.py::test_directory_temporarily_unavailable",
+    ),
+    Mutation(
         "architecture",
         "分岐が未達でも行の合格だけで通す",
         "packages/tools/ci/unit_coverage.py",

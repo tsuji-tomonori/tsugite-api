@@ -84,11 +84,16 @@ def list_members(
         )
         next_cursor = ""
     else:
-        idp = boto3.client("cognito-idp")
-        #: 利用者・グループの管理（Cognitoユーザープール） / 利用者の一覧を取得
-        page = idp.list_users(
-            UserPoolId=pool(), Limit=limit, **({"PaginationToken": cursor} if cursor else {})
-        )
+        try:
+            idp = boto3.client("cognito-idp")
+            #: 利用者・グループの管理（Cognitoユーザープール） / 利用者の一覧を取得
+            page = idp.list_users(
+                UserPoolId=pool(), Limit=limit, **({"PaginationToken": cursor} if cursor else {})
+            )
+        except ClientError, BotoCoreError:
+            raise HTTPException(
+                503, "利用者を確認できませんでした。時間をおいて再実行してください"
+            ) from None
         users = {
             attrs["sub"]: user["Username"]
             for user in page.get("Users", [])

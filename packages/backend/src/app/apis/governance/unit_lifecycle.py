@@ -113,7 +113,17 @@ def migrate_references(db, source, target):
             conflict("所属者がいます。所属を解除するか移管先を選択してください")
         return
     for row in db.scalars(select(Affiliation).where(Affiliation.unit_id == source)):
-        move_record(db, row, (row.subject, target), unit_id=target)
+        destination = db.get(Affiliation, (row.subject, target))
+        if destination is None:
+            move_record(db, row, (row.subject, target), unit_id=target)
+        elif row.active and destination.active:
+            conflict("移管先に同じ所属があります。重複を解消してください")
+        else:
+            if row.active:
+                destination.title = row.title
+                destination.leader = row.leader
+                destination.active = True
+            db.delete(row)
 
 
 def retire(key, target, request, actor, db):

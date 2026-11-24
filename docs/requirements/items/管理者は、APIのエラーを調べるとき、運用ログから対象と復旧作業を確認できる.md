@@ -23,7 +23,11 @@
 
 CRITICAL の `operator_action` には対象、照合するデータ、修正または再実行する操作、復旧の確認方法を日本語で記載する。API呼び出し履歴のJSONLには発生時の分類を引き継ぐ。旧形式の履歴は保存済みのHTTPステータスから分類し、当時記録していない画面や作業は null とする。
 
+利用者一覧を取得する際、外部名簿との通信や名簿サービスの障害で結果を確認できなければ503を返す。復旧後、管理者は同じページを再取得できる。
+
 ### 受入テスト
+
+- 受入テスト `packages/backend/tests/test_required_member_directory.py::test_directory_temporarily_unavailable`
 
 - 受入テスト `packages/backend/tests/test_request_logs.py::test_http_log`
 - 受入テスト `packages/backend/tests/test_request_logs.py::test_member_partial_deletion`

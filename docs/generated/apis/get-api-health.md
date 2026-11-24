@@ -6,7 +6,7 @@ GET `/api/health`
 
 [API一覧](README.md) · [CRUD一覧](../db/crud.md)
 
-共通 · `health_api_health_get` · [health:31](../../../packages/backend/src/app/main.py#L31)
+共通 · `health_api_health_get` · [health:32](../../../packages/backend/src/app/main.py#L32)
 
 ## 入力
 

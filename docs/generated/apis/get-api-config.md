@@ -6,7 +6,7 @@ GET `/api/config`
 
 [API一覧](README.md) · [CRUD一覧](../db/crud.md)
 
-共通 · `config_api_config_get` · [config:36](../../../packages/backend/src/app/main.py#L36)
+共通 · `config_api_config_get` · [config:37](../../../packages/backend/src/app/main.py#L37)
 
 ## 入力
 

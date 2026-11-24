@@ -16,6 +16,8 @@
 
 ### 受入テスト
 
+- 受入テスト `packages/frontend/tests/test_required_product_trial.py::test_api_docs_runs_and_copies_curl`
+
 - 受入テスト `tests/e2e/browser/test_api_docs.py::test_openapi_key_console` / `response.png`
 
 ## 却下した方針

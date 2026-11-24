@@ -6,7 +6,7 @@ POST `/api/notifications`
 
 [API一覧](README.md) · [CRUD一覧](../db/crud.md)
 
-共通 · `send_api_notifications_post` · [send:75](../../../packages/backend/src/app/apis/governance/notifications.py#L75)
+共通 · `send_api_notifications_post` · [send:76](../../../packages/backend/src/app/apis/governance/notifications.py#L76)
 
 ## 入力
 
@@ -65,22 +65,22 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | R | 検索 | select | [send:96](../../../packages/backend/src/app/apis/governance/notifications.py#L96) |
-| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:105](../../../packages/backend/src/app/core/workspace.py#L105) |
-| [APIカタログ](../db/database.md#assets) | assets | R | 主キーで取得 | db.get | [record:25](../../../packages/backend/src/app/core/catalog.py#L25) |
-| [監査履歴](../db/database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [send:81](../../../packages/backend/src/app/apis/governance/notifications.py#L81) |
-| [監査履歴](../db/database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [event:10](../../../packages/backend/src/app/core/catalog.py#L10) |
-| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:30](../../../packages/backend/src/app/core/workspace.py#L30) |
-| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:54](../../../packages/backend/src/app/core/workspace.py#L54) |
-| [通知](../db/database.md#notices) | notices | C | レコードを追加 | db.add | [send:107](../../../packages/backend/src/app/apis/governance/notifications.py#L107) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:123](../../../packages/backend/src/app/core/auth.py#L123) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:91](../../../packages/backend/src/app/core/workspace.py#L91) |
+| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | R | 検索 | select | [send:97](../../../packages/backend/src/app/apis/governance/notifications.py#L97) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:106](../../../packages/backend/src/app/core/workspace.py#L106) |
+| [APIカタログ](../db/database.md#assets) | assets | R | 主キーで取得 | db.get | [record:26](../../../packages/backend/src/app/core/catalog.py#L26) |
+| [監査履歴](../db/database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [send:82](../../../packages/backend/src/app/apis/governance/notifications.py#L82) |
+| [監査履歴](../db/database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [event:11](../../../packages/backend/src/app/core/catalog.py#L11) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:31](../../../packages/backend/src/app/core/workspace.py#L31) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:55](../../../packages/backend/src/app/core/workspace.py#L55) |
+| [通知](../db/database.md#notices) | notices | C | レコードを追加 | db.add | [send:108](../../../packages/backend/src/app/apis/governance/notifications.py#L108) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:124](../../../packages/backend/src/app/core/auth.py#L124) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:92](../../../packages/backend/src/app/core/workspace.py#L92) |
 
 ### AWSサービス
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:53](../../../packages/backend/src/app/core/config.py#L53) |
+| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:54](../../../packages/backend/src/app/core/config.py#L54) |
 
 <details><summary>解析した関数・依存</summary>
 
