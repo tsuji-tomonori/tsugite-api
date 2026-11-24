@@ -49,7 +49,7 @@ def monitoring_view(unit, paths):
         if not members:
             t.p("所属メンバーはいません。")
             return
-        with t.div(classes="resource-table"):
+        with t.div(classes="resource-table", tabindex="0", role="region", aria_label="所属メンバー一覧"):
             with t.table(aria_label="所属メンバー一覧"):
                 with t.thead():
                     with t.tr():

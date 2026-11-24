@@ -68,5 +68,6 @@ def test_dashboard_recovers_from_metrics_failure(portal_module, monkeypatch):
         assert not root.inert and not root.hasAttribute("aria-busy")
         recovered = markup()
         assert "time-chart" in recovered and "利用状況を再読み込み" not in recovered
+        assert 'class="chart-scroll"' in recovered and "--buckets:1" in recovered
         assert "業務メニュー" not in recovered
         assert "メトリクスを開く" in recovered and "アクセスログを開く" in recovered

@@ -18,3 +18,8 @@
   .guide-search .field:first-child { grid-column: 1 / -1; }
 }
 .guide-results [hidden], .guide-grid [hidden], #guide-empty[hidden] { display: none; }
+
+@media (max-width: 30rem) {
+  .guide-search { grid-template-columns: minmax(0, 1fr); gap: var(--action-gap); }
+  .guide-search .btn { justify-self: start; }
+}

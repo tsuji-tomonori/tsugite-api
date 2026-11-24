@@ -110,21 +110,25 @@ async def inspect_bucket(at, minutes):
 def graph(pts, key, minutes):
     maximum = max([1] + [p[key] for p in pts])
     t.small("最大目盛 " + str(maximum))
-    with t.div(classes="time-chart", aria_label="時間帯別の" + MEASURES[key]):
-        for p in pts:
-            label = p["at"][:16] + " UTC · " + str(p[key])
-            t.button(
-                "",
-                type="button",
-                title=label,
-                aria_label=label,
-                classes="time-bar",
-                style=f"--height:{100 * p[key] / maximum:.2f}%",
-                on_click=action(inspect_bucket, p["at"], minutes),
-            )
-    with t.div(classes="chart-axis"):
-        for p in (pts[0], pts[len(pts) // 2], pts[-1]):
-            t.span(p["at"][5:16].replace("T", " "))
+    with t.div(
+        classes="chart-scroll", role="region", aria_label="時間帯別の" + MEASURES[key], tabindex="0"
+    ):
+        with t.div(classes="chart-series", style=f"--buckets:{len(pts)}"):
+            with t.div(classes="time-chart"):
+                for p in pts:
+                    label = p["at"][:16] + " UTC · " + str(p[key])
+                    t.button(
+                        "",
+                        type="button",
+                        title=label,
+                        aria_label=label,
+                        classes="time-bar",
+                        style=f"--height:{100 * p[key] / maximum:.2f}%",
+                        on_click=action(inspect_bucket, p["at"], minutes),
+                    )
+            with t.div(classes="chart-axis"):
+                for p in (pts[0], pts[len(pts) // 2], pts[-1]):
+                    t.span(p["at"][5:16].replace("T", " "))
 
 
 async def load_dimensions(scope="metrics"):
