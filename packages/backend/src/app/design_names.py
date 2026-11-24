@@ -9,7 +9,7 @@ from fastapi import FastAPI
 from fastapi.routing import APIRoute, iter_route_contexts
 from tsugite_db.source_docs import read_source
 
-from app.apis.product_contract import describe_product_fields
+from app.schemas.product_contract import describe_product_fields
 
 
 @cache

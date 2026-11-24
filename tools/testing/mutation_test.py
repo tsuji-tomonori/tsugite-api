@@ -25,6 +25,14 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
+        "database",
+        "公開履歴テーブルのモデル登録を外す",
+        "packages/database/src/tsugite_db/models/__init__.py",
+        "from .spec_releases import SpecRelease as SpecRelease",
+        "",
+        "tests/architecture/test_boundaries.py::test_model_files_match_registered_tables",
+    ),
+    Mutation(
         "frontend",
         "集計区間数に応じたグラフの最小幅を無効にする",
         "packages/frontend/src/web_app/activity_filters.py",

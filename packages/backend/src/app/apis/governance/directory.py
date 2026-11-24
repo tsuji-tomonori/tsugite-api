@@ -1,53 +1,18 @@
 import json
-from typing import Literal
 
-from app.apis import outputs
-from app.apis.catalog.common import DB, User
 from app.apis.governance.members import administrator, projects
-from app.apis.schemas import Input
 from app.core.auth import DEMO_GROUPS
 from app.core.config import local_demo, settings
 from app.core.member_profiles import directory_accounts, directory_fields, directory_profiles
 from app.core.workspace import ancestry, retired_units, units
+from app.dependencies import DB, User
+from app.schemas import outputs
+from app.schemas.directory import Membership, State, UnitData
 from fastapi import APIRouter, HTTPException, Request
-from pydantic import Field
 from sqlalchemy import func, select
 from tsugite_db.models import AccessLog, Affiliation, Asset, DirectoryTree, Event, LogUnit, Member
 
 router = APIRouter()
-
-
-#: 部署・プロジェクトの編集内容
-class UnitData(Input):
-    #: 組織の種類（部署・プロジェクト）
-    kind: Literal[
-        #: プロジェクト
-        "project",
-        #: 部署
-        "department",
-    ]
-    #: 部署・プロジェクト名
-    name: str = Field(min_length=1, max_length=120)
-    #: 親部署の識別子
-    parent: str = ""
-
-
-#: 組織への所属設定
-class Membership(Input):
-    #: 対象利用者の識別子
-    subject: str = Field(min_length=1, max_length=180)
-    #: 部署・プロジェクトの識別子
-    unit_id: str
-    #: 所属先の管理者か
-    leader: bool = False
-    #: 役職名
-    title: str = Field("", max_length=120)
-
-
-#: 組織の利用停止設定
-class State(Input):
-    #: 組織の利用を停止中か
-    stopped: bool
 
 
 def audit(db, actor, request, action, unit, detail):
