@@ -28,7 +28,7 @@ async def change_suspension(asset):
 
 async def save_policy(asset):
     data = {"visibility": value("policy-visibility")}
-    for key in ("projects", "departments", "auto_departments", "delegates"):
+    for key in ("projects", "departments", "auto_departments", "delegates", "metadata_values"):
         fields = document.querySelectorAll('input[name="policy-' + key + '"]:checked')
         data[key] = [str(fields.item(i).value) for i in range(fields.length)]
     data["auto_titles"] = [
@@ -39,7 +39,7 @@ async def save_policy(asset):
     ctx["message"] = "公開範囲と承認ルールを保存しました"
 
 
-def policy_form(asset, rules, tree, *, expanded=False):
+def policy_form(asset, rules, tree, *, expanded=False, fields=()):
     with t.details(classes="box", open=expanded):
         t.summary("公開範囲と承認ルール")
         field(
@@ -66,6 +66,27 @@ def policy_form(asset, rules, tree, *, expanded=False):
                                 checked=u["id"] in rules[key],
                             )
                             t.span(u["name"])
+        values = {u["id"]: u for u in tree}
+        field_labels = {f["key"]: f["label"] for f in fields if not f["builtin"] and f["public_values"]}
+        selected = set(rules.get("metadata_values", []))
+        choices = selected | {key for key, u in values.items() if u["kind"] in field_labels}
+        if choices:
+            with t.fieldset():
+                t.legend("公開先のメタデータ（いずれかの値に所属）")
+                for key in sorted(choices):
+                    unit = values.get(key, {})
+                    with t.label(classes="scope-choice"):
+                        t.input(
+                            type="checkbox",
+                            name="policy-metadata_values",
+                            value=key,
+                            checked=key in selected,
+                        )
+                        t.span(
+                            " / ".join(
+                                filter(None, [field_labels.get(unit.get("kind")), unit.get("name", key)])
+                            )
+                        )
         field(
             "自動承認する役職（複数はカンマ区切り）",
             "policy-titles",
@@ -118,7 +139,12 @@ def detail_page():
     t.p(a["owner"] + " · " + ("公開中" if a["published"] else "未掲載"), classes="muted")
     if a["owner"] in ctx["me"]["owners"]:
         publication_actions(a)
-        policy_form(a, ctx["policy"], ctx["policy_directory"]["units"])
+        policy_form(
+            a,
+            ctx["policy"],
+            ctx["policy_directory"]["units"],
+            fields=ctx["policy_directory"].get("metadata_fields", []),
+        )
         operation_views.provider_view(a, ctx, field, btn, load)
     with t.div(classes="btn-grouping docs-actions"):
         if a["published"]:

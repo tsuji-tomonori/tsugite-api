@@ -52,6 +52,7 @@ def unit_state(unit, by_id):
 
 
 def list_view(root, label, kind, data, by_id, paths, number):
+    custom = root.startswith("attributes/")
     rows = sorted(
         (u for u in by_id.values() if u["kind"] == kind), key=lambda u: (paths[u["id"]], u["id"])
     )
@@ -63,7 +64,7 @@ def list_view(root, label, kind, data, by_id, paths, number):
         with t.div(classes="results-head"):
             t.strong(f"{len(rows)} 件")
             if data["admin"]:
-                link(label + "を作成", root + "/create", button=True)
+                link("値を追加" if custom else label + "を作成", root + "/create", button=True)
         if not rows:
             t.p(label + "は登録されていません。")
             return
@@ -71,7 +72,13 @@ def list_view(root, label, kind, data, by_id, paths, number):
             with t.table(aria_label=label + "一覧"):
                 with t.thead():
                     with t.tr():
-                        for title in ("名称", "識別子", "親部署", "利用状態", "自分の所属"):
+                        for title in (
+                            "名称",
+                            "識別子",
+                            "上位の値" if custom else "親部署",
+                            *([] if custom else ["利用状態"]),
+                            "自分の所属",
+                        ):
                             t.th(title, scope="col")
                 with t.tbody():
                     for row in rows[start : start + PAGE_SIZE]:
@@ -80,7 +87,8 @@ def list_view(root, label, kind, data, by_id, paths, number):
                                 link(row["name"], url(root, "detail", row["id"]))
                             t.td(row["id"], classes="mono")
                             t.td(paths.get(row.get("parent"), "—"))
-                            t.td(unit_state(row, by_id))
+                            if not custom:
+                                t.td(unit_state(row, by_id))
                             t.td("所属" if row["id"] in own else "—")
         with t.nav(classes="pager", aria_label=label + "一覧のページ"):
             if number > 1:
@@ -113,14 +121,15 @@ def unit_editor(root, kind, label, by_id, paths, unit=None):
         field("名称", "org-unit-name", text=draft.get("name", ""))
         if not unit:
             field("識別子", "org-unit-id", placeholder="例　sales-west")
+        custom = root.startswith("attributes/")
         parents = [
             (k, paths[k])
             for k, row in by_id.items()
-            if row["kind"] == "department"
+            if row["kind"] == (kind if custom else "department")
             and all(a["id"] != draft.get("id") for a in ancestors(row, by_id))
         ]
         field(
-            "親部署",
+            "上位の値" if custom else "親部署",
             "org-parent",
             options=[("", "指定なし"), *sorted(parents, key=lambda p: p[1])],
             text=draft.get("parent") or "",
@@ -155,8 +164,11 @@ def retirement_form(root, label, unit, by_id, paths):
 
     with t.details(classes="box"):
         t.summary("移管・削除")
-        t.p("移管すると、所属者・配下の組織・API商品・利用権・認証情報を移管先に引き継ぎます。")
-        t.p("移管先の所属者にも共有の利用権が適用されます。監査履歴には当時の識別子が残ります。")
+        if root.startswith("attributes/"):
+            t.p("同じ項目の別の値に、所属者と下位の値を移管します。")
+        else:
+            t.p("移管すると、所属者・配下の組織・API商品・利用権・認証情報を移管先に引き継ぎます。")
+            t.p("移管先の所属者にも共有の利用権が適用されます。監査履歴には当時の識別子が残ります。")
         field("移管先", "unit-destination", options=[("", "選択してください"), *candidates])
         btn(label + "を移管", transfer)
         t.p("所属者や利用中の設定がない組織は削除できます。廃止した識別子は再使用できません。")

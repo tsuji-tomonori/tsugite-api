@@ -1,5 +1,4 @@
 import json
-from typing import Literal
 
 from app.apis import outputs
 from app.apis.catalog.common import DB, User
@@ -8,6 +7,7 @@ from app.apis.schemas import Input
 from app.core.auth import DEMO_GROUPS
 from app.core.config import local_demo, settings
 from app.core.member_profiles import directory_accounts, directory_fields, directory_profiles
+from app.core.metadata import BUILTIN_FIELDS, metadata_fields, parent_kind
 from app.core.workspace import ancestry, retired_units, units
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import Field
@@ -19,13 +19,8 @@ router = APIRouter()
 
 #: 部署・プロジェクトの編集内容
 class UnitData(Input):
-    #: 組織の種類（部署・プロジェクト）
-    kind: Literal[
-        #: プロジェクト
-        "project",
-        #: 部署
-        "department",
-    ]
+    #: 所属先を分類するメタデータのキー
+    kind: str
     #: 部署・プロジェクト名
     name: str = Field(min_length=1, max_length=120)
     #: 親部署の識別子
@@ -107,7 +102,11 @@ def roster(db):
 
 
 def manages(actor, tree, key):
-    return key in tree and (actor.admin or bool(actor.leads & ancestry(tree, [key])))
+    return (
+        key in tree
+        and tree[key]["kind"] in BUILTIN_FIELDS
+        and (actor.admin or bool(actor.leads & ancestry(tree, [key])))
+    )
 
 
 #: 組織の構成と利用者の所属を確認する
@@ -115,16 +114,16 @@ def manages(actor, tree, key):
 def workspace(actor: User, db: DB):
     tree = units(db)
     people, rows = roster(db)
-    managed = {key for key in tree if manages(actor, tree, key)}
-    visible_units = [
-        unit
-        for key, unit in tree.items()
-        if unit["kind"] == "department" or key in actor.projects or key in managed
-    ]
-    # 招待時のプロジェクト名が名簿に残っていても、現在の所属には加えない。
-    own_units = set(actor.projects) | {
-        r["unit_id"] for r in rows if r["subject"] == actor.subject and r["unit_id"] in actor.departments
-    }
+    managed = (
+        set(tree)
+        if actor.admin
+        else {key for key in tree if actor.metadata_leads & ancestry(tree, [key])}
+    )
+    fields_by_key = metadata_fields(db)
+    own_units = set(actor.projects).union(*actor.metadata.values())
+    public = {key for key, unit in tree.items() if fields_by_key[unit["kind"]]["public_values"]}
+    visible_values = ancestry(tree, own_units | managed | public)
+    visible_units = [unit for key, unit in tree.items() if key in visible_values]
     visible = [
         r
         for r in rows
@@ -138,8 +137,9 @@ def workspace(actor: User, db: DB):
     }
     return {
         "admin": actor.admin,
+        "metadata_fields": list(fields_by_key.values()),
         "units": visible_units,
-        "leads": sorted(managed),
+        "leads": sorted(key for key in managed if tree[key]["kind"] in BUILTIN_FIELDS),
         "my_units": sorted(own_units),
         "memberships": [{**row, **fields[row["subject"]]} for row in visible],
         "users": [{"subject": i, "username": people[i], **fields[i]} for i in sorted(people_ids)],
@@ -174,10 +174,13 @@ def unit(
         raise HTTPException(422, "識別子を確認してください")
     if key in retired_units(db):
         raise HTTPException(409, "廃止した識別子は再使用できません")
+    if data.kind not in metadata_fields(db):
+        raise HTTPException(422, "登録済みのメタデータ項目を選択してください")
     if data.parent and (
-        tree.get(data.parent, {}).get("kind") != "department" or key in ancestry(tree, [data.parent])
+        tree.get(data.parent, {}).get("kind") != parent_kind(data.kind)
+        or key in ancestry(tree, [data.parent])
     ):
-        raise HTTPException(422, "親部署が存在しないか、循環する配置です")
+        raise HTTPException(422, "親の種類が一致しないか、循環する配置です")
     if key in tree and tree[key]["kind"] != data.kind:
         raise HTTPException(409, "種類の変更はできません")
     tree[key] = {"id": key, **data.model_dump(), "stopped": tree.get(key, {}).get("stopped", False)}

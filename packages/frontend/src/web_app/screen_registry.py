@@ -1,7 +1,7 @@
 """画面モジュールからルートとナビゲーションを組み立てる。"""
 
 from collections.abc import Awaitable, Callable
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from functools import cache
 from importlib import import_module
 from pkgutil import iter_modules
@@ -24,6 +24,7 @@ class Screen:
     own_heading: bool = False
     clear_on_load: tuple[str, ...] = ()
 
+    menu_paths: Callable[[dict], list[tuple[str, str]]] | None = None
     examples: dict[str, Callable[[], None]] = field(default_factory=dict)
 
     def page_title(self):
@@ -61,5 +62,11 @@ def menu(user):
     groups = {}
     for screen in sorted(screens().values(), key=lambda item: (item.order, item.path)):
         if screen.group and screen.visible(user):
-            groups.setdefault(screen.group, []).append(screen)
+            entries = groups.setdefault(screen.group, [])
+            if screen.menu_paths:
+                entries.extend(
+                    replace(screen, path=path, title=label) for path, label in screen.menu_paths(user)
+                )
+            else:
+                entries.append(screen)
     return groups

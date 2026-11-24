@@ -17,12 +17,22 @@ KINDS = {"departments": ("department", "部署"), "projects": ("project", "プ�
 
 def location():
     root, *parts = route().split("/")
+    if root == "attributes" and parts:
+        return "attributes/" + parts[0], [unquote(part) for part in parts[1:]]
     return ("departments" if root == "workspace" else root), [unquote(part) for part in parts]
+
+
+def kind_label(root):
+    if root in KINDS:
+        return KINDS[root]
+    key = root.partition("/")[2]
+    fields = (ctx.get("workspace") or {}).get("metadata_fields", [])
+    return key, next((f["label"] for f in fields if f["key"] == key and not f["builtin"]), "")
 
 
 def page_title():
     root, parts = location()
-    label = KINDS[root][1]
+    label = kind_label(root)[1]
     suffix = {
         "create": "の作成",
         "edit": "の編集",
@@ -30,6 +40,8 @@ def page_title():
         "monitor": "のモニタリング",
         "member": "の所属設定",
     }
+    if root.startswith("attributes/"):
+        label += "の値"
     return label + suffix.get(parts[0] if parts else "", "一覧")
 
 
@@ -43,9 +55,9 @@ async def load_workspace(page):
     root, parts = location()
     if len(parts) == 2 and parts[0] == "monitor":
         unit = next(
-            (u for u in data["units"] if u["id"] == parts[1] and u["kind"] == KINDS[root][0]), None
+            (u for u in data["units"] if u["id"] == parts[1] and u["kind"] == kind_label(root)[0]), None
         )
-        if unit and (data["admin"] or unit["id"] in data["leads"]):
+        if root in KINDS and unit and (data["admin"] or unit["id"] in data["leads"]):
             usage = await client.api(directory.endpoint(unit) + "/usage")
             if page == route():
                 ctx["workspace_usage"] = usage
@@ -61,11 +73,14 @@ def usage_settings(unit, state):
 
 def view():
     root, parts = location()
-    kind, label = KINDS[root]
+    kind, label = kind_label(root)
     data = ctx.get("workspace")
     if data is None:
         t.p("一覧を取得できませんでした。")
         btn("再読み込み", load)
+        return
+    if not label:
+        t.p("メタデータ項目が見つかりません。")
         return
     by_id = {u["id"]: u for u in data["units"]}
     paths = directory.unit_paths(by_id)
@@ -86,13 +101,14 @@ def view():
     if not unit or unit["kind"] != kind:
         t.p("対象が見つかりません。")
         return
-    managed = data["admin"] or unit["id"] in data["leads"]
+    managed = root in KINDS and (data["admin"] or unit["id"] in data["leads"])
     detail = directory.url(root, "detail", unit["id"])
     with t.div(classes="resource-heading"):
         t.h2(paths[unit["id"]])
         t.span(unit["id"], classes="mono")
     if len(parts) == 2 and parts[0] == "detail":
-        t.p(directory.unit_state(unit, by_id))
+        if root in KINDS:
+            t.p(directory.unit_state(unit, by_id))
         with t.div(classes="btn-grouping"):
             if data["admin"]:
                 directory.link(label + "を編集", directory.url(root, "edit", unit["id"]), button=True)
@@ -127,6 +143,7 @@ async def toggle(unit):
 def list_screen(root, order):
     def with_heading():
         t.h1(KINDS[root][1] + "一覧")
+        t.span("使用中のデータパーツ", classes="metadata-badge")
         view()
 
     return Screen(
@@ -134,15 +151,32 @@ def list_screen(root, order):
         KINDS[root][1],
         with_heading,
         load_workspace,
-        group="ワークスペース",
+        group="メタデータ",
         order=order,
         own_heading=True,
     )
 
 
+def attribute_menu(user):
+    return [
+        ("attributes/" + item["key"], item["label"])
+        for item in user.get("metadata_fields", [])
+        if not item["builtin"]
+    ]
+
+
 SCREENS = (
     list_screen("departments", 60),
     list_screen("projects", 61),
+    Screen(
+        "attributes/",
+        page_title,
+        view,
+        load_workspace,
+        group="メタデータ",
+        order=63,
+        menu_paths=attribute_menu,
+    ),
     Screen("departments/", page_title, view, load_workspace, parent="departments"),
     Screen("projects/", page_title, view, load_workspace, parent="projects"),
     Screen(

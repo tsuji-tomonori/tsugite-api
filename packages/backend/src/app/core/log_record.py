@@ -13,6 +13,8 @@ SCREENS = frozenset(
         "guide",
         "keys",
         "workspace",
+        "attributes",
+        "metadata",
         "departments",
         "projects",
         "metrics",

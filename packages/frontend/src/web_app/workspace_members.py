@@ -131,9 +131,14 @@ def membership_editor(root, unit, data, subject, *, draft=None):
                     btn("ユーザーをさらに読み込む" if draft else "登録ユーザーを読み込む", more)
         else:
             t.p("ユーザー　" + person_label({"subject": subject, "username": names.get(subject), **row}))
-        field("役職", "org-title", text=draft.get("title", row.get("title", "")), placeholder="例　課長")
         field(
-            "管理権限",
+            "グループ内の役割" if root.startswith("attributes/") else "役職",
+            "org-title",
+            text=draft.get("title", row.get("title", "")),
+            placeholder="例　課長",
+        )
+        field(
+            "メンバーの閲覧権限" if root.startswith("attributes/") else "管理権限",
             "org-leader",
             options=[("no", "メンバー"), ("yes", "リーダー")],
             text=draft.get("role", "yes" if row.get("leader") else "no"),

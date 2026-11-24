@@ -63,6 +63,8 @@ def key_for(subject, job_id):
 def submit(question, actor, job_id, request_id=None, screen=None):
     key = key_for(actor.subject, job_id)
     data = asdict(actor)
+    data.pop("metadata_leads", None)
+    data["metadata"] = {key: sorted(values) for key, values in actor.metadata.items()}
     for name in SETS:
         data[name] = sorted(data[name])
     now = int(time())
@@ -180,7 +182,13 @@ def process(event, fields):
     if not job or job.get("result") or job["deadline"] <= time():
         return
     data = event["actor"]
-    actor = Actor(**{**data, **{name: frozenset(data[name]) for name in SETS}})
+    actor = Actor(
+        **{
+            **data,
+            **{name: frozenset(data[name]) for name in SETS},
+            "metadata": {key: frozenset(values) for key, values in data.get("metadata", {}).items()},
+        }
+    )
 
     def products():
         with Session(engine()) as db:

@@ -57,7 +57,11 @@ def filter_form(chart, f, dims, workspace, *, scope="metrics"):
                 (u["id"], u["name"])
                 for u in workspace.get("units", [])
                 if u["id"] in workspace.get("leads", [])
-                or (scope == "audit" and ctx["me"].get("auditor"))
+                or (
+                    scope == "audit"
+                    and ctx["me"].get("auditor")
+                    and u["kind"] in ("department", "project")
+                )
             ]
             if choices and scope != "personal":
                 choice("unit", "集計する部署・プロジェクト", [("", "閲覧できる全範囲")] + choices)
@@ -127,7 +131,7 @@ async def load_dimensions(scope="metrics"):
     ctx["workspace"] = await client.api("/workspace")
     allowed = ctx["workspace"]["leads"]
     if scope == "audit" and ctx["me"].get("auditor"):
-        allowed = [u["id"] for u in ctx["workspace"]["units"]]
+        allowed = [u["id"] for u in ctx["workspace"]["units"] if u["kind"] in ("department", "project")]
     if scope == "personal" or ctx["filters"]["unit"] not in allowed:
         ctx["filters"]["unit"] = ""
     params = {"unit": ctx["filters"]["unit"]}

@@ -3,6 +3,7 @@ from typing import Literal
 
 from app.apis.catalog.common import DB, User, event, record
 from app.apis.schemas import Input
+from app.core.metadata import BUILTIN_FIELDS, metadata_fields
 from app.core.workspace import policy, units
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import Field
@@ -23,6 +24,8 @@ class Policy(Input):
     projects: list[str] = Field(default_factory=list)
     #: 閲覧を許可する部署
     departments: list[str] = Field(default_factory=list)
+    #: 閲覧を許可する任意メタデータの値
+    metadata_values: list[str] = Field(default_factory=list)
     #: 自動承認の対象部署
     auto_departments: list[str] = Field(default_factory=list)
     #: 自動承認の対象役職
@@ -69,6 +72,15 @@ def configure(
     ):
         if any(tree.get(i, {}).get("kind") != kind for i in ids):
             raise HTTPException(422, "所属先を確認してください")
+    previous = policy(asset).get("metadata_values", [])
+    if "metadata_values" not in data.model_fields_set:
+        data.metadata_values = previous
+    else:
+        fields = metadata_fields(db)
+        for key in set(data.metadata_values) - set(previous):
+            kind = tree.get(key, {}).get("kind")
+            if kind not in fields or kind in BUILTIN_FIELDS or not fields[kind]["public_values"]:
+                raise HTTPException(422, "全利用者に公開しているメタデータの値を選択してください")
     if any(not t.strip() or len(t) > 120 for t in data.auto_titles):
         raise HTTPException(422, "役職名を確認してください")
     encoded = json.dumps(data.model_dump(), ensure_ascii=False)

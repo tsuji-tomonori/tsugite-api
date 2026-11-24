@@ -119,7 +119,10 @@ class Portal(Page):
                     with t.div(classes="nav-group"):
                         t.small(label)
                         for entry in entries:
-                            selected = active == entry.path
+                            selected = active == entry.path or (
+                                entry.menu_paths
+                                and (page == entry.path or page.startswith(entry.path + "/"))
+                            )
                             t.button(
                                 entry.page_title(),
                                 type="button",
