@@ -57,3 +57,16 @@ def test_flat_baseline_requires_equivalent_file_selection(tmp_path, monkeypatch)
     assert not coverage.compatible_baseline(tmp_path, nested)
     marker.write_text(coverage.coverage_policy(legacy + "# different tracer"))
     assert not coverage.compatible_baseline(tmp_path, flat)
+
+
+def test_baseline_resolves_its_own_frontend_builder(tmp_path):
+    """開発ツール移動前の2種類の配置と移動後の配置で、比較元のビルダーを選ぶ。"""
+    for name in (
+        "tools/build_frontend.py",
+        "tools/packaging/build_frontend.py",
+        "packages/tools/packaging/build_frontend.py",
+    ):
+        path = tmp_path / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.touch()
+        assert coverage.frontend_builder(tmp_path) == name

@@ -6,7 +6,7 @@ PUT `/api/inquiries/{inquiry_id}/reply`
 
 [API一覧](README.md) · [CRUD一覧](../db/crud.md)
 
-共通 · `reply_to_inquiry_api_inquiries__inquiry_id__reply_put` · [reply_to_inquiry:102](../../../packages/backend/src/app/apis/inquiries.py#L102)
+共通 · `reply_to_inquiry_api_inquiries__inquiry_id__reply_put` · [reply_to_inquiry:103](../../../packages/backend/src/app/apis/inquiries.py#L103)
 
 ## 入力
 
@@ -68,20 +68,20 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:105](../../../packages/backend/src/app/core/workspace.py#L105) |
-| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:30](../../../packages/backend/src/app/core/workspace.py#L30) |
-| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:54](../../../packages/backend/src/app/core/workspace.py#L54) |
-| [運営への問い合わせ](../db/database.md#inquiries) | inquiries | R | 主キーで取得 | db.get | [reply_to_inquiry:112](../../../packages/backend/src/app/apis/inquiries.py#L112) |
-| [運営への問い合わせ](../db/database.md#inquiries) | inquiries | U | 管理者の回答本文を設定 | answer に代入 | [reply_to_inquiry:123](../../../packages/backend/src/app/apis/inquiries.py#L123) |
-| [運営への問い合わせ](../db/database.md#inquiries) | inquiries | U | 管理者の回答日時を設定 | answered_at に代入 | [reply_to_inquiry:123](../../../packages/backend/src/app/apis/inquiries.py#L123) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:123](../../../packages/backend/src/app/core/auth.py#L123) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:91](../../../packages/backend/src/app/core/workspace.py#L91) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:106](../../../packages/backend/src/app/core/workspace.py#L106) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:31](../../../packages/backend/src/app/core/workspace.py#L31) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:55](../../../packages/backend/src/app/core/workspace.py#L55) |
+| [運営への問い合わせ](../db/database.md#inquiries) | inquiries | R | 主キーで取得 | db.get | [reply_to_inquiry:113](../../../packages/backend/src/app/apis/inquiries.py#L113) |
+| [運営への問い合わせ](../db/database.md#inquiries) | inquiries | U | 管理者の回答本文を設定 | answer に代入 | [reply_to_inquiry:124](../../../packages/backend/src/app/apis/inquiries.py#L124) |
+| [運営への問い合わせ](../db/database.md#inquiries) | inquiries | U | 管理者の回答日時を設定 | answered_at に代入 | [reply_to_inquiry:124](../../../packages/backend/src/app/apis/inquiries.py#L124) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:124](../../../packages/backend/src/app/core/auth.py#L124) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:92](../../../packages/backend/src/app/core/workspace.py#L92) |
 
 ### AWSサービス
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:53](../../../packages/backend/src/app/core/config.py#L53) |
+| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:54](../../../packages/backend/src/app/core/config.py#L54) |
 
 <details><summary>解析した関数・依存</summary>
 

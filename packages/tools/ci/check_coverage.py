@@ -161,6 +161,19 @@ def only_browser_timeouts(junit):
     )
 
 
+def frontend_builder(checkout):
+    """比較元のディレクトリ構成から画面配布物のビルダーを選ぶ。"""
+    return next(
+        candidate
+        for candidate in (
+            "packages/tools/packaging/build_frontend.py",
+            "tools/packaging/build_frontend.py",
+            "tools/build_frontend.py",
+        )
+        if (checkout / candidate).is_file()
+    )
+
+
 def measure_base_coverage(sha):
     print(f"No coverage artifact matches {sha}; measuring the base in this PR run.", flush=True)
     env = os.environ.copy()
@@ -172,10 +185,7 @@ def measure_base_coverage(sha):
         subprocess.run(["git", "worktree", "add", "--detach", str(path), sha], check=True, env=env)
         try:
             subprocess.run(["task", "setup", "browser:install"], cwd=path, check=True, env=env)
-            # Older base commits keep the builder directly under tools/.
-            builder = "packages/tools/packaging/build_frontend.py"
-            if not (path / builder).is_file():
-                builder = "tools/build_frontend.py"
+            builder = frontend_builder(path)
             subprocess.run(
                 ["uv", "run", "--locked", "--all-packages", "python", builder],
                 cwd=path,
@@ -196,6 +206,8 @@ def measure_base_coverage(sha):
                 roots = tomllib.load(file)["tool"]["coverage"]["run"]["source"]
             if (path / "agent/jobs.py").is_file():
                 roots = ["agent" if root == "packages/agent/src/agent" else root for root in roots]
+            if not (path / "packages/tools").exists() and (path / "tools").is_dir():
+                roots = ["tools" if root == "packages/tools" else root for root in roots]
             command = [
                 "uv",
                 "run",

@@ -142,7 +142,7 @@
 | 全API項目とDBカラムに業務用の和名がある | — | [test_business_names_cover_every_operation_field_and_database_column](../../../tests/architecture/tools/test_design_sources.py#L172) |
 | 定義元のコメントだけを変更するとOpenAPI、API詳細、DB定義書、AWS操作表に反映される。 | — | [test_editing_declaration_comments_changes_openapi_and_design_pages](../../../tests/architecture/tools/test_design_sources.py#L209) |
 
-### バックエンド（56項目）
+### バックエンド（57項目）
 
 | 確認内容 | 条件別の確認内容 | テスト定義 |
 | --- | --- | --- |
@@ -183,6 +183,7 @@
 | 内部参照の連鎖とJSON Pointerのエスケープを解決し、パス順を保つ。 | — | [test_resolves_path_item_references_in_order](../../../packages/backend/tests/test_openapi.py#L6) |
 | 解決できないパスと拡張項目を飛ばし、有効なパスを返す。 | 自分自身を参照している<br>参照先が存在しない<br>外部ドキュメントを参照している<br>パス項目が配列になっている | [test_skips_invalid_path_item_without_losing_valid_paths](../../../packages/backend/tests/test_openapi.py#L34) |
 | 公開スキーマの操作、入力項目、成功応答を日本語で取得し、再取得しても内容が変わらない。 | — | [test_published_schema_uses_business_names](../../../packages/backend/tests/test_openapi.py#L40) |
+| 提供者は購読者に仕様内の操作を設定でき、解除すると個別設定が一覧から消える。 | — | [test_subscriber_operation_policy_is_scoped_and_resettable](../../../packages/backend/tests/test_operation_policy.py#L5) |
 | 公開範囲、委任判断、個人・プロジェクト別申請、部署・役職の自動承認を確認する | — | [test_delegation_search_and_personal_isolation](../../../packages/backend/tests/test_org_access.py#L40) |
 | Cognitoグループの除外が有効で、ポータルで新設したプロジェクトへの招待も反映される | — | [test_invitation_respects_identity_source](../../../packages/backend/tests/test_org_access.py#L156) |
 | 利用者には有効な所属先だけを返し、兼務の追加と所属解除を同じセッションに反映する | — | [test_workspace_project_visibility](../../../packages/backend/tests/test_org_access.py#L184) |
@@ -203,7 +204,7 @@
 | 管理者だけが空の部署を子から削除でき、廃止した識別子は再作成できない。 | — | [test_unit_retirement](../../../packages/backend/tests/test_unit_lifecycle.py#L5) |
 | 提供・利用を既存プロジェクトへ移管し、公開状態・旧URLと新URLでの認証済み呼び出しを確認する。 | — | [test_project_transfer](../../../packages/backend/tests/test_unit_lifecycle.py#L25) |
 
-### フロントエンド（44項目）
+### フロントエンド（46項目）
 
 | 確認内容 | 条件別の確認内容 | テスト定義 |
 | --- | --- | --- |
@@ -241,6 +242,8 @@
 | 登録済みの利用者は確認コードを間違えても同じ画面で再入力できる。 | — | [test_returning_user_retries_mfa](../../../packages/frontend/tests/test_portal_login.py#L62) |
 | 再設定コードを受け取った利用者は新しいパスワードを設定してログイン画面に戻れる。 | — | [test_reset_returns_to_signin](../../../packages/frontend/tests/test_portal_login.py#L84) |
 | パスワードは認証サービスへのPOST本文だけで送信し、エラーは日本語で表示する。 | — | [test_credentials_sent_to_identity_service](../../../packages/frontend/tests/test_portal_login.py#L105) |
+| 利用者には本人の編集欄を表示し、他者のプロフィールの読み込みと編集を制限する。 | — | [test_profile_reads_only_the_allowed_member](../../../packages/frontend/tests/test_profile_screen.py#L8) |
+| プロフィール更新で読み込み時の版を送り、空に戻した表示名を解除する。 | — | [test_profile_save_preserves_revision_and_clears_blank_names](../../../packages/frontend/tests/test_profile_screen.py#L38) |
 | 画面内の入力不備と不具合を区別し、商品と本人の識別子だけを残す。 | — | [test_screen_error_context](../../../packages/frontend/tests/test_screen_logs.py#L8) |
 | API呼び出しには登録済み画面の識別子だけを付加する。 | — | [test_request_carries_screen](../../../packages/frontend/tests/test_screen_logs.py#L26) |
 | 独立した画面ファイルを追加すると配布物に入り、URLからデータ取得と描画までできる。 | — | [test_new_screen_is_packaged_loaded_and_rendered](../../../packages/frontend/tests/test_screen_registry.py#L13) |
@@ -312,7 +315,7 @@
 | finance の利用者には所属先が1件だけ表示され、未所属の詳細URLを開いても情報は表示されない | — | [test_consumer_project_directory](../../../tests/e2e/browser/test_workspace_console.py#L213) |
 | 管理画面で部署を移管して子部署を引き継ぎ、未使用の子部署を削除できる。 | — | [test_retire_workspace_units](../../../tests/e2e/browser/test_workspace_console.py#L238) |
 
-### 開発ツール（57項目）
+### 開発ツール（60項目）
 
 | 確認内容 | 条件別の確認内容 | テスト定義 |
 | --- | --- | --- |
@@ -345,6 +348,7 @@
 | 検査の直前の説明と実行条件を対応付け、シェル文字列内の偽コメントを無視する。 | — | [test_workflow_comments_follow_steps](../../../packages/tools/tests/test_completion.py#L9) |
 | ブランチの下限・低下幅を合成し、非同期テストとクラスの説明を定義行から取得する。 | — | [test_rule_changes_and_test_edits_reach_document](../../../packages/tools/tests/test_completion.py#L29) |
 | 旧方式で測った成果物は比較元に階層付き画面がなく計測器の他の部分が一致するときだけ使う。 | — | [test_flat_baseline_requires_equivalent_file_selection](../../../packages/tools/tests/test_coverage_baseline.py#L7) |
+| 開発ツール移動前の2種類の配置と移動後の配置で、比較元のビルダーを選ぶ。 | — | [test_baseline_resolves_its_own_frontend_builder](../../../packages/tools/tests/test_coverage_baseline.py#L62) |
 | コミットフックが規約に沿った件名を許可し、規約外の件名を理由付きで拒否する。 | — | [test_commit_message_hook](../../../packages/tools/tests/test_delivery_contracts.py#L13) |
 | mainへのマージを検証した後だけOIDCで配備し、PRでは検証を実行する。 | — | [test_merge_deploy_workflow](../../../packages/tools/tests/test_delivery_contracts.py#L31) |
 | 変異後のアサーション失敗を検出に数え、収集エラーやスキップを検出件数から除く。 | — | [test_mutation_verdict](../../../packages/tools/tests/test_delivery_contracts.py#L60) |
@@ -355,6 +359,7 @@
 | UTF-8の正常な文書を許可し、異常な符号化や改行を検出する | — | [test_text_policy](../../../packages/tools/tests/test_design.py#L132) |
 | OpenAPIの通信上の項目名を保ち、用途に応じた和名を表示する | — | [test_openapi_preserves_wire_names_and_labels_them_in_context](../../../packages/tools/tests/test_design.py#L139) |
 | 過去に保存した独自項目を返しつつ、公開する入れ子の型をフィールド宣言から取得する。 | — | [test_nested_contracts_preserve_legacy_records_and_follow_field_annotations](../../../packages/tools/tests/test_design.py#L165) |
+| 結果ファイルや画面が欠けたら不合格とし、そろった場合は画像・実行日時・リソースを表示する。 | — | [test_html_report_tracks_missing_results_and_renders_artifacts](../../../packages/tools/tests/test_html_report.py#L8) |
 | 各リソースを所属別に掲載し、配列・参照・埋め込みJSONを項目ごとの行に展開する。 | — | [test_component_parameter_sheet](../../../packages/tools/tests/test_infrastructure_docs.py#L9) |
 | 所属が欠けたリソースは論理IDを示して生成を止める。 | — | [test_missing_component_identifies_resource](../../../packages/tools/tests/test_infrastructure_docs.py#L56) |
 | 同じ依存を別の場所で同期してもLayerが一致し、依存を更新したときだけ内容が変わる。 | — | [test_layer_rebuild_is_reproducible](../../../packages/tools/tests/test_lambda_layer.py#L29) |
@@ -373,6 +378,7 @@
 | テーマ生成はCSSの文字列とコメントを除外し、入れ子の変数と代替値を取得する。 | — | [test_stylesheet_uses_only_variable_references](../../../packages/tools/tests/test_stylesheet.py#L5) |
 | メール補完はドライランで保存せず、確認したsubだけのメールを更新し氏名を保持する。 | — | [test_sync_uses_verified_subject_and_preserves_names](../../../packages/tools/tests/test_sync_member_emails.py#L18) |
 | 境界値を許容し、片方だけが基準未満なら表示上の丸めで合格にしない。 | — | [test_coverage_compares_exact_line_and_branch_counts](../../../packages/tools/tests/test_unit_coverage.py#L5) |
+| 他スイートの結果で単体の未計測を補わず、未実行・分岐なし計測・下限未達を区別する。 | — | [test_gate_uses_only_the_packages_own_unit_run](../../../packages/tools/tests/test_unit_coverage.py#L16) |
 
 ### AWSエミュレーターE2E（14項目）
 

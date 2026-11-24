@@ -6,7 +6,7 @@ DELETE `/api/workspace/units/{key}`
 
 [API一覧](README.md) · [CRUD一覧](../db/crud.md)
 
-共通 · `delete_unit_api_workspace_units__key__delete` · [delete_unit:169](../../../packages/backend/src/app/apis/governance/unit_lifecycle.py#L169)
+共通 · `delete_unit_api_workspace_units__key__delete` · [delete_unit:170](../../../packages/backend/src/app/apis/governance/unit_lifecycle.py#L170)
 
 ## 入力
 
@@ -54,47 +54,47 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | D | レコードを削除 | db.delete | [move_record:47](../../../packages/backend/src/app/apis/governance/unit_lifecycle.py#L47) |
-| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | R | 検索 | select | [migrate_references:93](../../../packages/backend/src/app/apis/governance/unit_lifecycle.py#L93) |
-| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | R | 検索 | select | [pending_steps:77](../../../packages/backend/src/app/apis/governance/unit_lifecycle.py#L77) |
-| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | U | 申請時の回答・利用条件・審査履歴（JSON）を設定 | submission に代入 | [pending_steps:85](../../../packages/backend/src/app/apis/governance/unit_lifecycle.py#L85) |
-| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | U | 現在の承認担当を設定 | stage に代入 | [pending_steps:87](../../../packages/backend/src/app/apis/governance/unit_lifecycle.py#L87) |
-| [利用者の組織所属](../db/database.md#affiliations) | affiliations | D | レコードを削除 | db.delete | [move_record:47](../../../packages/backend/src/app/apis/governance/unit_lifecycle.py#L47) |
-| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [roster:76](../../../packages/backend/src/app/apis/governance/directory.py#L76) |
-| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [migrate_references:119](../../../packages/backend/src/app/apis/governance/unit_lifecycle.py#L119) |
-| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:105](../../../packages/backend/src/app/core/workspace.py#L105) |
-| [API呼び出し件数の監視設定](../db/database.md#alert_rules) | alert_rules | D | レコードを削除 | db.delete | [move_record:47](../../../packages/backend/src/app/apis/governance/unit_lifecycle.py#L47) |
-| [API呼び出し件数の監視設定](../db/database.md#alert_rules) | alert_rules | R | 検索 | select | [migrate_references:100](../../../packages/backend/src/app/apis/governance/unit_lifecycle.py#L100) |
-| [API認証情報](../db/database.md#api_keys) | api_keys | R | 検索 | select | [migrate_references:106](../../../packages/backend/src/app/apis/governance/unit_lifecycle.py#L106) |
-| [API認証情報](../db/database.md#api_keys) | api_keys | U | 認証情報を利用するプロジェクトを設定 | project に代入 | [migrate_references:109](../../../packages/backend/src/app/apis/governance/unit_lifecycle.py#L109) |
-| [APIカタログ](../db/database.md#assets) | assets | R | 検索 | select | [asset_references:56](../../../packages/backend/src/app/apis/governance/unit_lifecycle.py#L56) |
-| [APIカタログ](../db/database.md#assets) | assets | U | 提供プロジェクトの識別子を設定 | owner に代入 | [asset_references:59](../../../packages/backend/src/app/apis/governance/unit_lifecycle.py#L59) |
-| [APIカタログ](../db/database.md#assets) | assets | U | 公開範囲と承認条件（JSON）を設定 | policy に代入 | [asset_references:65](../../../packages/backend/src/app/apis/governance/unit_lifecycle.py#L65) |
-| [APIカタログ](../db/database.md#assets) | assets | U | 環境別の申請項目・利用規約・承認経路（JSON）を設定 | offers に代入 | [asset_references:73](../../../packages/backend/src/app/apis/governance/unit_lifecycle.py#L73) |
-| [監査履歴](../db/database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [audit:54](../../../packages/backend/src/app/apis/governance/directory.py#L54) |
-| [認証情報の利用制限](../db/database.md#credential_rules) | credential_rules | D | レコードを削除 | db.delete | [move_record:47](../../../packages/backend/src/app/apis/governance/unit_lifecycle.py#L47) |
-| [認証情報の利用制限](../db/database.md#credential_rules) | credential_rules | R | 主キーで取得 | db.get | [migrate_references:110](../../../packages/backend/src/app/apis/governance/unit_lifecycle.py#L110) |
-| [組織階層](../db/database.md#directory_tree) | directory_tree | C | レコードを追加 | db.add | [save_tree:154](../../../packages/backend/src/app/apis/governance/directory.py#L154) |
-| [組織階層](../db/database.md#directory_tree) | directory_tree | C | レコードを追加 | db.add | [retire:152](../../../packages/backend/src/app/apis/governance/unit_lifecycle.py#L152) |
-| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retire:149](../../../packages/backend/src/app/apis/governance/unit_lifecycle.py#L149) |
-| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:30](../../../packages/backend/src/app/core/workspace.py#L30) |
-| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:54](../../../packages/backend/src/app/core/workspace.py#L54) |
-| [組織階層](../db/database.md#directory_tree) | directory_tree | U | 部署・プロジェクトの階層データ（JSON）を設定 | units に代入 | [save_tree:155](../../../packages/backend/src/app/apis/governance/directory.py#L155) |
-| [組織階層](../db/database.md#directory_tree) | directory_tree | U | 部署・プロジェクトの階層データ（JSON）を設定 | units に代入 | [retire:153](../../../packages/backend/src/app/apis/governance/unit_lifecycle.py#L153) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 検索 | select | [roster:70](../../../packages/backend/src/app/apis/governance/directory.py#L70) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 検索 | select | [roster:80](../../../packages/backend/src/app/apis/governance/directory.py#L80) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [roster:85](../../../packages/backend/src/app/apis/governance/directory.py#L85) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [roster:101](../../../packages/backend/src/app/apis/governance/directory.py#L101) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:123](../../../packages/backend/src/app/core/auth.py#L123) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:91](../../../packages/backend/src/app/core/workspace.py#L91) |
+| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | D | レコードを削除 | db.delete | [move_record:48](../../../packages/backend/src/app/apis/governance/unit_lifecycle.py#L48) |
+| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | R | 検索 | select | [migrate_references:94](../../../packages/backend/src/app/apis/governance/unit_lifecycle.py#L94) |
+| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | R | 検索 | select | [pending_steps:78](../../../packages/backend/src/app/apis/governance/unit_lifecycle.py#L78) |
+| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | U | 申請時の回答・利用条件・審査履歴（JSON）を設定 | submission に代入 | [pending_steps:86](../../../packages/backend/src/app/apis/governance/unit_lifecycle.py#L86) |
+| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | U | 現在の承認担当を設定 | stage に代入 | [pending_steps:88](../../../packages/backend/src/app/apis/governance/unit_lifecycle.py#L88) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | D | レコードを削除 | db.delete | [move_record:48](../../../packages/backend/src/app/apis/governance/unit_lifecycle.py#L48) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [roster:77](../../../packages/backend/src/app/apis/governance/directory.py#L77) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [migrate_references:120](../../../packages/backend/src/app/apis/governance/unit_lifecycle.py#L120) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:106](../../../packages/backend/src/app/core/workspace.py#L106) |
+| [API呼び出し件数の監視設定](../db/database.md#alert_rules) | alert_rules | D | レコードを削除 | db.delete | [move_record:48](../../../packages/backend/src/app/apis/governance/unit_lifecycle.py#L48) |
+| [API呼び出し件数の監視設定](../db/database.md#alert_rules) | alert_rules | R | 検索 | select | [migrate_references:101](../../../packages/backend/src/app/apis/governance/unit_lifecycle.py#L101) |
+| [API認証情報](../db/database.md#api_keys) | api_keys | R | 検索 | select | [migrate_references:107](../../../packages/backend/src/app/apis/governance/unit_lifecycle.py#L107) |
+| [API認証情報](../db/database.md#api_keys) | api_keys | U | 認証情報を利用するプロジェクトを設定 | project に代入 | [migrate_references:110](../../../packages/backend/src/app/apis/governance/unit_lifecycle.py#L110) |
+| [APIカタログ](../db/database.md#assets) | assets | R | 検索 | select | [asset_references:57](../../../packages/backend/src/app/apis/governance/unit_lifecycle.py#L57) |
+| [APIカタログ](../db/database.md#assets) | assets | U | 提供プロジェクトの識別子を設定 | owner に代入 | [asset_references:60](../../../packages/backend/src/app/apis/governance/unit_lifecycle.py#L60) |
+| [APIカタログ](../db/database.md#assets) | assets | U | 公開範囲と承認条件（JSON）を設定 | policy に代入 | [asset_references:66](../../../packages/backend/src/app/apis/governance/unit_lifecycle.py#L66) |
+| [APIカタログ](../db/database.md#assets) | assets | U | 環境別の申請項目・利用規約・承認経路（JSON）を設定 | offers に代入 | [asset_references:74](../../../packages/backend/src/app/apis/governance/unit_lifecycle.py#L74) |
+| [監査履歴](../db/database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [audit:55](../../../packages/backend/src/app/apis/governance/directory.py#L55) |
+| [認証情報の利用制限](../db/database.md#credential_rules) | credential_rules | D | レコードを削除 | db.delete | [move_record:48](../../../packages/backend/src/app/apis/governance/unit_lifecycle.py#L48) |
+| [認証情報の利用制限](../db/database.md#credential_rules) | credential_rules | R | 主キーで取得 | db.get | [migrate_references:111](../../../packages/backend/src/app/apis/governance/unit_lifecycle.py#L111) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | C | レコードを追加 | db.add | [save_tree:155](../../../packages/backend/src/app/apis/governance/directory.py#L155) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | C | レコードを追加 | db.add | [retire:153](../../../packages/backend/src/app/apis/governance/unit_lifecycle.py#L153) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retire:150](../../../packages/backend/src/app/apis/governance/unit_lifecycle.py#L150) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:31](../../../packages/backend/src/app/core/workspace.py#L31) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:55](../../../packages/backend/src/app/core/workspace.py#L55) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | U | 部署・プロジェクトの階層データ（JSON）を設定 | units に代入 | [save_tree:156](../../../packages/backend/src/app/apis/governance/directory.py#L156) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | U | 部署・プロジェクトの階層データ（JSON）を設定 | units に代入 | [retire:154](../../../packages/backend/src/app/apis/governance/unit_lifecycle.py#L154) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 検索 | select | [roster:71](../../../packages/backend/src/app/apis/governance/directory.py#L71) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 検索 | select | [roster:81](../../../packages/backend/src/app/apis/governance/directory.py#L81) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [roster:86](../../../packages/backend/src/app/apis/governance/directory.py#L86) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [roster:102](../../../packages/backend/src/app/apis/governance/directory.py#L102) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:124](../../../packages/backend/src/app/core/auth.py#L124) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:92](../../../packages/backend/src/app/core/workspace.py#L92) |
 
 ### AWSサービス
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:53](../../../packages/backend/src/app/core/config.py#L53) |
+| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:54](../../../packages/backend/src/app/core/config.py#L54) |
 
-要確認　ORM書込先　[move_record:46](../../../packages/backend/src/app/apis/governance/unit_lifecycle.py#L46)
+要確認　ORM書込先　[move_record:47](../../../packages/backend/src/app/apis/governance/unit_lifecycle.py#L47)
 
 <details><summary>解析した関数・依存</summary>
 

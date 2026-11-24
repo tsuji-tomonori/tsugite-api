@@ -6,7 +6,7 @@ POST `/api/requests/{key}/{project}/{environment}/{principal}`
 
 [API一覧](README.md) · [CRUD一覧](../db/crud.md)
 
-共通 · `decidePersonal` · [decide:20](../../../packages/backend/src/app/apis/catalog/decide/router.py#L20)
+共通 · `decidePersonal` · [decide:21](../../../packages/backend/src/app/apis/catalog/decide/router.py#L21)
 
 ## 入力
 
@@ -95,27 +95,27 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | R | 主キーで取得 | db.get | [decide:35](../../../packages/backend/src/app/apis/catalog/decide/router.py#L35) |
-| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | U | 現在の承認担当を設定 | stage に代入 | [decide:64](../../../packages/backend/src/app/apis/catalog/decide/router.py#L64) |
-| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | U | 現在の承認担当を設定 | stage に代入 | [decide:68](../../../packages/backend/src/app/apis/catalog/decide/router.py#L68) |
-| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | U | 申請時の回答・利用条件・審査履歴（JSON）を設定 | submission に代入 | [decide:69](../../../packages/backend/src/app/apis/catalog/decide/router.py#L69) |
-| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | U | 現在の承認担当を設定 | stage に代入 | [decide:71](../../../packages/backend/src/app/apis/catalog/decide/router.py#L71) |
-| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | U | 利用申請の審査状態を設定 | status に代入 | [decide:72](../../../packages/backend/src/app/apis/catalog/decide/router.py#L72) |
-| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | U | 審査・取消の理由を設定 | decision_note に代入 | [decide:73](../../../packages/backend/src/app/apis/catalog/decide/router.py#L73) |
-| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [delegated:170](../../../packages/backend/src/app/core/workspace.py#L170) |
-| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:105](../../../packages/backend/src/app/core/workspace.py#L105) |
-| [APIカタログ](../db/database.md#assets) | assets | R | 主キーで取得 | db.get | [record:32](../../../packages/backend/src/app/apis/catalog/common.py#L32) |
-| [監査履歴](../db/database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [event:17](../../../packages/backend/src/app/apis/catalog/common.py#L17) |
-| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:30](../../../packages/backend/src/app/core/workspace.py#L30) |
-| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:54](../../../packages/backend/src/app/core/workspace.py#L54) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:123](../../../packages/backend/src/app/core/auth.py#L123) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:91](../../../packages/backend/src/app/core/workspace.py#L91) |
+| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | R | 主キーで取得 | db.get | [decide:36](../../../packages/backend/src/app/apis/catalog/decide/router.py#L36) |
+| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | U | 現在の承認担当を設定 | stage に代入 | [decide:65](../../../packages/backend/src/app/apis/catalog/decide/router.py#L65) |
+| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | U | 現在の承認担当を設定 | stage に代入 | [decide:69](../../../packages/backend/src/app/apis/catalog/decide/router.py#L69) |
+| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | U | 申請時の回答・利用条件・審査履歴（JSON）を設定 | submission に代入 | [decide:70](../../../packages/backend/src/app/apis/catalog/decide/router.py#L70) |
+| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | U | 現在の承認担当を設定 | stage に代入 | [decide:72](../../../packages/backend/src/app/apis/catalog/decide/router.py#L72) |
+| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | U | 利用申請の審査状態を設定 | status に代入 | [decide:73](../../../packages/backend/src/app/apis/catalog/decide/router.py#L73) |
+| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | U | 審査・取消の理由を設定 | decision_note に代入 | [decide:74](../../../packages/backend/src/app/apis/catalog/decide/router.py#L74) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [delegated:171](../../../packages/backend/src/app/core/workspace.py#L171) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:106](../../../packages/backend/src/app/core/workspace.py#L106) |
+| [APIカタログ](../db/database.md#assets) | assets | R | 主キーで取得 | db.get | [record:33](../../../packages/backend/src/app/apis/catalog/common.py#L33) |
+| [監査履歴](../db/database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [event:18](../../../packages/backend/src/app/apis/catalog/common.py#L18) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:31](../../../packages/backend/src/app/core/workspace.py#L31) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:55](../../../packages/backend/src/app/core/workspace.py#L55) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:124](../../../packages/backend/src/app/core/auth.py#L124) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:92](../../../packages/backend/src/app/core/workspace.py#L92) |
 
 ### AWSサービス
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:53](../../../packages/backend/src/app/core/config.py#L53) |
+| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:54](../../../packages/backend/src/app/core/config.py#L54) |
 
 <details><summary>解析した関数・依存</summary>
 

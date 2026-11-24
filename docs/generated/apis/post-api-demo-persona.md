@@ -6,7 +6,7 @@ POST `/api/demo/{persona}`
 
 [API一覧](README.md) · [CRUD一覧](../db/crud.md)
 
-デモ限定 · `local_login_api_demo__persona__post` · [local_login:47](../../../packages/backend/src/app/main.py#L47)
+デモ限定 · `local_login_api_demo__persona__post` · [local_login:48](../../../packages/backend/src/app/main.py#L48)
 
 ## 入力
 
@@ -54,7 +54,7 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 検索 | select | [demo_token:55](../../../packages/backend/src/app/core/auth.py#L55) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 検索 | select | [demo_token:56](../../../packages/backend/src/app/core/auth.py#L56) |
 
 ### AWSサービス
 

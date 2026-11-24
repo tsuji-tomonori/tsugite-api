@@ -17,6 +17,7 @@ from packages.tools.ci.check_coverage import (
     compatible_coverage,
     coverage_policy,
     download_merged_coverage,
+    frontend_builder,
 )
 from packages.tools.ci.ci_coverage_parts import ARTIFACTS, PARTS, part_name, run_parts
 
@@ -303,11 +304,7 @@ def measure_missing_base_parts(base, missing):
                     check=True,
                 )
             if set(missing) & {BROWSER, BACKEND, TOOLS}:
-                builder = "packages/tools/packaging/build_frontend.py"
-                if not (checkout / builder).is_file():
-                    builder = "tools/packaging/build_frontend.py"
-                if not (checkout / builder).is_file():
-                    builder = "tools/build_frontend.py"
+                builder = frontend_builder(checkout)
                 subprocess.run([*uv, "python", builder], cwd=checkout, env=env, check=True)
             subprocess.run(
                 [
