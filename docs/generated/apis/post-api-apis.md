@@ -6,7 +6,7 @@ POST `/api/apis`
 
 [API一覧](README.md) · [CRUD一覧](../db/crud.md)
 
-共通 · `register` · [register:62](../../../packages/backend/src/app/apis/catalog/register/router.py#L62)
+共通 · `register` · [register:62](../../../packages/backend/src/app/apis/catalog/register.py#L62)
 
 ## 入力
 
@@ -85,35 +85,35 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:106](../../../packages/backend/src/app/core/workspace.py#L106) |
-| [API呼び出し識別名](../db/database.md#asset_routes) | asset_routes | R | 検索 | select | [assign_slug:25](../../../packages/backend/src/app/apis/catalog/register/router.py#L25) |
-| [APIカタログ](../db/database.md#assets) | assets | C | レコードを追加 | db.add | [register:79](../../../packages/backend/src/app/apis/catalog/register/router.py#L79) |
-| [監査履歴](../db/database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [event:18](../../../packages/backend/src/app/apis/catalog/common.py#L18) |
-| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:31](../../../packages/backend/src/app/core/workspace.py#L31) |
-| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:55](../../../packages/backend/src/app/core/workspace.py#L55) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:124](../../../packages/backend/src/app/core/auth.py#L124) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:92](../../../packages/backend/src/app/core/workspace.py#L92) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:105](../../../packages/backend/src/app/core/workspace.py#L105) |
+| [API呼び出し識別名](../db/database.md#asset_routes) | asset_routes | R | 検索 | select | [assign_slug:25](../../../packages/backend/src/app/apis/catalog/register.py#L25) |
+| [APIカタログ](../db/database.md#assets) | assets | C | レコードを追加 | db.add | [register:79](../../../packages/backend/src/app/apis/catalog/register.py#L79) |
+| [監査履歴](../db/database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [event:10](../../../packages/backend/src/app/core/catalog.py#L10) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:30](../../../packages/backend/src/app/core/workspace.py#L30) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:54](../../../packages/backend/src/app/core/workspace.py#L54) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:123](../../../packages/backend/src/app/core/auth.py#L123) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:91](../../../packages/backend/src/app/core/workspace.py#L91) |
 
 ### AWSサービス
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| API仕様文書の保管（Amazon S3） | s3 | C | API仕様文書を保存 | put_object | [archive_spec:24](../../../packages/backend/src/app/integrations/spec_archive.py#L24) |
-| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:54](../../../packages/backend/src/app/core/config.py#L54) |
+| API仕様文書の保管（Amazon S3） | s3 | C | API仕様文書を保存 | put_object | [archive_spec:23](../../../packages/backend/src/app/integrations/spec_archive.py#L23) |
+| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:53](../../../packages/backend/src/app/core/config.py#L53) |
 
 <details><summary>解析した関数・依存</summary>
 
-- `app.apis.catalog.common.allowed_spec`
-- `app.apis.catalog.common.event`
-- `app.apis.catalog.common.listing`
-- `app.apis.catalog.register.router.assign_slug`
-- `app.apis.catalog.register.router.register`
-- `app.apis.catalog.register.router.validated_spec`
+- `app.apis.catalog.register.assign_slug`
+- `app.apis.catalog.register.register`
+- `app.apis.catalog.register.validated_spec`
 - `app.core.auth.check_member`
 - `app.core.auth.current`
 - `app.core.auth.human`
 - `app.core.auth.identify`
 - `app.core.auth.keyset`
+- `app.core.catalog.allowed_spec`
+- `app.core.catalog.event`
+- `app.core.catalog.listing`
 - `app.core.config.local_demo`
 - `app.core.config.settings`
 - `app.core.config.targets`
@@ -127,7 +127,6 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 - `app.core.workspace.workspace_targets`
 - `app.integrations.spec_archive.archive_spec`
 - `app.integrations.spec_archive.canonical`
-- `tsugite_db.models.new_id`
 - `tsugite_db.session.engine`
 - `tsugite_db.session.session`
 

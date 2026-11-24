@@ -3,13 +3,13 @@ import json
 from datetime import UTC, datetime, timedelta
 from typing import Annotated, Literal
 
-from app.apis import outputs
-from app.apis.catalog.common import DB, User
 from app.apis.governance.directory import manages, unit_condition
 from app.apis.governance.notifications import unread
 from app.core.diagnostics import exported_invocation
 from app.core.log_visibility import led_calls
 from app.core.workspace import allowed_audience, private_project, project_label, units
+from app.dependencies import DB, User
+from app.schemas import outputs
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import Response
 from sqlalchemy import func, or_, select, true

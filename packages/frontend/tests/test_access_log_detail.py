@@ -1,7 +1,13 @@
-# 過去分の推定時刻と実測時刻を区別し、質問には選んだ記録の結果と識別子で答える。
+# ログ一件の表示とページ移動を検証する。
+from __future__ import annotations
+
 import asyncio
+from collections.abc import Callable
+from types import ModuleType
+from typing import Any
 from unittest.mock import AsyncMock
 
+import pytest
 from puepy import Page
 
 ROW = {
@@ -23,9 +29,9 @@ ROW = {
 }
 
 
-def test_detail_timestamps_and_answers(portal_module):
+def test_detail_timestamps_and_answers(portal_module: Callable[[str], ModuleType]) -> None:
     """過去分の推定時刻と実測時刻を区別し、質問には選んだ記録の結果と識別子で答える。"""
-    display = portal_module("access_log_display")
+    display = portal_module("content.access_log_display")
     fields = dict(display.detail_fields(ROW))
     assert fields["呼び出し開始"] == "2026-11-23 09:57:08.653 UTC（推定）"
     assert fields["応答"].endswith("09.010 UTC（記録時刻から推定）")
@@ -39,11 +45,13 @@ def test_detail_timestamps_and_answers(portal_module):
     assert "エラーコード" not in dict(display.detail_fields(measured))
 
 
-def test_detail_link_preserves_scope_and_id(portal_module, monkeypatch):
+def test_detail_link_preserves_scope_and_id(
+    portal_module: Callable[[str], ModuleType], monkeypatch: pytest.MonkeyPatch
+) -> None:
     """共有用URLから記号を含む元のIDと閲覧範囲を復元し、1件だけを読み込む。"""
-    logs = portal_module("portal_pages.logs")
+    logs = portal_module("actions.logs")
     api = AsyncMock(return_value=ROW)
-    monkeypatch.setattr(logs.client, "api", api)
+    monkeypatch.setattr(portal_module("apis.client"), "api", api)
     page = logs.detail_path("id+/=", "team", "chat", audit=True)
     monkeypatch.setattr(logs, "route", lambda: page)
     asyncio.run(logs.load_detail(page))
@@ -51,22 +59,24 @@ def test_detail_link_preserves_scope_and_id(portal_module, monkeypatch):
     assert logs.ctx["log_detail"] == (page, ROW, "team", "chat")
 
 
-def test_log_page_shows_only_requested_rows(portal_module, monkeypatch):
+def test_log_page_shows_only_requested_rows(
+    portal_module: Callable[[str], ModuleType], monkeypatch: pytest.MonkeyPatch
+) -> None:
     """次ページ確認用の21件目を表に出さず、最終ページで次への案内を消す。"""
     from unittest.mock import patch
     from xml.dom.minidom import Document
 
     from puepy.core import Tag
 
-    logs = portal_module("portal_pages.logs")
+    logs = portal_module("components.logs")
     monkeypatch.setattr(logs, "filters_view", lambda _, **kwargs: None)
     logs.ctx["log_rows"] = [{**ROW, "request_id": f"id-{n}"} for n in range(21)]
 
     class ListPage(Page):
-        def populate(self):
+        def populate(self) -> None:
             logs.logs_view()
 
-    def table_page():
+    def table_page() -> Any:
         page = ListPage()
         with page:
             page.generate_children()
@@ -81,21 +91,26 @@ def test_log_page_shows_only_requested_rows(portal_module, monkeypatch):
     assert "21～21件" in xml and "次へ" not in xml and "前へ" in xml
 
 
-def test_paging_back_keeps_the_time_window(portal_module, monkeypatch):
+def test_paging_back_keeps_the_time_window(
+    portal_module: Callable[[str], ModuleType], monkeypatch: pytest.MonkeyPatch
+) -> None:
     """前のページに戻る間に新しい呼び出しがあっても、検索期間を固定して同じ行を表示する。"""
     from unittest.mock import Mock
     from urllib.parse import parse_qs, urlsplit
 
-    logs = portal_module("portal_pages.logs")
+    logs = portal_module("actions.logs")
     monkeypatch.setattr(logs, "load_dimensions", AsyncMock())
-    monkeypatch.setattr(logs.client, "api", AsyncMock(return_value=[]))
+    monkeypatch.setattr(portal_module("apis.client"), "api", AsyncMock(return_value=[]))
     periods = Mock(side_effect=[{"end": "first"}, {"end": "refreshed"}])
     monkeypatch.setattr(logs, "time_params", periods)
     asyncio.run(logs.load_logs("logs"))
     asyncio.run(logs.log_page(20))
     asyncio.run(logs.log_page(0))
     asyncio.run(logs.load_logs("logs"))
-    queries = [parse_qs(urlsplit(call.args[0]).query) for call in logs.client.api.await_args_list]
+    queries = [
+        parse_qs(urlsplit(call.args[0]).query)
+        for call in portal_module("apis.client").api.await_args_list
+    ]
     assert [(q["offset"][0], q["end"][0]) for q in queries] == [
         ("0", "first"),
         ("20", "first"),

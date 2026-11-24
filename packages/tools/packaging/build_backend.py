@@ -77,6 +77,7 @@ def build_layers():
     build_dir.mkdir(exist_ok=True)
     for name, python_version, selection in (
         ("runtime", "3.15", ["--package", "tsugite-backend", "--no-dev"]),
+        ("sample-api", "3.14", ["--package", "tsugite-sample-api", "--no-dev"]),
         ("decision-model", "3.14", ["--only-group", "decision-model"]),
         ("model-sdk", "3.14", ["--only-group", "model-sdk"]),
     ):
@@ -101,6 +102,20 @@ def build_layers():
 
 def build():
     build_layers()
+    # The emulator also deploys this self-contained asset, without a Lambda layer.
+    sample = ROOT / "build/sample-api"
+    with TemporaryDirectory(dir=sample.parent) as stage:
+        with ZipFile(ROOT / "build/sample-api-layer.zip") as dependencies:
+            dependencies.extractall(stage)
+        bundle = Path(stage) / "python"
+        shutil.copytree(
+            ROOT / "packages/sample_api/src/sample_api",
+            bundle / "sample_api",
+            ignore=shutil.ignore_patterns("__pycache__"),
+        )
+        if sample.exists():
+            shutil.rmtree(sample)
+        bundle.rename(sample)
     dest = ROOT / "build/lambda"
     if dest.exists():
         shutil.rmtree(dest)
@@ -124,7 +139,7 @@ def build():
         dest / "agent",
         ignore=shutil.ignore_patterns("__pycache__", "models"),
     )
-    guide_path = Path("packages/frontend/src/web_app")
+    guide_path = Path("packages/frontend/src/web_app/content")
     (dest / guide_path).mkdir(parents=True)
     for name in ("guide_content.py", "guide_search.py"):
         shutil.copy(ROOT / guide_path / name, dest / guide_path / name)

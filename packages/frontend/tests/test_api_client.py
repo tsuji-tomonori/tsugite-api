@@ -1,34 +1,40 @@
-# 承認済みの申請だけを候補にし、失効した商品の直接指定では仕様を取得しない。
+# APIクライアントの入力と認証を検証する。
+from __future__ import annotations
+
 import asyncio
-from types import SimpleNamespace
+from collections.abc import Callable, Sequence
+from types import ModuleType, SimpleNamespace
+from typing import Any
 from unittest.mock import AsyncMock, Mock
 from urllib.parse import parse_qs
 
 import pytest
 
 
-def test_console_reads_only_approved_spec(portal_module, monkeypatch):
+def test_console_reads_only_approved_spec(
+    portal_module: Callable[[str], ModuleType], monkeypatch: pytest.MonkeyPatch
+) -> None:
     """承認済みの申請だけを候補にし、失効した商品の直接指定では仕様を取得しない。"""
-    page = portal_module("portal_pages.console")
+    page = portal_module("components.console")
     rights = [
         {"asset_id": "ok", "status": "approved"},
         {"asset_id": "held", "status": "pending"},
         {"asset_id": "old", "status": "revoked"},
     ]
     api = AsyncMock(side_effect=[rights, [], {"id": "ok"}])
-    monkeypatch.setattr(page.client, "api", api)
-    asyncio.run(page.load_console("console/old"))
+    monkeypatch.setattr(portal_module("apis.client"), "api", api)
+    asyncio.run(portal_module("actions.console").load_console("console/old"))
     assert api.await_count == 2
     assert page.ctx["console_rights"] == rights[:1]
     assert page.ctx["console_asset"] is None
-    asyncio.run(page.open_asset("ok"))
+    asyncio.run(portal_module("actions.console").open_asset("ok"))
     api.assert_awaited_with("/apis/ok")
     assert page.ctx["console_asset"] == {"id": "ok"}
 
 
-def test_only_allowed_operations_and_environments(portal_module):
+def test_only_allowed_operations_and_environments(portal_module: Callable[[str], ModuleType]) -> None:
     """本人に許可された操作と承認環境を選べ、操作制限のある委任認証は候補から外れる。"""
-    page = portal_module("portal_pages.console")
+    page = portal_module("components.console")
     spec = {"paths": {"/item": {"get": {"summary": "読む"}, "post": {}, "trace": {}}}}
     asset = {
         "id": "stock",
@@ -57,19 +63,26 @@ def test_only_allowed_operations_and_environments(portal_module):
     assert page.bindings(asset, "POST /item")[-1][0] == key
 
 
-def test_identity_and_delegated_token(portal_module, monkeypatch):
+def test_identity_and_delegated_token(
+    portal_module: Callable[[str], ModuleType], monkeypatch: pytest.MonkeyPatch
+) -> None:
     """ログインだけの実行を拒否し、選択した委任認証でOAuth交換した短期トークンを送る。"""
-    docs = portal_module("api_docs")
-    monkeypatch.setattr(docs.client, "screen_headers", lambda: {"X-Tsugite-Screen": "console"})
-    monkeypatch.setattr(docs.client, "store", SimpleNamespace(getItem=lambda _: "session"))
+    docs = portal_module("components.api_docs")
+    monkeypatch.setattr(
+        portal_module("apis.client"), "screen_headers", lambda: {"X-Tsugite-Screen": "console"}
+    )
+    monkeypatch.setattr(
+        portal_module("apis.client"), "store", SimpleNamespace(getItem=lambda _: "session")
+    )
     response = SimpleNamespace(ok=True, json=AsyncMock(return_value={"access_token": "delegated"}))
     exchange = AsyncMock(return_value=response)
-    monkeypatch.setattr(docs, "pyfetch", exchange)
+    monkeypatch.setattr(portal_module("apis.invocation"), "pyfetch", exchange)
     with pytest.raises(docs.client.InputError, match="認証情報"):
         asyncio.run(docs.credential_headers(None))
     exchange.assert_not_awaited()
     token = asyncio.run(docs.credential_headers({"mode": "app", "id": "mine"}))
     exchange.assert_awaited_once()
+    assert exchange.await_args is not None
     assert exchange.await_args.args == ("/api/credentials/mine/token-exchange",)
     assert exchange.await_args.kwargs["method"] == "POST"
     assert parse_qs(exchange.await_args.kwargs["body"]) == {
@@ -80,9 +93,11 @@ def test_identity_and_delegated_token(portal_module, monkeypatch):
     assert token == {"Authorization": "Bearer delegated", "X-Tsugite-Screen": "console"}
 
 
-def test_trial_uses_approved_environments_and_reuses_personal_credential(portal_module, monkeypatch):
+def test_trial_uses_approved_environments_and_reuses_personal_credential(
+    portal_module: Callable[[str], ModuleType], monkeypatch: pytest.MonkeyPatch
+) -> None:
     """承認済み環境だけを表示し、同時実行でも同じ商品の個人認証情報を再利用する。"""
-    docs = portal_module("api_docs")
+    docs = portal_module("components.api_docs")
     asset = {"id": "stock", "name": "在庫", "environments": ["sandbox", "staging"]}
     grant = {"asset_id": "stock", "project": "finance", "environment": "sandbox", "status": "approved"}
     mine = dict(grant, project="personal-alice", environment="staging", subject="alice")
@@ -104,11 +119,12 @@ def test_trial_uses_approved_environments_and_reuses_personal_credential(portal_
         (None, "staging", "personal-alice", "個人利用 · 準本番"),
     ]
     api = AsyncMock(return_value={"id": "trial", "mode": "bearer"})
-    monkeypatch.setattr(docs.client, "api", api)
+    monkeypatch.setattr(portal_module("apis.client"), "api", api)
     issue = docs.trial_key_issuer(asset)
 
-    async def call_twice():
-        return await asyncio.gather(issue("finance"), issue("finance"))
+    async def call_twice() -> Sequence[dict[str, Any]]:
+        first, second = await asyncio.gather(issue("finance"), issue("finance"))
+        return [first, second]
 
     assert asyncio.run(call_twice()) == [{"id": "trial", "mode": "bearer"}] * 2
     api.assert_awaited_once_with(
@@ -125,9 +141,11 @@ def test_trial_uses_approved_environments_and_reuses_personal_credential(portal_
     )
 
 
-def test_manual_request_uses_only_entered_headers(portal_module, monkeypatch):
+def test_manual_request_uses_only_entered_headers(
+    portal_module: Callable[[str], ModuleType], monkeypatch: pytest.MonkeyPatch
+) -> None:
     """URL直接指定では入力したヘッダーと本文だけを使い、Cookieとリダイレクトを無効にする。"""
-    manual = portal_module("manual_request")
+    manual = portal_module("components.manual_request")
     fields = {
         "url": "https://example.test/orders?a=1",
         "method": "POST",
@@ -137,7 +155,7 @@ def test_manual_request_uses_only_entered_headers(portal_module, monkeypatch):
     document = SimpleNamespace(getElementById=lambda key: SimpleNamespace(value=fields[key[7:]]))
     monkeypatch.setattr(manual, "document", document)
     fetch = AsyncMock(return_value=SimpleNamespace(status=409, string=AsyncMock(return_value="重複")))
-    monkeypatch.setattr(manual, "pyfetch", fetch)
+    monkeypatch.setattr(manual, "fetch", fetch)
     button, output = Mock(disabled=True), Mock()
     asyncio.run(manual.send(button, output))
     fetch.assert_awaited_once_with(
@@ -154,9 +172,9 @@ def test_manual_request_uses_only_entered_headers(portal_module, monkeypatch):
     assert button.disabled is False
 
 
-def test_invalid_manual_requests_are_rejected(portal_module):
+def test_invalid_manual_requests_are_rejected(portal_module: Callable[[str], ModuleType]) -> None:
     """送信先やヘッダーの形式が不正な場合やGETに本文がある場合は送信前にエラーになる。"""
-    manual = portal_module("manual_request")
+    manual = portal_module("components.manual_request")
     for url in ("//example.test", "file:///local", "https://user:pass@example.test"):
         with pytest.raises(manual.client.InputError, match="URL"):
             manual.request_options(url, "POST", "", "")

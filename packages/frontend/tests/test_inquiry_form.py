@@ -1,18 +1,23 @@
-# 応答を受け取れずに再送しても受付番号を再利用し、次の新規送信には別の番号を使う。
+# 問い合わせの入力と送受信を検証する。
+from __future__ import annotations
+
 import asyncio
-from types import SimpleNamespace
+from collections.abc import Callable
+from types import ModuleType, SimpleNamespace
 from unittest.mock import AsyncMock, Mock
 
 import pytest
 
 
-def test_retry_reuses_pending_inquiry_id(portal_module, monkeypatch):
+def test_retry_reuses_pending_inquiry_id(
+    portal_module: Callable[[str], ModuleType], monkeypatch: pytest.MonkeyPatch
+) -> None:
     """応答を受け取れずに再送しても受付番号を再利用し、次の新規送信には別の番号を使う。"""
-    form = portal_module("inquiry_form")
+    form = portal_module("apis.messages")
     uuid = Mock(side_effect=["first", "second", "third"])
     monkeypatch.setattr(form.window, "crypto", SimpleNamespace(randomUUID=uuid), raising=False)
     api = AsyncMock(side_effect=[OSError("通信失敗"), {"inquiry_id": "first"}, {"inquiry_id": "second"}])
-    monkeypatch.setattr(form.client, "api", api)
+    monkeypatch.setattr(portal_module("apis.client"), "api", api)
     state = {"contact_text": "利用方法について"}
     question = state["contact_text"]
     with pytest.raises(OSError, match="通信失敗"):
@@ -27,18 +32,22 @@ def test_retry_reuses_pending_inquiry_id(portal_module, monkeypatch):
     ]
 
 
-def test_invalid_question_is_not_submitted(portal_module, monkeypatch):
+def test_invalid_question_is_not_submitted(
+    portal_module: Callable[[str], ModuleType], monkeypatch: pytest.MonkeyPatch
+) -> None:
     """短すぎる本文と文字数の上限を超えた本文は運営へ送信しない。"""
-    form = portal_module("inquiry_form")
+    form = portal_module("apis.messages")
     api = AsyncMock()
-    monkeypatch.setattr(form.client, "api", api)
+    monkeypatch.setattr(portal_module("apis.client"), "api", api)
     for question in ("", "問", "問" * 2001):
         with pytest.raises(form.client.InputError, match="2〜2000文字"):
             asyncio.run(form.post_inquiry({}, question))
     api.assert_not_awaited()
 
 
-def test_inquiries_page_shows_receipt_and_latest_tickets(portal_module, monkeypatch):
+def test_inquiries_page_shows_receipt_and_latest_tickets(
+    portal_module: Callable[[str], ModuleType], monkeypatch: pytest.MonkeyPatch
+) -> None:
     """自分の履歴の2ページ目から送信すると、受付番号と先頭ページの新しい問い合わせが表示される。"""
     from unittest.mock import patch
     from xml.dom.minidom import Document
@@ -46,14 +55,14 @@ def test_inquiries_page_shows_receipt_and_latest_tickets(portal_module, monkeypa
     from puepy import Page
     from puepy.core import Tag
 
-    screen = portal_module("portal_pages.inquiries")
+    screen = portal_module("components.inquiries")
     screen.ctx.update(me={"admin": True}, inquiry_offset=20)
 
     class InquiryPage(Page):
-        def populate(self):
+        def populate(self) -> None:
             screen.inquiries()
 
-    def visible_text():
+    def visible_text() -> list[str]:
         page = InquiryPage()
         with page:
             page.generate_children()
@@ -67,11 +76,11 @@ def test_inquiries_page_shows_receipt_and_latest_tickets(portal_module, monkeypa
     question = "利用手順について"
     record = {"inquiry_id": "abc", "question": question, "answer": None}
     api = AsyncMock(side_effect=[record, [record]])
-    monkeypatch.setattr(screen.client, "api", api)
-    monkeypatch.setattr(screen, "value", lambda name: question)
-    window = portal_module("inquiry_form").window
+    monkeypatch.setattr(portal_module("apis.client"), "api", api)
+    monkeypatch.setattr(portal_module("actions.inquiries"), "value", lambda name: question)
+    window = portal_module("apis.messages").window
     monkeypatch.setattr(window, "crypto", SimpleNamespace(randomUUID=lambda: "abc"), raising=False)
-    asyncio.run(screen.submit_inquiry())
+    asyncio.run(portal_module("actions.inquiries").submit_inquiry())
     assert api.await_args_list[-1].args == ("/inquiries?incoming=false&offset=0",)
     result = visible_text()
     assert "問い合わせを受け付けました。受付番号 abc" in result and "回答待ち" in result

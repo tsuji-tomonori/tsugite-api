@@ -9,11 +9,11 @@ from aws_cdk import App, Aspects
 from cdk_nag import AwsSolutionsChecks
 
 ROOT = Path(__file__).resolve().parents[3]
-sys.path.insert(0, str(ROOT / "packages/infra"))
+sys.path.insert(0, str(ROOT))
 
 
 def synthesize_report(target: Path) -> Path:
-    from src.infra_app.stack import CatalogStack
+    from packages.infra.src.stack import CatalogStack
 
     app = App(outdir=str(target))
     CatalogStack(app, "TsugiteApi")

@@ -3,11 +3,10 @@ import json
 import re
 from typing import Annotated
 
-from app.apis.catalog.common import DB, event, record, right_id
 from app.apis.governance.alerts import admit
 from app.apis.governance.keys import invoker
-from app.apis.schemas import Env
 from app.core.auth import Actor, check_member
+from app.core.catalog import event, record, right_id
 from app.core.credential_policy import check_operation
 from app.core.diagnostics import InvocationTimer, OperationalRepair, asset_object
 from app.core.openapi import path_items
@@ -19,7 +18,9 @@ from app.core.workspace import (
     stopped,
     workspace_targets,
 )
+from app.dependencies import DB
 from app.integrations.upstream import MAX_BODY, dispatch
+from app.schemas.catalog import Env
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import select
 from starlette.concurrency import run_in_threadpool

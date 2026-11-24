@@ -6,7 +6,7 @@ POST `/api/apis/{key}/requests`
 
 [API一覧](README.md) · [CRUD一覧](../db/crud.md)
 
-共通 · `apply` · [apply:16](../../../packages/backend/src/app/apis/catalog/apply/router.py#L16)
+共通 · `apply` · [apply:16](../../../packages/backend/src/app/apis/catalog/apply.py#L16)
 
 ## 入力
 
@@ -96,48 +96,48 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | C | レコードを追加 | db.add | [apply:39](../../../packages/backend/src/app/apis/catalog/apply/router.py#L39) |
-| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | R | 主キーで取得 | db.get | [apply:36](../../../packages/backend/src/app/apis/catalog/apply/router.py#L36) |
-| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | U | 現在の承認担当を設定 | stage に代入 | [apply:42](../../../packages/backend/src/app/apis/catalog/apply/router.py#L42) |
-| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | U | 申請時の回答・利用条件・審査履歴（JSON）を設定 | submission に代入 | [apply:42](../../../packages/backend/src/app/apis/catalog/apply/router.py#L42) |
-| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | U | 利用申請の審査状態を設定 | status に代入 | [apply:54](../../../packages/backend/src/app/apis/catalog/apply/router.py#L54) |
-| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | U | 個人申請の対象利用者識別子を設定 | subject に代入 | [apply:55](../../../packages/backend/src/app/apis/catalog/apply/router.py#L55) |
-| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | U | 申請した利用者の識別子を設定 | applicant に代入 | [apply:56](../../../packages/backend/src/app/apis/catalog/apply/router.py#L56) |
-| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | U | 審査・取消の理由を設定 | decision_note に代入 | [apply:57](../../../packages/backend/src/app/apis/catalog/apply/router.py#L57) |
-| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | U | 利用申請の理由を設定 | reason に代入 | [apply:58](../../../packages/backend/src/app/apis/catalog/apply/router.py#L58) |
-| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | U | 利用申請の審査状態を設定 | status に代入 | [apply:69](../../../packages/backend/src/app/apis/catalog/apply/router.py#L69) |
-| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | U | 審査・取消の理由を設定 | decision_note に代入 | [apply:71](../../../packages/backend/src/app/apis/catalog/apply/router.py#L71) |
-| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:106](../../../packages/backend/src/app/core/workspace.py#L106) |
-| [APIカタログ](../db/database.md#assets) | assets | R | 主キーで取得 | db.get | [record:33](../../../packages/backend/src/app/apis/catalog/common.py#L33) |
-| [APIカタログ](../db/database.md#assets) | assets | U | 更新 | update | [apply:46](../../../packages/backend/src/app/apis/catalog/apply/router.py#L46) |
-| [監査履歴](../db/database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [event:18](../../../packages/backend/src/app/apis/catalog/common.py#L18) |
-| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:31](../../../packages/backend/src/app/core/workspace.py#L31) |
-| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:55](../../../packages/backend/src/app/core/workspace.py#L55) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:124](../../../packages/backend/src/app/core/auth.py#L124) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:92](../../../packages/backend/src/app/core/workspace.py#L92) |
+| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | C | レコードを追加 | db.add | [apply:39](../../../packages/backend/src/app/apis/catalog/apply.py#L39) |
+| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | R | 主キーで取得 | db.get | [apply:36](../../../packages/backend/src/app/apis/catalog/apply.py#L36) |
+| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | U | 現在の承認担当を設定 | stage に代入 | [apply:42](../../../packages/backend/src/app/apis/catalog/apply.py#L42) |
+| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | U | 申請時の回答・利用条件・審査履歴（JSON）を設定 | submission に代入 | [apply:42](../../../packages/backend/src/app/apis/catalog/apply.py#L42) |
+| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | U | 利用申請の審査状態を設定 | status に代入 | [apply:54](../../../packages/backend/src/app/apis/catalog/apply.py#L54) |
+| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | U | 個人申請の対象利用者識別子を設定 | subject に代入 | [apply:55](../../../packages/backend/src/app/apis/catalog/apply.py#L55) |
+| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | U | 申請した利用者の識別子を設定 | applicant に代入 | [apply:56](../../../packages/backend/src/app/apis/catalog/apply.py#L56) |
+| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | U | 審査・取消の理由を設定 | decision_note に代入 | [apply:57](../../../packages/backend/src/app/apis/catalog/apply.py#L57) |
+| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | U | 利用申請の理由を設定 | reason に代入 | [apply:58](../../../packages/backend/src/app/apis/catalog/apply.py#L58) |
+| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | U | 利用申請の審査状態を設定 | status に代入 | [apply:69](../../../packages/backend/src/app/apis/catalog/apply.py#L69) |
+| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | U | 審査・取消の理由を設定 | decision_note に代入 | [apply:71](../../../packages/backend/src/app/apis/catalog/apply.py#L71) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:105](../../../packages/backend/src/app/core/workspace.py#L105) |
+| [APIカタログ](../db/database.md#assets) | assets | R | 主キーで取得 | db.get | [record:25](../../../packages/backend/src/app/core/catalog.py#L25) |
+| [APIカタログ](../db/database.md#assets) | assets | U | 更新 | update | [apply:46](../../../packages/backend/src/app/apis/catalog/apply.py#L46) |
+| [監査履歴](../db/database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [event:10](../../../packages/backend/src/app/core/catalog.py#L10) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:30](../../../packages/backend/src/app/core/workspace.py#L30) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:54](../../../packages/backend/src/app/core/workspace.py#L54) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:123](../../../packages/backend/src/app/core/auth.py#L123) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:91](../../../packages/backend/src/app/core/workspace.py#L91) |
 
 ### AWSサービス
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:54](../../../packages/backend/src/app/core/config.py#L54) |
+| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:53](../../../packages/backend/src/app/core/config.py#L53) |
 
 <details><summary>解析した関数・依存</summary>
 
-- `app.apis.catalog.apply.router.apply`
-- `app.apis.catalog.common.event`
-- `app.apis.catalog.common.record`
-- `app.apis.catalog.common.right_id`
-- `app.apis.catalog.offers.configured`
-- `app.apis.catalog.offers.submission`
+- `app.apis.catalog.apply.apply`
 - `app.core.auth.check_member`
 - `app.core.auth.current`
 - `app.core.auth.human`
 - `app.core.auth.identify`
 - `app.core.auth.keyset`
+- `app.core.catalog.event`
+- `app.core.catalog.record`
+- `app.core.catalog.right_id`
 - `app.core.config.local_demo`
 - `app.core.config.settings`
 - `app.core.diagnostics.asset_object`
+- `app.core.offers.configured`
+- `app.core.offers.submission`
 - `app.core.workspace.allowed_audience`
 - `app.core.workspace.ancestry`
 - `app.core.workspace.configured_projects`
@@ -148,7 +148,6 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 - `app.core.workspace.retired_units`
 - `app.core.workspace.stopped`
 - `app.core.workspace.units`
-- `tsugite_db.models.now`
 - `tsugite_db.session.engine`
 - `tsugite_db.session.session`
 

@@ -11,7 +11,7 @@ def test_published_operations_have_stable_ids():
     ids = {op["operationId"] for path in schema["paths"].values() for op in path.values()}
     assert expected <= ids
     for operation in expected:
-        assert (ROOT / "packages/backend/src/app/apis/catalog" / operation / "router.py").is_file()
+        assert (ROOT / "packages/backend/src/app/apis/catalog" / f"{operation}.py").is_file()
 
 
 def test_route_handlers_belong_to_api_layer():

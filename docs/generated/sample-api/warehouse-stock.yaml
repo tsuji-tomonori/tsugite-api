@@ -1,0 +1,201 @@
+openapi: 3.1.0
+info:
+  title: 倉庫在庫
+  description: SKUごとの在庫数を確認し、棚卸しと引当の差異を調べます。
+  version: 1.0.0
+paths:
+  /health:
+    get:
+      summary: データベースの稼働状態を確認
+      operationId: health_health_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+  /items:
+    get:
+      summary: 商品を一覧で取得
+      operationId: list_items_items_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockList'
+  /items/{sku}:
+    get:
+      summary: 商品の詳細を取得
+      operationId: detail_items__sku__get
+      parameters:
+      - name: sku
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Sku
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockItem'
+        '404':
+          description: 該当なし
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /warehouses:
+    get:
+      summary: 倉庫ごとの商品件数を集計
+      operationId: by_warehouse_warehouses_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/StockItemCount'
+                type: array
+                title: Response By Warehouse Warehouses Get
+  /low-stock:
+    get:
+      summary: 在庫数が上限以下の商品を取得
+      operationId: below_limit_low_stock_get
+      parameters:
+      - name: maximum
+        in: query
+        required: false
+        schema:
+          type: integer
+          description: 在庫数の上限
+          default: 12
+          title: Maximum
+        description: 在庫数の上限
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StockItem'
+                title: Response Below Limit Low Stock Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /stock-total:
+    get:
+      summary: 在庫数の合計を取得
+      operationId: stock_summary_stock_total_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockItemTotal'
+components:
+  schemas:
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    Health:
+      properties:
+        status:
+          type: string
+          const: ok
+          title: Status
+          default: ok
+      type: object
+      title: Health
+    StockItem:
+      properties:
+        sku:
+          type: string
+          title: Sku
+        stock:
+          type: integer
+          title: Stock
+      type: object
+      required:
+      - sku
+      - stock
+      title: StockItem
+    StockItemCount:
+      properties:
+        warehouse:
+          type: string
+          title: Warehouse
+        count:
+          type: integer
+          title: Count
+      type: object
+      required:
+      - warehouse
+      - count
+      title: StockItemCount
+    StockItemTotal:
+      properties:
+        total:
+          type: integer
+          title: Total
+      type: object
+      required:
+      - total
+      title: StockItemTotal
+    StockList:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/StockItem'
+          type: array
+          title: Items
+      type: object
+      required:
+      - items
+      title: StockList
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError

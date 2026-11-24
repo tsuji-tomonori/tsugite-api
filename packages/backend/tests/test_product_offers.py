@@ -140,8 +140,8 @@ def test_publication_history_and_archive_failures(portal, monkeypatch):
 
 def test_internal_path_item_reference_is_invokable(portal):
     """同じ内部参照を使う複数のOpenAPIパスで操作を解決できる"""
-    from app.apis.catalog.releases import entries
     from app.apis.gateway import operation_template
+    from app.core.releases import entries
 
     spec = deepcopy(FORM["spec"])
     spec.update(openapi="3.1.0", components={"pathItems": {"Stock": spec["paths"]["/items"]}})

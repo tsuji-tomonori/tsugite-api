@@ -6,7 +6,7 @@ PUT `/api/apis/{key}/publication`
 
 [API一覧](README.md) · [CRUD一覧](../db/crud.md)
 
-共通 · `publish` · [publish:36](../../../packages/backend/src/app/apis/catalog/publish/router.py#L36)
+共通 · `publish` · [publish:36](../../../packages/backend/src/app/apis/catalog/publish.py#L36)
 
 ## 入力
 
@@ -62,45 +62,45 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:106](../../../packages/backend/src/app/core/workspace.py#L106) |
-| [APIカタログ](../db/database.md#assets) | assets | R | 主キーで取得 | db.get | [record:33](../../../packages/backend/src/app/apis/catalog/common.py#L33) |
-| [APIカタログ](../db/database.md#assets) | assets | U | カタログで公開中かを設定 | published に代入 | [publish:60](../../../packages/backend/src/app/apis/catalog/publish/router.py#L60) |
-| [監査履歴](../db/database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [event:18](../../../packages/backend/src/app/apis/catalog/common.py#L18) |
-| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:31](../../../packages/backend/src/app/core/workspace.py#L31) |
-| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:55](../../../packages/backend/src/app/core/workspace.py#L55) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:124](../../../packages/backend/src/app/core/auth.py#L124) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:92](../../../packages/backend/src/app/core/workspace.py#L92) |
-| [商品別API仕様の公開履歴](../db/database.md#spec_releases) | spec_releases | C | レコードを追加 | db.add | [record_release:52](../../../packages/backend/src/app/apis/catalog/releases.py#L52) |
-| [商品別API仕様の公開履歴](../db/database.md#spec_releases) | spec_releases | R | 検索 | select | [record_release:34](../../../packages/backend/src/app/apis/catalog/releases.py#L34) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:105](../../../packages/backend/src/app/core/workspace.py#L105) |
+| [APIカタログ](../db/database.md#assets) | assets | R | 主キーで取得 | db.get | [record:25](../../../packages/backend/src/app/core/catalog.py#L25) |
+| [APIカタログ](../db/database.md#assets) | assets | U | カタログで公開中かを設定 | published に代入 | [publish:60](../../../packages/backend/src/app/apis/catalog/publish.py#L60) |
+| [監査履歴](../db/database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [event:10](../../../packages/backend/src/app/core/catalog.py#L10) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:30](../../../packages/backend/src/app/core/workspace.py#L30) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:54](../../../packages/backend/src/app/core/workspace.py#L54) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:123](../../../packages/backend/src/app/core/auth.py#L123) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:91](../../../packages/backend/src/app/core/workspace.py#L91) |
+| [商品別API仕様の公開履歴](../db/database.md#spec_releases) | spec_releases | C | レコードを追加 | db.add | [record_release:51](../../../packages/backend/src/app/core/releases.py#L51) |
+| [商品別API仕様の公開履歴](../db/database.md#spec_releases) | spec_releases | R | 検索 | select | [record_release:33](../../../packages/backend/src/app/core/releases.py#L33) |
 
 ### AWSサービス
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| 接続先関数の実行（Lambda） | lambda | 実行 | 接続先関数を実行する権限を確認 | invoke (DryRun) | [probe:47](../../../packages/backend/src/app/integrations/upstream.py#L47) |
-| API仕様文書の保管（Amazon S3） | s3 | C | API仕様文書を保存 | put_object | [archive_spec:24](../../../packages/backend/src/app/integrations/spec_archive.py#L24) |
-| 秘密情報の保管（Secrets Manager） | secretsmanager | R | 秘密情報の値を取得 | get_secret_value | [auth_headers:28](../../../packages/backend/src/app/integrations/upstream.py#L28) |
-| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:54](../../../packages/backend/src/app/core/config.py#L54) |
+| 接続先関数の実行（Lambda） | lambda | 実行 | 接続先関数を実行する権限を確認 | invoke (DryRun) | [probe:46](../../../packages/backend/src/app/integrations/upstream.py#L46) |
+| API仕様文書の保管（Amazon S3） | s3 | C | API仕様文書を保存 | put_object | [archive_spec:23](../../../packages/backend/src/app/integrations/spec_archive.py#L23) |
+| 秘密情報の保管（Secrets Manager） | secretsmanager | R | 秘密情報の値を取得 | get_secret_value | [auth_headers:27](../../../packages/backend/src/app/integrations/upstream.py#L27) |
+| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:53](../../../packages/backend/src/app/core/config.py#L53) |
 
 <details><summary>解析した関数・依存</summary>
 
-- `app.apis.catalog.common.event`
-- `app.apis.catalog.common.listing`
-- `app.apis.catalog.common.record`
-- `app.apis.catalog.publish.router.publish`
-- `app.apis.catalog.releases.entries`
-- `app.apis.catalog.releases.fingerprint`
-- `app.apis.catalog.releases.record_release`
+- `app.apis.catalog.publish.publish`
 - `app.core.auth.check_member`
 - `app.core.auth.current`
 - `app.core.auth.human`
 - `app.core.auth.identify`
 - `app.core.auth.keyset`
+- `app.core.catalog.event`
+- `app.core.catalog.listing`
+- `app.core.catalog.record`
 - `app.core.config.local_demo`
 - `app.core.config.settings`
 - `app.core.config.targets`
 - `app.core.diagnostics.asset_object`
 - `app.core.openapi.path_items`
+- `app.core.releases.entries`
+- `app.core.releases.fingerprint`
+- `app.core.releases.record_release`
 - `app.core.workspace.ancestry`
 - `app.core.workspace.configured_projects`
 - `app.core.workspace.populate`

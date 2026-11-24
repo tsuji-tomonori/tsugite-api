@@ -1,13 +1,20 @@
-# 画面内の入力不備と不具合を区別し、商品と本人の識別子だけを残す。
+# 操作時の画面情報とエラー記録を検証する。
+from __future__ import annotations
+
 import asyncio
 import json
-from types import SimpleNamespace
+from collections.abc import Callable
+from types import ModuleType, SimpleNamespace
 from unittest.mock import AsyncMock, Mock
 
+import pytest
 
-def test_screen_error_context(portal_module, monkeypatch):
+
+def test_screen_error_context(
+    portal_module: Callable[[str], ModuleType], monkeypatch: pytest.MonkeyPatch
+) -> None:
     """画面内の入力不備と不具合を区別し、商品と本人の識別子だけを残す。"""
-    client = portal_module("client")
+    client = portal_module("apis.client")
     client.window.location = SimpleNamespace(hash="#/edit/product-1")
     client.window.console = Mock()
     monkeypatch.setattr(client, "viewer", lambda: "person-1")
@@ -23,9 +30,11 @@ def test_screen_error_context(portal_module, monkeypatch):
     assert client.window.console.error.call_count == 1
 
 
-def test_request_carries_screen(portal_module, monkeypatch):
+def test_request_carries_screen(
+    portal_module: Callable[[str], ModuleType], monkeypatch: pytest.MonkeyPatch
+) -> None:
     """API呼び出しには登録済み画面の識別子だけを付加する。"""
-    client = portal_module("client")
+    client = portal_module("apis.client")
     client.window.location = SimpleNamespace(hash="#/guide/a-private-article")
     monkeypatch.setattr(client, "viewer", lambda: "person-1")
     monkeypatch.setattr(client, "store", Mock(getItem=Mock(return_value=None)))

@@ -1,0 +1,201 @@
+openapi: 3.1.0
+info:
+  title: 列車運行
+  description: 列車を路線や遅延時間（分）で検索します。
+  version: 1.0.0
+paths:
+  /health:
+    get:
+      summary: データベースの稼働状態を確認
+      operationId: health_health_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+  /trains:
+    get:
+      summary: 列車を一覧で取得
+      operationId: list_trains_trains_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/TrainService'
+                type: array
+                title: Response List Trains Trains Get
+  /trains/{train_id}:
+    get:
+      summary: 列車の詳細を取得
+      operationId: detail_trains__train_id__get
+      parameters:
+      - name: train_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Train Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrainService'
+        '404':
+          description: 該当なし
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /rail-lines:
+    get:
+      summary: 路線ごとの列車件数を集計
+      operationId: by_line_rail_lines_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/TrainServiceCount'
+                type: array
+                title: Response By Line Rail Lines Get
+  /on-time-services:
+    get:
+      summary: 遅延時間（分）が上限以下の列車を取得
+      operationId: below_limit_on_time_services_get
+      parameters:
+      - name: maximum
+        in: query
+        required: false
+        schema:
+          type: integer
+          description: 遅延時間（分）の上限
+          default: 0
+          title: Maximum
+        description: 遅延時間（分）の上限
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TrainService'
+                title: Response Below Limit On Time Services Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /delay-range:
+    get:
+      summary: 遅延時間（分）の範囲を取得
+      operationId: delay_minutes_summary_delay_range_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrainServiceRange'
+components:
+  schemas:
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    Health:
+      properties:
+        status:
+          type: string
+          const: ok
+          title: Status
+          default: ok
+      type: object
+      title: Health
+    TrainService:
+      properties:
+        train_id:
+          type: string
+          title: Train Id
+        line:
+          type: string
+          title: Line
+        delay_minutes:
+          type: integer
+          title: Delay Minutes
+      type: object
+      required:
+      - train_id
+      - line
+      - delay_minutes
+      title: TrainService
+    TrainServiceCount:
+      properties:
+        line:
+          type: string
+          title: Line
+        count:
+          type: integer
+          title: Count
+      type: object
+      required:
+      - line
+      - count
+      title: TrainServiceCount
+    TrainServiceRange:
+      properties:
+        minimum:
+          type: integer
+          title: Minimum
+        maximum:
+          type: integer
+          title: Maximum
+      type: object
+      required:
+      - minimum
+      - maximum
+      title: TrainServiceRange
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError

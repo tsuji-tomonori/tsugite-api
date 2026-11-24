@@ -73,7 +73,7 @@ def test_failed_probe_keeps_draft(portal, monkeypatch):
     """接続確認に失敗したAPIは下書きのまま残る"""
     import importlib
 
-    module = importlib.import_module("app.apis.catalog.publish.router")
+    module = importlib.import_module("app.apis.catalog.publish")
     from tests.support.catalog import FORM, headers
 
     owner = headers(portal, "provider")

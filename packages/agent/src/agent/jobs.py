@@ -10,8 +10,8 @@ from time import time
 from typing import Any, Protocol, cast
 
 import boto3
-from app.apis.catalog.catalog.router import visible_collection
 from app.core.auth import Actor
+from app.core.catalog_visibility import visible_collection
 from app.core.diagnostics import OperationalRepair, emit
 from app.core.log_record import SCREENS
 from botocore.config import Config

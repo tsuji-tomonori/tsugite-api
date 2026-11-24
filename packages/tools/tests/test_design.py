@@ -97,12 +97,12 @@ def test_sqlalchemy_and_conditional_aws_writes():
     def effects(key):
         return {(kind, name, action) for kind, name, action, *_ in index.trace([key]).effects}
 
-    deleted = effects("app.apis.catalog.register.router.delete")
+    deleted = effects("app.apis.catalog.register.delete")
     assert ("SQL", "assets", "U") in deleted and ("SQL", "assets", "D") not in deleted
     assert ("SQL", "audit_events", "C") in deleted
     assert not any(
         table == "assets" and detail in {"status に代入", "decision_note に代入"}
-        for _, table, _, _, _, detail in index.trace(["app.apis.catalog.register.router.delete"]).effects
+        for _, table, _, _, _, detail in index.trace(["app.apis.catalog.register.delete"]).effects
     )
     assert effects("app.integrations.spec_archive.archive_spec") == {("AWS", "s3", "C")}
     invite = effects("app.apis.governance.members.invite")
@@ -164,7 +164,7 @@ def test_openapi_preserves_wire_names_and_labels_them_in_context(monkeypatch):
 
 def test_nested_contracts_preserve_legacy_records_and_follow_field_annotations():
     """過去に保存した独自項目を返しつつ、公開する入れ子の型をフィールド宣言から取得する。"""
-    from app.apis.schemas import Right
+    from app.schemas.catalog import Right
 
     evidence = {"legacy_key": {"retired_option": True}, "steps": ["previous-format"]}
     grant = Right(

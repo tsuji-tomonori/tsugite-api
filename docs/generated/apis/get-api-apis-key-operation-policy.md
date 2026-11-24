@@ -6,7 +6,7 @@ GET `/api/apis/{key}/operation-policy`
 
 [API一覧](README.md) · [CRUD一覧](../db/crud.md)
 
-共通 · `get_operations_api_apis__key__operation_policy_get` · [get_operations:80](../../../packages/backend/src/app/apis/governance/credential_settings.py#L80)
+共通 · `get_operations_api_apis__key__operation_policy_get` · [get_operations:57](../../../packages/backend/src/app/apis/governance/credential_settings.py#L57)
 
 ## 入力
 
@@ -61,32 +61,31 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | R | 検索 | select | [subscribers:72](../../../packages/backend/src/app/apis/governance/credential_settings.py#L72) |
-| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 主キーで取得 | db.get | [federated_members:281](../../../packages/backend/src/app/apis/governance/directory.py#L281) |
-| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [roster:77](../../../packages/backend/src/app/apis/governance/directory.py#L77) |
-| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:106](../../../packages/backend/src/app/core/workspace.py#L106) |
-| [APIカタログ](../db/database.md#assets) | assets | R | 主キーで取得 | db.get | [record:33](../../../packages/backend/src/app/apis/catalog/common.py#L33) |
-| [認証情報の利用制限](../db/database.md#credential_rules) | credential_rules | R | 検索 | select | [get_operations:91](../../../packages/backend/src/app/apis/governance/credential_settings.py#L91) |
-| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:31](../../../packages/backend/src/app/core/workspace.py#L31) |
-| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:55](../../../packages/backend/src/app/core/workspace.py#L55) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [federated_members:283](../../../packages/backend/src/app/apis/governance/directory.py#L283) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 検索 | select | [roster:71](../../../packages/backend/src/app/apis/governance/directory.py#L71) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 検索 | select | [roster:81](../../../packages/backend/src/app/apis/governance/directory.py#L81) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [roster:86](../../../packages/backend/src/app/apis/governance/directory.py#L86) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [roster:102](../../../packages/backend/src/app/apis/governance/directory.py#L102) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:124](../../../packages/backend/src/app/core/auth.py#L124) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:92](../../../packages/backend/src/app/core/workspace.py#L92) |
+| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | R | 検索 | select | [subscribers:49](../../../packages/backend/src/app/apis/governance/credential_settings.py#L49) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 主キーで取得 | db.get | [federated_members:245](../../../packages/backend/src/app/apis/governance/directory.py#L245) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [roster:41](../../../packages/backend/src/app/apis/governance/directory.py#L41) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:105](../../../packages/backend/src/app/core/workspace.py#L105) |
+| [APIカタログ](../db/database.md#assets) | assets | R | 主キーで取得 | db.get | [record:25](../../../packages/backend/src/app/core/catalog.py#L25) |
+| [認証情報の利用制限](../db/database.md#credential_rules) | credential_rules | R | 検索 | select | [get_operations:68](../../../packages/backend/src/app/apis/governance/credential_settings.py#L68) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:30](../../../packages/backend/src/app/core/workspace.py#L30) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:54](../../../packages/backend/src/app/core/workspace.py#L54) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [federated_members:247](../../../packages/backend/src/app/apis/governance/directory.py#L247) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 検索 | select | [roster:35](../../../packages/backend/src/app/apis/governance/directory.py#L35) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 検索 | select | [roster:45](../../../packages/backend/src/app/apis/governance/directory.py#L45) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [roster:50](../../../packages/backend/src/app/apis/governance/directory.py#L50) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [roster:66](../../../packages/backend/src/app/apis/governance/directory.py#L66) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:123](../../../packages/backend/src/app/core/auth.py#L123) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:91](../../../packages/backend/src/app/core/workspace.py#L91) |
 
 ### AWSサービス
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| 利用者・グループの管理（Cognitoユーザープール） | cognito-idp | R | グループの利用者を一覧 | list_users_in_group | [federated_members:274](../../../packages/backend/src/app/apis/governance/directory.py#L274) |
-| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:54](../../../packages/backend/src/app/core/config.py#L54) |
+| 利用者・グループの管理（Cognitoユーザープール） | cognito-idp | R | グループの利用者を一覧 | list_users_in_group | [federated_members:238](../../../packages/backend/src/app/apis/governance/directory.py#L238) |
+| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:53](../../../packages/backend/src/app/core/config.py#L53) |
 
 <details><summary>解析した関数・依存</summary>
 
-- `app.apis.catalog.common.record`
 - `app.apis.governance.credential_settings.get_operations`
 - `app.apis.governance.credential_settings.members_for`
 - `app.apis.governance.credential_settings.owner`
@@ -99,6 +98,7 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 - `app.core.auth.human`
 - `app.core.auth.identify`
 - `app.core.auth.keyset`
+- `app.core.catalog.record`
 - `app.core.config.local_demo`
 - `app.core.config.settings`
 - `app.core.credential_policy.operations`

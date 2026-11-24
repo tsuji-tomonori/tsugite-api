@@ -28,9 +28,16 @@
 | `Metadata.Tsugite.Application` | `TsugiteAPI` |
 | `Metadata.Tsugite.Component` | `Bindings` |
 | `Metadata.Tsugite.ManagedBy` | `AWS-CDK` |
+| `Metadata.aws:asset:is-bundled` | `false` |
+| `Metadata.aws:asset:path` | `asset.42dedf150e7c6719fa9475609d30b007cbd761b3eaa18306e8156f17c006c9e5` |
+| `Metadata.aws:asset:property` | `Code` |
 | `Metadata.aws:cdk:path` | `TsugiteApi/Bindings/ProductionSample/Resource` |
-| `Properties.Code.ZipFile` | <code>"""Example upstream for the operations in examples/stock.openapi.json."""<br><br>import json<br><br><br>def handler(event, context):<br>    item = {"sku": "TS-01", "stock": 12}<br>    path = event.get("rawPath", "")<br>    status = 200<br>    if "/items/" in path:<br>        if path.rsplit("/", 1)&#91;-1&#93; == item&#91;"sku"&#93;:<br>            result = item<br>        else:<br>            status, result = 404, {"message": "商品が見つかりません"}<br>    else:<br>        result = {"items": &#91;item&#93;}<br>    return {<br>        "statusCode": status,<br>        "headers": {"content-type": "application/json"},<br>        "body": json.dumps(result),<br>    }<br></code> |
-| `Properties.Handler` | `index.handler` |
+| `Metadata.cdk_nag.rules_to_suppress[0].id` | `AwsSolutions-L1` |
+| `Metadata.cdk_nag.rules_to_suppress[0].reason` | `The sample uses the stable Python 3.14 runtime for AWS Emulator compatibility.` |
+| `Properties.Code.S3Bucket.Fn::Sub` | `cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}` |
+| `Properties.Code.S3Key` | `42dedf150e7c6719fa9475609d30b007cbd761b3eaa18306e8156f17c006c9e5.zip` |
+| `Properties.Handler` | `sample_api.main.handler` |
+| `Properties.MemorySize` | `256` |
 | `Properties.Role` | `${GetAtt:BindingsProductionSampleServiceRole4AC78C87.Arn}` |
 | `Properties.Runtime` | `python3.14` |
 | `Properties.Tags[0].Key` | `Application` |
@@ -39,6 +46,7 @@
 | `Properties.Tags[1].Value` | `Bindings` |
 | `Properties.Tags[2].Key` | `ManagedBy` |
 | `Properties.Tags[2].Value` | `AWS-CDK` |
+| `Properties.Timeout` | `10` |
 
 ### BindingsProductionSampleServiceRole4AC78C87
 
@@ -68,9 +76,16 @@
 | `Metadata.Tsugite.Application` | `TsugiteAPI` |
 | `Metadata.Tsugite.Component` | `Bindings` |
 | `Metadata.Tsugite.ManagedBy` | `AWS-CDK` |
+| `Metadata.aws:asset:is-bundled` | `false` |
+| `Metadata.aws:asset:path` | `asset.42dedf150e7c6719fa9475609d30b007cbd761b3eaa18306e8156f17c006c9e5` |
+| `Metadata.aws:asset:property` | `Code` |
 | `Metadata.aws:cdk:path` | `TsugiteApi/Bindings/StagingSample/Resource` |
-| `Properties.Code.ZipFile` | <code>"""Example upstream for the operations in examples/stock.openapi.json."""<br><br>import json<br><br><br>def handler(event, context):<br>    item = {"sku": "TS-01", "stock": 12}<br>    path = event.get("rawPath", "")<br>    status = 200<br>    if "/items/" in path:<br>        if path.rsplit("/", 1)&#91;-1&#93; == item&#91;"sku"&#93;:<br>            result = item<br>        else:<br>            status, result = 404, {"message": "商品が見つかりません"}<br>    else:<br>        result = {"items": &#91;item&#93;}<br>    return {<br>        "statusCode": status,<br>        "headers": {"content-type": "application/json"},<br>        "body": json.dumps(result),<br>    }<br></code> |
-| `Properties.Handler` | `index.handler` |
+| `Metadata.cdk_nag.rules_to_suppress[0].id` | `AwsSolutions-L1` |
+| `Metadata.cdk_nag.rules_to_suppress[0].reason` | `The sample uses the stable Python 3.14 runtime for AWS Emulator compatibility.` |
+| `Properties.Code.S3Bucket.Fn::Sub` | `cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}` |
+| `Properties.Code.S3Key` | `42dedf150e7c6719fa9475609d30b007cbd761b3eaa18306e8156f17c006c9e5.zip` |
+| `Properties.Handler` | `sample_api.main.handler` |
+| `Properties.MemorySize` | `256` |
 | `Properties.Role` | `${GetAtt:BindingsStagingSampleServiceRoleBB2519F8.Arn}` |
 | `Properties.Runtime` | `python3.14` |
 | `Properties.Tags[0].Key` | `Application` |
@@ -79,6 +94,7 @@
 | `Properties.Tags[1].Value` | `Bindings` |
 | `Properties.Tags[2].Key` | `ManagedBy` |
 | `Properties.Tags[2].Value` | `AWS-CDK` |
+| `Properties.Timeout` | `10` |
 
 ### BindingsStagingSampleServiceRoleBB2519F8
 
@@ -144,9 +160,16 @@
 | `Metadata.Tsugite.Application` | `TsugiteAPI` |
 | `Metadata.Tsugite.Component` | `Bindings` |
 | `Metadata.Tsugite.ManagedBy` | `AWS-CDK` |
+| `Metadata.aws:asset:is-bundled` | `false` |
+| `Metadata.aws:asset:path` | `asset.42dedf150e7c6719fa9475609d30b007cbd761b3eaa18306e8156f17c006c9e5` |
+| `Metadata.aws:asset:property` | `Code` |
 | `Metadata.aws:cdk:path` | `TsugiteApi/Bindings/Sample/Resource` |
-| `Properties.Code.ZipFile` | <code>"""Example upstream for the operations in examples/stock.openapi.json."""<br><br>import json<br><br><br>def handler(event, context):<br>    item = {"sku": "TS-01", "stock": 12}<br>    path = event.get("rawPath", "")<br>    status = 200<br>    if "/items/" in path:<br>        if path.rsplit("/", 1)&#91;-1&#93; == item&#91;"sku"&#93;:<br>            result = item<br>        else:<br>            status, result = 404, {"message": "商品が見つかりません"}<br>    else:<br>        result = {"items": &#91;item&#93;}<br>    return {<br>        "statusCode": status,<br>        "headers": {"content-type": "application/json"},<br>        "body": json.dumps(result),<br>    }<br></code> |
-| `Properties.Handler` | `index.handler` |
+| `Metadata.cdk_nag.rules_to_suppress[0].id` | `AwsSolutions-L1` |
+| `Metadata.cdk_nag.rules_to_suppress[0].reason` | `The sample uses the stable Python 3.14 runtime for AWS Emulator compatibility.` |
+| `Properties.Code.S3Bucket.Fn::Sub` | `cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}` |
+| `Properties.Code.S3Key` | `42dedf150e7c6719fa9475609d30b007cbd761b3eaa18306e8156f17c006c9e5.zip` |
+| `Properties.Handler` | `sample_api.main.handler` |
+| `Properties.MemorySize` | `256` |
 | `Properties.Role` | `${GetAtt:SampleServiceRole93281BDB.Arn}` |
 | `Properties.Runtime` | `python3.14` |
 | `Properties.Tags[0].Key` | `Application` |
@@ -155,6 +178,7 @@
 | `Properties.Tags[1].Value` | `Bindings` |
 | `Properties.Tags[2].Key` | `ManagedBy` |
 | `Properties.Tags[2].Value` | `AWS-CDK` |
+| `Properties.Timeout` | `10` |
 
 ### SampleServiceRole93281BDB
 

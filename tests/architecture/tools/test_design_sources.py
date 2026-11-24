@@ -216,8 +216,8 @@ def test_editing_declaration_comments_changes_openapi_and_design_pages(tmp_path,
 
     changes = (
         ("packages/backend/src/app/main.py", "サービスの稼働状態を確認する", "稼働確認の試験操作"),
-        ("packages/backend/src/app/apis/outputs.py", "サービスの稼働状態", "稼働確認の試験項目"),
-        ("packages/database/src/tsugite_db/models.py", "APIカタログ", "試験用カタログ"),
+        ("packages/backend/src/app/schemas/outputs.py", "サービスの稼働状態", "稼働確認の試験項目"),
+        ("packages/database/src/tsugite_db/models/assets.py", "APIカタログ", "試験用カタログ"),
         (
             "packages/backend/src/app/integrations/spec_archive.py",
             "API仕様文書の保管（Amazon S3） / API仕様文書を保存",
