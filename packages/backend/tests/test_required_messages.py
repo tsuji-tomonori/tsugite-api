@@ -3,7 +3,7 @@ from uuid import UUID, uuid4
 
 import pytest
 
-from tests.support.catalog import headers
+from tests.support.catalog import approved, headers
 
 
 def test_independent_notification_counts(portal):
@@ -189,3 +189,26 @@ def test_blank_question_and_reply_leave_history_unchanged(portal):
     assert empty_reply.status_code == 422 and empty_reply.json()["detail"]
     records = portal.get("/api/inquiries", headers=user).json()
     assert len(records) == 1 and records[0]["question"] == question and records[0]["answer"] is None
+
+
+def test_provider_notifies_an_applicant_project(portal):
+    """提供者が申請元のプロジェクトに連絡すると、利用者は対象プロジェクトと提供者を確認して既読にできる。"""
+    provider = headers(portal, "provider")
+    user = headers(portal, "consumer")
+    asset_id, _, _ = approved(portal, provider, user)
+    sender = portal.get("/api/me", headers=provider).json()["subject"]
+    content = {
+        "project": "finance",
+        "asset_id": asset_id,
+        "title": "サービス更新",
+        "body": "来月も同じURLで利用できます。",
+    }
+    posted = portal.post("/api/notifications", headers=provider, json=content)
+    assert posted.status_code == 201
+    notice_id = posted.json()["id"]
+    inbox = portal.get("/api/notifications", headers=user).json()
+    item = next(row for row in inbox["items"] if row["id"] == notice_id)
+    assert item["project"] == "finance" and item["sender"] == sender
+    assert item["title"] == content["title"] and item["body"] == content["body"] and item["unread"]
+    read = portal.put(f"/api/notifications/{notice_id}/read", headers=user)
+    assert read.status_code == 200 and read.json()["read"]

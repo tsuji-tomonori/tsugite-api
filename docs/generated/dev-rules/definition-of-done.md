@@ -158,7 +158,7 @@
 | 全API項目とDBカラムに業務用の和名がある | — | [test_business_names_cover_every_operation_field_and_database_column](../../../tests/architecture/tools/test_design_sources.py#L172) |
 | 定義元のコメントだけを変更するとOpenAPI、API詳細、DB定義書、AWS操作表に反映される。 | — | [test_editing_declaration_comments_changes_openapi_and_design_pages](../../../tests/architecture/tools/test_design_sources.py#L209) |
 
-### バックエンド（162項目）
+### バックエンド（163項目）
 
 | 確認内容 | 条件別の確認内容 | テスト定義 |
 | --- | --- | --- |
@@ -272,6 +272,7 @@
 | 二人が別々に相談すると各自の履歴には本人の受付だけが載り、管理者は双方を確認できる。 | — | [test_inquiry_history_separates_requesters](../../../packages/backend/tests/test_required_messages.py#L132) |
 | 受付の確認が回答後になった場合も、同じ本文の再送は既存の回答を保持する。 | — | [test_response_retry_after_an_inquiry_has_been_answered](../../../packages/backend/tests/test_required_messages.py#L154) |
 | 空白だけの問い合わせ・回答は本文として受理せず、利用者が本文を書き直すまでは履歴を変えない。 | — | [test_blank_question_and_reply_leave_history_unchanged](../../../packages/backend/tests/test_required_messages.py#L176) |
+| 提供者が申請元のプロジェクトに連絡すると、利用者は対象プロジェクトと提供者を確認して既読にできる。 | — | [test_provider_notifies_an_applicant_project](../../../packages/backend/tests/test_required_messages.py#L194) |
 | 兼務する任意属性の値を追加・訂正・解除しても既存のプロジェクトと部署の権限を保つ。 | — | [test_metadata_assignments_can_be_corrected_without_adding_projects](../../../packages/backend/tests/test_required_metadata.py#L29) |
 | 任意属性の名称を公開しても所属名簿を開示せず、値のリーダーは配下の名簿のみを確認できる。 | — | [test_public_value_names_do_not_expose_rosters_and_leader_scope_stays_in_tree](../../../packages/backend/tests/test_required_metadata.py#L75) |
 | 分類値の名称が公開されていても一般利用者は定義・値・所属権限を変更できない。 | 非管理者による項目の公開設定と表示名変更を拒否する<br>非管理者による新しい分類値の作成を拒否する<br>非管理者による自身への分類値のリーダー付与を拒否する | [test_non_admin_cannot_change_metadata_definition_or_grant_roles](../../../packages/backend/tests/test_required_metadata.py#L136) |
