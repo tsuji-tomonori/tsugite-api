@@ -467,7 +467,7 @@ def test_upstream_unavailable(aws, resources, tmp_path, request):
 
 
 def test_cognito_member_lifecycle(aws, resources, tmp_path):
-    """AWS EmulatorのCognitoでユーザー追加・所属・削除・既発行トークンの停止を確認する"""
+    """AWS Emulatorで氏名付き招待と本人編集を行い、Cognitoの識別子とトークンが継続して使える。"""
     with live_portal(aws, resources, tmp_path, "directory") as (url, tokens):
         admin = {"Authorization": "Bearer " + tokens["administrator"]}
         claims = jwt.decode(tokens["user"], options={"verify_signature": False})
@@ -483,11 +483,24 @@ def test_cognito_member_lifecycle(aws, resources, tmp_path):
             username = "account@example.org"
             created = api.post(
                 "members",
-                json={"email": username, "role": "consumer", "project": "finance"},
+                json={
+                    "email": username,
+                    "role": "consumer",
+                    "project": "finance",
+                    "full_name": "河合 直子",
+                },
                 headers=admin,
             )
             assert created.status_code == 201, created.text
             member = created.json()
+            assert (member["email"], member["full_name"], member["display_name"]) == (
+                username,
+                "河合 直子",
+                None,
+            )
+            initial = idp.admin_get_user(UserPoolId=pool, Username=username)
+            assert initial["Username"] == member["username"] == username
+            assert {"Name": "sub", "Value": member["subject"]} in initial["UserAttributes"]
             assert any(
                 row["subject"] == member["subject"]
                 for row in api.get("members", headers=admin).json()["items"]
@@ -503,6 +516,35 @@ def test_cognito_member_lifecycle(aws, resources, tmp_path):
             )["AuthenticationResult"]["AccessToken"]
             user = {"Authorization": "Bearer " + token}
             assert api.get("me", headers=user).json()["projects"] == ["finance"]
+            profile = api.get("me/profile", headers=user).raise_for_status().json()
+            assert (profile["subject"], profile["revision"]) == (member["subject"], 1)
+            edited = (
+                api.patch(
+                    "me/profile",
+                    json={"revision": 1, "display_name": "なお"},
+                    headers=user,
+                )
+                .raise_for_status()
+                .json()
+            )
+            assert (edited["full_name"], edited["display_name"], edited["revision"]) == (
+                "河合 直子",
+                "なお",
+                2,
+            )
+            after = idp.admin_get_user(UserPoolId=pool, Username=username)
+            assert (after["Username"], after["UserAttributes"]) == (
+                initial["Username"],
+                initial["UserAttributes"],
+            )
+            assert api.get("me", headers=user).json()["subject"] == member["subject"]
+            workspace = api.get("workspace", headers=admin).raise_for_status().json()
+            row = next(r for r in workspace["memberships"] if r["subject"] == member["subject"])
+            assert (row["email"], row["full_name"], row["display_name"]) == (
+                username,
+                "河合 直子",
+                "なお",
+            )
             assert api.delete(
                 "members/" + member["subject"], params={"username": username}, headers=admin
             ).is_success

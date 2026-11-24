@@ -49,6 +49,7 @@ def migrate(event):
         conn.exec_driver_sql(
             "GRANT SELECT, INSERT ON spec_releases, audit_events, invocation_logs, notices, notice_reads, invocation_units, asset_routes TO tsugite_app"
         )
+        conn.exec_driver_sql("GRANT SELECT, INSERT, UPDATE ON portal_member_profiles TO tsugite_app")
         if chat_arn:
             if not conn.scalar(text("SELECT 1 FROM pg_roles WHERE rolname='tsugite_chat'")):
                 conn.exec_driver_sql("CREATE ROLE tsugite_chat WITH LOGIN")

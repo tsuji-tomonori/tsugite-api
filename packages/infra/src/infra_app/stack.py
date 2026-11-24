@@ -41,6 +41,8 @@ class CatalogStack(Stack):
         chat = PortalChat(self, "Chat", runtime.api, database.cluster, code, runtime.dependencies)
         schema = database.install_schema(runtime.role, code, runtime.dependencies, chat.worker_role)
         schema.node.add_dependency(chat)
+        runtime.api.node.add_dependency(schema)
+        runtime.authorizer.node.add_dependency(schema)
         gateway = CatalogGateway(self, "Gateway", prefix, runtime.api, runtime.authorizer)
         delivery = PortalDelivery(self, "Portal", prefix, gateway.api, runtime.origin_secret)
         identity = PortalIdentity(self, "Identities", projects, delivery.url)

@@ -260,6 +260,8 @@ class Audit(BaseModel):
     at: datetime
     #: 操作した利用者・システムの識別子
     actor: str
+    #: 操作の対象となった利用者の識別子
+    target_subject: str | None = None
     #: 利用プロジェクトの識別子
     project: str
     #: 提供プロジェクトの識別子

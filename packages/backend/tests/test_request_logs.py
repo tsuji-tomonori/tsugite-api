@@ -147,7 +147,7 @@ def test_member_partial_deletion(monkeypatch):
     monkeypatch.setattr(members.boto3, "client", lambda _: identity)
     row = Member(subject="target-user", username="private@example.test", deleted=False)
     db = Mock()
-    db.get.return_value = row
+    db.get.side_effect = lambda model, _: row if model is Member else None
 
     @app.delete("/api/members/{subject}")
     async def remove(subject: str, request: Request):

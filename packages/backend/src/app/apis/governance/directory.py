@@ -7,6 +7,7 @@ from app.apis.governance.members import administrator, projects
 from app.apis.schemas import Input
 from app.core.auth import DEMO_GROUPS
 from app.core.config import local_demo, settings
+from app.core.member_profiles import directory_accounts, directory_fields, directory_profiles
 from app.core.workspace import ancestry, retired_units, units
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import Field
@@ -130,13 +131,18 @@ def workspace(actor: User, db: DB):
         if r["unit_id"] in managed or (r["subject"] == actor.subject and r["unit_id"] in own_units)
     ]
     people_ids = set(people) if actor.admin else {r["subject"] for r in visible}
+    profiles = directory_profiles(db, people_ids)
+    accounts = directory_accounts(db, people_ids)
+    fields = {
+        subject: directory_fields(profiles.get(subject), accounts.get(subject)) for subject in people_ids
+    }
     return {
         "admin": actor.admin,
         "units": visible_units,
         "leads": sorted(managed),
         "my_units": sorted(own_units),
-        "memberships": visible,
-        "users": [{"subject": i, "username": people[i]} for i in sorted(people_ids)],
+        "memberships": [{**row, **fields[row["subject"]]} for row in visible],
+        "users": [{"subject": i, "username": people[i], **fields[i]} for i in sorted(people_ids)],
         "titles": sorted({r["title"] for r in visible if r["title"]}),
     }
 
@@ -314,6 +320,11 @@ def usage(
     _, members = roster(db)
     scoped = [m for m in members if key in ancestry(tree, [m["unit_id"]])]
     scoped.extend(federated_members(db, tree, key, scoped))
+    subjects = {row["subject"] for row in scoped}
+    profiles = directory_profiles(db, subjects)
+    accounts = directory_accounts(db, subjects)
+    for row in scoped:
+        row.update(directory_fields(profiles.get(row["subject"]), accounts.get(row["subject"])))
     condition = unit_condition(tree, key)
     base = select(func.count(AccessLog.request_id)).where(condition)
 

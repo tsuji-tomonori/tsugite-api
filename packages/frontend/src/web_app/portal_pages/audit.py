@@ -55,6 +55,8 @@ def audit_view():
                 + "　"
                 + row["detail"]
             )
+            if row.get("target_subject"):
+                t.p("対象利用者 " + row["target_subject"], classes="mono")
             t.small("API " + row["asset_id"] + " / リクエスト " + row["request_id"], classes="mono")
     with t.div(classes="pager"):
         if ctx["audit_offset"]:

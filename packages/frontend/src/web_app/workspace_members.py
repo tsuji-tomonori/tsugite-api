@@ -10,14 +10,20 @@ from puepy import t
 from workspace_views import link, navigate, url
 
 
+def person_label(person):
+    name = person.get("display_name") or person.get("full_name")
+    address = person.get("email") or person.get("username") or person["subject"]
+    return f"{name}（{address}）" if name and name != address else address
+
+
 def members_view(root, unit, data):
     key = unit["id"]
     rows = [r for r in data["memberships"] if r["unit_id"] == key]
-    names = {u["subject"]: u["username"] for u in data["users"]}
+    people = {u["subject"]: u for u in data["users"]}
 
     async def remove(row):
         if window.confirm(
-            f"{unit['name']} から {names.get(row['subject'], row['subject'])} の所属を解除しますか？"
+            f"{unit['name']} から {person_label({**people.get(row['subject'], {}), **row})} の所属を解除しますか？"
         ):
             params = urlencode({"unit_id": key, "subject": row["subject"]})
             await client.api("/workspace/memberships?" + params, "DELETE")
@@ -44,11 +50,21 @@ def members_view(root, unit, data):
             with t.tbody():
                 for row in rows:
                     subject = row["subject"]
-                    username = row.get("username") or names.get(subject, subject)
-                    email, name = (username, "—") if "@" in username else ("—", username)
+                    person = {**people.get(subject, {}), **row}
+                    username = person.get("username")
+                    email = person.get("email")
+                    if "email" not in person and username and "@" in username:
+                        email = username
+                    full_name, display_name = person.get("full_name"), person.get("display_name")
                     with t.tr():
-                        t.td(email)
-                        t.td(name)
+                        t.td(email or "—")
+                        with t.td():
+                            t.span(display_name or full_name or "—")
+                            if display_name and full_name and display_name != full_name:
+                                t.div(full_name, classes="muted")
+                            if not (display_name or full_name or email):
+                                label = "ログイン名" if username and username != subject else "利用者ID"
+                                t.div(f"{label} {username or subject}", classes="muted")
                         with t.td():
                             t.strong("リーダー" if row["leader"] else "メンバー")
                             if row.get("title"):
@@ -68,14 +84,14 @@ def membership_editor(root, unit, data, subject, *, draft=None):
     row = members.get(subject, {})
     if draft is None:
         draft = ctx.get("member_form", {})
-    names = {u["subject"]: u["username"] for u in data["users"]}
+    names = {u["subject"]: person_label(u) for u in data["users"]}
     names.update(draft.get("names", {}))
     detail = url(root, "detail", key)
 
     async def more():
         params = urlencode({"cursor": draft.get("next", "")})
         response = await client.api("/members?" + params)
-        names.update({u["subject"]: u["username"] for u in response["items"] if not u.get("deleted")})
+        names.update({u["subject"]: person_label(u) for u in response["items"] if not u.get("deleted")})
         ctx["member_form"] = {
             "names": names,
             "next": response["next"],
@@ -114,7 +130,7 @@ def membership_editor(root, unit, data, subject, *, draft=None):
                 with t.div(classes="field-actions"):
                     btn("ユーザーをさらに読み込む" if draft else "登録ユーザーを読み込む", more)
         else:
-            t.p("ユーザー　" + (row.get("username") or names.get(subject, subject)))
+            t.p("ユーザー　" + person_label({"subject": subject, "username": names.get(subject), **row}))
         field("役職", "org-title", text=draft.get("title", row.get("title", "")), placeholder="例　課長")
         field(
             "管理権限",

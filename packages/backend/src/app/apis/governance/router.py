@@ -10,6 +10,7 @@ from . import (
     notifications,
     observability,
     policies,
+    profiles,
     unit_lifecycle,
 )
 
@@ -24,6 +25,7 @@ for feature in (
     notifications,
     observability,
     policies,
+    profiles,
     unit_lifecycle,
 ):
     router.include_router(feature.router)
