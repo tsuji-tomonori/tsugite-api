@@ -56,7 +56,7 @@ def test_frontend_builder_runs_stylesheet_and_design_policy_tests(tmp_path):
 def test_infra_and_aws_require_browser_and_assets(tmp_path):
     """インフラの実装変更ではCDK・監査・AWSの画面連携に必要な環境を用意する。"""
     cached_report(tmp_path)
-    plan = ci.select(["packages/infra/src/infra_app/stack.py"], SUITES, tmp_path)
+    plan = ci.select(["packages/infra/src/stack.py"], SUITES, tmp_path)
     assert plan["suites"] == [ci.INFRA]
     assert all(plan[key] for key in ("synth", "aws", "audit", "chromium"))
     assert not plan["aws_portal_only"]
@@ -129,7 +129,7 @@ def test_coverage_includes_all_runtime_layers_and_unexecuted_files(tmp_path, mon
         "packages/backend/src/app/api.py",
         "packages/database/src/tsugite_db/session.py",
         "packages/frontend/src/web_app/app.py",
-        "packages/infra/src/infra_app/stack.py",
+        "packages/infra/src/stack.py",
         "packages/infra/app.py",
         "packages/agent/src/agent/worker.py",
         "packages/agent/src/agent/models/nested/inference.py",

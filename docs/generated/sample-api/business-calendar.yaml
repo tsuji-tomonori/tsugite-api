@@ -1,0 +1,193 @@
+openapi: 3.1.0
+info:
+  title: 営業日カレンダー
+  description: 次の営業日を照会して、出荷予定日を計算します。
+  version: 1.0.0
+paths:
+  /health:
+    get:
+      summary: データベースの稼働状態を確認
+      operationId: health_health_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+  /calendar:
+    get:
+      summary: 営業日を一覧で取得
+      operationId: list_calendar_calendar_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/BusinessDay'
+                type: array
+                title: Response List Calendar Calendar Get
+  /calendar/next:
+    get:
+      summary: 指定日以降で最初の営業日を取得
+      operationId: next_day_calendar_next_get
+      parameters:
+      - name: on_or_after
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date
+          default: '2026-11-24'
+          title: On Or After
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BusinessDay'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /calendar/{business_date}:
+    get:
+      summary: 営業日の詳細を取得
+      operationId: detail_calendar__business_date__get
+      parameters:
+      - name: business_date
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Business Date
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BusinessDay'
+        '404':
+          description: 該当なし
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /offices:
+    get:
+      summary: 事業所ごとの営業日件数を集計
+      operationId: by_office_offices_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/BusinessDayCount'
+                type: array
+                title: Response By Office Offices Get
+  /opening-hours:
+    get:
+      summary: 営業時間の合計を取得
+      operationId: hours_summary_opening_hours_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BusinessDayTotal'
+components:
+  schemas:
+    BusinessDay:
+      properties:
+        business_date:
+          type: string
+          title: Business Date
+        office:
+          type: string
+          title: Office
+        hours:
+          type: integer
+          title: Hours
+      type: object
+      required:
+      - business_date
+      - office
+      - hours
+      title: BusinessDay
+    BusinessDayCount:
+      properties:
+        office:
+          type: string
+          title: Office
+        count:
+          type: integer
+          title: Count
+      type: object
+      required:
+      - office
+      - count
+      title: BusinessDayCount
+    BusinessDayTotal:
+      properties:
+        total:
+          type: integer
+          title: Total
+      type: object
+      required:
+      - total
+      title: BusinessDayTotal
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    Health:
+      properties:
+        status:
+          type: string
+          const: ok
+          title: Status
+          default: ok
+      type: object
+      title: Health
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError

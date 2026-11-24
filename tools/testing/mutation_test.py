@@ -209,7 +209,7 @@ MUTATIONS = (
     Mutation(
         "infra",
         "モデル関数のメモリを配備先の上限より大きくする",
-        "packages/infra/src/infra_app/chat.py",
+        "packages/infra/src/components/chat.py",
         "memory_size=3008,",
         "memory_size=3072,",
         "packages/infra/tests/test_cost.py::test_chat_uses_separate_on_demand_python_functions",
@@ -217,7 +217,7 @@ MUTATIONS = (
     Mutation(
         "infra",
         "モデル関数の配備を待たずにDB移行を開始する",
-        "packages/infra/src/infra_app/stack.py",
+        "packages/infra/src/stack.py",
         "schema.node.add_dependency(chat)",
         "pass",
         "packages/infra/tests/test_cdk_regression.py::test_schema_waits_for_chat_models",
@@ -225,7 +225,7 @@ MUTATIONS = (
     Mutation(
         "infra",
         "チャットのワーカー関数に同時実行枠を予約する",
-        "packages/infra/src/infra_app/chat.py",
+        "packages/infra/src/components/chat.py",
         "timeout=Duration.seconds(145),",
         "timeout=Duration.seconds(145), reserved_concurrent_executions=4,",
         "packages/infra/tests/test_cost.py::test_chat_uses_separate_on_demand_python_functions",
@@ -233,7 +233,7 @@ MUTATIONS = (
     Mutation(
         "infra",
         "チャットのモデル関数に同時実行枠を予約する",
-        "packages/infra/src/infra_app/chat.py",
+        "packages/infra/src/components/chat.py",
         "timeout=Duration.seconds(timeout),",
         "timeout=Duration.seconds(timeout), reserved_concurrent_executions=4,",
         "packages/infra/tests/test_cost.py::test_chat_uses_separate_on_demand_python_functions",
@@ -289,10 +289,10 @@ MUTATIONS = (
     Mutation(
         "stock-lambda",
         "存在しない商品を成功として返す",
-        "packages/infra/src/infra_app/lambdas/stock/stock.py",
-        "status, result = 404",
-        "status, result = 200",
-        "packages/infra/tests/test_stock_lambda.py::test_stock_response[missing]",
+        "packages/sample_api/src/sample_api/database.py",
+        "raise HTTPException(404,",
+        "raise HTTPException(200,",
+        "packages/sample_api/tests/test_stock_lambda.py::test_stock_response[missing]",
     ),
     Mutation(
         "backend",
@@ -585,7 +585,7 @@ MUTATIONS = (
     Mutation(
         "infra",
         "モデルの予備領域を増やす",
-        "packages/infra/src/infra_app/chat.py",
+        "packages/infra/src/components/chat.py",
         "ephemeral_storage_size=Size.mebibytes(512)",
         "ephemeral_storage_size=Size.mebibytes(1024)",
         "packages/infra/tests/test_cost.py::test_chat_uses_separate_on_demand_python_functions",
@@ -685,7 +685,7 @@ MUTATIONS = (
     Mutation(
         "infra",
         "Lambdaの割当メモリーを増やす",
-        "packages/infra/src/infra_app/functions.py",
+        "packages/infra/src/components/functions.py",
         "memory_size=768,",
         "memory_size=1024,",
         "packages/infra/tests/test_cost.py::test_cost_drivers_are_bounded",
@@ -693,7 +693,7 @@ MUTATIONS = (
     Mutation(
         "infra",
         "リソースの管理者タグの値を誤る",
-        "packages/infra/src/infra_app/ownership.py",
+        "packages/infra/src/components/ownership.py",
         '"ManagedBy": "AWS-CDK"',
         '"ManagedBy": "Other"',
         "packages/infra/tests/test_stack.py::test_every_resource_has_ownership",
@@ -701,7 +701,7 @@ MUTATIONS = (
     Mutation(
         "infra",
         "ポータルURLのスタック出力名を変更する",
-        "packages/infra/src/infra_app/stack.py",
+        "packages/infra/src/stack.py",
         'CfnOutput(self, "PortalUrl",',
         'CfnOutput(self, "ChangedPortalUrl",',
         "packages/infra/tests/test_cdk_regression.py::test_cloudformation_structure_matches_snapshot",

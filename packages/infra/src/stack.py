@@ -7,15 +7,15 @@ from aws_cdk import CfnOutput, Stack
 from aws_cdk import aws_lambda as fn
 from constructs import Construct
 
-from .bindings import UpstreamBindings
-from .chat import PortalChat
-from .database import CatalogDatabase
-from .delivery import PortalDelivery
-from .functions import ROOT
-from .gateway import CatalogGateway
-from .identity import PortalIdentity
-from .ownership import CatalogSynthesizer, preserve_logical_ids
-from .runtime import ApiRuntime
+from .components.bindings import UpstreamBindings
+from .components.chat import PortalChat
+from .components.database import CatalogDatabase
+from .components.delivery import PortalDelivery
+from .components.functions import ROOT
+from .components.gateway import CatalogGateway
+from .components.identity import PortalIdentity
+from .components.ownership import CatalogSynthesizer, preserve_logical_ids
+from .components.runtime import ApiRuntime
 
 
 class CatalogStack(Stack):

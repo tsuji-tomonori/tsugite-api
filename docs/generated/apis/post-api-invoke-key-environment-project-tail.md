@@ -83,7 +83,7 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| 接続先関数の実行（Lambda） | lambda | 実行 | 接続先関数を呼び出す | invoke | [dispatch:95](../../../packages/backend/src/app/integrations/upstream.py#L95) |
+| 接続先関数の実行（Lambda） | lambda | 実行 | 接続先関数を呼び出す | invoke | [dispatch:107](../../../packages/backend/src/app/integrations/upstream.py#L107) |
 | 秘密情報の保管（Secrets Manager） | secretsmanager | R | 秘密情報の値を取得 | get_secret_value | [auth_headers:27](../../../packages/backend/src/app/integrations/upstream.py#L27) |
 | 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:53](../../../packages/backend/src/app/core/config.py#L53) |
 

@@ -1,8 +1,7 @@
 import json
 
 import pytest
-
-from packages.infra.src.infra_app.lambdas.stock.stock import handler
+from sample_api.main import handler
 
 
 @pytest.mark.parametrize(
@@ -33,7 +32,15 @@ from packages.infra.src.infra_app.lambdas.stock.stock import handler
 )
 def test_stock_response(path: str, status: int, body: dict[str, object]) -> None:
     """在庫サンプルが操作に応じたステータスとJSON応答を返す。"""
-    result = handler({"rawPath": path}, None)
+    result = handler(
+        {
+            "version": "2.0",
+            "rawPath": path,
+            "requestContext": {"http": {"method": "GET", "path": path, "sourceIp": "127.0.0.1"}},
+            "headers": {},
+        },
+        None,
+    )
     assert result["statusCode"] == status
-    assert result["headers"] == {"content-type": "application/json"}
+    assert result["headers"]["content-type"] == "application/json"
     assert json.loads(result["body"]) == body

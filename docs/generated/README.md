@@ -7,6 +7,7 @@
 | 分野 | ドキュメント | 再生成コマンド |
 | --- | --- | --- |
 | API | [API操作一覧と操作別の実装設計書](apis/README.md) | `task docs:api` |
+| サンプルAPI | [商品別のOpenAPI YAML](sample-api/) | `task docs:samples` |
 | DB | [テーブル・レコード・カラム定義](db/database.md) · [入出力スキーマ](db/schemas.md) · [SQL・AWSのCRUD表](db/crud.md) | `task docs:api` |
 | インフラ | [CDKコンポーネント別の設計書](infra/README.md) | `task docs:infra` |
 | 開発ルール | [完了の定義](dev-rules/definition-of-done.md) | `task docs:quality` |

@@ -2,12 +2,22 @@
 
 import argparse
 import json
+from copy import deepcopy
+from functools import cache
 from pathlib import Path
 
 import httpx
+import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
 CATALOG = json.loads((ROOT / "docs/examples/marketplace.json").read_text(encoding="utf-8"))
+
+
+@cache
+def product_spec(slug):
+    return yaml.safe_load(
+        (ROOT / "docs/generated/sample-api" / f"{slug}.yaml").read_text(encoding="utf-8")
+    )
 
 
 def offer(product, edition=None):
@@ -46,18 +56,8 @@ def offer(product, edition=None):
         "owner": "supply",
         "summary": product["summary"],
         "targets": {env: "sample-" + env},
-        "spec": {
-            "openapi": "3.0.3",
-            "info": {"title": name, "version": "1.0.0"},
-            "paths": {
-                product["path"]: {
-                    product["method"].lower(): {
-                        "summary": product["summary"],
-                        "responses": {"200": {"description": "処理結果"}},
-                    }
-                }
-            },
-        },
+        "base_path": "/" + product["slug"],
+        "spec": deepcopy(product_spec(product["slug"])),
     }
 
 
@@ -67,16 +67,29 @@ def seed(api, editions):
     headers = {"Authorization": "Bearer " + login.json()["access_token"]}
     inventory = api.get("apis", params={"inventory": True}, headers=headers)
     inventory.raise_for_status()
-    existing = {row["name"]: row for row in inventory.json()}
+    existing = {row["slug"]: row for row in inventory.json() if row["owner"] == "supply"}
     ids = []
     for edition in range(1, editions + 1):
         for product in CATALOG:
             data = offer(product, edition)
-            row = existing.get(data["name"])
+            row = existing.get(data["slug"])
             if row is None:
                 result = api.post("apis", headers=headers, json=data)
                 result.raise_for_status()
                 row = result.json()
+            else:
+                detail = api.get(f"apis/{row['id']}", headers=headers).raise_for_status().json()
+                if detail["spec"] != data["spec"] or detail["base_path"] != data["base_path"]:
+                    row = (
+                        api.put(
+                            f"apis/{row['id']}",
+                            params={"revision": detail["revision"]},
+                            headers=headers,
+                            json=data,
+                        )
+                        .raise_for_status()
+                        .json()
+                    )
             if not row["published"]:
                 response = api.put(
                     f"apis/{row['id']}/publication", params={"published": True}, headers=headers
@@ -88,7 +101,7 @@ def seed(api, editions):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="ローカルデモのカタログに用途の異なる6種類のAPIを公開します"
+        description="ローカルデモのカタログに用途の異なる12種類のAPIを公開します"
     )
     parser.add_argument("--editions", type=int, default=1, choices=range(1, 101), metavar="1..100")
     args = parser.parse_args()
