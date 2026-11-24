@@ -36,6 +36,9 @@ def test_gateway_authorizer_rechecks_each_invocation(portal, monkeypatch):
         "isAuthorized": True,
         "context": {"subject": "consumer", "project": "finance"},
     }
+    for direct_headers in ({}, {"x-tsugite-origin": "incorrect"}):
+        direct = {**incoming, "headers": {"authorization": call["Authorization"], **direct_headers}}
+        assert handler(direct, None) == {"isAuthorized": False}
     assert handler(
         {
             **incoming,

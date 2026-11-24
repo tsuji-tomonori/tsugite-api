@@ -16,6 +16,10 @@ CloudFrontを入口とし、非公開S3、API Gateway、Lambda、Cognito、Auror
 
 - 受入テスト `packages/infra/tests/test_stack.py::test_access_boundaries`
 - 受入テスト `packages/infra/tests/test_cost.py::test_cost_drivers_are_bounded`
+- 受入テスト `packages/backend/tests/test_auth.py::test_portal_origin_with_valid_access_token`
+- 受入テスト `packages/backend/tests/test_gateway_event.py::test_gateway_authorizer_rechecks_each_invocation`
+
+配備後は、同じスタックのヘルスチェックが CloudFront 経由で 200、API Gateway 直アクセスで入口拒否の 403 になることを Deploy to AWS で確認する。
 
 ## 却下した方針
 

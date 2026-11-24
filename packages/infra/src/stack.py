@@ -48,6 +48,7 @@ class CatalogStack(Stack):
         identity = PortalIdentity(self, "Identities", projects, delivery.url)
         UpstreamBindings(self, "Bindings", cfg, not config_file, projects, identity, runtime.role, param)
         preserve_logical_ids(self)
+        CfnOutput(self, "GatewayEndpoint", value=gateway.api.api_endpoint)
         CfnOutput(self, "PortalUrl", value=delivery.url)
         CfnOutput(self, "UserPoolId", value=identity.pool.user_pool_id)
         CfnOutput(self, "TokenEndpoint", value=identity.domain.base_url() + "/oauth2/token")
