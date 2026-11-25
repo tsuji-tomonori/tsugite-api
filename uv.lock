@@ -11,6 +11,8 @@ members = [
     "tsugite-e2e",
     "tsugite-frontend",
     "tsugite-infra",
+    "tsugite-model",
+    "tsugite-sample-api",
     "tsugite-tools",
 ]
 constraints = [
@@ -1743,9 +1745,6 @@ dev = [
     { name = "pytestarch" },
     { name = "ruff" },
 ]
-model-sdk = [
-    { name = "boto3" },
-]
 quality-docs = [
     { name = "pyyaml" },
 ]
@@ -1763,7 +1762,6 @@ dev = [
     { name = "pytestarch" },
     { name = "ruff" },
 ]
-model-sdk = [{ name = "boto3" }]
 quality-docs = [{ name = "pyyaml" }]
 
 [[package]]
@@ -1878,9 +1876,37 @@ requires-dist = [
 ]
 
 [[package]]
+name = "tsugite-model"
+version = "0.1.0"
+source = { editable = "packages/model" }
+dependencies = [
+    { name = "boto3" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "boto3" }]
+
+[[package]]
+name = "tsugite-sample-api"
+version = "0.1.0"
+source = { editable = "packages/sample_api" }
+dependencies = [
+    { name = "fastapi" },
+    { name = "mangum" },
+    { name = "pydantic" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "fastapi" },
+    { name = "mangum" },
+    { name = "pydantic", specifier = ">=2" },
+]
+
+[[package]]
 name = "tsugite-tools"
 version = "0.1.0"
-source = { virtual = "tools" }
+source = { virtual = "packages/tools" }
 dependencies = [
     { name = "playwright" },
     { name = "sqlglot" },

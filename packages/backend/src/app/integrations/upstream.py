@@ -1,3 +1,4 @@
+# 提供元APIへのリクエストを送信する。
 import base64
 import json
 import os
@@ -55,6 +56,18 @@ def probe(target: Target) -> None:
 
 def dispatch(target: Target, method: str, path: str, query: str, body: bytes, headers: dict) -> Response:
     if target.kind == "demo":
+        from fastapi.testclient import TestClient
+        from sample_api.main import PRODUCTS, app
+
+        if path.split("/", 2)[1] in PRODUCTS:
+            with TestClient(app) as client:
+                result = client.request(
+                    method,
+                    path + ("?" + query if query else ""),
+                    content=body,
+                    headers={"content-type": headers.get("content-type", "application/json")},
+                )
+            return response(result.status_code, result.content, result.headers["content-type"])
         payload = json.dumps(
             {
                 "project": headers["x-tsugite-project"],

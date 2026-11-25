@@ -1,3 +1,4 @@
+# EmulatorのCognitoと共有・本人キーでHTTPS接続先を呼び、別人・範囲外・失効を拒否する。
 """Exercise issued keys across the HTTP boundary with Cognito and a TLS upstream."""
 
 import json
@@ -7,9 +8,9 @@ import secrets
 import httpx
 import jwt
 
+from packages.tools.demo.seed_marketplace import CATALOG, offer
 from tests.e2e.aws.https_stock import https_stock
 from tests.e2e.aws.test_portal import live_portal
-from tools.demo.seed_marketplace import CATALOG, offer
 
 
 def another_finance_user(aws, first_token):

@@ -1,3 +1,4 @@
+# HTTPの結果と原因から重要度を決め、対象APIと画面を安全に記録する。
 import asyncio
 import json
 from types import SimpleNamespace
@@ -181,7 +182,7 @@ def test_member_partial_deletion(monkeypatch):
 
 def test_model_worker_error_has_request_context(monkeypatch):
     """モデル呼び出しの失敗を元のAPI・画面・利用者に結び付け、質問本文を記録しない。"""
-    from agent import jobs
+    import chat_jobs as jobs
 
     sink = Mock(level=0)
     monkeypatch.setattr(logger, "handlers", [sink])
@@ -210,7 +211,7 @@ def test_packaged_model_reports_weight_repair(tmp_path, monkeypatch, capsys):
     import importlib.util
     from pathlib import Path
 
-    from tools.packaging import build_chat
+    from packages.tools.packaging import build_chat
 
     monkeypatch.setattr(build_chat, "BUILD", tmp_path)
     build_chat.stage()
@@ -220,7 +221,7 @@ def test_packaged_model_reports_weight_repair(tmp_path, monkeypatch, capsys):
         ).read_bytes()
     package = tmp_path / "chat-decision"
     monkeypatch.syspath_prepend(str(package))
-    spec = importlib.util.spec_from_file_location("model_runtime", package / "runtime.py")
+    spec = importlib.util.spec_from_file_location("model_runtime", package / "model_runtime.py")
     runtime = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(runtime)
     monkeypatch.setenv("MODEL_ROLE", "decision")

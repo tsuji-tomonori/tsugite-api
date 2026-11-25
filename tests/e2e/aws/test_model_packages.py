@@ -1,3 +1,4 @@
+# 配備用コードとLayerだけでモデルを読み込み、外部パッケージの読み込み元を確認する。
 import subprocess
 from pathlib import Path
 from zipfile import ZipFile
@@ -32,6 +33,9 @@ def test_model_imports_from_deployment_packages(tmp_path, code, layer, handler, 
     layer_dir = tmp_path / "opt"
     with ZipFile(BUILD / f"{layer}-layer.zip") as archive:
         archive.extractall(layer_dir)
+    if handler == "decision":
+        with ZipFile(BUILD / "decision-weights-layer.zip") as weights:
+            weights.extractall(layer_dir)
     script = """
 import importlib
 import importlib.util
@@ -44,6 +48,10 @@ assert Path(module.__file__).parent == Path(code)
 names = ["boto3"]
 if handler == "decision":
     names.extend(["numpy", "onnxruntime", "tokenizers"])
+    assert module.MODEL_DIR == Path("/opt/models/decision")
+    module.MODEL_DIR = Path(dependencies).parent / module.MODEL_DIR.relative_to("/opt")
+    vectors = module.handler({"texts": ["商品の検索"]}, None)["vectors"]
+    assert len(vectors) == 1 and len(vectors[0]) > 0 and any(vectors[0])
     assert "CPUExecutionProvider" in importlib.import_module("onnxruntime").get_available_providers()
 else:
     assert not any(importlib.util.find_spec(name) for name in ("onnxruntime", "numpy", "tokenizers"))
@@ -81,11 +89,11 @@ import sys
 from pathlib import Path
 code, dependencies = sys.argv[1:]
 sys.path[:0] = [code, dependencies]
-from agent import jobs
+import chat_jobs as jobs
 from app.core.auth import Actor
 assert Path(jobs.__file__).resolve().is_relative_to(code)
 assert callable(jobs.handler)
-assert not Path(code, "agent/models").exists()
+assert not any(Path(code, name).exists() for name in ("decision.py", "completion.py", "model_runtime.py", "manifest.json"))
 viewer = Actor("consumer", frozenset(), frozenset(), False, False)
 result = jobs.ask("APIキーを発行する手順を教えて", lambda: [], viewer, lambda *_: {})
 assert result["kind"] == "manual" and result["keys"]

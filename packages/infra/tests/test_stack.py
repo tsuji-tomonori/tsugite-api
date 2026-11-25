@@ -1,10 +1,12 @@
+# 非公開S3、呼び出しの認可、キャッシュと配信の設定が設計どおりである。
 import json
 from pathlib import Path
 
 import pytest
 from aws_cdk import App, Environment
 from aws_cdk.assertions import Match, Template
-from src.infra_app.stack import CatalogStack
+
+from packages.infra.src.stack import CatalogStack
 
 
 def test_access_boundaries(tmp_path, request):
@@ -74,6 +76,26 @@ def test_access_boundaries(tmp_path, request):
             }
         },
     )
+    (distribution,) = template.find_resources("AWS::CloudFront::Distribution").values()
+    config = distribution["Properties"]["DistributionConfig"]
+    (behavior,) = [route for route in config["CacheBehaviors"] if route["PathPattern"] == "api/*"]
+    (origin,) = [item for item in config["Origins"] if item["Id"] == behavior["TargetOriginId"]]
+    assert origin["CustomOriginConfig"]["OriginProtocolPolicy"] == "https-only"
+    (header,) = [
+        h for h in origin["OriginCustomHeaders"] if h["HeaderName"].lower() == "x-tsugite-origin"
+    ]
+    secret_id = "OriginKey10CF34FB"
+    assert secret_id in template.find_resources("AWS::SecretsManager::Secret")
+    assert header["HeaderValue"] == {
+        "Fn::Join": ["", ["{{resolve:secretsmanager:", {"Ref": secret_id}, ":SecretString:::}}"]]
+    }
+    for handler in ("app.main.handler", "app.authorizer.handler"):
+        (function,) = template.find_resources(
+            "AWS::Lambda::Function", {"Properties": {"Handler": handler}}
+        ).values()
+        assert (
+            function["Properties"]["Environment"]["Variables"]["ORIGIN_SECRET"] == header["HeaderValue"]
+        )
     template.resource_count_is("AWS::CloudFront::OriginAccessControl", 1)
     template.resource_count_is("Custom::AWSCDKOpenIdConnectProvider", 0)
     template.has_resource_properties(
@@ -154,3 +176,27 @@ def test_existing_resources_keep_their_logical_ids(tmp_path):
     for component, logical_ids in old_groups.items():
         for logical_id in logical_ids:
             assert resources[logical_id]["Metadata"]["Tsugite"]["Component"] == component
+
+
+def test_upstream_bindings_validate_target_and_secret(tmp_path):
+    """提供先の所有者・環境・種類とARNを検査し、不正な接続設定で配備を進めない。"""
+    target = {
+        "owner": "team",
+        "environment": "sandbox",
+        "kind": "https",
+        "address": "https://example.test",
+    }
+    config = tmp_path / "bindings.json"
+    for index, (change, message) in enumerate(
+        (
+            ({"owner": "other"}, "owner or environment"),
+            ({"environment": "other"}, "owner or environment"),
+            ({"kind": "other"}, "unknown target"),
+            ({"kind": "lambda", "address": "*"}, "specific Lambda ARN"),
+            ({"secret_arn": "*"}, "specific secret ARN"),
+        )
+    ):
+        config.write_text(json.dumps({"projects": ["team"], "targets": {"target": target | change}}))
+        app = App(outdir=str(tmp_path / str(index)), context={"bindings": str(config)})
+        with pytest.raises(ValueError, match=message):
+            CatalogStack(app, "TsugiteApi")

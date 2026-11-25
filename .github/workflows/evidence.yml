@@ -1,0 +1,28 @@
+name: Publish requirement evidence
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    concurrency:
+      group: publish-requirement-evidence
+      queue: max
+    permissions:
+      actions: read
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+      - name: マージ順に要件別の証跡をコミット
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash packages/tools/ci/publish_evidence.sh

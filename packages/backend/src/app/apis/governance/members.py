@@ -1,14 +1,9 @@
-from typing import Literal
-
+# 利用者の所属や権限を管理する。
 import boto3
-from app.apis import outputs
-from app.apis.catalog.common import DB, User
-from app.apis.governance.profile_fields import ProfileNames
 from app.core.auth import DEMO_GROUPS
 from app.core.config import local_demo, settings
 from app.core.diagnostics import OperationalRepair
 from app.core.member_profiles import (
-    INVITATION_EMAIL,
     NAME_FIELDS,
     directory_accounts,
     directory_fields,
@@ -17,9 +12,11 @@ from app.core.member_profiles import (
     set_directory_email,
 )
 from app.core.workspace import configured_projects, retired_units, units
+from app.dependencies import DB, User
+from app.schemas import outputs
+from app.schemas.members import Invitation
 from botocore.exceptions import BotoCoreError, ClientError
 from fastapi import APIRouter, HTTPException, Query, Request
-from pydantic import Field
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from tsugite_db.models import Event, Member, MemberProfile, new_id
@@ -31,21 +28,6 @@ def projects(db=None):
     if db is not None:
         return sorted(k for k, u in units(db).items() if u["kind"] == "project")
     return sorted(configured_projects())
-
-
-#: ポータル利用者の招待内容
-class Invitation(ProfileNames):
-    #: 招待先メールアドレス
-    email: str = Field(pattern=INVITATION_EMAIL, max_length=150)
-    #: 招待先プロジェクトの識別子
-    project: str
-    #: 利用者の役割
-    role: Literal[
-        #: 利用者
-        "consumer",
-        #: 提供者
-        "provider",
-    ]
 
 
 def administrator(actor):
@@ -102,11 +84,16 @@ def list_members(
         )
         next_cursor = ""
     else:
-        idp = boto3.client("cognito-idp")
-        #: 利用者・グループの管理（Cognitoユーザープール） / 利用者の一覧を取得
-        page = idp.list_users(
-            UserPoolId=pool(), Limit=limit, **({"PaginationToken": cursor} if cursor else {})
-        )
+        try:
+            idp = boto3.client("cognito-idp")
+            #: 利用者・グループの管理（Cognitoユーザープール） / 利用者の一覧を取得
+            page = idp.list_users(
+                UserPoolId=pool(), Limit=limit, **({"PaginationToken": cursor} if cursor else {})
+            )
+        except ClientError, BotoCoreError:
+            raise HTTPException(
+                503, "利用者を確認できませんでした。時間をおいて再実行してください"
+            ) from None
         users = {
             attrs["sub"]: user["Username"]
             for user in page.get("Users", [])
@@ -170,6 +157,10 @@ def invite(data: Invitation, request: Request, actor: User, db: DB):
             )["User"]
         except idp.exceptions.UsernameExistsException as exc:
             raise HTTPException(409, "登録済みです") from exc
+        except idp.exceptions.InternalErrorException, idp.exceptions.TooManyRequestsException:
+            raise HTTPException(
+                503, "招待サービスが一時的に利用できません。時間をおいて再実行してください"
+            ) from None
         try:
             subject = next(a["Value"] for a in user["Attributes"] if a["Name"] == "sub")
             request.state.target_subject_id = subject

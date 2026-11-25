@@ -12,11 +12,18 @@ OpenAPIの操作と本人の認証情報を使うことで、URLの組み立て�
 
 「APIクライアント」で承認済みの商品を選ぶと、その時点のOpenAPIから操作と入力欄を表示する。実行時にゲートウェイが本人・環境・操作の権限を確認する。URLを直接指定する場合はブラウザーから送信し、接続先用に入力したヘッダーを使う。
 
+URL直接指定ではポータルの資格情報を自動送信せず、リダイレクトを拒否する。応答のHTTPステータスと本文を表示する。
+
 ### 受入テスト
 
 - 受入テスト `tests/e2e/browser/test_api_docs.py::test_openapi_key_console` / `console-oauth.png`
 - 受入テスト `tests/e2e/browser/test_api_docs.py::test_openapi_key_console` / `console-url.png`
+- 受入テスト `packages/frontend/tests/test_api_client.py::test_manual_request_uses_only_entered_headers`
 
 ## 却下した方針
 
 入力した任意のURLにポータルのトークンを自動送信すると、利用者の認証情報が別のサービスに渡ってしまう。
+
+### 変更履歴
+
+- 2026-11-25 #34 の直接送信で使う資格情報の範囲を明記した。

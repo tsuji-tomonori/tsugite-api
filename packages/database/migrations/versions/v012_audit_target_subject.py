@@ -1,3 +1,4 @@
+# 監査対象の利用者に対応するDBスキーマへ移行する。
 """Record the stable subject targeted by an audited member operation."""
 
 import sqlalchemy as sa

@@ -1,7 +1,9 @@
+# ブラウザーとサーバーで共用するログ形式を定義する。
 """Application log contract shared with the browser build (standard library only)."""
 
 import re
 from datetime import UTC, datetime
+from typing import TypedDict
 
 INVOKE_ROUTE = "/api/invoke/{key}/{environment}/{project}/{tail:path}"
 
@@ -13,6 +15,8 @@ SCREENS = frozenset(
         "guide",
         "keys",
         "workspace",
+        "attributes",
+        "metadata",
         "departments",
         "projects",
         "metrics",
@@ -37,7 +41,27 @@ SCREENS = frozenset(
 )
 
 
-def identifier(value):
+class LogRecord(TypedDict):
+    """ブラウザーとAPIが共有するログの項目と型。"""
+
+    at: str
+    level: str
+    event: str
+    source: str
+    reason: str | None
+    request_id: str | None
+    method: str | None
+    route: str | None
+    operation: str | None
+    screen: str | None
+    status: int | None
+    actor_id: str | None
+    target_subject_id: str | None
+    asset_id: str | None
+    operator_action: str | None
+
+
+def identifier(value: object) -> str | None:
     if (
         isinstance(value, str)
         and re.fullmatch(r"[A-Za-z0-9_:/+@.-]{1,180}", value)
@@ -48,23 +72,23 @@ def identifier(value):
 
 
 def log_record(
-    event,
+    event: str,
     *,
-    source,
-    status=None,
-    failed=False,
-    user_error=False,
-    action=None,
-    request_id=None,
-    method=None,
-    route=None,
-    operation=None,
-    screen=None,
-    actor_id=None,
-    target_subject_id=None,
-    asset_id=None,
-    reason=None,
-):
+    source: str,
+    status: int | None = None,
+    failed: bool = False,
+    user_error: bool = False,
+    action: str | None = None,
+    request_id: str | None = None,
+    method: str | None = None,
+    route: str | None = None,
+    operation: str | None = None,
+    screen: str | None = None,
+    actor_id: str | None = None,
+    target_subject_id: str | None = None,
+    asset_id: str | None = None,
+    reason: str | None = None,
+) -> LogRecord:
     if action:
         level = "CRITICAL"
     elif failed or (status is not None and status >= 500):

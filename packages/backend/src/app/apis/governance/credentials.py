@@ -1,55 +1,25 @@
+# 認証情報の発行・更新を受け付ける。
 import hashlib
 import hmac
 import json
 import secrets
-from typing import Literal
 from urllib.parse import parse_qsl
 
-from app.apis import outputs
-from app.apis.catalog.common import DB, User
 from app.apis.governance.credential_settings import members_for
 from app.apis.governance.directory import audit, manages
-from app.apis.governance.keys import KeyInput, key_assets, metadata
-from app.apis.schemas import Input
+from app.apis.governance.keys import key_assets, metadata
 from app.core import credential_policy as policy
 from app.core.access_token import encode, machine_actor, may_use
 from app.core.auth import check_member, identify
 from app.core.workspace import populate, private_project, stopped, units
+from app.dependencies import DB, User
+from app.schemas import outputs
+from app.schemas.credentials import Exchange, Issue
 from fastapi import APIRouter, HTTPException, Request, Response
 from fastapi.responses import JSONResponse
-from pydantic import Field, SecretStr
 from tsugite_db.models import Asset, CredentialLease, PortalKey, new_id
 
 router = APIRouter()
-
-
-#: 認証情報の発行条件
-class Issue(KeyInput):
-    #: 認証方式
-    mode: Literal[
-        #: 短期トークン方式
-        "bearer",
-        #: 利用者を伴うアプリ認証
-        "app",
-        #: システム間認証
-        "system",
-    ]
-    #: 希望するトークン有効期間（分）
-    ttl_minutes: int = Field(60, ge=1, le=60)
-    #: 発行から更新可能になるまでの時間（分）
-    refresh_minutes: int | None = Field(None, ge=1, le=60)
-    #: 対象のAPI操作
-    operations: dict[str, list[str]] = Field(default_factory=dict)
-    #: 利用を許可する利用者
-    users: list[str] = Field(default_factory=list)
-
-
-#: トークン交換の入力
-class Exchange(Input):
-    #: クライアント識別子
-    client_id: str = Field(min_length=32, max_length=32)
-    #: クライアントシークレット
-    client_secret: SecretStr
 
 
 def secret_for(key):
@@ -216,7 +186,13 @@ TOKEN_EXCHANGE = "urn:ietf:params:oauth:grant-type:token-exchange"
 #: 利用者のログイン情報を選択した認証情報の短期トークンに交換する
 @router.post(
     "/credentials/{key_id}/token-exchange",
-    responses={200: {"model": outputs.ExchangedToken}},
+    responses={
+        200: {"model": outputs.ExchangedToken},
+        400: {
+            "model": outputs.TokenExchangeError,
+            "description": "交換方式が未対応、またはフォームの入力内容が不正です。",
+        },
+    },
     openapi_extra={
         "x-design-auth": "フォームのsubject_tokenにログイン済み利用者のアクセストークンを指定し、本人が利用可能な認証情報に交換します。",
         "requestBody": {

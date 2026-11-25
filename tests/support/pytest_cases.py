@@ -1,9 +1,10 @@
+# テストの日本語説明をpytestの結果に反映する。
 import inspect
 from collections import Counter
 
 import pytest
 
-from tests.architecture.case_text import is_japanese_case_text
+from tests.architecture.core.case_text import is_japanese_case_text
 
 
 def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:

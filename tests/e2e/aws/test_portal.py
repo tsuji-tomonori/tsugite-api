@@ -1,3 +1,4 @@
+# Cognitoで識別した2人が画面で承認し、在庫照会・取消・監査まで進める。
 import json
 import os
 import secrets
@@ -118,11 +119,11 @@ def live_portal(aws, resources, tmp_path, identity, binding=None, ca=None):
     with auth as (config, tokens):
         config["targets"] = {
             "sample-" + env: {
-                **(binding or {"kind": "lambda", "address": resources[logical_id]}),
+                **(binding or {"kind": "lambda", "address": resources["transport-" + env]}),
                 "owner": "supply",
                 "environment": env,
             }
-            for env, logical_id in STOCK_FUNCTIONS.items()
+            for env in STOCK_FUNCTIONS
         }
         param = "/tsugite/" + tmp_path.name
         aws.client("ssm").put_parameter(Name=param, Type="String", Value=json.dumps(config))
@@ -345,7 +346,7 @@ def test_approved_calls_reach_upstream(
 
 def test_marketplace_contracts(aws, resources, tmp_path, request):
     """6種類を個別に登録・公開・承認して実行し、HTTPSの受信・業務応答・監査記録を照合する"""
-    from tools.demo.seed_marketplace import CATALOG, offer
+    from packages.tools.demo.seed_marketplace import CATALOG, offer
 
     expected = [
         {"items": [{"sku": "TS-01", "stock": 12}]},
@@ -362,7 +363,7 @@ def test_marketplace_contracts(aws, resources, tmp_path, request):
     ):
         owner, user = ({"Authorization": "Bearer " + tokens[k]} for k in ("owner", "user"))
         call_headers = invocation_headers(api, user, endpoint="credentials")
-        for product, answer in zip(CATALOG, expected, strict=True):
+        for product, answer in zip(CATALOG[:6], expected, strict=True):
             data = {**offer(product), "base_path": "/v1"}
             asset = api.post("apis", headers=owner, json=data).raise_for_status().json()["id"]
             api.put(
@@ -408,13 +409,13 @@ def test_marketplace_contracts(aws, resources, tmp_path, request):
                 )
             )
         assert [(m, p) for m, p in calls if m != "HEAD"] == [
-            (item["method"], "/warehouse/v1" + item["path"]) for item in CATALOG
+            (item["method"], "/warehouse/v1" + item["path"]) for item in CATALOG[:6]
         ]
 
 
 def test_upstream_unavailable(aws, resources, tmp_path, request):
     """承認済みのHTTPS接続先が停止したとき、502と監査・アクセスログを同じIDで追跡できる"""
-    from tools.demo.seed_marketplace import CATALOG, offer
+    from packages.tools.demo.seed_marketplace import CATALOG, offer
 
     with ExitStack() as stack:
         with https_stock(aws, tmp_path, os.environ["AWS_CA_BUNDLE"]) as (binding, ca, _):

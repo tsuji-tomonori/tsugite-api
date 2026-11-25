@@ -1,8 +1,10 @@
+# 常時稼働の構成を置かず、Lambdaのメモリ・タイムアウトとログ保存期間を制限する。
 from collections import Counter
 
 from aws_cdk import App, Environment
 from aws_cdk.assertions import Match, Template
-from src.infra_app.stack import CatalogStack
+
+from packages.infra.src.stack import CatalogStack
 
 
 def test_cost_drivers_are_bounded(tmp_path):
@@ -38,7 +40,7 @@ def test_chat_uses_separate_on_demand_python_functions(tmp_path):
     template.has_resource_properties(
         "AWS::Lambda::Function",
         {
-            "Handler": "agent.jobs.handler",
+            "Handler": "chat_jobs.handler",
             "Runtime": "python3.15",
             "ReservedConcurrentExecutions": Match.absent(),
         },

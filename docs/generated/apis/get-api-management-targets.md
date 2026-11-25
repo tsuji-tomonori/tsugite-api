@@ -4,9 +4,9 @@
 
 GET `/api/management-targets`
 
-[API一覧](../README.md) · [CRUD一覧](../crud.md)
+[API一覧](README.md) · [CRUD一覧](../db/crud.md)
 
-共通 · `management_targets_api_management_targets_get` · [management_targets:259](../../../packages/backend/src/app/apis/governance/observability.py#L259)
+共通 · `management_targets_api_management_targets_get` · [management_targets:329](../../../packages/backend/src/app/apis/governance/observability.py#L329)
 
 ## 入力
 
@@ -22,7 +22,7 @@ GET `/api/management-targets`
 
 | ステータス | 説明 | 形式・条件 | スキーマ |
 | --- | --- | --- | --- |
-| 200 | 正常に処理できました | application/json | 配列 / [監視対象のAPI・プロジェクト・環境（ManagementTarget）](../schemas.md#managementtarget) |
+| 200 | 正常に処理できました | application/json | 配列 / [監視対象のAPI・プロジェクト・環境（ManagementTarget）](../db/schemas.md#managementtarget) |
 
 ### 200 application/json の項目
 
@@ -32,9 +32,10 @@ GET `/api/management-targets`
 | API名 | [].name | 必須 | 文字列 |
 | 利用プロジェクトの識別子 | [].project | 必須 | 文字列 |
 | 監視対象の識別子 | [].id | 必須 | 文字列 |
+| 利用プロジェクトの表示名 | [].project_label | 任意 | 文字列 |
 | 提供環境 | [].environment | 必須 | 文字列 |
 
-実装・認証依存で送出し得るHTTPエラー（エラーの詳細を示す `detail` を含むJSON）　401, 403。
+実装・認証依存で送出し得るHTTPエラー（エラーの詳細を示す `detail` を含むJSON）　401, 403, 503。
 
 AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugite-Origin` を付与します。共通ミドルウェアは通常のAPI応答にリクエスト識別子 `X-Request-ID` とキャッシュへの保存を禁止する `Cache-Control: no-store` を付けます。Lambdaのオリジン検証に失敗すると403、DBの競合は409、DB操作エラーは409または503です。
 
@@ -44,20 +45,21 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| [API利用申請・利用権](../database.md#access_rights) | access_rights | R | テーブルを結合 | join | [management_targets:261](../../../packages/backend/src/app/apis/governance/observability.py#L261) |
-| [API利用申請・利用権](../database.md#access_rights) | access_rights | R | 検索 | select | [management_targets:261](../../../packages/backend/src/app/apis/governance/observability.py#L261) |
-| [利用者の組織所属](../database.md#affiliations) | affiliations | R | 検索 | select | [populate:69](../../../packages/backend/src/app/core/workspace.py#L69) |
-| [APIカタログ](../database.md#assets) | assets | R | テーブルを結合 | join | [management_targets:261](../../../packages/backend/src/app/apis/governance/observability.py#L261) |
-| [APIカタログ](../database.md#assets) | assets | R | 検索 | select | [management_targets:261](../../../packages/backend/src/app/apis/governance/observability.py#L261) |
-| [組織階層](../database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
-| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:121](../../../packages/backend/src/app/core/auth.py#L121) |
-| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:56](../../../packages/backend/src/app/core/workspace.py#L56) |
+| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | R | テーブルを結合 | join | [management_targets:331](../../../packages/backend/src/app/apis/governance/observability.py#L331) |
+| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | R | 検索 | select | [management_targets:331](../../../packages/backend/src/app/apis/governance/observability.py#L331) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:107](../../../packages/backend/src/app/core/workspace.py#L107) |
+| [APIカタログ](../db/database.md#assets) | assets | R | テーブルを結合 | join | [management_targets:331](../../../packages/backend/src/app/apis/governance/observability.py#L331) |
+| [APIカタログ](../db/database.md#assets) | assets | R | 検索 | select | [management_targets:331](../../../packages/backend/src/app/apis/governance/observability.py#L331) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:55](../../../packages/backend/src/app/core/workspace.py#L55) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:126](../../../packages/backend/src/app/core/auth.py#L126) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:92](../../../packages/backend/src/app/core/workspace.py#L92) |
 
 ### AWSサービス
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:53](../../../packages/backend/src/app/core/config.py#L53) |
+| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:54](../../../packages/backend/src/app/core/config.py#L54) |
 
 <details><summary>解析した関数・依存</summary>
 
@@ -72,6 +74,9 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 - `app.core.workspace.ancestry`
 - `app.core.workspace.configured_projects`
 - `app.core.workspace.populate`
+- `app.core.workspace.project_ids`
+- `app.core.workspace.project_label`
+- `app.core.workspace.retired_units`
 - `app.core.workspace.units`
 - `tsugite_db.session.engine`
 - `tsugite_db.session.session`

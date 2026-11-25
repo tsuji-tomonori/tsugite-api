@@ -1,27 +1,21 @@
+# ポータル利用者のプロフィールを取得・更新する。
 """View and edit the portal member's profile through the existing human session."""
 
 import json
 
 import boto3
-from app.apis import outputs
-from app.apis.catalog.common import DB, User
 from app.apis.governance.members import administrator, member_event, pool
-from app.apis.governance.profile_fields import ProfileNames
 from app.core.auth import DEMO_GROUPS
 from app.core.config import local_demo
 from app.core.member_profiles import NAME_FIELDS, directory_fields
+from app.dependencies import DB, User
+from app.schemas import outputs
+from app.schemas.profiles import ProfileEdit
 from botocore.exceptions import BotoCoreError, ClientError
 from fastapi import APIRouter, HTTPException, Request
-from pydantic import Field
 from tsugite_db.models import Member, MemberProfile
 
 router = APIRouter()
-
-
-#: 利用者プロフィールの編集内容
-class ProfileEdit(ProfileNames):
-    #: 取得したプロフィールの版番号
-    revision: int = Field(ge=0)
 
 
 def existing_account(db, subject):

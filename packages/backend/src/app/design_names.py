@@ -1,3 +1,4 @@
+# 宣言内のコメントから設計書に載せる業務名を取得する。
 """Project the source comments of registered routes and models onto their OpenAPI contract."""
 
 import ast
@@ -9,7 +10,7 @@ from fastapi import FastAPI
 from fastapi.routing import APIRoute, iter_route_contexts
 from tsugite_db.source_docs import read_source
 
-from app.apis.product_contract import describe_product_fields
+from app.schemas.product_contract import describe_product_fields
 
 
 @cache

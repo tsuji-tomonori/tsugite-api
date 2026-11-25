@@ -1,3 +1,4 @@
+# 合成したテンプレートから移行 Lambda を構築し、関数 ZIP と依存 Layer を登録できる。
 import base64
 import hashlib
 import json

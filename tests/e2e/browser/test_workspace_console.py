@@ -1,3 +1,4 @@
+# 管理者が組織階層と兼務を設定し、リーダーがキー・利用状況・停止と再開を操作する。
 """Browser coverage for an administrator and a project leader using real portal routes."""
 
 import os

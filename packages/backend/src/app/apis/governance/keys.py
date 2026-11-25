@@ -1,42 +1,27 @@
+# APIキーを発行して管理する。
 import hashlib
 import hmac
 import json
 import secrets
 from dataclasses import replace
-from typing import Annotated, Literal
+from typing import Annotated
 
-from app.apis import outputs
-from app.apis.catalog.common import DB, User, record
 from app.apis.governance.directory import audit, manages
-from app.apis.schemas import Input, Listing
 from app.core import credential_policy
 from app.core.access_token import resolve
 from app.core.auth import Actor, bearer, check_member, identify
+from app.core.catalog import record
 from app.core.workspace import allowed_audience, ancestry, populate, private_project, units
+from app.dependencies import DB, User
+from app.schemas import outputs
+from app.schemas.catalog import Listing
+from app.schemas.keys import KeyInput
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.security import HTTPAuthorizationCredentials
-from pydantic import Field
 from sqlalchemy import or_, select
 from tsugite_db.models import Access, PortalKey, new_id
 
 router = APIRouter()
-
-
-#: APIキーの発行条件
-class KeyInput(Input):
-    #: 認証情報の表示名
-    name: str = Field(min_length=1, max_length=120)
-    #: 利用プロジェクトの識別子
-    project: str
-    #: APIキーの利用範囲（個人・共有）
-    kind: Literal[
-        #: 共有
-        "shared",
-        #: 個人用
-        "personal",
-    ]
-    #: 対象APIの識別子一覧
-    api_ids: list[str] = Field(default_factory=list)
 
 
 def metadata(k):
@@ -74,7 +59,7 @@ def list_keys(actor: User, db: DB):
 #: 認証情報の対象に選べるAPIを一覧する
 @router.get("/key-assets", responses={200: {"model": list[Listing]}})
 def key_assets(actor: User, db: DB):
-    from app.apis.catalog.common import listing
+    from app.core.catalog import listing
     from tsugite_db.models import Asset
 
     held = select(Access.asset_id).where(

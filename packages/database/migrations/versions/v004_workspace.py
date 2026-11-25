@@ -1,3 +1,4 @@
+# 所属組織に対応するDBスキーマへ移行する。
 """Directory, scoped credentials, subscription principals and historical organization attribution."""
 
 import sqlalchemy as sa

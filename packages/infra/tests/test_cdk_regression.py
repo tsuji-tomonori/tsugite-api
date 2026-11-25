@@ -1,3 +1,4 @@
+# 標準構成のリソース型と論理ID、スタック出力をスナップショットと照合する。
 import csv
 import json
 from collections import Counter
@@ -6,10 +7,10 @@ from pathlib import Path
 import pytest
 from aws_cdk import App, AssetStaging, Environment
 from aws_cdk.assertions import Template
-from src.infra_app import stack
-from src.infra_app.stack import CatalogStack
 
-from tools.ci.audit_infra import synthesize_report
+from packages.infra.src import stack
+from packages.infra.src.stack import CatalogStack
+from packages.tools.ci.audit_infra import synthesize_report
 
 HERE = Path(__file__).resolve().parent
 
@@ -73,7 +74,7 @@ def test_backend_layer_changes_only_with_dependencies(tmp_path):
             "app.main.handler",
             "app.authorizer.handler",
             "app.migrate.handler",
-            "agent.jobs.handler",
+            "chat_jobs.handler",
         }
         functions = {
             props["Handler"]: props
@@ -103,7 +104,7 @@ def test_backend_layer_changes_only_with_dependencies(tmp_path):
 
 
 def test_model_layer_changes_are_isolated(tmp_path):
-    """モデルコードの変更ではLayerが変わらず、判定依存の変更は生成モデルに波及しない。"""
+    """関数コード、判定用の依存、重みを個別に更新し、他の配布物が変化しないことを確認する。"""
 
     def synth(name):
         AssetStaging.clear_asset_hash_cache()
@@ -117,15 +118,21 @@ def test_model_layer_changes_are_isolated(tmp_path):
             props = resource["Properties"]
             role = props.get("Environment", {}).get("Variables", {}).get("MODEL_ROLE")
             if role:
-                (layer_ref,) = props["Layers"]
-                layer = resources[layer_ref["Ref"]]
-                assert layer["Type"] == "AWS::Lambda::LayerVersion"
                 expected_runtime = "python3.14" if role == "decision" else "python3.15"
-                assert (
-                    layer["Properties"]["CompatibleRuntimes"] == [props["Runtime"]] == [expected_runtime]
-                )
+                refs = props["Layers"]
+                assert len(refs) == (2 if role == "decision" else 1)
+                assert ("MODEL_BUCKET" in props["Environment"]["Variables"]) == (role != "decision")
                 codes[role] = props["Code"]
-                layers[role] = layer["Properties"]["Content"]
+                layers[role] = []
+                for ref in refs:
+                    layer = resources[ref["Ref"]]
+                    assert layer["Type"] == "AWS::Lambda::LayerVersion"
+                    assert (
+                        layer["Properties"]["CompatibleRuntimes"]
+                        == [props["Runtime"]]
+                        == [expected_runtime]
+                    )
+                    layers[role].append(layer["Properties"]["Content"])
         assert set(layers) == {"decision", "tool", "generate"}
         assert layers["tool"] == layers["generate"] != layers["decision"]
         return codes, layers
@@ -139,14 +146,21 @@ def test_model_layer_changes_are_isolated(tmp_path):
     (stack.ROOT / "build/decision-model-layer.zip").write_bytes(b"new model dependencies")
     final_codes, final_layers = synth("dependency")
     assert final_codes == new_codes
-    assert final_layers["decision"] != layers["decision"]
+    assert final_layers["decision"][0] != layers["decision"][0]
+    assert final_layers["decision"][1] == layers["decision"][1]
     assert final_layers["tool"] == layers["tool"]
+    (stack.ROOT / "build/decision-weights-layer.zip").write_bytes(b"new weights")
+    weight_codes, weight_layers = synth("weights")
+    assert weight_codes == final_codes
+    assert weight_layers["decision"][0] == final_layers["decision"][0]
+    assert weight_layers["decision"][1] != final_layers["decision"][1]
+    assert weight_layers["tool"] == final_layers["tool"]
 
 
 def test_sample_functions_use_python_315(catalog_stack):
     """3環境のサンプルAPIがすべてPython 3.15で動作する構成になっている。"""
     Template.from_stack(catalog_stack).resource_properties_count_is(
-        "AWS::Lambda::Function", {"Handler": "stock.handler", "Runtime": "python3.15"}, 3
+        "AWS::Lambda::Function", {"Handler": "sample_api.main.handler", "Runtime": "python3.15"}, 3
     )
 
 

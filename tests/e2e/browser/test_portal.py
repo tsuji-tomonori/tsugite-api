@@ -1,3 +1,4 @@
+# デモの提供者と利用者が公開・申請・承認・実行・権限取消を画面で完了できる。
 """Run against a fresh, migrated loopback demo database on every test."""
 
 import os
@@ -33,7 +34,7 @@ def test_home_chat_and_inquiry(demo_url: str, request: pytest.FixtureRequest) ->
     import httpx
     from playwright.sync_api import expect, sync_playwright
 
-    from tools.demo.seed_marketplace import seed
+    from packages.tools.demo.seed_marketplace import seed
 
     with httpx.Client(base_url=demo_url + "/api/", trust_env=False) as api:
         seed(api, 1)
@@ -95,12 +96,12 @@ def test_submit_from_inquiries(demo_url: str, request: pytest.FixtureRequest) ->
 
 
 def test_large_catalog(demo_url: str, request: pytest.FixtureRequest) -> None:
-    """6業務・20拠点の公開120件を全件照合し、PC・スマートフォンの検索とページ送りを確認する"""
+    """12業務・20拠点の公開240件を全件照合し、PC・スマートフォンの検索とページ送りを確認する"""
     import httpx
     from playwright.sync_api import expect, sync_playwright
 
+    from packages.tools.demo.seed_marketplace import CATALOG, offer, seed
     from tests.support.catalog_journey import browser_evidence, navigate
-    from tools.demo.seed_marketplace import CATALOG, offer, seed
 
     with httpx.Client(base_url=demo_url + "/api/", trust_env=False) as api:
         ids = seed(api, 20)
@@ -108,18 +109,18 @@ def test_large_catalog(demo_url: str, request: pytest.FixtureRequest) -> None:
         consumer = {"Authorization": "Bearer " + api.post("demo/consumer").json()["access_token"]}
         draft = api.post("apis", headers=provider, json=offer(CATALOG[0], 21)).raise_for_status().json()
         observed: list[str] = []
-        for page in range(1, 11):
+        for page in range(1, 21):
             result = (
                 api.get("catalog-page", params={"page": page}, headers=consumer)
                 .raise_for_status()
                 .json()
             )
-            assert (result["total"], result["page"], len(result["items"])) == (120, page, 12)
+            assert (result["total"], result["page"], len(result["items"])) == (240, page, 12)
             observed.extend(item["id"] for item in result["items"])
-        assert len(set(observed)) == 120 and set(observed) == set(ids)
+        assert len(set(observed)) == 240 and set(observed) == set(ids)
         assert draft["id"] not in observed
         assert (
-            api.get("catalog-page", headers=provider, params={"inventory": True}).json()["total"] == 121
+            api.get("catalog-page", headers=provider, params={"inventory": True}).json()["total"] == 241
         )
 
     with sync_playwright() as pw:
@@ -131,12 +132,12 @@ def test_large_catalog(demo_url: str, request: pytest.FixtureRequest) -> None:
                 view.goto(demo_url)
                 view.get_by_role("button", name="利用チーム", exact=True).click()
                 navigate(view, "APIカタログ")
-                expect(view.get_by_role("heading", name="API一覧（120件）")).to_be_visible()
+                expect(view.get_by_role("heading", name="API一覧（240件）")).to_be_visible()
                 expect(view.locator(".result-table tbody tr")).to_have_count(12)
                 assert visible_table_ratio(view.get_by_role("table", name="API一覧")) >= 0.70
                 expect(view.get_by_label("キーワードで検索")).to_be_hidden()
                 assert view.evaluate("document.documentElement.scrollWidth <= innerWidth")
-            capture(desktop, "catalog", "120件の公開カタログ。先頭12件を表示するデスクトップ画面")
+            capture(desktop, "catalog", "240件の公開カタログ。先頭12件を表示するデスクトップ画面")
             capture(mobile, "phone", "390px幅で同じ公開カタログを表示")
             desktop.get_by_role("button", name="次へ").click()
             expect(desktop.get_by_text("13–24 件を表示")).to_be_visible()
@@ -150,10 +151,10 @@ def test_large_catalog(demo_url: str, request: pytest.FixtureRequest) -> None:
                 "el => el.matches(':focus-visible') && getComputedStyle(el).outlineStyle !== 'none'"
             )
             mobile.keyboard.press("Enter")
-            expect(mobile.get_by_role("heading", name="API一覧（3件）")).to_be_visible()
-            expect(mobile.locator(".result-table tbody tr")).to_have_count(3)
+            expect(mobile.get_by_role("heading", name="API一覧（6件）")).to_be_visible()
+            expect(mobile.locator(".result-table tbody tr")).to_have_count(6)
             assert all("岐阜" in name for name in mobile.locator(".asset-title").all_text_contents())
-            capture(mobile, "filtered", "キーワードと本番環境で絞り、120件から目的の3件を抽出")
+            capture(mobile, "filtered", "キーワードと本番環境で絞り、240件から目的の6件を抽出")
             mobile.locator("summary").filter(has_text="検索条件").click()
             mobile.get_by_label("キーワードで検索").fill("該当なしの検索語")
             mobile.get_by_label("キーワードで検索").press("Enter")
@@ -164,7 +165,7 @@ def test_large_catalog(demo_url: str, request: pytest.FixtureRequest) -> None:
     request.node.user_properties.append(
         (
             "finding",
-            "実測値：6業務×20拠点の公開120件、未公開1件。全10ページを照合し、重複・欠落・下書き混入は各0件。390pxと1440pxで横幅内に収まり、検索ボタンをキーボードで実行できた。",
+            "実測値：12業務×20拠点の公開240件、未公開1件。全20ページを照合し、重複・欠落・下書き混入は各0件。390pxと1440pxで横幅内に収まり、検索ボタンをキーボードで実行できた。",
         )
     )
 
@@ -174,8 +175,8 @@ def test_console_visual_modes(demo_url: str, request: pytest.FixtureRequest) -> 
     import httpx
     from playwright.sync_api import expect, sync_playwright
 
+    from packages.tools.demo.seed_marketplace import seed
     from tests.support.catalog_journey import browser_evidence, navigate
-    from tools.demo.seed_marketplace import seed
 
     with httpx.Client(base_url=demo_url + "/api/", trust_env=False) as api:
         seed(api, 1)
@@ -241,7 +242,7 @@ def test_console_visual_modes(demo_url: str, request: pytest.FixtureRequest) -> 
                     theme,
                     "AWSコンソールの"
                     + ("ライト" if theme == "light" else "ダーク")
-                    + "配色で6種類のAPIを表示",
+                    + "配色で12種類のAPIを表示",
                 )
             page.reload()
             expect(mode).to_have_value("dark")

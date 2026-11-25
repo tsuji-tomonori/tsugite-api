@@ -1,3 +1,4 @@
+# 管理機能のルーターを集約する。
 from fastapi import APIRouter
 
 from . import (
@@ -7,6 +8,7 @@ from . import (
     directory,
     keys,
     members,
+    metadata,
     notifications,
     observability,
     policies,
@@ -22,6 +24,7 @@ for feature in (
     directory,
     keys,
     members,
+    metadata,
     notifications,
     observability,
     policies,

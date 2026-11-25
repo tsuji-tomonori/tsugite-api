@@ -1,11 +1,20 @@
+# 部署とプロジェクトの画面を検証する。
+from __future__ import annotations
+
 import asyncio
-from types import SimpleNamespace
+from collections.abc import Callable
+from types import ModuleType, SimpleNamespace
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from routing.screen_registry import Screen
 from unittest.mock import AsyncMock
 
+import pytest
 from test_components import render
 
 
-def directory():
+def directory() -> dict[str, Any]:
     return {
         "admin": False,
         "my_units": ["d00"],
@@ -28,14 +37,15 @@ def directory():
     }
 
 
-def screen(portal_module, path, data):
-    module = portal_module("portal_pages.workspace")
+def screen(portal_module: Callable[[str], ModuleType], path: str, data: dict[str, Any]) -> Screen:
+    ui = portal_module("runtime.portal_ui")
     portal_module("js").window.location = SimpleNamespace(hash="#/" + path)
-    module.ctx.update(workspace=data, me={"subject": "alice"})
-    return module
+    ui.ctx.update(workspace=data, me={"subject": "alice"})
+    route: Screen = portal_module("routing.screen_registry").resolve(path)
+    return route
 
 
-def test_directory_pages_filter_before_paginating(portal_module):
+def test_directory_pages_filter_before_paginating(portal_module: Callable[[str], ModuleType]) -> None:
     """部署を10件ずつ表示し、次ページとプロジェクト一覧では該当する対象だけを開ける。"""
     data = directory()
     page = screen(portal_module, "departments", data)
@@ -53,7 +63,7 @@ def test_directory_pages_filter_before_paginating(portal_module):
     assert "#/departments/detail/" not in dom.toxml()
 
 
-def test_direct_members_have_aligned_table_columns(portal_module):
+def test_direct_members_have_aligned_table_columns(portal_module: Callable[[str], ModuleType]) -> None:
     """直接所属の利用者をメールアドレス・名前・担当ロールに分け、管理者にだけ操作列を表示する。"""
     data = directory()
     data["admin"] = True
@@ -107,7 +117,9 @@ def test_direct_members_have_aligned_table_columns(portal_module):
     assert not table.getElementsByTagName("a") and not table.getElementsByTagName("button")
 
 
-def test_scoped_monitor_and_edit_routes(portal_module, monkeypatch):
+def test_scoped_monitor_and_edit_routes(
+    portal_module: Callable[[str], ModuleType], monkeypatch: pytest.MonkeyPatch
+) -> None:
     """権限と種類が一致する対象だけの利用統計を取得し、管理者専用の編集フォームを分離する。"""
     data = directory()
     page = screen(portal_module, "departments/monitor/d00", data)
@@ -120,19 +132,19 @@ def test_scoped_monitor_and_edit_routes(portal_module, monkeypatch):
         "by_project": [{"project": "p", "calls": 4}],
     }
     api = AsyncMock(side_effect=[data, usage, data, data])
-    monkeypatch.setattr(page.client, "api", api)
-    asyncio.run(page.load_workspace("departments/monitor/d00"))
+    monkeypatch.setattr(portal_module("apis.client"), "api", api)
+    asyncio.run(portal_module("actions.workspace").load_workspace("departments/monitor/d00"))
     _, dom = render(page.view)
     assert [m.getAttribute("value") for m in dom.getElementsByTagName("meter")] == ["4", "4"]
     assert "4 件" in dom.toxml() and "1 件" in dom.toxml()
     assert "所属メンバーはいません。" in dom.toxml()
     for path in ("departments/monitor/d01", "projects/monitor/d00"):
-        screen(portal_module, path, data)
-        asyncio.run(page.load_workspace(path))
+        page = screen(portal_module, path, data)
+        asyncio.run(portal_module("actions.workspace").load_workspace(path))
         _, dom = render(page.view)
         assert not dom.getElementsByTagName("meter")
     assert [c.args[0] for c in api.await_args_list].count("/workspace/units/d00/usage") == 1
-    screen(portal_module, "departments/edit/d00", data)
+    page = screen(portal_module, "departments/edit/d00", data)
     assert not render(page.view)[1].getElementsByTagName("input")
     data["admin"] = True
     _, dom = render(page.view)
@@ -140,7 +152,7 @@ def test_scoped_monitor_and_edit_routes(portal_module, monkeypatch):
     assert not dom.getElementsByTagName("table") and not dom.getElementsByTagName("meter")
 
 
-def test_unit_retirement_actions_are_admin_only(portal_module):
+def test_unit_retirement_actions_are_admin_only(portal_module: Callable[[str], ModuleType]) -> None:
     """管理者にだけ移管・削除を表示し、移管先には同種の別組織だけを提示する。"""
     data = directory()
     page = screen(portal_module, "departments/detail/d00", data)
@@ -156,7 +168,9 @@ def test_unit_retirement_actions_are_admin_only(portal_module):
     assert "d01" in ids and "d00" not in ids and "p" not in ids
 
 
-def test_project_monitor_shows_members_as_a_table(portal_module, monkeypatch):
+def test_project_monitor_shows_members_as_a_table(
+    portal_module: Callable[[str], ModuleType], monkeypatch: pytest.MonkeyPatch
+) -> None:
     """プロジェクト単位の集計であることを案内し、所属メンバーを4列の表で表示する。"""
     data = directory()
     data["admin"] = True
@@ -174,10 +188,11 @@ def test_project_monitor_shows_members_as_a_table(portal_module, monkeypatch):
         "by_project": [{"project": "p", "calls": 4}],
     }
     api = AsyncMock(side_effect=[data, usage])
-    monkeypatch.setattr(page.client, "api", api)
-    asyncio.run(page.load_workspace(path))
+    monkeypatch.setattr(portal_module("apis.client"), "api", api)
+    asyncio.run(portal_module("actions.workspace").load_workspace(path))
 
     _, dom = render(page.view)
+    assert api.await_args is not None
     assert api.await_args.args == ("/workspace/units/p/usage",)
     assert "選択したプロジェクトの利用実績を集計しています。" in dom.toxml()
     details = dom.getElementsByTagName("details")[0]

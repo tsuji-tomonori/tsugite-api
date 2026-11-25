@@ -1,27 +1,16 @@
-from app.apis import outputs
-from app.apis.catalog.common import DB, User, event, record
+# ポータルの通知を配信・取得する。
 from app.apis.governance.members import projects
-from app.apis.schemas import Input
+from app.core.catalog import event, record
 from app.core.workspace import private_project
+from app.dependencies import DB, User
+from app.schemas import outputs
+from app.schemas.notifications import Message
 from fastapi import APIRouter, HTTPException, Query, Request
-from pydantic import Field
 from sqlalchemy import exists, func, or_, select
 from sqlalchemy.exc import IntegrityError
 from tsugite_db.models import Access, Event, Notice, NoticeRead
 
 router = APIRouter()
-
-
-#: 送信する通知
-class Message(Input):
-    #: 通知の件名
-    title: str = Field(min_length=1, max_length=160)
-    #: 通知本文
-    body: str = Field(min_length=1, max_length=3000)
-    #: 通知先プロジェクトの識別子
-    project: str = Field(min_length=1, max_length=64)
-    #: カタログ掲載APIの識別子
-    asset_id: str = ""
 
 
 def mailbox(actor):

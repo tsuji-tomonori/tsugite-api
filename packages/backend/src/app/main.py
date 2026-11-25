@@ -1,3 +1,4 @@
+# FastAPIアプリケーションを組み立てる。
 import os
 from pathlib import Path
 
@@ -5,13 +6,14 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.staticfiles import StaticFiles
 from mangum import Mangum
 
-from app.apis import catalog, chat, gateway, inquiries, outputs
-from app.apis.catalog.common import DB
+from app.apis import catalog, chat, gateway, inquiries
 from app.apis.governance import router as governance
 from app.core.auth import demo_token
 from app.core.config import local_demo, settings
 from app.core.request_logs import install_request_logs
+from app.dependencies import DB
 from app.design_names import PortalAPI
+from app.schemas import outputs
 
 
 def create_app() -> FastAPI:

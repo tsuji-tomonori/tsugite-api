@@ -1,3 +1,4 @@
+# OpenAPIの型からパス・クエリ・JSONを入力し、選択したキーでHTTPSの送料計算を実行する。
 import json
 import os
 import ssl

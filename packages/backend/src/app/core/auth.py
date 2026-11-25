@@ -1,5 +1,6 @@
+# ログイン情報から利用者と操作権限を特定する。
 import secrets
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from functools import lru_cache
 from typing import Annotated
 
@@ -38,6 +39,8 @@ class Actor:
     expires: int = 0
     base_projects: frozenset[str] = frozenset()
     generation: int = 0
+    metadata: dict[str, frozenset[str]] = field(default_factory=dict, hash=False)
+    metadata_leads: frozenset[str] = frozenset()
 
 
 @lru_cache
