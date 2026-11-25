@@ -1,8 +1,10 @@
 # 同じ依存を別の場所で同期してもLayerが一致し、依存を更新したときだけ内容が変わる。
 import hashlib
-from zipfile import ZipFile
+from zipfile import ZIP_DEFLATED, ZipFile
 
-from packages.tools.packaging import build_backend
+import pytest
+
+from packages.tools.packaging import build_backend, build_chat
 from packages.tools.packaging.build_backend import sync_layer
 
 
@@ -78,3 +80,20 @@ def test_each_lambda_layer_exports_its_locked_dependencies(tmp_path, monkeypatch
         ),
         "model-sdk-layer.zip": (["--package", "tsugite-model", "--no-dev"], "3.14"),
     }
+
+
+def test_model_package_limit_includes_all_uncompressed_layers(tmp_path, monkeypatch):
+    """関数と2層の展開後サイズを合算し、上限の1バイト手前まで配備を許可する。"""
+    monkeypatch.setattr(build_chat, "BUILD", tmp_path)
+    target = tmp_path / "code"
+    target.mkdir()
+    layers = ["dependencies.zip", "weights.zip"]
+    for name in layers:
+        with ZipFile(tmp_path / name, "w", compression=ZIP_DEFLATED) as archive:
+            archive.writestr("content", bytes(1024))
+    with (target / "handler").open("wb") as code:
+        code.truncate(250 * 1024**2 - 2049)
+        build_chat.check_package_size(target, layers)
+        code.truncate(250 * 1024**2 - 2048)
+        with pytest.raises(ValueError, match="package limit"):
+            build_chat.check_package_size(target, layers)

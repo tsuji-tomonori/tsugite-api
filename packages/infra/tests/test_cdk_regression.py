@@ -103,7 +103,7 @@ def test_backend_layer_changes_only_with_dependencies(tmp_path):
 
 
 def test_model_layer_changes_are_isolated(tmp_path):
-    """モデルコードの変更ではLayerが変わらず、判定依存の変更は生成モデルに波及しない。"""
+    """関数コード、判定用の依存、重みを個別に更新し、他の配布物が変化しないことを確認する。"""
 
     def synth(name):
         AssetStaging.clear_asset_hash_cache()
@@ -117,12 +117,18 @@ def test_model_layer_changes_are_isolated(tmp_path):
             props = resource["Properties"]
             role = props.get("Environment", {}).get("Variables", {}).get("MODEL_ROLE")
             if role:
-                (layer_ref,) = props["Layers"]
-                layer = resources[layer_ref["Ref"]]
-                assert layer["Type"] == "AWS::Lambda::LayerVersion"
-                assert layer["Properties"]["CompatibleRuntimes"] == [props["Runtime"]] == ["python3.14"]
+                refs = props["Layers"]
+                assert len(refs) == (2 if role == "decision" else 1)
+                assert ("MODEL_BUCKET" in props["Environment"]["Variables"]) == (role != "decision")
                 codes[role] = props["Code"]
-                layers[role] = layer["Properties"]["Content"]
+                layers[role] = []
+                for ref in refs:
+                    layer = resources[ref["Ref"]]
+                    assert layer["Type"] == "AWS::Lambda::LayerVersion"
+                    assert (
+                        layer["Properties"]["CompatibleRuntimes"] == [props["Runtime"]] == ["python3.14"]
+                    )
+                    layers[role].append(layer["Properties"]["Content"])
         assert set(layers) == {"decision", "tool", "generate"}
         assert layers["tool"] == layers["generate"] != layers["decision"]
         return codes, layers
@@ -136,8 +142,15 @@ def test_model_layer_changes_are_isolated(tmp_path):
     (stack.ROOT / "build/decision-model-layer.zip").write_bytes(b"new model dependencies")
     final_codes, final_layers = synth("dependency")
     assert final_codes == new_codes
-    assert final_layers["decision"] != layers["decision"]
+    assert final_layers["decision"][0] != layers["decision"][0]
+    assert final_layers["decision"][1] == layers["decision"][1]
     assert final_layers["tool"] == layers["tool"]
+    (stack.ROOT / "build/decision-weights-layer.zip").write_bytes(b"new weights")
+    weight_codes, weight_layers = synth("weights")
+    assert weight_codes == final_codes
+    assert weight_layers["decision"][0] == final_layers["decision"][0]
+    assert weight_layers["decision"][1] != final_layers["decision"][1]
+    assert weight_layers["tool"] == final_layers["tool"]
 
 
 def test_schema_waits_for_chat_models(catalog_stack):

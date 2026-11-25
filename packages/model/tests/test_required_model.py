@@ -192,17 +192,55 @@ def test_non_dense_onnx_output_fails_the_embedding_request(decision_worker, monk
     session.run.assert_called_once_with(None, {"input_ids": [[2, 3]], "attention_mask": [[1, 1]]})
 
 
-def test_warm_worker_reuses_downloaded_versioned_tokenizer(workers, tmp_path, monkeypatch):
-    """固定版のトークナイザーを一度取得し、メモリキャッシュを作り直した後も一時ファイルを再利用する。"""
+def test_decision_worker_loads_weights_and_tokenizer_from_layer(decision_worker, monkeypatch):
+    """判定は専用レイヤーの重みとトークナイザーを使い、二度目には同じ推論セッションを再利用する。"""
+    ort = sys.modules["onnxruntime"]
+    session_factory = Mock()
+    monkeypatch.setattr(ort, "InferenceSession", session_factory, raising=False)
+    monkeypatch.setattr(ort, "SessionOptions", Mock(), raising=False)
+    tokenizer_factory = sys.modules["tokenizers"].Tokenizer.from_file
+    s3_client = Mock(side_effect=AssertionError("判定モデルでS3の取得は不要"))
+    monkeypatch.setattr("boto3.client", s3_client)
+    monkeypatch.delenv("MODEL_BUCKET", raising=False)
+
+    first_session, first_tokenizer = decision_worker.load()
+    next_session, next_tokenizer = decision_worker.load()
+
+    assert first_session is next_session is session_factory.return_value
+    assert first_tokenizer is next_tokenizer is tokenizer_factory.return_value
+    session_factory.assert_called_once()
+    tokenizer_factory.assert_called_once()
+    weights_path = Path(session_factory.call_args.args[0])
+    tokenizer_path = Path(tokenizer_factory.call_args.args[0])
+    assert weights_path.parent == tokenizer_path.parent == Path("/opt/models/decision")
+    assert weights_path.name == "model.onnx" and tokenizer_path.name == "tokenizer.json"
+    s3_client.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    "role",
+    [
+        pytest.param(
+            "tool", id="search", marks=pytest.mark.case_detail("検索語生成用の固定版の重みを再利用する")
+        ),
+        pytest.param(
+            "generate",
+            id="answer",
+            marks=pytest.mark.case_detail("回答生成用の固定版の重みを再利用する"),
+        ),
+    ],
+)
+def test_generation_worker_reuses_downloaded_versioned_weights(workers, tmp_path, monkeypatch, role):
+    """生成用の固定版の重みを一度取得し、メモリキャッシュを作り直した後も一時ファイルを再利用する。"""
     runtime = workers("model_runtime")
-    filename = "tokenizer.json"
+    filename = "model.gguf"
     manifest = {
-        "decision": [
+        role: [
             {
                 "name": filename,
                 "revision": "fixture-commit",
                 "file": filename,
-                "repo": "example/tokenizer",
+                "repo": "example/generation-model",
             }
         ]
     }
@@ -213,17 +251,17 @@ def test_warm_worker_reuses_downloaded_versioned_tokenizer(workers, tmp_path, mo
 
     def download(bucket, key, target):
         assert bucket == "fixture-models"
-        assert key == "tsugite-chat-models/decision/fixture-commit/tokenizer.json"
-        Path(target).write_bytes(b'{"model":"fixture"}')
+        assert key == f"tsugite-chat-models/{role}/fixture-commit/{filename}"
+        Path(target).write_bytes(b"GGUF fixture")
 
     storage.download_file.side_effect = download
     monkeypatch.setattr(runtime.boto3, "client", lambda service: storage)
     runtime.model_file.cache_clear()
     try:
-        first = Path(runtime.model_file("decision", filename))
-        assert first.is_relative_to(tmp_path) and first.read_bytes() == b'{"model":"fixture"}'
+        first = Path(runtime.model_file(role, filename))
+        assert first.is_relative_to(tmp_path) and first.read_bytes() == b"GGUF fixture"
         runtime.model_file.cache_clear()
-        assert Path(runtime.model_file("decision", filename)) == first
+        assert Path(runtime.model_file(role, filename)) == first
         storage.download_file.assert_called_once()
     finally:
         runtime.model_file.cache_clear()

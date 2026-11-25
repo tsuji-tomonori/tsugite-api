@@ -473,6 +473,14 @@ MUTATIONS = (
     ),
     Mutation(
         "model-layer",
+        "判定モデルを専用Layerと異なるパスから読む",
+        "packages/model/src/decision.py",
+        'Path("/opt/models/decision")',
+        'Path("/tmp/models/decision")',
+        "packages/model/tests/test_model_workers.py::test_embedding_load_reuses_cpu_model_and_tokenizer",
+    ),
+    Mutation(
+        "model-layer",
         "判定モデルの依存群をSDKだけに置き換える",
         "packages/tools/packaging/build_backend.py",
         '["--package", "tsugite-model", "--no-dev", "--extra", "decision"]',

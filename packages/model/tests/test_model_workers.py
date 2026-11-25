@@ -68,15 +68,15 @@ def test_model_download_verifies_digest_before_reuse(monkeypatch, tmp_path):
     monkeypatch.setenv("MODEL_BUCKET", "models")
     monkeypatch.setattr(worker, "Path", lambda _: tmp_path)
     item = {"name": "model.bin", "revision": "v1", "sha256": hashlib.sha256(b"valid").hexdigest()}
-    monkeypatch.setattr(worker, "manifest", lambda: {"decision": [item]})
+    monkeypatch.setattr(worker, "manifest", lambda: {"tool": [item]})
     content = iter([b"bad", b"valid"])
     s3.download_file.side_effect = lambda bucket, key, dest: Path(dest).write_bytes(next(content))
     with pytest.raises(ValueError, match="checksum"):
-        worker.model_file("decision", "model.bin")
+        worker.model_file("tool", "model.bin")
     assert not list(tmp_path.iterdir())
-    model = worker.model_file("decision", "model.bin")
+    model = worker.model_file("tool", "model.bin")
     assert Path(model).read_bytes() == b"valid"
-    assert worker.model_file("decision", "model.bin") == model
+    assert worker.model_file("tool", "model.bin") == model
     assert s3.download_file.call_count == 2
 
 
@@ -126,7 +126,6 @@ def test_model_process_recovers_from_failed_health_check(monkeypatch):
 def test_embedding_load_reuses_cpu_model_and_tokenizer(monkeypatch):
     """埋め込みモデルと長さ制限付きトークナイザーを初回だけ読み込む。"""
     ort, tokenizers, model_runtime = Mock(), Mock(), Mock()
-    model_runtime.model_file.side_effect = lambda role, name: f"/tmp/{role}/{name}"
     worker = load_worker(
         "decision",
         monkeypatch,
@@ -140,9 +139,9 @@ def test_embedding_load_reuses_cpu_model_and_tokenizer(monkeypatch):
     options = ort.SessionOptions.return_value
     assert (options.inter_op_num_threads, options.intra_op_num_threads) == (1, 2)
     ort.InferenceSession.assert_called_once_with(
-        "/tmp/decision/model.onnx", sess_options=options, providers=["CPUExecutionProvider"]
+        "/opt/models/decision/model.onnx", sess_options=options, providers=["CPUExecutionProvider"]
     )
-    tokenizers.Tokenizer.from_file.assert_called_once_with("/tmp/decision/tokenizer.json")
+    tokenizers.Tokenizer.from_file.assert_called_once_with("/opt/models/decision/tokenizer.json")
     tokenizer.enable_truncation.assert_called_once_with(max_length=192)
     tokenizer.enable_padding.assert_called_once_with(pad_id=3, pad_token="[PAD]")
 

@@ -21,7 +21,7 @@ def cdk_test_assets(tmp_path, monkeypatch):
         asset = root / relative
         asset.parent.mkdir(parents=True)
         asset.write_text("test asset\n", encoding="utf-8")
-    for name in ("runtime", "decision-model", "model-sdk"):
+    for name in ("runtime", "decision-model", "decision-weights", "model-sdk"):
         (root / "build" / f"{name}-layer.zip").write_bytes(name.encode())
     (root / "deploy/config").mkdir(parents=True)
     copyfile(stack.ROOT / "deploy/config/http.toml", root / "deploy/config/http.toml")

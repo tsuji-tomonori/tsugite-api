@@ -22,12 +22,39 @@ def put(root, name, content):
     return target
 
 
+DECISION_FILES = {"model.onnx": b"quantized-weights", "tokenizer.json": b'{"model":"fixture"}'}
+
+
+def fixture_manifest():
+    return {
+        "decision": [
+            {
+                "name": name,
+                "repo": "example/ruri",
+                "revision": "pinned-version",
+                "file": name,
+                "sha256": hashlib.sha256(payload).hexdigest(),
+            }
+            for name, payload in DECISION_FILES.items()
+        ],
+        "tool": [],
+        "generate": [],
+    }
+
+
+def curl_fixture(command, content):
+    output_flag = next(flag for flag in ("-o", "--output") if flag in command)
+    Path(command[command.index(output_flag) + 1]).write_bytes(content)
+
+
 @pytest.fixture
 def distribution_root(tmp_path, monkeypatch):
     models = tmp_path / "packages/model/src"
     for name in ("decision.py", "completion.py", "model_runtime.py"):
         put(models, name, name.encode())
-    put(models, "manifest.json", b"{}")
+    put(models, "manifest.json", json.dumps(fixture_manifest()).encode())
+    put(tmp_path, "packages/model/licenses/ruri-Apache-2.0.txt", b"ruri fixture license")
+
     for path in (
         "packages/agent/src/agent/retrieval.py",
         "packages/sample_api/src/sample_api/handler.py",
@@ -97,20 +124,23 @@ def test_backend_build_includes_migrations_and_reproducible_layers(distribution_
 
 
 def test_model_package_pins_native_server_and_carries_its_license(distribution_root, monkeypatch):
-    """生成モデルの配布物には固定版から作った実行ファイルと再配布ライセンスを同梱する。"""
+    """ビルドは判定資材を専用Layerに収め、生成関数の配布物にはサーバーとそのライセンスを同梱する。"""
     root = distribution_root
     (root / "build").mkdir()
     for layer in ("decision-model", "model-sdk"):
         with ZipFile(root / "build" / f"{layer}-layer.zip", "w") as archive:
             archive.writestr("python/example.py", "")
-    source_revision = "78ffbaa18533c2ed51eab2ef5ae0702330efc3e9"
 
     def build_command(args, **options):
-        if "clone" in args:
+        if args[0] == "curl":
+            url = next(arg for arg in args if arg.startswith("https://"))
+            assert "/resolve/pinned-version/" in url
+            curl_fixture(args, DECISION_FILES[url.rsplit("/", 1)[-1]])
+        elif "clone" in args:
             put(Path(args[-1]), "LICENSE", b"upstream license")
-        if "--build" in args:
+        elif "--build" in args:
             put(Path(args[args.index("--build") + 1]), "bin/llama-server", b"test server").chmod(0o755)
-        return subprocess.CompletedProcess(args, 0, stdout=source_revision + "\n")
+        return subprocess.CompletedProcess(args, 0, stdout=build_chat.LLAMA_COMMIT + "\n")
 
     monkeypatch.setattr(subprocess, "run", build_command)
     build_chat.build()
@@ -122,8 +152,13 @@ def test_model_package_pins_native_server_and_carries_its_license(distribution_r
     assert any(
         path.read_bytes() == b"upstream license" for path in generation.iterdir() if path.is_file()
     )
-    for directory in (generation, decision):
-        assert (directory / "manifest.json").read_text() == "{}"
+    assert set(json.loads((generation / "manifest.json").read_text())) == {"tool", "generate"}
+    with ZipFile(root / "build/decision-weights-layer.zip") as archive:
+        assert archive.read("models/decision/LICENSE") == b"ruri fixture license"
+        for name, payload in DECISION_FILES.items():
+            assert archive.read("models/decision/" + name) == payload
+    with ZipFile(root / "build/decision-model-layer.zip") as dependencies:
+        assert not any(name.startswith("models/") for name in dependencies.namelist())
 
 
 def test_model_package_rejects_unexpected_source_revision(distribution_root, monkeypatch):
@@ -141,21 +176,18 @@ def model_storage(distribution_root, monkeypatch):
     payload = b"quantized test fixture"
     version = hashlib.sha256(payload).hexdigest()
     models = distribution_root / "packages/model/src"
-    (models / "manifest.json").write_text(
-        json.dumps(
+    manifest = fixture_manifest()
+    for role in ("tool", "generate"):
+        manifest[role] = [
             {
-                "tool": [
-                    {
-                        "repo": "example/model",
-                        "revision": "20250101",
-                        "file": "weights.gguf",
-                        "name": "model.gguf",
-                        "sha256": version,
-                    }
-                ]
+                "repo": f"example/{role}",
+                "revision": "20250101",
+                "file": "weights.gguf",
+                "name": "model.gguf",
+                "sha256": version,
             }
-        )
-    )
+        ]
+    (models / "manifest.json").write_text(json.dumps(manifest))
     sts, s3 = Mock(), Mock()
     sts.get_caller_identity.return_value = {
         "Account": "123456789012",
@@ -172,26 +204,39 @@ def model_storage(distribution_root, monkeypatch):
 
 
 def test_model_publisher_reuses_identical_uploaded_version(model_storage, monkeypatch):
-    """初回は検証した重みを配信し、同じ版が配信済みなら取得と送信を省略する。"""
+    """生成用の2モデルだけをS3へ送り、各モデルが同一版なら次の配備で再取得・再送信を省く。"""
     s3, payload, version = model_storage
+    fetched = set()
+    uploads = {}
 
     def fetch(command, *, check):
-        assert check and "example/model/resolve/20250101/weights.gguf" in command[-1]
-        Path(command[command.index("--output") + 1]).write_bytes(payload)
+        assert check
+        url = next(arg for arg in command if arg.startswith("https://"))
+        fetched.add(url)
+        curl_fixture(command, payload)
+
+    def upload(source, bucket, key, *, ExtraArgs):
+        assert Path(source).read_bytes() == payload
+        assert "ap-northeast-1" in bucket
+        uploads[key] = {"ContentLength": len(payload), "Metadata": ExtraArgs["Metadata"]}
 
     fetch_weight = Mock(side_effect=fetch)
+    s3.upload_file.side_effect = upload
     monkeypatch.setattr(subprocess, "run", fetch_weight)
     build_chat.publish()
-    source, bucket, key = s3.upload_file.call_args.args
-    assert Path(source).read_bytes() == payload
-    assert "ap-northeast-1" in bucket
-    assert key == f"tsugite-chat-models/tool/{version}/model.gguf"
-    metadata = s3.upload_file.call_args.kwargs["ExtraArgs"]["Metadata"]
-    s3.head_object.side_effect = None
-    s3.head_object.return_value = {"ContentLength": len(payload), "Metadata": metadata}
+    assert fetched == {
+        f"https://huggingface.co/example/{role}/resolve/20250101/weights.gguf"
+        for role in ("tool", "generate")
+    }
+    assert set(uploads) == {
+        f"tsugite-chat-models/{role}/{version}/model.gguf" for role in ("tool", "generate")
+    }
+    s3.head_object.side_effect = lambda *, Bucket, Key: uploads[Key]
+    s3.upload_file.reset_mock()
+    fetch_weight.reset_mock()
     build_chat.publish()
-    s3.upload_file.assert_called_once()
-    fetch_weight.assert_called_once()
+    s3.upload_file.assert_not_called()
+    fetch_weight.assert_not_called()
 
 
 def test_model_publisher_rejects_damaged_weights(model_storage, monkeypatch):
@@ -199,7 +244,7 @@ def test_model_publisher_rejects_damaged_weights(model_storage, monkeypatch):
     s3, _, _ = model_storage
 
     def damaged(command, **options):
-        Path(command[command.index("--output") + 1]).write_bytes(b"incomplete")
+        curl_fixture(command, b"incomplete")
 
     monkeypatch.setattr(subprocess, "run", damaged)
     with pytest.raises((RuntimeError, ValueError), match="(?i)hash|checksum|sha256|一致"):
@@ -276,3 +321,31 @@ def test_frontend_build_serves_runtime_locally_and_reuses_verified_assets(tmp_pa
     assert (dist / "vendor/puepy/LICENSE").stat().st_size > 0
     build_frontend.build()
     assert fetch.call_count == len(entries)
+
+
+@pytest.mark.parametrize(
+    "damaged",
+    [
+        pytest.param(
+            "model.onnx",
+            marks=pytest.mark.case_detail("判定モデルの重みが固定ハッシュと異なる場合は配布を止める"),
+        ),
+        pytest.param(
+            "tokenizer.json",
+            marks=pytest.mark.case_detail("トークナイザーだけが固定ハッシュと異なる場合も配布を止める"),
+        ),
+    ],
+)
+def test_decision_layer_rejects_each_damaged_input(distribution_root, monkeypatch, damaged):
+    """判定用の重み・トークナイザーを個別に照合し、どちらかが破損していればLayerを完成させない。"""
+
+    def fetch(command, *, check):
+        assert check
+        url = next(arg for arg in command if arg.startswith("https://"))
+        name = url.rsplit("/", 1)[-1]
+        curl_fixture(command, b"broken" if name == damaged else DECISION_FILES[name])
+
+    monkeypatch.setattr(subprocess, "run", fetch)
+    with pytest.raises((RuntimeError, ValueError), match="(?i)hash|checksum|sha256|一致"):
+        build_chat.build_decision_weights()
+    assert not (distribution_root / "build/decision-weights-layer.zip").exists()
