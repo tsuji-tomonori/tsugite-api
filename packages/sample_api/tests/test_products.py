@@ -1,5 +1,6 @@
 import json
 
+import pytest
 from fastapi.testclient import TestClient
 from openapi_spec_validator import validate
 from sample_api.main import PRODUCTS, app, handler
@@ -25,6 +26,7 @@ def test_generated_product_contracts(tmp_path):
         assert (tmp_path / f"{slug}.yaml").read_bytes() == (OUTPUT / f"{slug}.yaml").read_bytes()
 
 
+@pytest.mark.usefixtures("lambda_event_loop")
 def test_each_product_operation_through_lambda():
     """12商品で5つの業務操作とヘルスチェックを実行し、商品境界とLambda応答を照合する。"""
     client = TestClient(app)

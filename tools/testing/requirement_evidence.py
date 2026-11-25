@@ -137,6 +137,7 @@ def render(
     pages.mkdir(exist_ok=True)
     lines = ["# 要件別のテスト結果", ""]
     commit = os.environ.get("EVIDENCE_COMMIT")
+    repository = os.environ.get("GITHUB_REPOSITORY", "tsuji-tomonori/tsugite-api")
     if commit:
         lines.extend([f"対象コミット　`{commit}`", ""])
     suite = ElementTree.Element("testsuite", name="要件別の受入テスト")
@@ -228,7 +229,16 @@ def render(
                     "",
                     f"判定　{verdict}",
                     "",
-                    *([f"対象コミット　`{commit}`", ""] if commit else []),
+                    *(
+                        [
+                            f"対象コミット　`{commit}`",
+                            "",
+                            f"[検証した要件と変更履歴](https://github.com/{repository}/blob/{commit}/{ITEMS.as_posix()}/{quote(page.name)})",
+                            "",
+                        ]
+                        if commit
+                        else []
+                    ),
                     "## 実行したテストと証跡",
                     "",
                     *rows,
