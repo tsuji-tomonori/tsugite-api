@@ -12,10 +12,12 @@
 
 登録時に半角小文字の英字で始まる名前を指定する。数字とハイフンを含められ、全商品で一意とする。登録済みの商品にも初回に限り設定でき、従来のUUID付きURLと承認済みの利用権はそのまま使える。
 
+> Quint slug.reservedTest — 作成・改名・削除・再登録時の識別名の予約を検査する。
 > 実装検証 test_api_slug_is_unique_and_fixed test_existing_api_keeps_grants_when_named test_user_flow — 識別名の一意制約、使用文字、既存URLとの互換性をDB・HTTPで確認する。
 
 ### 受入テスト
 
+- 受入テスト `packages/backend/tests/test_quint_governance.py::test_reserved_name_history`
 - 受入テスト `packages/backend/tests/test_catalog.py::test_api_slug_is_unique_and_fixed`
 - 受入テスト `packages/backend/tests/test_catalog.py::test_existing_api_keeps_grants_when_named`
 - 受入テスト `tests/e2e/browser/test_portal.py::test_user_flow` / `06-invoked.png`

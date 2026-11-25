@@ -224,3 +224,75 @@ def test_profile_history(states, portal):
         current = portal.get("/api/me/profile", headers=people["consumer"]).raise_for_status().json()
         assert current["display_name"] == ("表示名" if step["named"] else None)
         revision = current["revision"]
+
+
+@pytest.mark.parametrize("states", histories("slug"))
+def test_reserved_name_history(states, portal):
+    """重複・改名の拒否と、削除後も元の識別名が予約されていることを確かめる。"""
+    from tests.support.catalog import FORM
+
+    owner = headers(portal, "provider")
+    asset = None
+    for step in states[1:]:
+        op = step["operation"]
+        if op in {"invalid", "create"}:
+            form = {**FORM, "slug": "invalid/name"} if op == "invalid" else FORM
+            response = portal.post("/api/apis", headers=owner, json=form)
+            if response.status_code == 201:
+                asset = response.json()
+        else:
+            assert asset is not None
+            url = "/api/apis/" + asset["id"]
+            params = {"revision": asset["revision"]}
+            if op == "rename":
+                response = portal.put(url, params=params, headers=owner, json={**FORM, "slug": "new"})
+            else:
+                assert op == "delete"
+                response = portal.delete(url, params=params, headers=owner)
+        assert response.status_code == step["response"], (op, response.text)
+        items = portal.get("/api/apis?inventory=true", headers=owner).raise_for_status().json()
+        assert any(item["slug"] == FORM["slug"] for item in items) == (step["lifecycle"] == "listed")
+
+
+@pytest.mark.parametrize("states", histories("email"))
+def test_directory_email_history(states):
+    """同期候補と本人確認結果を変え、既存氏名と保存した連絡先を各段階で読む。"""
+    from unittest.mock import Mock
+
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import Session
+    from tsugite_db.models import Base, Member, MemberProfile, now
+
+    from packages.tools.operations.sync_member_emails import sync
+    from packages.tools.tests.test_sync_member_emails import record
+
+    engine = create_engine("sqlite://")
+    with engine.connect() as connection:
+        Base.metadata.create_all(connection)
+        with Session(connection) as db:
+            db.add(Member(subject="user", username="user", project="", role="consumer", deleted=False))
+            db.add(
+                MemberProfile(
+                    subject="user",
+                    full_name="利用 太郎",
+                    email="old@example.test",
+                    email_synced_at=now(),
+                )
+            )
+            db.commit()
+        for step in states[1:]:
+            op = step["operation"]
+            idp = Mock()
+            contact = "new@example.test"
+            idp.get_paginator.return_value.paginate.return_value = [{"Users": [record("user", contact)]}]
+            confirmed = record("other" if op == "mismatch" else "user", contact, listed=False)
+            idp.admin_get_user.return_value = {**confirmed, "Enabled": op != "disabled"}
+            with Session(connection) as db:
+                db.get_one(Member, "user").deleted = op == "retired"
+                db.commit()
+            sync(idp, connection, "pool", apply=op != "preview")
+            assert bool(idp.admin_get_user.call_count) == step["verified"]
+            with Session(connection) as db:
+                profile = db.get_one(MemberProfile, "user")
+                assert profile.full_name == "利用 太郎"
+                assert profile.email == (contact if step["updated"] else "old@example.test")

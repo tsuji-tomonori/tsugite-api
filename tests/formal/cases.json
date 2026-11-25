@@ -288,6 +288,43 @@
       "response": 200
     }
   ],
+  "email.contactTest": [
+    {
+      "operation": "init",
+      "updated": false,
+      "verified": false
+    },
+    {
+      "operation": "preview",
+      "updated": false,
+      "verified": false
+    },
+    {
+      "operation": "mismatch",
+      "updated": false,
+      "verified": true
+    },
+    {
+      "operation": "disabled",
+      "updated": false,
+      "verified": true
+    },
+    {
+      "operation": "retired",
+      "updated": false,
+      "verified": false
+    },
+    {
+      "operation": "apply",
+      "updated": true,
+      "verified": true
+    },
+    {
+      "operation": "apply",
+      "updated": true,
+      "verified": false
+    }
+  ],
   "entitlement.principalTest": [
     {
       "caller": "holder",
@@ -1002,6 +1039,43 @@
       "response": 201,
       "stage": "department",
       "status": "pending"
+    }
+  ],
+  "slug.reservedTest": [
+    {
+      "lifecycle": "available",
+      "operation": "init",
+      "response": 0
+    },
+    {
+      "lifecycle": "available",
+      "operation": "invalid",
+      "response": 422
+    },
+    {
+      "lifecycle": "listed",
+      "operation": "create",
+      "response": 201
+    },
+    {
+      "lifecycle": "listed",
+      "operation": "create",
+      "response": 409
+    },
+    {
+      "lifecycle": "listed",
+      "operation": "rename",
+      "response": 409
+    },
+    {
+      "lifecycle": "reserved",
+      "operation": "delete",
+      "response": 200
+    },
+    {
+      "lifecycle": "reserved",
+      "operation": "create",
+      "response": 409
     }
   ]
 }
