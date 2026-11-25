@@ -3,7 +3,7 @@ from datetime import date
 
 from pydantic import BaseModel
 
-from sample_api.database import SampleDatabase
+from sample_api.database import MissingRecord, SampleDatabase
 
 
 class BusinessDay(BaseModel):
@@ -33,7 +33,11 @@ def list_calendar() -> list[BusinessDay]:
     return db.all("SELECT * FROM records ORDER BY business_date")
 
 
-@app.get("/calendar/next", summary="指定日以降で最初の営業日を取得")
+@app.get(
+    "/calendar/next",
+    summary="指定日以降で最初の営業日を取得",
+    responses={404: {"model": MissingRecord, "description": "該当なし"}},
+)
 def next_day(on_or_after: date = date(2026, 11, 24)) -> BusinessDay:
     return db.one(
         "SELECT * FROM records WHERE business_date >= ? ORDER BY business_date LIMIT 1",
@@ -44,7 +48,7 @@ def next_day(on_or_after: date = date(2026, 11, 24)) -> BusinessDay:
 @app.get(
     "/calendar/{business_date}",
     summary="営業日の詳細を取得",
-    responses={404: {"description": "該当なし"}},
+    responses={404: {"model": MissingRecord, "description": "該当なし"}},
 )
 def detail(business_date: str) -> BusinessDay:
     return db.one("SELECT * FROM records WHERE business_date = ?", business_date)

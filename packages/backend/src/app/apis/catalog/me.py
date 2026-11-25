@@ -3,13 +3,14 @@ from app.core.metadata import metadata_fields
 from app.core.workspace import private_project, project_label, units, workspace_targets
 from app.dependencies import DB, User
 from app.schemas import outputs
+from app.schemas.errors import domain_errors
 from fastapi import APIRouter
 
 router = APIRouter()
 
 
 #: ログイン中の利用者の所属と権限を確認する
-@router.get("/me", operation_id="me", responses={200: {"model": outputs.Profile}})
+@router.get("/me", operation_id="me", responses={**domain_errors(403), 200: {"model": outputs.Profile}})
 def me(actor: User, db: DB):
     tree = units(db) if actor.admin else {}
     projects = [key for key, unit in tree.items() if unit["kind"] == "project"]

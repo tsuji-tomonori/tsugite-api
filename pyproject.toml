@@ -20,7 +20,18 @@ constraint-dependencies = ["pydantic>=2,<3", "sqlalchemy>=2,<3", "aws-cdk-lib>=2
 
 [dependency-groups]
 quality-docs = ["pyyaml"]
-dev = ["pytest>=9", "pytest-given", "ruff", "pytest-cov", "pyright", "mypy", "pytestarch", "pip-audit"]
+dev = [
+    "pytest>=9",
+    "pytest-given",
+    "ruff",
+    "pytest-cov",
+    "pyright",
+    "mypy",
+    "pytestarch",
+    "pip-audit",
+    "pytest-api-coverage==0.1.0",
+    "schemathesis>=4,<5",
+]
 
 [tool.pytest.ini_options]
 addopts = ["-p", "tests.support.pytest_cases"]

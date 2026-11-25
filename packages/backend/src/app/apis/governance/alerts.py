@@ -5,6 +5,7 @@ from app.core.catalog import event, record, right_id
 from app.dependencies import DB, User
 from app.schemas import outputs
 from app.schemas.alerts import Rule, RuleResult
+from app.schemas.errors import domain_errors
 from fastapi import APIRouter, HTTPException, Request
 from sqlalchemy import case, or_, select, update
 from tsugite_db.models import Access, AlertRule, Asset, Notice
@@ -15,7 +16,10 @@ router = APIRouter()
 #: 呼び出し件数の通知・停止条件を設定する
 @router.put(
     "/alerts",
-    responses={200: {"model": outputs.Identifier, "description": "保存した監視ルールの識別子（id）"}},
+    responses={
+        **domain_errors(403),
+        200: {"model": outputs.Identifier, "description": "保存した監視ルールの識別子（id）"},
+    },
 )
 def save_rule(data: Rule, request: Request, actor: User, db: DB):
     asset = record(db, data.asset_id)

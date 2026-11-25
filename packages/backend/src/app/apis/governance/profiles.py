@@ -10,6 +10,7 @@ from app.core.config import local_demo
 from app.core.member_profiles import NAME_FIELDS, directory_fields
 from app.dependencies import DB, User
 from app.schemas import outputs
+from app.schemas.errors import domain_errors
 from app.schemas.profiles import ProfileEdit
 from botocore.exceptions import BotoCoreError, ClientError
 from fastapi import APIRouter, HTTPException, Request
@@ -83,21 +84,24 @@ def edit(db, request, actor, subject, account, data, action):
 
 
 #: 本人の利用者プロフィールを取得する
-@router.get("/me/profile", responses={200: {"model": outputs.MemberProfile}})
+@router.get("/me/profile", responses={**domain_errors(401, 403), 200: {"model": outputs.MemberProfile}})
 def my_profile(actor: User, db: DB):
     account = existing_account(db, actor.subject)
     return output(actor.subject, db.get(MemberProfile, actor.subject), account)
 
 
 #: 本人の氏名と表示名を更新する
-@router.patch("/me/profile", responses={200: {"model": outputs.MemberProfile}})
+@router.patch("/me/profile", responses={**domain_errors(409), 200: {"model": outputs.MemberProfile}})
 def update_my_profile(data: ProfileEdit, request: Request, actor: User, db: DB):
     account = existing_account(db, actor.subject)
     return edit(db, request, actor, actor.subject, account, data, "profile.self_update")
 
 
 #: 管理者が指定した利用者のプロフィールを取得する
-@router.get("/members/{subject}/profile", responses={200: {"model": outputs.MemberProfile}})
+@router.get(
+    "/members/{subject}/profile",
+    responses={**domain_errors(403, 404), 200: {"model": outputs.MemberProfile}},
+)
 def managed_profile(
     #: 対象利用者の識別子
     subject: str,
@@ -111,7 +115,10 @@ def managed_profile(
 
 
 #: 管理者が指定した利用者の氏名と表示名を更新する
-@router.patch("/members/{subject}/profile", responses={200: {"model": outputs.MemberProfile}})
+@router.patch(
+    "/members/{subject}/profile",
+    responses={**domain_errors(403, 404), 200: {"model": outputs.MemberProfile}},
+)
 def update_managed_profile(
     #: 対象利用者の識別子
     subject: str,

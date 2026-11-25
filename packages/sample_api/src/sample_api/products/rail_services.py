@@ -2,7 +2,7 @@
 from fastapi import Query
 from pydantic import BaseModel
 
-from sample_api.database import SampleDatabase
+from sample_api.database import MissingRecord, SampleDatabase
 
 
 class TrainService(BaseModel):
@@ -33,7 +33,11 @@ def list_trains() -> list[TrainService]:
     return db.all("SELECT * FROM records ORDER BY train_id")
 
 
-@app.get("/trains/{train_id}", summary="列車の詳細を取得", responses={404: {"description": "該当なし"}})
+@app.get(
+    "/trains/{train_id}",
+    summary="列車の詳細を取得",
+    responses={404: {"model": MissingRecord, "description": "該当なし"}},
+)
 def detail(train_id: str) -> TrainService:
     return db.one("SELECT * FROM records WHERE train_id = ?", train_id)
 

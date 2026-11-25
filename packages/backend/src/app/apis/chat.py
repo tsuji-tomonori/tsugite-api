@@ -8,6 +8,7 @@ from app.core.catalog import listing
 from app.core.catalog_visibility import visible_collection
 from app.dependencies import DB, User
 from app.schemas.chat import ChatGuide, ChatQuestion, ChatReceipt, ChatResult
+from app.schemas.errors import domain_errors
 from botocore.exceptions import BotoCoreError, ClientError
 from chat_retrieval import NO_MATCH, ask, manual_sources
 from fastapi import APIRouter, HTTPException, Request
@@ -18,7 +19,7 @@ _lock = Lock()
 
 
 #: チャットの質問を受け付ける
-@router.post("/chat", response_model=ChatReceipt, status_code=202)
+@router.post("/chat", responses=domain_errors(429, 503), response_model=ChatReceipt, status_code=202)
 def start_chat(data: ChatQuestion, actor: User, db: DB, request: Request):
     question = data.question.strip()
     if len(question) < 2:
@@ -57,7 +58,7 @@ def start_chat(data: ChatQuestion, actor: User, db: DB, request: Request):
 
 
 #: チャットの回答を取得する
-@router.get("/chat", response_model=ChatResult)
+@router.get("/chat", responses=domain_errors(404), response_model=ChatResult)
 def chat_result(
     #: チャットの受付識別子
     job_id: UUID,

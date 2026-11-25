@@ -15,6 +15,7 @@ from app.core.workspace import ancestry, private_project, units
 from app.dependencies import DB, User
 from app.schemas import outputs
 from app.schemas.credential_settings import Lifetime, LimitTarget, Permission
+from app.schemas.errors import domain_errors
 from fastapi import APIRouter, HTTPException, Request
 from sqlalchemy import select
 from tsugite_db.models import Access, Asset, CredentialRule
@@ -54,7 +55,10 @@ def subscribers(db, asset):
 
 
 #: APIの利用者別操作権限を確認する
-@router.get("/apis/{key}/operation-policy", responses={200: {"model": outputs.OperationPolicy}})
+@router.get(
+    "/apis/{key}/operation-policy",
+    responses={**domain_errors(403), 200: {"model": outputs.OperationPolicy}},
+)
 def get_operations(
     #: カタログ掲載APIの識別子
     key: str,
@@ -145,7 +149,9 @@ def get_limit(
 
 
 #: API・組織単位のトークン有効期間上限を設定する
-@router.put("/credential-limits/{kind}/{key}", responses={200: {"model": outputs.Limit}})
+@router.put(
+    "/credential-limits/{kind}/{key}", responses={**domain_errors(403), 200: {"model": outputs.Limit}}
+)
 def set_limit(
     #: 上限の設定対象（API・組織）
     kind: LimitTarget,

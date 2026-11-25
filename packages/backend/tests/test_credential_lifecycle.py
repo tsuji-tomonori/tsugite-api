@@ -104,6 +104,9 @@ def test_persistent_system_and_legacy_expiry(portal, monkeypatch):
     def exchange():
         return portal.post("/api/auth/token", json=proof).raise_for_status().json()
 
+    assert portal.post("/api/auth/token", json=proof, headers=user).status_code == 400
+    invalid = {**proof, "client_secret": "incorrect"}
+    assert portal.post("/api/auth/token", json=invalid).status_code == 401
     token = exchange()
     assert token["refresh_after"] == 180
     assert portal.get(path, headers=bearer(token["access_token"])).is_success

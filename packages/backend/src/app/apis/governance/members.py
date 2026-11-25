@@ -14,6 +14,7 @@ from app.core.member_profiles import (
 from app.core.workspace import configured_projects, retired_units, units
 from app.dependencies import DB, User
 from app.schemas import outputs
+from app.schemas.errors import domain_errors
 from app.schemas.members import Invitation
 from botocore.exceptions import BotoCoreError, ClientError
 from fastapi import APIRouter, HTTPException, Query, Request
@@ -56,7 +57,7 @@ def pool():
 
 
 #: ポータルの利用者を一覧する
-@router.get("/members", responses={200: {"model": outputs.MemberPage}})
+@router.get("/members", responses={**domain_errors(503), 200: {"model": outputs.MemberPage}})
 def list_members(
     actor: User,
     db: DB,
@@ -136,7 +137,11 @@ def undo_invitation(username):
 
 
 #: ポータルに利用者を招待する
-@router.post("/members", status_code=201, responses={201: {"model": outputs.Person}})
+@router.post(
+    "/members",
+    status_code=201,
+    responses={**domain_errors(403, 409, 503), 201: {"model": outputs.Person}},
+)
 def invite(data: Invitation, request: Request, actor: User, db: DB):
     administrator(actor)
     if data.project not in projects(db):
@@ -196,7 +201,9 @@ def invite(data: Invitation, request: Request, actor: User, db: DB):
 
 
 #: ポータルの利用者を削除する
-@router.delete("/members/{subject}", responses={200: {"model": outputs.Deleted}})
+@router.delete(
+    "/members/{subject}", responses={**domain_errors(404, 409, 503), 200: {"model": outputs.Deleted}}
+)
 def remove_member(
     #: 対象利用者の識別子
     subject: str,

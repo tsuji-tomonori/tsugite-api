@@ -14,12 +14,17 @@ from app.core.request_logs import install_request_logs
 from app.dependencies import DB
 from app.design_names import PortalAPI
 from app.schemas import outputs
+from app.schemas.errors import domain_errors
 
 
 def create_app() -> FastAPI:
     app = PortalAPI(
         title="継手API",
         version="0.1.0",
+        responses={
+            **domain_errors(403),
+            500: {"model": outputs.InternalServerError, "description": "サーバー内部のエラー"},
+        },
         docs_url=None,
         redoc_url=None,
         openapi_url="/api/openapi.json" if local_demo() else None,
@@ -45,7 +50,9 @@ def create_app() -> FastAPI:
 
     if local_demo():
         #: デモ利用者としてログインする
-        @app.post("/api/demo/{persona}", responses={200: {"model": outputs.DemoToken}})
+        @app.post(
+            "/api/demo/{persona}", responses={**domain_errors(404), 200: {"model": outputs.DemoToken}}
+        )
         def local_login(
             #: デモでログインする利用者名
             persona: str,

@@ -15,6 +15,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Health'
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
   /loans:
     get:
       summary: 貸出を一覧で取得
@@ -29,6 +35,12 @@ paths:
                   $ref: '#/components/schemas/Loan'
                 type: array
                 title: Response List Loans Loans Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
   /loans/{loan_id}:
     get:
       summary: 貸出の詳細を取得
@@ -47,14 +59,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Loan'
-        '404':
-          description: 該当なし
-        '422':
-          description: Validation Error
+        '500':
+          description: サーバー内部のエラー
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPValidationError'
+                $ref: '#/components/schemas/InternalServerError'
+        '404':
+          description: 該当なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MissingRecord'
   /library-branches:
     get:
       summary: 図書館ごとの貸出件数を集計
@@ -69,6 +85,12 @@ paths:
                   $ref: '#/components/schemas/LoanCount'
                 type: array
                 title: Response By Branch Library Branches Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
   /due-soon:
     get:
       summary: 返却までの日数が上限以下の貸出を取得
@@ -93,6 +115,12 @@ paths:
                 items:
                   $ref: '#/components/schemas/Loan'
                 title: Response Below Limit Due Soon Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
         '422':
           description: Validation Error
           content:
@@ -110,6 +138,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/LoanRange'
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
 components:
   schemas:
     HTTPValidationError:
@@ -130,6 +164,20 @@ components:
           default: ok
       type: object
       title: Health
+    InternalServerError:
+      properties:
+        error_code:
+          type: string
+          const: INTERNAL_ERROR
+          title: Error Code
+        detail:
+          type: string
+          title: Detail
+      type: object
+      required:
+      - error_code
+      - detail
+      title: InternalServerError
     Loan:
       properties:
         loan_id:
@@ -173,6 +221,15 @@ components:
       - minimum
       - maximum
       title: LoanRange
+    MissingRecord:
+      properties:
+        detail:
+          type: string
+          title: Detail
+      type: object
+      required:
+      - detail
+      title: MissingRecord
     ValidationError:
       properties:
         loc:

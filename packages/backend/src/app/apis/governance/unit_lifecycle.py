@@ -9,6 +9,7 @@ from app.core.catalog import right_id
 from app.core.workspace import ancestry, configured_projects, project_ids, retired_units, units
 from app.dependencies import DB, User
 from app.schemas import outputs
+from app.schemas.errors import domain_errors
 from app.schemas.unit_lifecycle import Transfer
 from fastapi import APIRouter, HTTPException, Request
 from sqlalchemy import select
@@ -171,7 +172,9 @@ def retire(key, target, request, actor, db):
 
 
 #: 未使用の部署・プロジェクトを削除する
-@router.delete("/workspace/units/{key}", responses={200: {"model": outputs.Removed}})
+@router.delete(
+    "/workspace/units/{key}", responses={**domain_errors(403, 404, 409), 200: {"model": outputs.Removed}}
+)
 def delete_unit(
     #: 削除する組織の識別子
     key: str,
@@ -183,7 +186,9 @@ def delete_unit(
 
 
 #: 関連する所属と利用設定を既存の組織へ移管し、移管元を廃止する
-@router.post("/workspace/units/{key}/transfer", responses={200: {"model": outputs.Removed}})
+@router.post(
+    "/workspace/units/{key}/transfer", responses={**domain_errors(409), 200: {"model": outputs.Removed}}
+)
 def transfer_unit(
     #: 移管元の組織の識別子
     key: str,

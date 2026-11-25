@@ -10,6 +10,7 @@ from app.dependencies import DB, User
 from app.integrations.spec_archive import archive_spec, canonical
 from app.schemas import outputs
 from app.schemas.catalog import Listing, NewListing, Offer, Register
+from app.schemas.errors import domain_errors
 from fastapi import APIRouter, HTTPException, Request
 from openapi_spec_validator import validate
 from sqlalchemy import select
@@ -59,7 +60,13 @@ def validated_spec(data, db):
 
 
 #: APIをカタログに登録する
-@router.post("/apis", response_model=Listing, status_code=201, operation_id="register")
+@router.post(
+    "/apis",
+    responses=domain_errors(403, 409, 503),
+    response_model=Listing,
+    status_code=201,
+    operation_id="register",
+)
 def register(data: NewListing, request: Request, actor: User, db: DB):
     if data.owner not in actor.owners:
         raise HTTPException(403, "提供プロジェクトの権限が必要です")
@@ -86,7 +93,7 @@ def register(data: NewListing, request: Request, actor: User, db: DB):
 
 
 #: APIの登録内容を更新する
-@router.put("/apis/{key}", response_model=Listing)
+@router.put("/apis/{key}", responses=domain_errors(403, 409), response_model=Listing)
 def edit(
     #: カタログ掲載APIの識別子
     key: str,
@@ -167,7 +174,7 @@ def close_rights(db, request, actor, row, reason, environments=None):
 
 
 #: APIをカタログから削除する（論理削除）
-@router.delete("/apis/{key}", responses={200: {"model": outputs.Deleted}})
+@router.delete("/apis/{key}", responses={**domain_errors(409), 200: {"model": outputs.Deleted}})
 def delete(
     #: カタログ掲載APIの識別子
     key: str,

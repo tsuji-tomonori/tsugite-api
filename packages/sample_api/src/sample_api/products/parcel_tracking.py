@@ -2,7 +2,7 @@
 from fastapi import Query
 from pydantic import BaseModel
 
-from sample_api.database import SampleDatabase
+from sample_api.database import MissingRecord, SampleDatabase
 
 
 class Parcel(BaseModel):
@@ -32,7 +32,11 @@ def list_parcels() -> list[Parcel]:
     return db.all("SELECT * FROM records ORDER BY parcel")
 
 
-@app.get("/parcels/{parcel}", summary="荷物の詳細を取得", responses={404: {"description": "該当なし"}})
+@app.get(
+    "/parcels/{parcel}",
+    summary="荷物の詳細を取得",
+    responses={404: {"model": MissingRecord, "description": "該当なし"}},
+)
 def detail(parcel: str) -> Parcel:
     return db.one("SELECT * FROM records WHERE parcel = ?", parcel)
 

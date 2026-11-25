@@ -4,6 +4,8 @@ from app.core.catalog import event, record
 from app.core.workspace import private_project
 from app.dependencies import DB, User
 from app.schemas import outputs
+from app.schemas.base import database_time
+from app.schemas.errors import domain_errors
 from app.schemas.notifications import Message
 from fastapi import APIRouter, HTTPException, Query, Request
 from sqlalchemy import exists, func, or_, select
@@ -53,7 +55,7 @@ def inbox(
                 "body": n.body,
                 "project": n.project,
                 "sender": n.sender,
-                "at": n.at,
+                "at": database_time(n.at),
                 "unread": is_new,
             }
             for n, is_new in records
@@ -71,7 +73,10 @@ def badge(actor: User, db: DB):
 @router.post(
     "/notifications",
     status_code=201,
-    responses={201: {"model": outputs.Identifier, "description": "送信した通知の識別子（id）"}},
+    responses={
+        **domain_errors(403),
+        201: {"model": outputs.Identifier, "description": "送信した通知の識別子（id）"},
+    },
 )
 def send(data: Message, request: Request, actor: User, db: DB):
     if not actor.admin and not actor.owners:
@@ -111,7 +116,7 @@ def send(data: Message, request: Request, actor: User, db: DB):
 
 
 #: 通知を既読にする
-@router.put("/notifications/{key}/read", responses={200: {"model": outputs.Read}})
+@router.put("/notifications/{key}/read", responses={**domain_errors(404), 200: {"model": outputs.Read}})
 def mark_read(
     #: 既読にする通知の識別子
     key: str,

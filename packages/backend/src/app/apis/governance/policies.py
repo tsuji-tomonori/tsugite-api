@@ -5,6 +5,7 @@ from app.core.catalog import event, record
 from app.core.metadata import BUILTIN_FIELDS, metadata_fields
 from app.core.workspace import policy, units
 from app.dependencies import DB, User
+from app.schemas.errors import domain_errors
 from app.schemas.policies import Policy
 from fastapi import APIRouter, HTTPException, Request
 
@@ -26,7 +27,7 @@ def read(
 
 
 #: APIの公開範囲と申請の承認条件を設定する
-@router.put("/apis/{key}/policy", responses={200: {"model": Policy}})
+@router.put("/apis/{key}/policy", responses={**domain_errors(409), 200: {"model": Policy}})
 def configure(
     #: カタログ掲載APIの識別子
     key: str,

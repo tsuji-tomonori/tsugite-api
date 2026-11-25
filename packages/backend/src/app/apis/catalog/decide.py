@@ -5,6 +5,7 @@ from app.core.catalog import NEXT, event, record, right_id
 from app.core.offers import can_review
 from app.dependencies import DB, User
 from app.schemas.catalog import Decision, Right
+from app.schemas.errors import domain_errors
 from fastapi import APIRouter, HTTPException, Request
 from tsugite_db.models import Access, now
 
@@ -14,11 +15,17 @@ router = APIRouter()
 #: 個人の利用申請を承認・却下・取り下げ・取消する
 @router.post(
     "/requests/{key}/{project}/{environment}/{principal}",
+    responses=domain_errors(403, 404, 409),
     response_model=Right,
     operation_id="decidePersonal",
 )
 #: プロジェクトの利用申請を承認・却下・取り下げ・取消する
-@router.post("/requests/{key}/{project}/{environment}", response_model=Right, operation_id="decide")
+@router.post(
+    "/requests/{key}/{project}/{environment}",
+    responses=domain_errors(403, 404, 409),
+    response_model=Right,
+    operation_id="decide",
+)
 def decide(
     #: 申請対象APIの識別子
     key: str,

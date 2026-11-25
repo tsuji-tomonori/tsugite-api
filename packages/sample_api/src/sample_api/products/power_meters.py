@@ -2,7 +2,7 @@
 from fastapi import Query
 from pydantic import BaseModel
 
-from sample_api.database import SampleDatabase
+from sample_api.database import MissingRecord, SampleDatabase
 
 
 class PowerMeter(BaseModel):
@@ -33,7 +33,9 @@ def list_meters() -> list[PowerMeter]:
 
 
 @app.get(
-    "/meters/{meter_id}", summary="電力計の詳細を取得", responses={404: {"description": "該当なし"}}
+    "/meters/{meter_id}",
+    summary="電力計の詳細を取得",
+    responses={404: {"model": MissingRecord, "description": "該当なし"}},
 )
 def detail(meter_id: str) -> PowerMeter:
     return db.one("SELECT * FROM records WHERE meter_id = ?", meter_id)

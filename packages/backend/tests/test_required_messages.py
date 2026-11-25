@@ -163,6 +163,9 @@ def test_response_retry_after_an_inquiry_has_been_answered(portal):
         f"/api/inquiries/{receipt}/reply", headers=admin, json={"answer": "環境別に申請してください。"}
     )
     assert answered.status_code == 200
+    conflict = portal.put(f"/api/inquiries/{receipt}/reply", headers=admin, json={"answer": "別の回答"})
+    assert conflict.status_code == 409
+    assert conflict.json()["detail"] == "すでに回答済みです"
     retried = portal.post("/api/inquiries", headers=user, json=payload)
     assert retried.status_code == 201 and retried.json()["inquiry_id"] == receipt
     assert (

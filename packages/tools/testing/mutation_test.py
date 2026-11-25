@@ -26,6 +26,14 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
+        "http-contract",
+        "サーバー内部エラーの本文から必須のエラーコードを取り除く",
+        "packages/backend/src/app/core/request_logs.py",
+        '"error_code": "INTERNAL_ERROR", ',
+        "",
+        "packages/backend/tests/test_http_contract.py::test_catalog_search_failure",
+    ),
+    Mutation(
         "frontend",
         "認証情報の初期更新時刻を有効期間の5分前に固定する",
         "packages/frontend/src/web_app/components/credential_views.py",
@@ -823,7 +831,9 @@ MUTATIONS = (
 
 
 def copy_sources(workspace):
-    ignore = shutil.ignore_patterns("dist", "cdk.out", ".venv", "__pycache__", "*.egg-info")
+    ignore = shutil.ignore_patterns(
+        "dist", "cdk.out", "node_modules", ".venv", "__pycache__", "*.egg-info"
+    )
     for folder in ("packages", "deploy/config", "docs/examples", "tests"):
         shutil.copytree(ROOT / folder, workspace / folder, ignore=ignore)
     shutil.copyfile(ROOT / "pyproject.toml", workspace / "pyproject.toml")
