@@ -49,6 +49,14 @@ MUTATIONS = (
         "packages/infra/tests/test_stack.py::test_access_boundaries",
     ),
     Mutation(
+        "requirements",
+        "変更した要件の古い履歴を新しい変更理由として認める",
+        "tools/design/requirements.py",
+        "line in added and re.fullmatch",
+        "re.fullmatch",
+        "tests/architecture/test_requirement_maintenance.py::test_changed_item_requires_new_reason",
+    ),
+    Mutation(
         "metadata",
         "任意属性の役職を既存の自動承認条件に含める",
         "packages/backend/src/app/core/workspace.py",
