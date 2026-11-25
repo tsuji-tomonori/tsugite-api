@@ -15,6 +15,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Health'
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
   /stores:
     get:
       summary: 店舗を一覧で取得
@@ -29,6 +35,12 @@ paths:
                   $ref: '#/components/schemas/Store'
                 type: array
                 title: Response List Stores Stores Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
   /stores/{store_code}:
     get:
       summary: 店舗の詳細を取得
@@ -47,14 +59,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Store'
-        '404':
-          description: 該当なし
-        '422':
-          description: Validation Error
+        '500':
+          description: サーバー内部のエラー
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPValidationError'
+                $ref: '#/components/schemas/InternalServerError'
+        '404':
+          description: 該当なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MissingRecord'
   /service-areas:
     get:
       summary: 市区町村ごとの店舗件数を集計
@@ -69,6 +85,12 @@ paths:
                   $ref: '#/components/schemas/StoreCount'
                 type: array
                 title: Response By City Service Areas Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
   /small-stores:
     get:
       summary: 座席数が上限以下の店舗を取得
@@ -93,6 +115,12 @@ paths:
                 items:
                   $ref: '#/components/schemas/Store'
                 title: Response Below Limit Small Stores Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
         '422':
           description: Validation Error
           content:
@@ -110,6 +138,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/StoreTotal'
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
 components:
   schemas:
     HTTPValidationError:
@@ -130,6 +164,29 @@ components:
           default: ok
       type: object
       title: Health
+    InternalServerError:
+      properties:
+        error_code:
+          type: string
+          const: INTERNAL_ERROR
+          title: Error Code
+        detail:
+          type: string
+          title: Detail
+      type: object
+      required:
+      - error_code
+      - detail
+      title: InternalServerError
+    MissingRecord:
+      properties:
+        detail:
+          type: string
+          title: Detail
+      type: object
+      required:
+      - detail
+      title: MissingRecord
     Store:
       properties:
         store_code:

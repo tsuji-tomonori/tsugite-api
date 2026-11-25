@@ -2,6 +2,7 @@
 from uuid import UUID
 
 from app.dependencies import DB, User
+from app.schemas.errors import domain_errors
 from app.schemas.inquiries import InquiryRecord, InquiryReply, InquirySubmission
 from fastapi import APIRouter, HTTPException, Query, Request
 from sqlalchemy import select
@@ -22,7 +23,7 @@ def result(row):
 
 
 #: 運営への問い合わせを送信する
-@router.post("/inquiries", response_model=InquiryRecord, status_code=201)
+@router.post("/inquiries", responses=domain_errors(409), response_model=InquiryRecord, status_code=201)
 def submit_inquiry(data: InquirySubmission, actor: User, db: DB):
     question = data.question.strip()
     if len(question) < 2:
@@ -45,7 +46,7 @@ def submit_inquiry(data: InquirySubmission, actor: User, db: DB):
 
 
 #: 問い合わせ履歴を取得する
-@router.get("/inquiries", response_model=list[InquiryRecord])
+@router.get("/inquiries", responses=domain_errors(403), response_model=list[InquiryRecord])
 def get_inquiries(
     actor: User,
     db: DB,
@@ -69,7 +70,9 @@ def get_inquiries(
 
 
 #: 問い合わせに回答する
-@router.put("/inquiries/{inquiry_id}/reply", response_model=InquiryRecord)
+@router.put(
+    "/inquiries/{inquiry_id}/reply", responses=domain_errors(403, 404, 409), response_model=InquiryRecord
+)
 def reply_to_inquiry(
     #: 問い合わせの識別子
     inquiry_id: UUID,

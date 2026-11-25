@@ -5,6 +5,7 @@ from app.core.offers import submission
 from app.core.workspace import allowed_audience, policy, private_project, stopped
 from app.dependencies import DB, User
 from app.schemas.catalog import Apply, Right
+from app.schemas.errors import domain_errors
 from fastapi import APIRouter, HTTPException, Request
 from sqlalchemy import update
 from tsugite_db.models import Access, Asset
@@ -13,7 +14,13 @@ router = APIRouter()
 
 
 #: 特定の環境でのAPI利用を申請する
-@router.post("/apis/{key}/requests", status_code=201, response_model=Right, operation_id="apply")
+@router.post(
+    "/apis/{key}/requests",
+    responses=domain_errors(403, 404, 409),
+    status_code=201,
+    response_model=Right,
+    operation_id="apply",
+)
 def apply(
     #: カタログ掲載APIの識別子
     key: str,

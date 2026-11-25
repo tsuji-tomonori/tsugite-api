@@ -15,6 +15,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Health'
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
   /exhibits:
     get:
       summary: 収蔵品を一覧で取得
@@ -29,6 +35,12 @@ paths:
                   $ref: '#/components/schemas/Exhibit'
                 type: array
                 title: Response List Exhibits Exhibits Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
   /exhibits/{accession}:
     get:
       summary: 収蔵品の詳細を取得
@@ -47,14 +59,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Exhibit'
-        '404':
-          description: 該当なし
-        '422':
-          description: Validation Error
+        '500':
+          description: サーバー内部のエラー
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPValidationError'
+                $ref: '#/components/schemas/InternalServerError'
+        '404':
+          description: 該当なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MissingRecord'
   /galleries:
     get:
       summary: 展示室ごとの収蔵品件数を集計
@@ -69,6 +85,12 @@ paths:
                   $ref: '#/components/schemas/ExhibitCount'
                 type: array
                 title: Response By Gallery Galleries Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
   /early-works:
     get:
       summary: 制作年が上限以下の収蔵品を取得
@@ -93,6 +115,12 @@ paths:
                 items:
                   $ref: '#/components/schemas/Exhibit'
                 title: Response Below Limit Early Works Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
         '422':
           description: Validation Error
           content:
@@ -110,6 +138,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ExhibitRange'
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
 components:
   schemas:
     Exhibit:
@@ -173,6 +207,29 @@ components:
           default: ok
       type: object
       title: Health
+    InternalServerError:
+      properties:
+        error_code:
+          type: string
+          const: INTERNAL_ERROR
+          title: Error Code
+        detail:
+          type: string
+          title: Detail
+      type: object
+      required:
+      - error_code
+      - detail
+      title: InternalServerError
+    MissingRecord:
+      properties:
+        detail:
+          type: string
+          title: Detail
+      type: object
+      required:
+      - detail
+      title: MissingRecord
     ValidationError:
       properties:
         loc:

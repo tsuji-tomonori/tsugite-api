@@ -7,6 +7,7 @@ from app.apis.governance.members import administrator
 from app.core.metadata import BUILTIN_FIELDS
 from app.dependencies import DB, User
 from app.schemas import outputs
+from app.schemas.errors import domain_errors
 from app.schemas.metadata import MetadataSettings
 from fastapi import APIRouter, HTTPException, Path, Request
 from sqlalchemy.exc import IntegrityError
@@ -17,7 +18,10 @@ router = APIRouter()
 
 
 #: メタデータ項目の表示名と選択肢の公開範囲を設定する
-@router.put("/workspace/metadata/{key}", responses={200: {"model": outputs.MetadataField}})
+@router.put(
+    "/workspace/metadata/{key}",
+    responses={**domain_errors(403, 409), 200: {"model": outputs.MetadataField}},
+)
 def save_field(
     #: メタデータ項目の識別子
     key: Annotated[str, Path(pattern=r"^[a-z][a-z0-9-]{0,62}$")],

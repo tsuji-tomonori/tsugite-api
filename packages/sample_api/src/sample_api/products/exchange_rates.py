@@ -2,7 +2,7 @@
 from fastapi import Query
 from pydantic import BaseModel
 
-from sample_api.database import SampleDatabase
+from sample_api.database import MissingRecord, SampleDatabase
 
 
 class ExchangeRate(BaseModel):
@@ -34,7 +34,9 @@ def list_rates() -> list[ExchangeRate]:
 
 
 @app.get(
-    "/rates/{currency}", summary="為替レートの詳細を取得", responses={404: {"description": "該当なし"}}
+    "/rates/{currency}",
+    summary="為替レートの詳細を取得",
+    responses={404: {"model": MissingRecord, "description": "該当なし"}},
 )
 def detail(currency: str) -> ExchangeRate:
     return db.one("SELECT * FROM records WHERE currency = ?", currency)

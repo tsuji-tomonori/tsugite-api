@@ -15,6 +15,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Health'
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
   /orders:
     get:
       summary: 発注を一覧で取得
@@ -29,6 +35,12 @@ paths:
                   $ref: '#/components/schemas/PurchaseOrder'
                 type: array
                 title: Response List Orders Orders Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
     post:
       summary: 見本の仕入先で発注結果を試算
       operationId: preview_order_orders_post
@@ -45,6 +57,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PurchaseOrder'
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
         '422':
           description: Validation Error
           content:
@@ -69,14 +87,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PurchaseOrder'
-        '404':
-          description: 該当なし
-        '422':
-          description: Validation Error
+        '500':
+          description: サーバー内部のエラー
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPValidationError'
+                $ref: '#/components/schemas/InternalServerError'
+        '404':
+          description: 該当なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MissingRecord'
   /suppliers:
     get:
       summary: 仕入先ごとの発注件数を集計
@@ -91,6 +113,12 @@ paths:
                   $ref: '#/components/schemas/PurchaseOrderCount'
                 type: array
                 title: Response By Supplier Suppliers Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
   /ordered-units:
     get:
       summary: 数量の合計を取得
@@ -102,6 +130,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PurchaseOrderTotal'
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
 components:
   schemas:
     HTTPValidationError:
@@ -122,6 +156,29 @@ components:
           default: ok
       type: object
       title: Health
+    InternalServerError:
+      properties:
+        error_code:
+          type: string
+          const: INTERNAL_ERROR
+          title: Error Code
+        detail:
+          type: string
+          title: Detail
+      type: object
+      required:
+      - error_code
+      - detail
+      title: InternalServerError
+    MissingRecord:
+      properties:
+        detail:
+          type: string
+          title: Detail
+      type: object
+      required:
+      - detail
+      title: MissingRecord
     OrderRequest:
       properties:
         units:

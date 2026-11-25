@@ -11,6 +11,7 @@ from app.core.workspace import ancestry, retired_units, units
 from app.dependencies import DB, User
 from app.schemas import outputs
 from app.schemas.directory import Membership, State, UnitData
+from app.schemas.errors import domain_errors
 from fastapi import APIRouter, HTTPException, Request
 from sqlalchemy import func, select
 from tsugite_db.models import AccessLog, Affiliation, Asset, DirectoryTree, Event, LogUnit, Member
@@ -130,7 +131,9 @@ def save_tree(db, tree):
 
 
 #: 部署・プロジェクトを登録または更新する
-@router.put("/workspace/units/{key}", responses={200: {"model": outputs.Unit}})
+@router.put(
+    "/workspace/units/{key}", responses={**domain_errors(403, 409), 200: {"model": outputs.Unit}}
+)
 def unit(
     #: 部署・プロジェクトの識別子
     key: str,
@@ -163,7 +166,9 @@ def unit(
 
 
 #: 利用者の所属・役職・管理権限を設定する
-@router.put("/workspace/memberships", responses={200: {"model": Membership}})
+@router.put(
+    "/workspace/memberships", responses={**domain_errors(403, 404, 409), 200: {"model": Membership}}
+)
 def assign(data: Membership, request: Request, actor: User, db: DB):
     request.state.target_subject_id = data.subject
     administrator(actor)
@@ -184,7 +189,9 @@ def assign(data: Membership, request: Request, actor: User, db: DB):
 
 
 #: 利用者の所属を解除する
-@router.delete("/workspace/memberships", responses={200: {"model": outputs.Removed}})
+@router.delete(
+    "/workspace/memberships", responses={**domain_errors(404), 200: {"model": outputs.Removed}}
+)
 def unassign(
     #: 対象利用者の識別子
     subject: str,
@@ -208,7 +215,9 @@ def unassign(
 
 
 #: 部署・プロジェクトの利用を停止または再開する
-@router.put("/workspace/units/{key}/state", responses={200: {"model": outputs.Unit}})
+@router.put(
+    "/workspace/units/{key}/state", responses={**domain_errors(403), 200: {"model": outputs.Unit}}
+)
 def change_state(
     #: 部署・プロジェクトの識別子
     key: str,
@@ -284,7 +293,9 @@ def unit_condition(tree, key):
 
 
 #: 部署・プロジェクトの所属者とAPI利用実績を取得する
-@router.get("/workspace/units/{key}/usage", responses={200: {"model": outputs.Usage}})
+@router.get(
+    "/workspace/units/{key}/usage", responses={**domain_errors(403), 200: {"model": outputs.Usage}}
+)
 def usage(
     #: 部署・プロジェクトの識別子
     key: str,

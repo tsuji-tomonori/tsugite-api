@@ -1,7 +1,7 @@
 # purchase_orders 商品のサンプル操作と応答を定義する。
 from pydantic import BaseModel, Field
 
-from sample_api.database import SampleDatabase
+from sample_api.database import MissingRecord, SampleDatabase
 
 
 class PurchaseOrder(BaseModel):
@@ -42,7 +42,11 @@ def preview_order(request: OrderRequest) -> PurchaseOrder:
     )
 
 
-@app.get("/orders/{order_id}", summary="発注の詳細を取得", responses={404: {"description": "該当なし"}})
+@app.get(
+    "/orders/{order_id}",
+    summary="発注の詳細を取得",
+    responses={404: {"model": MissingRecord, "description": "該当なし"}},
+)
 def detail(order_id: str) -> PurchaseOrder:
     return db.one("SELECT * FROM records WHERE order_id = ?", order_id)
 

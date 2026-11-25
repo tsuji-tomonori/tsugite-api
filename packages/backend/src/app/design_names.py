@@ -143,7 +143,41 @@ def localize(schema, routes=(), *, strict=False):
                     param.setdefault("description", title)
                     if isinstance(param.get("schema"), dict):
                         param["schema"]["title"] = title
-            for response in op.get("responses", {}).values():
+            responses = op.get("responses", {})
+            if route and "ErrorDetail" in schemas and op.get("security"):
+                responses.setdefault(
+                    "401",
+                    {
+                        "description": "利用者認証が必要です",
+                        "content": {
+                            "application/json": {"schema": {"$ref": "#/components/schemas/ErrorDetail"}}
+                        },
+                    },
+                )
+            validation = responses.get("422", {}).get("content", {}).get("application/json", {})
+            if (
+                route
+                and "ErrorDetail" in schemas
+                and validation.get("schema") == {"$ref": "#/components/schemas/HTTPValidationError"}
+            ):
+                # FastAPI also advertises 422 for unconstrained string path parameters. A missing
+                # segment misses the route; any present string already satisfies those parameters.
+                if (
+                    route
+                    and route.body_field is None
+                    and all(
+                        p["schema"].get("type") == "string"
+                        and not (p["schema"].keys() - {"type", "title", "default", "description"})
+                        and (p["in"] == "path" or not p.get("required"))
+                        for p in op.get("parameters", [])
+                    )
+                ):
+                    del responses["422"]
+                else:
+                    validation["schema"] = {
+                        "anyOf": [validation["schema"], {"$ref": "#/components/schemas/ErrorDetail"}]
+                    }
+            for response in responses.values():
                 response["description"] = {
                     "Successful Response": "正常に処理できました",
                     "Validation Error": "入力内容が条件を満たしていません",

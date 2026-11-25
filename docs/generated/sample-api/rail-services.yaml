@@ -15,6 +15,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Health'
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
   /trains:
     get:
       summary: 列車を一覧で取得
@@ -29,6 +35,12 @@ paths:
                   $ref: '#/components/schemas/TrainService'
                 type: array
                 title: Response List Trains Trains Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
   /trains/{train_id}:
     get:
       summary: 列車の詳細を取得
@@ -47,14 +59,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TrainService'
-        '404':
-          description: 該当なし
-        '422':
-          description: Validation Error
+        '500':
+          description: サーバー内部のエラー
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPValidationError'
+                $ref: '#/components/schemas/InternalServerError'
+        '404':
+          description: 該当なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MissingRecord'
   /rail-lines:
     get:
       summary: 路線ごとの列車件数を集計
@@ -69,6 +85,12 @@ paths:
                   $ref: '#/components/schemas/TrainServiceCount'
                 type: array
                 title: Response By Line Rail Lines Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
   /on-time-services:
     get:
       summary: 遅延時間（分）が上限以下の列車を取得
@@ -93,6 +115,12 @@ paths:
                 items:
                   $ref: '#/components/schemas/TrainService'
                 title: Response Below Limit On Time Services Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
         '422':
           description: Validation Error
           content:
@@ -110,6 +138,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TrainServiceRange'
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
 components:
   schemas:
     HTTPValidationError:
@@ -130,6 +164,29 @@ components:
           default: ok
       type: object
       title: Health
+    InternalServerError:
+      properties:
+        error_code:
+          type: string
+          const: INTERNAL_ERROR
+          title: Error Code
+        detail:
+          type: string
+          title: Detail
+      type: object
+      required:
+      - error_code
+      - detail
+      title: InternalServerError
+    MissingRecord:
+      properties:
+        detail:
+          type: string
+          title: Detail
+      type: object
+      required:
+      - detail
+      title: MissingRecord
     TrainService:
       properties:
         train_id:

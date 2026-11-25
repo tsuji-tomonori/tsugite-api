@@ -15,6 +15,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Health'
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
   /observations:
     get:
       summary: 降水観測を一覧で取得
@@ -29,6 +35,12 @@ paths:
                   $ref: '#/components/schemas/Observation'
                 type: array
                 title: Response List Observations Observations Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
   /observations/{station_id}:
     get:
       summary: 降水観測の詳細を取得
@@ -47,14 +59,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Observation'
-        '404':
-          description: 該当なし
-        '422':
-          description: Validation Error
+        '500':
+          description: サーバー内部のエラー
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPValidationError'
+                $ref: '#/components/schemas/InternalServerError'
+        '404':
+          description: 該当なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MissingRecord'
   /river-basins:
     get:
       summary: 流域ごとの降水観測件数を集計
@@ -69,6 +85,12 @@ paths:
                   $ref: '#/components/schemas/ObservationCount'
                 type: array
                 title: Response By Basin River Basins Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
   /dry-stations:
     get:
       summary: 降水量（mm）が上限以下の降水観測を取得
@@ -93,6 +115,12 @@ paths:
                 items:
                   $ref: '#/components/schemas/Observation'
                 title: Response Below Limit Dry Stations Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
         '422':
           description: Validation Error
           content:
@@ -110,6 +138,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ObservationRange'
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
 components:
   schemas:
     HTTPValidationError:
@@ -130,6 +164,29 @@ components:
           default: ok
       type: object
       title: Health
+    InternalServerError:
+      properties:
+        error_code:
+          type: string
+          const: INTERNAL_ERROR
+          title: Error Code
+        detail:
+          type: string
+          title: Detail
+      type: object
+      required:
+      - error_code
+      - detail
+      title: InternalServerError
+    MissingRecord:
+      properties:
+        detail:
+          type: string
+          title: Detail
+      type: object
+      required:
+      - detail
+      title: MissingRecord
     Observation:
       properties:
         station_id:
