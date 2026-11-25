@@ -11,7 +11,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        suite: [api, browser, cdk, synth]
+        suite: [agent, model, api, browser, cdk, synth]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -25,11 +25,15 @@ jobs:
         run: |
           uv run --locked playwright install --with-deps chromium --only-shell
           uv run --locked python packages/tools/packaging/build_frontend.py
+      - if: matrix.suite == 'agent' || matrix.suite == 'model'
+        env:
+          PACKAGE: ${{ matrix.suite }}
+        run: uv run --locked pytest -q "packages/$PACKAGE/tests" --junitxml="artifacts/$PACKAGE.xml"
       - if: matrix.suite == 'api'
         run: |
           uv run --locked python -m packages.tools.operations.manage contracts
           uv run --locked python -m packages.tools.design.generate
-          uv run --locked pytest -q packages/agent/tests packages/backend/tests packages/database/tests packages/tools/tests --junitxml=artifacts/api.xml
+          uv run --locked pytest -q packages/backend/tests packages/database/tests packages/tools/tests --junitxml=artifacts/api.xml
       - if: matrix.suite == 'browser'
         run: uv run --locked pytest -q tests/e2e/browser --junitxml=artifacts/browser.xml
       - if: matrix.suite == 'cdk'

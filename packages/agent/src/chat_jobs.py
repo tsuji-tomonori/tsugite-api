@@ -16,10 +16,9 @@ from app.core.diagnostics import OperationalRepair, emit
 from app.core.log_record import SCREENS
 from botocore.config import Config
 from botocore.exceptions import ClientError
+from chat_retrieval import ask
 from sqlalchemy.orm import Session
 from tsugite_db.session import engine
-
-from agent.retrieval import ask
 
 JOB_SECONDS = 150
 JOB_TTL = 900

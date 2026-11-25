@@ -27,8 +27,8 @@ BROWSER = "tests/e2e/browser"
 TOOLS = "packages/tools/tests"
 #: アーキテクチャ
 ARCHITECTURE = "tests/architecture"
-#: エージェント・推論モデル
 AGENT = "packages/agent/tests"
+MODEL = "packages/model/tests"
 #: バックエンド
 BACKEND = "packages/backend/tests"
 #: データベース
@@ -47,7 +47,7 @@ def affected(path, suites):
         return FULL
     for suite in suites:
         if path.startswith(suite + "/"):
-            return {suite, "types"} if suite in {AGENT, FRONTEND} else {suite}
+            return {suite, "types"} if suite in {AGENT, MODEL, FRONTEND} else {suite}
     if path.startswith("docs/requirements/items/"):
         return FULL
     if (
@@ -66,7 +66,7 @@ def affected(path, suites):
     ):
         return set()
     if path == "packages/backend/src/app/core/log_record.py":
-        return {AGENT, BACKEND, FRONTEND, BROWSER, TOOLS, "types", "aws", "aws_portal"}
+        return {AGENT, MODEL, BACKEND, FRONTEND, BROWSER, TOOLS, INFRA, "types", "aws", "aws_portal"}
     if path.startswith("packages/backend/"):
         return {AGENT, BACKEND, BROWSER, TOOLS, "types", "design", "aws"}
     if path.startswith("packages/database/"):
@@ -89,8 +89,10 @@ def affected(path, suites):
         return {AGENT, BACKEND, BROWSER, INFRA, TOOLS, "types", "audit", "aws"}
     if path.startswith("packages/agent/"):
         return {AGENT, BACKEND, BROWSER, INFRA, "types", "audit", "aws"}
+    if path.startswith("packages/model/"):
+        return {MODEL, INFRA, "types", "audit", "aws"}
     if path == "packages/tools/packaging/build_chat.py":
-        return {AGENT, BACKEND, BROWSER, INFRA, TOOLS, "types", "audit", "aws"}
+        return {MODEL, INFRA, TOOLS, "types", "audit", "aws"}
     if path.startswith("packages/infra/"):
         return (
             {INFRA, TOOLS, "aws", "audit"}
@@ -228,6 +230,18 @@ def select(paths, suites, cached):
     }
 
 
+def parallel_packages():
+    """パッケージ側で宣言した分野を、並列テストと完了の定義で共有する。"""
+    root = Path(__file__).resolve().parents[3]
+    labels = {}
+    for project in sorted((root / "packages").glob("*/pyproject.toml")):
+        with project.open("rb") as file:
+            verify = tomllib.load(file).get("tool", {}).get("tsugite", {}).get("verify")
+        if verify is not None:
+            labels[(project.parent.relative_to(root) / "tests").as_posix()] = verify["label"]
+    return labels
+
+
 def configured_suites():
     with Path("pyproject.toml").open("rb") as file:
         return tomllib.load(file)["tool"]["pytest"]["ini_options"]["testpaths"]
@@ -336,6 +350,10 @@ def plan(base):
                 shutil.copyfile(index, PARTS / index.name)
     if result["reuse_xml"]:
         shutil.copyfile(cached / "coverage.xml", ARTIFACTS / "coverage.xml")
+    package_labels = parallel_packages()
+    result["packages"] = [
+        Path(suite).parent.name for suite in result["suites"] if suite in package_labels
+    ]
     result["setup"] = any(value for key, value in result.items() if key != "reuse_xml")
     result["coverage"] = bool(result["suites"]) or result["reuse_xml"]
     result["documents"] = any(path.lower().endswith(".md") for path in paths)
@@ -356,8 +374,6 @@ def write_coverage_report(destination):
     for entry in ElementTree.parse(destination).iter("class"):
         path = Path(entry.attrib["filename"])
         area = path.parts[1] if path.parts[0] == "packages" else path.parts[0]
-        if path.is_relative_to("packages/agent/src/agent/models"):
-            area = "models"
         counts = totals.setdefault(area, [0, 0])
         lines = entry.findall("./lines/line")
         counts[0] += sum(int(line.attrib["hits"]) > 0 for line in lines)
@@ -369,7 +385,17 @@ def write_coverage_report(destination):
 
 def run_suites():
     plan_data = json.loads((ARTIFACTS / "ci-plan.json").read_text())
-    run_parts(plan_data["suites"])
+    suites = plan_data["suites"]
+    parallel = {f"packages/{package}/tests" for package in plan_data["packages"]}
+    try:
+        run_parts([suite for suite in suites if suite not in parallel])
+    finally:
+        reports = ElementTree.Element("testsuites")
+        for suite in suites:
+            junit = (ARTIFACTS / part_name(suite)).with_suffix(".xml")
+            if junit.is_file():
+                reports.extend(ElementTree.parse(junit).iter("testsuite"))
+        ElementTree.ElementTree(reports).write(ARTIFACTS / "junit.xml", encoding="utf-8")
     parts = [PARTS / part_name(suite) for suite in configured_suites()]
     measured = [str(part) for part in parts if part.stat().st_size]
     subprocess.run([sys.executable, "-m", "coverage", "combine", "--keep", *measured], check=True)

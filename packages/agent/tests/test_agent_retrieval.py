@@ -2,7 +2,7 @@
 import json
 from types import SimpleNamespace
 
-from agent.retrieval import TOPICS, ask, rewritten, semantic
+from chat_retrieval import TOPICS, ask, rewritten, semantic
 
 ACTOR = SimpleNamespace(owners=set(), leads=set(), admin=False)
 

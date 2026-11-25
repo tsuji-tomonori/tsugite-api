@@ -42,7 +42,7 @@ def test_chat_cites_authored_guide_steps(portal):
 
 def test_invalid_worker_step_returns_first_visible_guide_step(portal, monkeypatch):
     """ワーカーの手順番号が文字列でも、閲覧できるガイドの最初の手順を案内する。"""
-    from agent import jobs
+    import chat_jobs as jobs
 
     consumer = headers(portal, "consumer")
     key, manual = ask(portal, consumer, "APIキーを発行する手順を教えて")
@@ -80,7 +80,7 @@ def test_inquiry_requires_explicit_submission_and_private_reply(portal):
 
 def test_async_chat_resolves_public_product_through_worker(portal, monkeypatch):
     """APIが受け付けた質問をワーカーがDBで検索し、本人の受付番号で公開商品を取得できる。"""
-    from agent import jobs
+    import chat_jobs as jobs
 
     provider = headers(portal, "provider")
     consumer = headers(portal, "consumer")

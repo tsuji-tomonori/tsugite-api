@@ -24,8 +24,8 @@ def put(root, name, content):
 
 @pytest.fixture
 def distribution_root(tmp_path, monkeypatch):
-    models = tmp_path / "packages/agent/src/agent/models"
-    for name in ("decision.py", "completion.py", "runtime.py"):
+    models = tmp_path / "packages/model/src"
+    for name in ("decision.py", "completion.py", "model_runtime.py"):
         put(models, name, name.encode())
     put(models, "manifest.json", b"{}")
     for path in (
@@ -140,7 +140,7 @@ def test_model_package_rejects_unexpected_source_revision(distribution_root, mon
 def model_storage(distribution_root, monkeypatch):
     payload = b"quantized test fixture"
     version = hashlib.sha256(payload).hexdigest()
-    models = distribution_root / "packages/agent/src/agent/models"
+    models = distribution_root / "packages/model/src"
     (models / "manifest.json").write_text(
         json.dumps(
             {

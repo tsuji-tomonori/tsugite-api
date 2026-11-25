@@ -47,11 +47,11 @@ def workflow_checks(source, link):
             if not prefix.startswith("#:") or not prefix[2:].strip():
                 raise ValueError(f"{WORKFLOW}:{index + 1}: 検査の説明を #: コメントで指定してください")
             title = fields.get("name", fields.get("run"))
-            condition = fields["if"].value if "if" in fields else ""
+            conditions = [node["if"].value for node in (mapping(job), fields) if "if" in node]
             yield (
                 link(title.value, WORKFLOW, index + 1),
                 prefix.removeprefix("#:").strip(),
-                f"`{condition}`" if condition else "すべてのPR",
+                " かつ ".join(f"`{condition}`" for condition in conditions) or "すべてのPR",
             )
 
 
@@ -62,6 +62,7 @@ def suite_labels():
         for node in source.tree.body:
             if isinstance(node, ast.Assign) and (label := source.label(node)):
                 labels[ast.literal_eval(node.value)] = label
+    labels.update(ci_scope.parallel_packages())
     return labels
 
 

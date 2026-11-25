@@ -6,7 +6,6 @@ import os
 import subprocess
 import sys
 from pathlib import Path
-from xml.etree import ElementTree
 
 ARTIFACTS = Path("artifacts")
 PARTS = ARTIFACTS / "coverage-parts"
@@ -20,7 +19,6 @@ def run_parts(suites):
     from coverage import CoverageData
 
     PARTS.mkdir(parents=True, exist_ok=True)
-    reports = ElementTree.Element("testsuites")
     failed_suites = []
     for suite in suites:
         part = PARTS / part_name(suite)
@@ -39,9 +37,6 @@ def run_parts(suites):
             f"--given-html={prefix}.html",
         ]
         result = subprocess.run(command, env={**os.environ, "COVERAGE_FILE": str(part.resolve())})
-        if junit.exists():
-            reports.extend(ElementTree.parse(junit).getroot().iter("testsuite"))
-            ElementTree.ElementTree(reports).write(ARTIFACTS / "junit.xml", encoding="utf-8")
         if result.returncode:
             failed_suites.append(suite)
             continue

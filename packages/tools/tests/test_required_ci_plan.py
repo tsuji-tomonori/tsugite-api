@@ -99,13 +99,22 @@ def test_plan_records_changed_suites_and_baseline_gaps(project, monkeypatch, doc
     assert json.loads(outputs["missing"]) == (["packages/tools/tests"] if expected else [])
 
 
-def test_selected_suites_retain_separate_measurements_and_combined_result(project, monkeypatch):
-    """選択した二つのスイートのJUnitと計測を残し、合算したXMLに両方の実行行を反映する。"""
+def test_selected_suites_retain_separate_measurements_and_combined_result(project):
+    """パッケージ別ジョブと集約ジョブのJUnitを残し、合算したXMLに両方の実行行を反映する。"""
     suites = ["packages/frontend/tests", "packages/tools/tests"]
     artifacts = project / "artifacts"
     artifacts.mkdir()
-    (artifacts / "ci-plan.json").write_text(json.dumps({"suites": suites}))
+    (artifacts / "ci-plan.json").write_text(json.dumps({"suites": suites, "packages": ["frontend"]}))
+    ci_coverage_parts.run_parts([suites[0]])
+    package_junit = artifacts / "packages-frontend-tests.xml"
+    recorded = package_junit.read_bytes()
     ci_scope.run_suites()
+    assert package_junit.read_bytes() == recorded
+    combined = ElementTree.parse(artifacts / "junit.xml").findall(".//testcase")
+    assert {case.get("classname") for case in combined} == {
+        "packages.frontend.tests.test_frontend",
+        "packages.tools.tests.test_tools",
+    }
     root = ElementTree.parse(artifacts / "coverage.xml").getroot()
     assert int(root.attrib["lines-covered"]) == int(root.attrib["lines-valid"]) == 4
     for suite in suites:
@@ -262,9 +271,27 @@ def test_baseline_measurement_uses_clean_checkout(project, monkeypatch, per_suit
         pytest.param(
             "packages/tools/packaging/build_chat.py",
             ["synth", "audit"],
-            ["packages/agent/tests"],
+            ["packages/model/tests"],
             id="model",
-            marks=pytest.mark.case_detail("推論用配布物の変更時はエージェント単体とリソースを検査する"),
+            marks=pytest.mark.case_detail("推論用配布物の変更時はモデル単体とリソースを検査する"),
+        ),
+        pytest.param(
+            "packages/agent/src/chat_jobs.py",
+            ["synth", "types", "aws"],
+            ["packages/agent/tests", "packages/backend/tests"],
+            id="agent-job",
+            marks=pytest.mark.case_detail(
+                "チャットジョブの変更時はエージェント単体とAPIの連携を検証する"
+            ),
+        ),
+        pytest.param(
+            "packages/model/src/decision.py",
+            ["synth", "types", "aws"],
+            ["packages/model/tests", "packages/infra/tests"],
+            id="decision-handler",
+            marks=pytest.mark.case_detail(
+                "判定ハンドラーの変更時は独立したモデルと配備先のテストを選ぶ"
+            ),
         ),
         pytest.param(
             "tests/e2e/aws/test_portal.py",
@@ -336,6 +363,10 @@ def test_quality_document_links_selected_commit_and_live_policy(project, monkeyp
     """完了条件のCI成果物は適用ルールの値を示し、検証したコミットのソースにリンクする。"""
     from packages.tools.design import completion
 
+    for package, label in (("agent", "エージェント"), ("model", "推論モデル")):
+        directory = project / "packages" / package
+        (directory / "tests").mkdir(parents=True)
+        (directory / "pyproject.toml").write_text(f'[tool.tsugite.verify]\nlabel = "{label}"\n')
     rules = [{"type": "code_coverage", "parameters": {"minimum_coverage": 91, "max_coverage_drop": 2}}]
     path = project / "rules.json"
     path.write_text(json.dumps(rules))
@@ -344,6 +375,7 @@ def test_quality_document_links_selected_commit_and_live_policy(project, monkeyp
     monkeypatch.setattr("sys.argv", ["completion", "--rules-file", str(path), "--artifact"])
     completion.main()
     doc = (project / "artifacts/definition-of-done.md").read_text()
+    assert "エージェント" in doc and "推論モデル" in doc
     assert "91%以上" in doc and "2ポイント以内" in doc
     assert "verified-commit" in doc and "check.yml" in doc
 
@@ -409,3 +441,46 @@ def test_plan_preserves_untouched_suite_cache(project):
     ci_scope.run_suites()
     coverage = ElementTree.parse(project / "artifacts/coverage.xml").getroot()
     assert coverage.get("lines-covered") == coverage.get("lines-valid") == "4"
+
+
+@pytest.mark.parametrize(
+    "chosen",
+    [
+        pytest.param(
+            "agent",
+            id="agent",
+            marks=pytest.mark.case_detail(
+                "エージェントの単体テスト変更はエージェントのジョブで検証する"
+            ),
+        ),
+        pytest.param(
+            "model",
+            id="model",
+            marks=pytest.mark.case_detail("モデルの単体テスト変更はモデルのジョブで検証する"),
+        ),
+    ],
+)
+def test_independent_lambda_package_job_matches_changed_suite(project, chosen):
+    """一方のLambdaの単体テストだけを更新すると、そのパッケージをCIの行列と計画に含める。"""
+    suites = ["packages/agent/tests", "packages/model/tests"]
+    (project / "pyproject.toml").write_text(
+        f"[tool.pytest.ini_options]\ntestpaths = {json.dumps(suites)}\n"
+    )
+    for package, label in (("agent", "エージェント"), ("model", "推論モデル")):
+        directory = project / "packages" / package
+        (directory / "tests").mkdir(parents=True)
+        (directory / "pyproject.toml").write_text(
+            f'[project]\nname = "tsugite-{package}"\n[tool.tsugite.verify]\nlabel = "{label}"\n'
+        )
+    git(project, "add", ".")
+    git(project, "commit", "-qm", "independent packages")
+    base = git(project, "rev-parse", "HEAD")
+    suite = f"packages/{chosen}/tests"
+    (project / suite / "test_handler.py").write_text("def test_handler():\n    assert True\n")
+    git(project, "add", suite)
+    git(project, "commit", "-qm", "change unit test")
+    ci_scope.plan(base)
+    plan = json.loads((project / "artifacts/ci-plan.json").read_text())
+    outputs = dict(line.split("=", 1) for line in (project / "outputs").read_text().splitlines())
+    assert plan["suites"] == [suite]
+    assert plan["packages"] == json.loads(outputs["packages"]) == [chosen]

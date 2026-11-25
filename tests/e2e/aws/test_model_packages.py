@@ -67,11 +67,11 @@ import sys
 from pathlib import Path
 code, dependencies = sys.argv[1:]
 sys.path[:0] = [code, dependencies]
-from agent import jobs
+import chat_jobs as jobs
 from app.core.auth import Actor
 assert Path(jobs.__file__).resolve().is_relative_to(code)
 assert callable(jobs.handler)
-assert not Path(code, "agent/models").exists()
+assert not any(Path(code, name).exists() for name in ("decision.py", "completion.py", "model_runtime.py", "manifest.json"))
 viewer = Actor("consumer", frozenset(), frozenset(), False, False)
 result = jobs.ask("APIキーを発行する手順を教えて", lambda: [], viewer, lambda *_: {})
 assert result["kind"] == "manual" and result["keys"]

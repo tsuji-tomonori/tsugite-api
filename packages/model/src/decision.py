@@ -6,7 +6,7 @@ from functools import cache
 
 import numpy as np
 import onnxruntime as ort
-from runtime import logged_model, model_file
+from model_runtime import logged_model, model_file
 from tokenizers import Tokenizer
 
 

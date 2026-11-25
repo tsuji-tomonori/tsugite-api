@@ -41,7 +41,7 @@ tasks:
       - '{{.RUN}} ruff format .'
   types:
     desc: 型検査
-    cmds: ['uv run --locked --all-packages --group decision-model pyright', '{{.RUN}} mypy', '{{.RUN}} mypy --config-file packages/frontend/pyproject.toml']
+    cmds: ['uv run --locked --all-packages --extra decision pyright', '{{.RUN}} mypy', '{{.RUN}} mypy --config-file packages/frontend/pyproject.toml']
   docs:
     desc: APIとインフラの設計書を更新
     cmds:
@@ -133,8 +133,11 @@ tasks:
     desc: フロントエンドの単体テスト
     cmds: ['{{.RUN}} pytest -q packages/frontend/tests {{.CLI_ARGS}}']
   test:agent:
-    desc: エージェントと推論Lambdaの単体テスト、チャットAPIとの結合テスト
-    cmds: ['{{.RUN}} pytest -q packages/agent/tests packages/backend/tests/test_chat_api.py {{.CLI_ARGS}}']
+    desc: エージェントの単体テスト、チャットAPIとの結合テスト
+    cmds: ['uv run --locked --package tsugite-agent --group dev pytest -q packages/agent/tests packages/backend/tests/test_chat_api.py {{.CLI_ARGS}}']
+  test:model:
+    desc: モデル推論と重み取得の単体テスト
+    cmds: ['uv run --locked --package tsugite-model --group dev pytest -q packages/model/tests {{.CLI_ARGS}}']
   test:backend:
     desc: バックエンドの単体・APIテスト
     cmds: ['{{.RUN}} pytest -q packages/backend/tests {{.CLI_ARGS}}']

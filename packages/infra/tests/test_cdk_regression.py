@@ -74,7 +74,7 @@ def test_backend_layer_changes_only_with_dependencies(tmp_path):
             "app.main.handler",
             "app.authorizer.handler",
             "app.migrate.handler",
-            "agent.jobs.handler",
+            "chat_jobs.handler",
         }
         functions = {
             props["Handler"]: props

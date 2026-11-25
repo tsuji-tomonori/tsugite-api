@@ -33,9 +33,7 @@ class PortalChat(Construct):
             ],
         )
         bucket = f"cdk-hnb659fds-assets-{Aws.ACCOUNT_ID}-{Aws.REGION}"
-        artifacts = json.loads(
-            (ROOT / "packages/agent/src/agent/models/manifest.json").read_text(encoding="utf-8")
-        )
+        artifacts = json.loads((ROOT / "packages/model/src/manifest.json").read_text(encoding="utf-8"))
         role = iam.Role(self, "WorkerRole", assumed_by=iam.ServicePrincipal("lambda.amazonaws.com"))
         role.add_to_policy(
             iam.PolicyStatement(actions=["dsql:DbConnect"], resources=[cluster.attr_resource_arn])
@@ -45,7 +43,7 @@ class PortalChat(Construct):
             self,
             "Worker",
             runtime=EVENT_PYTHON,
-            handler="agent.jobs.handler",
+            handler="chat_jobs.handler",
             code=backend_code,
             layers=[dependencies],
             role=role,

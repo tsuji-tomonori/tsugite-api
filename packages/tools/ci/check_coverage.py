@@ -20,13 +20,14 @@ BROWSER_FIXTURE = Path("tests/e2e/browser/conftest.py")
 BROWSER_TRACE = Path("tests/support/pyodide_trace.py")
 
 
-def coverage_policy(browser_fixture=None, *, legacy_agent=False):
+def coverage_policy(browser_fixture=None, *, previous_agent_root=None):
     with (ROOT / "pyproject.toml").open("rb") as file:
         config = tomllib.load(file)["tool"]["coverage"]
     # 比較元のコミットでも移動前のエージェントを同じ範囲で計測する。
-    if legacy_agent:
+    if previous_agent_root:
         roots = config["run"]["source"]
-        roots[:] = ["agent" if name == "packages/agent/src/agent" else name for name in roots]
+        roots.remove("packages/model/src")
+        roots[roots.index("packages/agent/src")] = previous_agent_root
     digest = hashlib.sha256(json.dumps(config, sort_keys=True).encode())
     if browser_fixture is None:
         browser_fixture = (ROOT / BROWSER_FIXTURE).read_text(encoding="utf-8")
@@ -128,7 +129,9 @@ def compatible_baseline(folder, sha):
     )
     flat = 'path.name: path.as_posix() for path in FRONTEND.glob("*.py")'
     fixture = (ROOT / BROWSER_FIXTURE).read_text(encoding="utf-8")
-    if marker.read_text().strip() == coverage_policy(legacy_agent=True):
+    if marker.read_text().strip() in {
+        coverage_policy(previous_agent_root=root) for root in ("agent", "packages/agent/src/agent")
+    }:
         return True
     if fixture.count(recursive) != 1 or marker.read_text().strip() != coverage_policy(
         fixture.replace(recursive, flat)
@@ -204,8 +207,11 @@ def measure_base_coverage(sha):
             config = ROOT / "pyproject.toml"
             with config.open("rb") as file:
                 roots = tomllib.load(file)["tool"]["coverage"]["run"]["source"]
-            if (path / "agent/jobs.py").is_file():
-                roots = ["agent" if root == "packages/agent/src/agent" else root for root in roots]
+            for previous in ("agent", "packages/agent/src/agent"):
+                if (path / previous / "jobs.py").is_file():
+                    roots.remove("packages/model/src")
+                    roots[roots.index("packages/agent/src")] = previous
+                    break
             if not (path / "packages/tools").exists() and (path / "tools").is_dir():
                 roots = ["tools" if root == "packages/tools" else root for root in roots]
             command = [

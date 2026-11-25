@@ -36,6 +36,9 @@ def test_rule_changes_and_test_edits_reach_document(tmp_path, monkeypatch):
     assert "89%以上" in result and "0.5ポイント以内" in result
     assert "全体の最低行カバレッジ | 下限指定なし" in completion.render([], "sample", "../../")
     assert "フロントエンド" in result and "アーキテクチャ" in result
+    for suite, label in completion.ci_scope.parallel_packages().items():
+        section = result.split(f"### {label}（", 1)[1].split("\n### ", 1)[0]
+        assert f"({suite}/" in section.replace("(../../", "(")
     suite = tmp_path / "cases"
     suite.mkdir()
     path = suite / "test_feature.py"

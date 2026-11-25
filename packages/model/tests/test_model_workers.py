@@ -11,13 +11,13 @@ from unittest.mock import Mock
 import pytest
 
 ROOT = Path(__file__).resolve().parents[3]
-MODELS = ROOT / "packages/agent/src/agent/models"
+MODELS = ROOT / "packages/model/src"
 
 
 def load_worker(name, monkeypatch, **dependencies):
     monkeypatch.syspath_prepend(str(ROOT / "packages/backend/src/app/core"))
     for module, replacement in dependencies.items():
-        if module == "runtime":
+        if module == "model_runtime":
             replacement.logged_model.side_effect = lambda handler: handler
         monkeypatch.setitem(sys.modules, module, replacement)
     spec = importlib.util.spec_from_file_location(name, MODELS / f"{name}.py")
@@ -35,7 +35,7 @@ def test_embedding_reuses_vectors_and_validates_batch(monkeypatch):
         numpy=Mock(),
         onnxruntime=Mock(),
         tokenizers=Mock(),
-        runtime=Mock(),
+        model_runtime=Mock(),
     )
     encode = Mock(return_value=SimpleNamespace(tolist=lambda: [[1.0], [2.0]]))
     monkeypatch.setattr(worker, "encode", encode)
@@ -50,7 +50,7 @@ def test_embedding_reuses_vectors_and_validates_batch(monkeypatch):
 
 def test_completion_limits_tool_choices(monkeypatch):
     """検索モデルへの選択肢を許可された操作に限定し、候補が空ならモデルを呼び出さない。"""
-    worker = load_worker("completion", monkeypatch, runtime=Mock())
+    worker = load_worker("completion", monkeypatch, model_runtime=Mock())
     monkeypatch.setenv("MODEL_ROLE", "tool")
     complete = Mock(return_value={"action": "catalog", "query": "在庫"})
     monkeypatch.setattr(worker, "complete", complete)
@@ -64,7 +64,7 @@ def test_completion_limits_tool_choices(monkeypatch):
 def test_model_download_verifies_digest_before_reuse(monkeypatch, tmp_path):
     """モデルのハッシュが異なる場合は一時ファイルを破棄し、正しいモデルを取得した後は再利用する。"""
     s3 = Mock()
-    worker = load_worker("runtime", monkeypatch, boto3=SimpleNamespace(client=lambda _: s3))
+    worker = load_worker("model_runtime", monkeypatch, boto3=SimpleNamespace(client=lambda _: s3))
     monkeypatch.setenv("MODEL_BUCKET", "models")
     monkeypatch.setattr(worker, "Path", lambda _: tmp_path)
     item = {"name": "model.bin", "revision": "v1", "sha256": hashlib.sha256(b"valid").hexdigest()}
@@ -84,7 +84,7 @@ def test_generation_returns_grounded_result_from_warm_process(monkeypatch):
     """起動済みの生成モデルを再利用し、提示した資料の範囲と決定的な生成条件を渡す。"""
     import json
 
-    worker = load_worker("completion", monkeypatch, runtime=Mock())
+    worker = load_worker("completion", monkeypatch, model_runtime=Mock())
     monkeypatch.setenv("MODEL_ROLE", "generate")
     process = Mock()
     process.poll.return_value = None
@@ -105,7 +105,7 @@ def test_generation_returns_grounded_result_from_warm_process(monkeypatch):
 
 def test_model_process_recovers_from_failed_health_check(monkeypatch):
     """応答しない生成プロセスを停止し、同じモデルをCPUで再起動して準備完了を待つ。"""
-    worker = load_worker("completion", monkeypatch, runtime=Mock())
+    worker = load_worker("completion", monkeypatch, model_runtime=Mock())
     old, new = Mock(), Mock()
     old.poll.return_value = new.poll.return_value = None
     monkeypatch.setattr(worker, "process", old)
@@ -125,10 +125,15 @@ def test_model_process_recovers_from_failed_health_check(monkeypatch):
 
 def test_embedding_load_reuses_cpu_model_and_tokenizer(monkeypatch):
     """埋め込みモデルと長さ制限付きトークナイザーを初回だけ読み込む。"""
-    ort, tokenizers, runtime = Mock(), Mock(), Mock()
-    runtime.model_file.side_effect = lambda role, name: f"/tmp/{role}/{name}"
+    ort, tokenizers, model_runtime = Mock(), Mock(), Mock()
+    model_runtime.model_file.side_effect = lambda role, name: f"/tmp/{role}/{name}"
     worker = load_worker(
-        "decision", monkeypatch, numpy=Mock(), onnxruntime=ort, tokenizers=tokenizers, runtime=runtime
+        "decision",
+        monkeypatch,
+        numpy=Mock(),
+        onnxruntime=ort,
+        tokenizers=tokenizers,
+        model_runtime=model_runtime,
     )
     session, tokenizer = worker.load()
     assert worker.load() == (session, tokenizer)
@@ -146,7 +151,7 @@ def test_model_runtime_logs_failures_and_preserves_exceptions(monkeypatch, capsy
     """成功時は戻り値を保ち、重みの検証エラーは診断ログを出して呼び出し元へ伝える。"""
     import json
 
-    worker = load_worker("runtime", monkeypatch)
+    worker = load_worker("model_runtime", monkeypatch)
     assert worker.manifest()["decision"]
     assert worker.logged_model(lambda event, ctx: "成功")({}, None) == "成功"
 

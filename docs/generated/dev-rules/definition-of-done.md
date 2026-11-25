@@ -11,7 +11,7 @@
 | 単体テストのパッケージ別下限 | C0 90%、C1 85% |
 | 全体の最低行カバレッジ | 84%以上 |
 | 比較元からの低下幅 | 1ポイント以内 |
-| 計測対象 | `packages/backend/src/app`、`packages/database`、`packages/frontend/src/web_app`、`packages/infra`、`packages/sample_api/src/sample_api`、`packages/agent/src/agent`、`packages/tools` |
+| 計測対象 | `packages/backend/src/app`、`packages/database`、`packages/frontend/src/web_app`、`packages/infra`、`packages/sample_api/src/sample_api`、`packages/agent/src`、`packages/model/src`、`packages/tools` |
 | 計測から除くパターン | `*/tests/*`、`*/cdk.out/*`、`*/__pycache__/*` |
 
 ## 分野別の変更と必要な検査
@@ -21,11 +21,12 @@
 | 分野 | 変更ファイルの例 | 合格が必要なテスト | 追加の検査・生成 |
 | --- | --- | --- | --- |
 | サンプルAPI | `packages/sample_api/src/sample_api/database.py` | サンプルAPI、アーキテクチャ、バックエンド、インフラ、ブラウザーE2E、開発ツール | Ruff（書式・静的解析）、API設計書・契約の生成、依存関係・CDK監査、CDK合成・インフラ文書生成、AWSエミュレーターE2E |
-| エージェント・推論モデル | `packages/agent/src/agent/jobs.py` | エージェント・推論モデル、アーキテクチャ、バックエンド、インフラ、ブラウザーE2E | Ruff（書式・静的解析）、型検査、依存関係・CDK監査、CDK合成・インフラ文書生成、AWSエミュレーターE2E |
-| バックエンド | `packages/backend/src/app/apis/catalog/apply.py` | エージェント・推論モデル、アーキテクチャ、バックエンド、ブラウザーE2E、開発ツール | Ruff（書式・静的解析）、型検査、API設計書・契約の生成、CDK合成・インフラ文書生成、AWSエミュレーターE2E |
+| エージェント | `packages/agent/src/chat_jobs.py` | エージェント、アーキテクチャ、バックエンド、インフラ、ブラウザーE2E | Ruff（書式・静的解析）、型検査、依存関係・CDK監査、CDK合成・インフラ文書生成、AWSエミュレーターE2E |
+| 推論モデル | `packages/model/src/completion.py` | 推論モデル、アーキテクチャ、インフラ | Ruff（書式・静的解析）、型検査、依存関係・CDK監査、CDK合成・インフラ文書生成、AWSエミュレーターE2E |
+| バックエンド | `packages/backend/src/app/apis/catalog/apply.py` | エージェント、アーキテクチャ、バックエンド、ブラウザーE2E、開発ツール | Ruff（書式・静的解析）、型検査、API設計書・契約の生成、CDK合成・インフラ文書生成、AWSエミュレーターE2E |
 | フロントエンド | `packages/frontend/src/web_app/actions/activity.py` | アーキテクチャ、フロントエンド、ブラウザーE2E | Ruff（書式・静的解析）、型検査、CDK合成・インフラ文書生成、AWSエミュレーターE2E |
 | インフラ | `packages/infra/app.py` | アーキテクチャ、インフラ | Ruff（書式・静的解析）、依存関係・CDK監査、CDK合成・インフラ文書生成、AWSエミュレーターE2E |
-| データベース | `packages/database/migrations/env.py` | エージェント・推論モデル、アーキテクチャ、バックエンド、データベース、ブラウザーE2E、開発ツール | Ruff（書式・静的解析）、型検査、API設計書・契約の生成、CDK合成・インフラ文書生成、AWSエミュレーターE2E |
+| データベース | `packages/database/migrations/env.py` | エージェント、アーキテクチャ、バックエンド、データベース、ブラウザーE2E、開発ツール | Ruff（書式・静的解析）、型検査、API設計書・契約の生成、CDK合成・インフラ文書生成、AWSエミュレーターE2E |
 | 開発ツール | `packages/tools/ci/audit_infra.py` | アーキテクチャ | Ruff（書式・静的解析）、依存関係・CDK監査、CDK合成・インフラ文書生成 |
 
 ## CIの検査項目と実行条件
@@ -34,37 +35,39 @@
 
 | 検査 | 確認内容 | 実行条件 |
 | --- | --- | --- |
-| [完了の定義を生成](../../../.github/workflows/check.yml#L26) | 分野別のテスト定義と有効なカバレッジ基準から完了の定義を生成できる。 | すべてのPR |
-| [要件別の受入テスト定義を検査](../../../.github/workflows/check.yml#L38) | 各要件に実在する受入テストと証跡の取得方法が定義されている。 | すべてのPR |
-| [要件一覧と用語一覧を生成し、feat ブランチの新規要件を検査](../../../.github/workflows/check.yml#L41) | 要件文・必須の節・共通語彙を検査する。feat ブランチには新しい要件が1件以上ある。 | すべてのPR |
-| [Markdown文書の表題を検証](../../../.github/workflows/check.yml#L77) | 文書の最初のレベル1見出しに日本語がある。 | `steps.scope.outputs.documents == 'true'` |
-| [変更ファイルの文字コードと改行を検査](../../../.github/workflows/check.yml#L81) | 変更したテキストはUTF-8（BOMなし）・LFで、末尾の改行が1つある。 | `steps.scope.outputs.full != 'true'` |
-| [task lint](../../../.github/workflows/check.yml#L97) | 全体のRuff書式検査・静的解析と、Git管理対象のテキスト検査が通る。 | `steps.scope.outputs.full == 'true'` |
-| [変更したPythonファイルの書式と静的検査](../../../.github/workflows/check.yml#L100) | 追加・変更したPythonファイルにRuffの書式違反やルール違反がない。 | `steps.scope.outputs.lint == 'true' && steps.scope.outputs.full != 'true'` |
-| [task types](../../../.github/workflows/check.yml#L109) | 設定対象のPyrightとmypyの型検査がともに通る。 | `steps.scope.outputs.types == 'true'` |
-| [task test:hooks](../../../.github/workflows/check.yml#L112) | Gitフックが機密情報を含むコミットや保護対象ブランチへの不正なプッシュを拒否する。 | `steps.scope.outputs.hooks == 'true'` |
-| [task synth](../../../.github/workflows/check.yml#L121) | 配布物をビルドし、CDKからCloudFormationテンプレートを合成できる。 | `steps.scope.outputs.synth == 'true'` |
-| [同じロックから再ビルドしたLambda LayerのSHA-256を照合](../../../.github/workflows/check.yml#L124) | 依存ロックまたはビルダーの変更時は、再生成したLambda依存パッケージのSHA-256が一致する。 | `steps.scope.outputs.synth == 'true'` |
-| [uv run --locked --all-packages python packages/tools/packaging/build_frontend.py](../../../.github/workflows/check.yml#L135) | フロントエンドの配布物を生成できる。 | `steps.scope.outputs.frontend_build == 'true'` |
-| [task docs:infra:render](../../../.github/workflows/check.yml#L138) | 合成済みテンプレートからリソース一覧とパラメーターシートを生成できる。 | `steps.scope.outputs.synth == 'true'` |
-| [task contracts docs:api](../../../.github/workflows/check.yml#L141) | OpenAPI・テーブル定義・API設計書を生成できる。 | `steps.scope.outputs.design == 'true'` |
-| [商品別OpenAPIの生成と差分検査](../../../.github/workflows/check.yml#L144) | 商品別のOpenAPI YAMLをFastAPIから再生成し、コミット済みの仕様と一致する。 | `steps.scope.outputs.design == 'true'` |
-| [task audit](../../../.github/workflows/check.yml#L150) | CDKの監査結果を出力し、Lambda実行時依存に対するpip-auditが通る。 | `steps.scope.outputs.audit == 'true'` |
-| [対象テストを実行し、全体カバレッジを集計](../../../.github/workflows/check.yml#L153) | 差分に応じて選ばれたテストが成功し、比較元の計測結果と合わせて全体を集計できる。 | `steps.scope.outputs.suites != '[]'` |
-| [パッケージごとの単体テストカバレッジを検査](../../../.github/workflows/check.yml#L158) | パッケージ別に単体テストのみで行・分岐の両方が設定した下限を満たす。 | `steps.scope.outputs.suites != '[]'` |
-| [task test:aws](../../../.github/workflows/check.yml#L162) | AWSエミュレーターで対象のE2Eが成功する。 | `${{ !cancelled() && (success() \|\| steps.suites.outcome == 'failure') && steps.scope.outputs.aws == 'true' && steps.scope.outputs.aws_portal_only != 'true' }}` |
-| [task test:aws -- -k test_cognito_browser](../../../.github/workflows/check.yml#L165) | ポータルに限定した検証ではCognitoを使うブラウザーテストが成功する。 | `${{ !cancelled() && (success() \|\| steps.suites.outcome == 'failure') && steps.scope.outputs.aws_portal_only == 'true' }}` |
-| [行カバレッジをブランチルールと照合](../../../.github/workflows/check.yml#L168) | 全体の行カバレッジが、対象ブランチの下限と許容低下幅を満たす。 | `steps.scope.outputs.coverage == 'true'` |
-| [カバレッジと成果物へのリンクをCIの概要に表示](../../../.github/workflows/check.yml#L186) | 行カバレッジとXML成果物へのリンクをCIの概要で確認できる。 | `steps.coverage_artifact.outcome == 'success'` |
-| [今回のJUnit・画面証跡から要件別の合否を判定](../../../.github/workflows/check.yml#L195) | 今回の実行対象となった要件について、JUnit結果と指定された証跡から合否を判定できる。 | `${{ !cancelled() }}` |
-| [Build screenshot report](../../../.github/workflows/check.yml#L211) | JUnit結果とスクリーンショットからレポートを生成できる。 | `${{ !cancelled() && steps.scope.outputs.report == 'true' && hashFiles('artifacts/junit.xml') != '' }}` |
+| [完了の定義を生成](../../../.github/workflows/check.yml#L28) | 分野別のテスト定義と有効なカバレッジ基準から完了の定義を生成できる。 | すべてのPR |
+| [要件別の受入テスト定義を検査](../../../.github/workflows/check.yml#L40) | 各要件に実在する受入テストと証跡の取得方法が定義されている。 | すべてのPR |
+| [要件一覧と用語一覧を生成し、feat ブランチの新規要件を検査](../../../.github/workflows/check.yml#L43) | 要件文・必須の節・共通語彙を検査する。feat ブランチには新しい要件が1件以上ある。 | すべてのPR |
+| [パッケージの単体テストを実行](../../../.github/workflows/check.yml#L103) | 対象パッケージのテストを独立したジョブで実行し、JUnitとカバレッジを記録する。 | `needs.plan.outputs.packages != '[]'` |
+| [Markdown文書の表題を検証](../../../.github/workflows/check.yml#L147) | 文書の最初のレベル1見出しに日本語がある。 | `${{ !cancelled() }}` かつ `steps.scope.outputs.documents == 'true'` |
+| [変更ファイルの文字コードと改行を検査](../../../.github/workflows/check.yml#L151) | 変更したテキストはUTF-8（BOMなし）・LFで、末尾の改行が1つある。 | `${{ !cancelled() }}` かつ `steps.scope.outputs.full != 'true'` |
+| [task lint](../../../.github/workflows/check.yml#L167) | 全体のRuff書式検査・静的解析と、Git管理対象のテキスト検査が通る。 | `${{ !cancelled() }}` かつ `steps.scope.outputs.full == 'true'` |
+| [変更したPythonファイルの書式と静的検査](../../../.github/workflows/check.yml#L170) | 追加・変更したPythonファイルにRuffの書式違反やルール違反がない。 | `${{ !cancelled() }}` かつ `steps.scope.outputs.lint == 'true' && steps.scope.outputs.full != 'true'` |
+| [task types](../../../.github/workflows/check.yml#L179) | 設定対象のPyrightとmypyの型検査がともに通る。 | `${{ !cancelled() }}` かつ `steps.scope.outputs.types == 'true'` |
+| [task test:hooks](../../../.github/workflows/check.yml#L182) | Gitフックが機密情報を含むコミットや保護対象ブランチへの不正なプッシュを拒否する。 | `${{ !cancelled() }}` かつ `steps.scope.outputs.hooks == 'true'` |
+| [task synth](../../../.github/workflows/check.yml#L191) | 配布物をビルドし、CDKからCloudFormationテンプレートを合成できる。 | `${{ !cancelled() }}` かつ `steps.scope.outputs.synth == 'true'` |
+| [同じロックから再ビルドしたLambda LayerのSHA-256を照合](../../../.github/workflows/check.yml#L194) | 依存ロックまたはビルダーの変更時は、再生成したLambda依存パッケージのSHA-256が一致する。 | `${{ !cancelled() }}` かつ `steps.scope.outputs.synth == 'true'` |
+| [uv run --locked --all-packages python packages/tools/packaging/build_frontend.py](../../../.github/workflows/check.yml#L205) | フロントエンドの配布物を生成できる。 | `${{ !cancelled() }}` かつ `steps.scope.outputs.frontend_build == 'true'` |
+| [task docs:infra:render](../../../.github/workflows/check.yml#L208) | 合成済みテンプレートからリソース一覧とパラメーターシートを生成できる。 | `${{ !cancelled() }}` かつ `steps.scope.outputs.synth == 'true'` |
+| [task contracts docs:api](../../../.github/workflows/check.yml#L211) | OpenAPI・テーブル定義・API設計書を生成できる。 | `${{ !cancelled() }}` かつ `steps.scope.outputs.design == 'true'` |
+| [商品別OpenAPIの生成と差分検査](../../../.github/workflows/check.yml#L214) | 商品別のOpenAPI YAMLをFastAPIから再生成し、コミット済みの仕様と一致する。 | `${{ !cancelled() }}` かつ `steps.scope.outputs.design == 'true'` |
+| [task audit](../../../.github/workflows/check.yml#L220) | CDKの監査結果を出力し、Lambda実行時依存に対するpip-auditが通る。 | `${{ !cancelled() }}` かつ `steps.scope.outputs.audit == 'true'` |
+| [対象テストを実行し、全体カバレッジを集計](../../../.github/workflows/check.yml#L223) | 差分に応じて選ばれたテストが成功し、比較元の計測結果と合わせて全体を集計できる。 | `${{ !cancelled() }}` かつ `steps.scope.outputs.suites != '[]'` |
+| [パッケージごとの単体テストカバレッジを検査](../../../.github/workflows/check.yml#L228) | パッケージ別に単体テストのみで行・分岐の両方が設定した下限を満たす。 | `${{ !cancelled() }}` かつ `steps.scope.outputs.suites != '[]'` |
+| [task test:aws](../../../.github/workflows/check.yml#L232) | AWSエミュレーターで対象のE2Eが成功する。 | `${{ !cancelled() }}` かつ `${{ !cancelled() && (success() \|\| steps.suites.outcome == 'failure') && steps.scope.outputs.aws == 'true' && steps.scope.outputs.aws_portal_only != 'true' }}` |
+| [task test:aws -- -k test_cognito_browser](../../../.github/workflows/check.yml#L235) | ポータルに限定した検証ではCognitoを使うブラウザーテストが成功する。 | `${{ !cancelled() }}` かつ `${{ !cancelled() && (success() \|\| steps.suites.outcome == 'failure') && steps.scope.outputs.aws_portal_only == 'true' }}` |
+| [行カバレッジをブランチルールと照合](../../../.github/workflows/check.yml#L238) | 全体の行カバレッジが、対象ブランチの下限と許容低下幅を満たす。 | `${{ !cancelled() }}` かつ `steps.scope.outputs.coverage == 'true'` |
+| [カバレッジと成果物へのリンクをCIの概要に表示](../../../.github/workflows/check.yml#L256) | 行カバレッジとXML成果物へのリンクをCIの概要で確認できる。 | `${{ !cancelled() }}` かつ `steps.coverage_artifact.outcome == 'success'` |
+| [今回のJUnit・画面証跡から要件別の合否を判定](../../../.github/workflows/check.yml#L265) | 今回の実行対象となった要件について、JUnit結果と指定された証跡から合否を判定できる。 | `${{ !cancelled() }}` かつ `${{ !cancelled() }}` |
+| [Build screenshot report](../../../.github/workflows/check.yml#L281) | JUnit結果とスクリーンショットからレポートを生成できる。 | `${{ !cancelled() }}` かつ `${{ !cancelled() && steps.scope.outputs.report == 'true' && hashFiles('artifacts/junit.xml') != '' }}` |
+| [検証計画と並列ジョブの結果を確認](../../../.github/workflows/check.yml#L296) | 差分判定に成功し、選択されたすべてのパッケージが検証に合格している。 | `${{ !cancelled() }}` かつ `${{ !cancelled() }}` |
 
 ### 静的解析の設定
 
 | ツール | ルール・対象 |
 | --- | --- |
 | Ruff | `E4`、`E7`、`E9`、`F`、`I`、`F631`、`PT011`、`PT012` |
-| Pyright | `packages/agent`、`packages/backend/src/app`、`packages/database/src/tsugite_db` |
+| Pyright | `packages/agent`、`packages/model`、`packages/backend/src/app`、`packages/database/src/tsugite_db` |
 | Pyright（strict） | `packages/database/src/tsugite_db/models`、`packages/backend/src/app/schemas/catalog.py`、`packages/backend/src/app/schemas/base.py` |
 | mypy（strict=True） | `packages/database/src/tsugite_db/models`、`packages/backend/src/app/schemas/catalog.py`、`packages/backend/src/app/schemas/base.py` |
 | フロントエンドのmypy（strict=True） | `packages/frontend/src/web_app`、`packages/frontend/tests` |
@@ -81,7 +84,7 @@
 | 12商品で5つの業務操作とヘルスチェックを実行し、商品境界とLambda応答を照合する。 | — | [test_each_product_operation_through_lambda](../../../packages/sample_api/tests/test_products.py#L29) |
 | 在庫サンプルが操作に応じたステータスとJSON応答を返す。 | 登録されている商品の在庫一覧を返す<br>指定した商品の在庫を返す<br>未登録の商品は該当なしと返す | [test_stock_response](../../../packages/sample_api/tests/test_stock_lambda.py#L34) |
 
-### エージェント・推論モデル（19項目）
+### エージェント（11項目）
 
 | 確認内容 | 条件別の確認内容 | テスト定義 |
 | --- | --- | --- |
@@ -96,20 +99,33 @@
 | 対象外と判定した質問はおすすめという語を含んでも検索・生成を呼ばない。 | — | [test_strong_outside_decision_prevents_tools_and_generation](../../../packages/agent/tests/test_agent_retrieval.py#L54) |
 | 指示の上書きを拒否し、質問の語が含まれない生成クエリは元の質問に戻す。 | — | [test_agent_blocks_prompt_instructions_and_keeps_query_grounded](../../../packages/agent/tests/test_agent_retrieval.py#L70) |
 | 生成クエリだけに一致する商品は意味検索の候補から外す。 | — | [test_rewritten_similarity_needs_support_from_original_question](../../../packages/agent/tests/test_agent_retrieval.py#L81) |
-| 重複する入力の埋め込みを再利用し、空のバッチは推論前に拒否する。 | — | [test_embedding_reuses_vectors_and_validates_batch](../../../packages/agent/tests/test_model_workers.py#L30) |
-| 検索モデルへの選択肢を許可された操作に限定し、候補が空ならモデルを呼び出さない。 | — | [test_completion_limits_tool_choices](../../../packages/agent/tests/test_model_workers.py#L51) |
-| モデルのハッシュが異なる場合は一時ファイルを破棄し、正しいモデルを取得した後は再利用する。 | — | [test_model_download_verifies_digest_before_reuse](../../../packages/agent/tests/test_model_workers.py#L64) |
-| 起動済みの生成モデルを再利用し、提示した資料の範囲と決定的な生成条件を渡す。 | — | [test_generation_returns_grounded_result_from_warm_process](../../../packages/agent/tests/test_model_workers.py#L83) |
-| 応答しない生成プロセスを停止し、同じモデルをCPUで再起動して準備完了を待つ。 | — | [test_model_process_recovers_from_failed_health_check](../../../packages/agent/tests/test_model_workers.py#L106) |
-| 埋め込みモデルと長さ制限付きトークナイザーを初回だけ読み込む。 | — | [test_embedding_load_reuses_cpu_model_and_tokenizer](../../../packages/agent/tests/test_model_workers.py#L126) |
-| 成功時は戻り値を保ち、重みの検証エラーは診断ログを出して呼び出し元へ伝える。 | — | [test_model_runtime_logs_failures_and_preserves_exceptions](../../../packages/agent/tests/test_model_workers.py#L145) |
-| 起動中に終了したプロセスと応答期限を超えたプロセスを区別して後片付けする。 | — | [test_completion_startup_handles_crash_and_timeout](../../../packages/agent/tests/test_model_workers.py#L164) |
 
-### アーキテクチャ（48項目）
+### 推論モデル（16項目）
 
 | 確認内容 | 条件別の確認内容 | テスト定義 |
 | --- | --- | --- |
-| エージェントが使う推論モデルの役割、取得元、ハッシュを検査する。 | — | [test_agent_distributes_pinned_models](../../../tests/architecture/agent/test_distribution.py#L6) |
+| 重複する入力の埋め込みを再利用し、空のバッチは推論前に拒否する。 | — | [test_embedding_reuses_vectors_and_validates_batch](../../../packages/model/tests/test_model_workers.py#L30) |
+| 検索モデルへの選択肢を許可された操作に限定し、候補が空ならモデルを呼び出さない。 | — | [test_completion_limits_tool_choices](../../../packages/model/tests/test_model_workers.py#L51) |
+| モデルのハッシュが異なる場合は一時ファイルを破棄し、正しいモデルを取得した後は再利用する。 | — | [test_model_download_verifies_digest_before_reuse](../../../packages/model/tests/test_model_workers.py#L64) |
+| 起動済みの生成モデルを再利用し、提示した資料の範囲と決定的な生成条件を渡す。 | — | [test_generation_returns_grounded_result_from_warm_process](../../../packages/model/tests/test_model_workers.py#L83) |
+| 応答しない生成プロセスを停止し、同じモデルをCPUで再起動して準備完了を待つ。 | — | [test_model_process_recovers_from_failed_health_check](../../../packages/model/tests/test_model_workers.py#L106) |
+| 埋め込みモデルと長さ制限付きトークナイザーを初回だけ読み込む。 | — | [test_embedding_load_reuses_cpu_model_and_tokenizer](../../../packages/model/tests/test_model_workers.py#L126) |
+| 成功時は戻り値を保ち、重みの検証エラーは診断ログを出して呼び出し元へ伝える。 | — | [test_model_runtime_logs_failures_and_preserves_exceptions](../../../packages/model/tests/test_model_workers.py#L150) |
+| 起動中に終了したプロセスと応答期限を超えたプロセスを区別して後片付けする。 | — | [test_completion_startup_handles_crash_and_timeout](../../../packages/model/tests/test_model_workers.py#L169) |
+| 重複する文章は一度だけ推論し、ウォーム実行でも入力順に対応する埋め込みを返す。 | — | [test_embedding_worker_reuses_each_text_and_preserves_batch_order](../../../packages/model/tests/test_required_model.py#L41) |
+| 各モデルは質問をデータとして送り、温度・シードと出力形式を固定して同じ構造の応答を返す。 | 検索語モデルの選択肢をカタログと手順の検索に限定する<br>回答モデルの見出しと出典番号を渡された候補だけに限定する | [test_generation_workers_request_reproducible_schema_constrained_output](../../../packages/model/tests/test_required_model.py#L83) |
+| 業務更新だけが指定されて検索先が残らなければ、モデルを起動せず空の選択を返す。 | — | [test_no_permitted_search_target_skips_inference](../../../packages/model/tests/test_required_model.py#L114) |
+| 推論サービスの出力が壊れたJSONなら検索先や検索語を作らず、選択なしとして返す。 | — | [test_broken_json_does_not_return_invented_search_action](../../../packages/model/tests/test_required_model.py#L124) |
+| 生成サーバーに接続できなければ呼び出し失敗を通知し、エラーログに質問本文を含めない。 | — | [test_unavailable_inference_server_reports_failure_without_disclosing_question](../../../packages/model/tests/test_required_model.py#L135) |
+| 多数の異なる質問が続いた後でも直近の埋め込みを再利用し、古い質問は正しく再計算する。 | — | [test_warm_embedding_cache_keeps_recent_queries_and_recomputes_old_texts](../../../packages/model/tests/test_required_model.py#L152) |
+| ONNXが埋め込みの代わりに異なる型を返した場合は、検索に使えるベクトルとして返さない。 | — | [test_non_dense_onnx_output_fails_the_embedding_request](../../../packages/model/tests/test_required_model.py#L170) |
+| 固定版のトークナイザーを一度取得し、メモリキャッシュを作り直した後も一時ファイルを再利用する。 | — | [test_warm_worker_reuses_downloaded_versioned_tokenizer](../../../packages/model/tests/test_required_model.py#L194) |
+
+### アーキテクチャ（50項目）
+
+| 確認内容 | 条件別の確認内容 | テスト定義 |
+| --- | --- | --- |
+| ワーカーと検索をsrc直下から配布し、推論ワーカーを同梱しない。 | — | [test_agent_publishes_flat_worker_modules](../../../tests/architecture/agent/test_distribution.py#L7) |
 | 公開操作のOpenAPI IDと実装が対応する | — | [test_published_operations_have_stable_ids](../../../tests/architecture/backend/test_routes.py#L5) |
 | FastAPIに登録した業務ルートはapis配下で定義し、下位層からルーターを参照しない。 | — | [test_route_handlers_belong_to_api_layer](../../../tests/architecture/backend/test_routes.py#L17) |
 | 全層の単体テスト・アーキテクチャテスト・E2Eに簡潔な日本語の説明がある。 | — | [test_test_cases_have_japanese_descriptions](../../../tests/architecture/core/test_case_descriptions.py#L19) |
@@ -118,7 +134,7 @@
 | PR説明・CSS・各層のテスト変更で、キャッシュがなくても無関係な層やCDKを起動しない。 | — | [test_verify_skips_unrelated_packages_even_without_coverage](../../../tests/architecture/core/test_ci_scope.py#L67) |
 | AWSエミュレーターは合成済みテンプレートを使い、モデル定義の変更はCDKの単体テストでも検証する。 | — | [test_emulator_and_model_manifest_verify_deployment_inputs](../../../tests/architecture/core/test_ci_scope.py#L83) |
 | Verifyが差分判定の出力を使い、対象外のCDK合成・AWS・ブラウザー・単体テストを起動しない。 | — | [test_workflow_runs_expensive_steps_only_for_selected_outputs](../../../tests/architecture/core/test_ci_scope.py#L96) |
-| CIは単体テストの計測後にパッケージ別の行・分岐カバレッジを必須判定する。 | — | [test_verify_enforces_package_unit_coverage](../../../tests/architecture/core/test_ci_scope.py#L112) |
+| CIは単体テストの計測後にパッケージ別の行・分岐カバレッジを必須判定する。 | — | [test_verify_enforces_package_unit_coverage](../../../tests/architecture/core/test_ci_scope.py#L119) |
 | 全実装のインポートを調べ、配布単位を越える未許可の依存を検出する。 | — | [test_runtime_dependencies_respect_layer_boundaries](../../../tests/architecture/core/test_dependencies.py#L6) |
 | 要件・設計書・生成文書・各層の説明書は、日本語を含む表題で目的を示す。 | — | [test_markdown_documents_have_japanese_titles](../../../tests/architecture/core/test_documents.py#L26) |
 | 全要件のファイル名・要件文・四つの節・共通語彙を索引生成と同じ規則で検査する。 | — | [test_requirements_follow_the_project_vocabulary](../../../tests/architecture/core/test_documents.py#L39) |
@@ -148,6 +164,8 @@
 | フロントのソース先頭行と公開関数の説明が日本語で記述されていることを確認する。 | — | [test_frontend_source_describes_files_and_public_functions](../../../tests/architecture/frontend/test_frontend_screens.py#L103) |
 | 空行・英語だけのコメント・日本語の文字列をファイル先頭の説明として受理しない。 | — | [test_first_line_requires_a_japanese_comment](../../../tests/architecture/frontend/test_frontend_screens.py#L114) |
 | CDKスタックが各コンポーネントを組み立て、コンポーネントからスタックを参照しない。 | — | [test_components_do_not_import_the_stack](../../../tests/architecture/infra/test_stack.py#L8) |
+| エージェントが使う推論モデルの役割、取得元、ハッシュを検査する。 | — | [test_model_distributes_pinned_weights](../../../tests/architecture/model/test_distribution.py#L6) |
+| 推論関数の配布物から業務パッケージを読み込まずにハンドラーを起動準備できる。 | 判定関数は業務パッケージなしで読み込める<br>生成関数は業務パッケージと判定用依存なしで読み込める | [test_packaged_worker_imports_independently](../../../tests/architecture/model/test_workers.py#L26) |
 | 商品ごとに実装モジュールと公開用のOpenAPIファイルが一対一で対応する。 | — | [test_each_product_has_a_published_contract](../../../tests/architecture/sample_api/test_products.py#L5) |
 | 設計解析とその補助モジュールで外部辞書の読み込みと正規表現を検出する。 | — | [test_design_analysis_uses_only_python_sources_and_syntax_trees](../../../tests/architecture/tools/test_design_sources.py#L98) |
 | コードやスタイルシートを読む開発ツールで正規表現による解析を検出する。 | — | [test_project_tools_do_not_parse_source_files_with_regex](../../../tests/architecture/tools/test_design_sources.py#L103) |
@@ -622,7 +640,7 @@
 | finance の利用者には所属先が1件だけ表示され、未所属の詳細URLを開いても情報は表示されない | — | [test_consumer_project_directory](../../../tests/e2e/browser/test_workspace_console.py#L213) |
 | 管理画面で部署を移管して子部署を引き継ぎ、未使用の子部署を削除できる。 | — | [test_retire_workspace_units](../../../tests/e2e/browser/test_workspace_console.py#L238) |
 
-### 開発ツール（102項目）
+### 開発ツール（104項目）
 
 | 確認内容 | 条件別の確認内容 | テスト定義 |
 | --- | --- | --- |
@@ -649,9 +667,10 @@
 | 旧形式または異なる計測条件の結果は再利用せず、同じ条件の結果だけを使う。 | — | [test_cache_requires_same_coverage_policy](../../../packages/tools/tests/test_ci_scope.py#L179) |
 | 比較元でブラウザーのタイムアウトだけが起きた場合に限り再計測する。 | — | [test_baseline_retry_requires_only_browser_timeouts](../../../packages/tools/tests/test_ci_scope.py#L190) |
 | エージェントとモデルの変更で単体・API結合・構造・型・配布物の検査を選ぶ。 | — | [test_agent_sources_select_agent_consumers_and_deployment_checks](../../../packages/tools/tests/test_ci_scope.py#L205) |
-| 移動前と同じ範囲の総カバレッジを比較に使い、古いパスのスイート別結果は再利用しない。 | — | [test_moved_agent_reuses_only_aggregate_baseline](../../../packages/tools/tests/test_ci_scope.py#L217) |
-| 間接依存の更新は利用パッケージに絞り、移動した依存は変更前と変更後の両方を検証する。 | — | [test_lock_changes_follow_transitive_old_and_new_consumers](../../../packages/tools/tests/test_ci_scope.py#L234) |
-| PRテンプレートだけの差分はキャッシュがなくても準備やテストを起動せず、空の計測を公開しない。 | — | [test_template_plan_never_bootstraps_coverage](../../../packages/tools/tests/test_ci_scope.py#L263) |
+| 移動前と同じ範囲の総カバレッジを比較に使い、古いパスのスイート別結果は再利用しない。 | — | [test_moved_agent_reuses_only_aggregate_baseline](../../../packages/tools/tests/test_ci_scope.py#L221) |
+| 間接依存の更新は利用パッケージに絞り、移動した依存は変更前と変更後の両方を検証する。 | — | [test_lock_changes_follow_transitive_old_and_new_consumers](../../../packages/tools/tests/test_ci_scope.py#L238) |
+| PRテンプレートだけの差分はキャッシュがなくても準備やテストを起動せず、空の計測を公開しない。 | — | [test_template_plan_never_bootstraps_coverage](../../../packages/tools/tests/test_ci_scope.py#L267) |
+| 並列ジョブで取得した両パッケージのJUnitとカバレッジを再実行せず全体に合算する。 | — | [test_parallel_package_reports_are_combined_without_rerunning](../../../packages/tools/tests/test_ci_scope.py#L289) |
 | 検査の直前の説明と実行条件を対応付け、シェル文字列内の偽コメントを無視する。 | — | [test_workflow_comments_follow_steps](../../../packages/tools/tests/test_completion.py#L9) |
 | ブランチの下限・低下幅を合成し、非同期テストとクラスの説明を定義行から取得する。 | — | [test_rule_changes_and_test_edits_reach_document](../../../packages/tools/tests/test_completion.py#L29) |
 | 旧方式で測った成果物は比較元に階層付き画面がなく計測器の他の部分が一致するときだけ使う。 | — | [test_flat_baseline_requires_equivalent_file_selection](../../../packages/tools/tests/test_coverage_baseline.py#L7) |
@@ -681,14 +700,15 @@
 | 差分の実行予定とJUnit結果を照合し、要件ページと機械判定用XMLの両方を生成する。 | 成功した対象ケースを合格にする<br>失敗を要件ページとJUnitに記録する<br>テストエラーを不合格として記録する<br>対象テストのスキップで未完了とする<br>実行計画にない層は対象外とする | [test_requirement_evidence_command](../../../packages/tools/tests/test_required_ci_documents.py#L125) |
 | 同じ単体テストが元の実装で成功し変異で失敗した場合だけ検出に数える。 | 値の変化で対象のテストが失敗すれば検出する<br>変更後も成功するテストを検出に含めない<br>元の実装で失敗するテストを検出に含めない<br>スキップを変異の検出に含めない | [test_local_mutation_compares_target_before_and_after](../../../packages/tools/tests/test_required_ci_mutation.py#L38) |
 | PR用の実行計画と比較元で補完する計測を分けてGitHubの出力に記録する。 | PRテンプレートのみでは単体テストを起動しない<br>画面の単体テストの追加ではフロントのスイートだけを選択する | [test_plan_records_changed_suites_and_baseline_gaps](../../../packages/tools/tests/test_required_ci_plan.py#L83) |
-| 選択した二つのスイートのJUnitと計測を残し、合算したXMLに両方の実行行を反映する。 | — | [test_selected_suites_retain_separate_measurements_and_combined_result](../../../packages/tools/tests/test_required_ci_plan.py#L102) |
-| テストが失敗したスイート名を示して不合格にし、そのJUnitを保存する。 | — | [test_suite_failure_reports_which_run_failed](../../../packages/tools/tests/test_required_ci_plan.py#L118) |
-| 比較元の計測は分岐点のクリーンな作業ツリーで行い、PR側の編集を保持する。 | 全体の比較元には分岐点のテストの行数を使う<br>欠けたスイートだけを比較元で補完する | [test_baseline_measurement_uses_clean_checkout](../../../packages/tools/tests/test_required_ci_plan.py#L143) |
-| 変更した分野が必要とするテストと検査を差分計画に含める。 | 共有するガイド検索の変更は推論、画面、APIの検証に波及する<br>共通のガイド本文を変えたら画面と推論の両方を検証する<br>ブラウザー型スタブの変更は型検査とフロント単体を選ぶ<br>スタック全体の変更はインフラ単体と合成・監査を選ぶ<br>共通のログ形式を変えたらAPIと推論・開発ツールの利用箇所も検証する<br>フックの変更はフック検証を起動する<br>要件定義の追加は全層の受入テストを選ぶ<br>生成設計書の変更では設計生成とツール検証を選ぶ<br>サンプルAPIの変更は専用テストと配備・契約の検証を選ぶ<br>実行Layerの変更時は合成と依存監査を実行する<br>推論用配布物の変更時はエージェント単体とリソースを検査する<br>AWSの画面操作テストにはエミュレーターとブラウザーを用意する<br>画面操作テストの変更時は画面とブラウザーを用意する<br>API設計の生成変更は生成とツール単体を検証する<br>デモ商品の変更は実際の画面とAWSで確認する<br>構造規則のテストを変更するとそのスイートを起動する | [test_changed_consumer_plan_keeps_each_required_check](../../../packages/tools/tests/test_required_ci_plan.py#L306) |
-| 文書だけを変更した場合、検証済みの全体計測を保存し、追加のテストを要求しない。 | — | [test_document_only_plan_copies_verified_aggregate](../../../packages/tools/tests/test_required_ci_plan.py#L316) |
-| 完了条件のCI成果物は適用ルールの値を示し、検証したコミットのソースにリンクする。 | — | [test_quality_document_links_selected_commit_and_live_policy](../../../packages/tools/tests/test_required_ci_plan.py#L335) |
-| 各パッケージ自身のpytest計測ファイルを読み、実測した行と分岐の達成度で判定する。 | 両方向を通る単体テストの計測で行と分岐の基準を満たす<br>一方向しか通らない単体テストの計測を不合格にする | [test_package_gate_reads_own_suite_measurement](../../../packages/tools/tests/test_required_ci_plan.py#L366) |
-| 単体テストを片方だけ変更したとき、比較元の他方の計測を再利用し合算結果に含める。 | — | [test_plan_preserves_untouched_suite_cache](../../../packages/tools/tests/test_required_ci_plan.py#L389) |
+| パッケージ別ジョブと集約ジョブのJUnitを残し、合算したXMLに両方の実行行を反映する。 | — | [test_selected_suites_retain_separate_measurements_and_combined_result](../../../packages/tools/tests/test_required_ci_plan.py#L102) |
+| テストが失敗したスイート名を示して不合格にし、そのJUnitを保存する。 | — | [test_suite_failure_reports_which_run_failed](../../../packages/tools/tests/test_required_ci_plan.py#L127) |
+| 比較元の計測は分岐点のクリーンな作業ツリーで行い、PR側の編集を保持する。 | 全体の比較元には分岐点のテストの行数を使う<br>欠けたスイートだけを比較元で補完する | [test_baseline_measurement_uses_clean_checkout](../../../packages/tools/tests/test_required_ci_plan.py#L152) |
+| 変更した分野が必要とするテストと検査を差分計画に含める。 | 共有するガイド検索の変更は推論、画面、APIの検証に波及する<br>共通のガイド本文を変えたら画面と推論の両方を検証する<br>ブラウザー型スタブの変更は型検査とフロント単体を選ぶ<br>スタック全体の変更はインフラ単体と合成・監査を選ぶ<br>共通のログ形式を変えたらAPIと推論・開発ツールの利用箇所も検証する<br>フックの変更はフック検証を起動する<br>要件定義の追加は全層の受入テストを選ぶ<br>生成設計書の変更では設計生成とツール検証を選ぶ<br>サンプルAPIの変更は専用テストと配備・契約の検証を選ぶ<br>実行Layerの変更時は合成と依存監査を実行する<br>推論用配布物の変更時はモデル単体とリソースを検査する<br>チャットジョブの変更時はエージェント単体とAPIの連携を検証する<br>判定ハンドラーの変更時は独立したモデルと配備先のテストを選ぶ<br>AWSの画面操作テストにはエミュレーターとブラウザーを用意する<br>画面操作テストの変更時は画面とブラウザーを用意する<br>API設計の生成変更は生成とツール単体を検証する<br>デモ商品の変更は実際の画面とAWSで確認する<br>構造規則のテストを変更するとそのスイートを起動する | [test_changed_consumer_plan_keeps_each_required_check](../../../packages/tools/tests/test_required_ci_plan.py#L333) |
+| 文書だけを変更した場合、検証済みの全体計測を保存し、追加のテストを要求しない。 | — | [test_document_only_plan_copies_verified_aggregate](../../../packages/tools/tests/test_required_ci_plan.py#L343) |
+| 完了条件のCI成果物は適用ルールの値を示し、検証したコミットのソースにリンクする。 | — | [test_quality_document_links_selected_commit_and_live_policy](../../../packages/tools/tests/test_required_ci_plan.py#L362) |
+| 各パッケージ自身のpytest計測ファイルを読み、実測した行と分岐の達成度で判定する。 | 両方向を通る単体テストの計測で行と分岐の基準を満たす<br>一方向しか通らない単体テストの計測を不合格にする | [test_package_gate_reads_own_suite_measurement](../../../packages/tools/tests/test_required_ci_plan.py#L398) |
+| 単体テストを片方だけ変更したとき、比較元の他方の計測を再利用し合算結果に含める。 | — | [test_plan_preserves_untouched_suite_cache](../../../packages/tools/tests/test_required_ci_plan.py#L421) |
+| 一方のLambdaの単体テストだけを更新すると、そのパッケージをCIの行列と計画に含める。 | エージェントの単体テスト変更はエージェントのジョブで検証する<br>モデルの単体テスト変更はモデルのジョブで検証する | [test_independent_lambda_package_job_matches_changed_suite](../../../packages/tools/tests/test_required_ci_plan.py#L463) |
 | 変更したテキストの符号化と改行が規約に一致するときだけ受け付ける。 | 日本語のUTF-8とLFを許可する<br>UTF-8のBOMを拒否する<br>UTF-8として読めないバイトを拒否する<br>途中のCRLFを拒否する<br>末尾の改行がない文書を拒否する<br>末尾に改行が二つある文書を拒否する | [test_text_encoding_and_terminator](../../../packages/tools/tests/test_required_ci_text.py#L64) |
 | ステージ済みの不正な日本語名の文書を特定し、修正をステージしたら画像とともに許可する。 | — | [test_staged_text_uses_index_and_ignores_binary](../../../packages/tools/tests/test_required_ci_text.py#L69) |
 | PR差分は未変更の既存違反を除外し、全体検査は既存違反も検出する。 | — | [test_pull_request_range_and_full_checkout](../../../packages/tools/tests/test_required_ci_text.py#L85) |
