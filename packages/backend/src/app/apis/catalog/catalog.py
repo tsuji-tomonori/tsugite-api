@@ -4,6 +4,7 @@ from app.core.catalog_rank import rank_assets
 from app.core.catalog_visibility import visible_collection
 from app.dependencies import DB, User
 from app.schemas.catalog import CatalogPage, Env, Listing
+from app.schemas.errors import domain_errors
 from fastapi import APIRouter, Query
 
 router = APIRouter()
@@ -14,7 +15,7 @@ def collection(db, actor, inventory, q, environment=None):
 
 
 #: カタログのAPIを検索する
-@router.get("/apis", response_model=list[Listing], operation_id="catalog")
+@router.get("/apis", responses=domain_errors(401), response_model=list[Listing], operation_id="catalog")
 def catalog(
     actor: User,
     db: DB,

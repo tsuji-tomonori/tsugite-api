@@ -1,11 +1,10 @@
 # APIのリクエストとレスポンスの型を定義する。
 import re
-from datetime import datetime
 from typing import Annotated, Any, Literal, Self
 
 from pydantic import AfterValidator, BaseModel, ConfigDict, Field, model_validator
 
-from app.schemas.base import Input
+from app.schemas.base import DatabaseTime, Input
 from app.schemas.product_contract import (
     ApplicationEvidence,
     PublishedOffer,
@@ -261,7 +260,7 @@ class Right(BaseModel):
 class Audit(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     #: 監査対象の操作日時
-    at: datetime
+    at: DatabaseTime
     #: 操作した利用者・システムの識別子
     actor: str
     #: 操作の対象となった利用者の識別子

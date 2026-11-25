@@ -15,6 +15,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Health'
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
   /items:
     get:
       summary: 商品を一覧で取得
@@ -26,6 +32,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/StockList'
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
   /items/{sku}:
     get:
       summary: 商品の詳細を取得
@@ -44,14 +56,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/StockItem'
-        '404':
-          description: 該当なし
-        '422':
-          description: Validation Error
+        '500':
+          description: サーバー内部のエラー
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPValidationError'
+                $ref: '#/components/schemas/InternalServerError'
+        '404':
+          description: 該当なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MissingStock'
   /warehouses:
     get:
       summary: 倉庫ごとの商品件数を集計
@@ -66,6 +82,12 @@ paths:
                   $ref: '#/components/schemas/StockItemCount'
                 type: array
                 title: Response By Warehouse Warehouses Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
   /low-stock:
     get:
       summary: 在庫数が上限以下の商品を取得
@@ -90,6 +112,12 @@ paths:
                 items:
                   $ref: '#/components/schemas/StockItem'
                 title: Response Below Limit Low Stock Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
         '422':
           description: Validation Error
           content:
@@ -107,6 +135,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/StockItemTotal'
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
 components:
   schemas:
     HTTPValidationError:
@@ -127,6 +161,29 @@ components:
           default: ok
       type: object
       title: Health
+    InternalServerError:
+      properties:
+        error_code:
+          type: string
+          const: INTERNAL_ERROR
+          title: Error Code
+        detail:
+          type: string
+          title: Detail
+      type: object
+      required:
+      - error_code
+      - detail
+      title: InternalServerError
+    MissingStock:
+      properties:
+        message:
+          type: string
+          title: Message
+      type: object
+      required:
+      - message
+      title: MissingStock
     StockItem:
       properties:
         sku:

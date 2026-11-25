@@ -2,7 +2,7 @@
 from fastapi import Query
 from pydantic import BaseModel
 
-from sample_api.database import SampleDatabase
+from sample_api.database import MissingRecord, SampleDatabase
 
 
 class Store(BaseModel):
@@ -33,7 +33,9 @@ def list_stores() -> list[Store]:
 
 
 @app.get(
-    "/stores/{store_code}", summary="店舗の詳細を取得", responses={404: {"description": "該当なし"}}
+    "/stores/{store_code}",
+    summary="店舗の詳細を取得",
+    responses={404: {"model": MissingRecord, "description": "該当なし"}},
 )
 def detail(store_code: str) -> Store:
     return db.one("SELECT * FROM records WHERE store_code = ?", store_code)

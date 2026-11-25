@@ -15,6 +15,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Health'
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
   /rooms:
     get:
       summary: 会議室を一覧で取得
@@ -29,6 +35,12 @@ paths:
                   $ref: '#/components/schemas/MeetingRoom'
                 type: array
                 title: Response List Rooms Rooms Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
   /rooms/{room_id}:
     get:
       summary: 会議室の詳細を取得
@@ -47,14 +59,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MeetingRoom'
-        '404':
-          description: 該当なし
-        '422':
-          description: Validation Error
+        '500':
+          description: サーバー内部のエラー
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPValidationError'
+                $ref: '#/components/schemas/InternalServerError'
+        '404':
+          description: 該当なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MissingRecord'
   /buildings:
     get:
       summary: 建物ごとの会議室件数を集計
@@ -69,6 +85,12 @@ paths:
                   $ref: '#/components/schemas/MeetingRoomCount'
                 type: array
                 title: Response By Building Buildings Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
   /small-rooms:
     get:
       summary: 定員が上限以下の会議室を取得
@@ -93,6 +115,12 @@ paths:
                 items:
                   $ref: '#/components/schemas/MeetingRoom'
                 title: Response Below Limit Small Rooms Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
         '422':
           description: Validation Error
           content:
@@ -110,6 +138,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MeetingRoomTotal'
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
 components:
   schemas:
     HTTPValidationError:
@@ -130,6 +164,20 @@ components:
           default: ok
       type: object
       title: Health
+    InternalServerError:
+      properties:
+        error_code:
+          type: string
+          const: INTERNAL_ERROR
+          title: Error Code
+        detail:
+          type: string
+          title: Detail
+      type: object
+      required:
+      - error_code
+      - detail
+      title: InternalServerError
     MeetingRoom:
       properties:
         room_id:
@@ -169,6 +217,15 @@ components:
       required:
       - total
       title: MeetingRoomTotal
+    MissingRecord:
+      properties:
+        detail:
+          type: string
+          title: Detail
+      type: object
+      required:
+      - detail
+      title: MissingRecord
     ValidationError:
       properties:
         loc:

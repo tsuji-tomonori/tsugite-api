@@ -15,6 +15,7 @@ from app.core.workspace import allowed_audience, ancestry, populate, private_pro
 from app.dependencies import DB, User
 from app.schemas import outputs
 from app.schemas.catalog import Listing
+from app.schemas.errors import domain_errors
 from app.schemas.keys import KeyInput
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.security import HTTPAuthorizationCredentials
@@ -118,7 +119,7 @@ def issue(data: KeyInput, request: Request, actor: User, db: DB):
 
 
 #: 認証情報を失効させる
-@router.delete("/keys/{key}", responses={200: {"model": outputs.Revoked}})
+@router.delete("/keys/{key}", responses={**domain_errors(404), 200: {"model": outputs.Revoked}})
 def revoke(
     #: 失効させる認証情報の識別子
     key: str,

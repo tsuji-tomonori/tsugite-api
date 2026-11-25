@@ -15,6 +15,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Health'
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
   /calendar:
     get:
       summary: 営業日を一覧で取得
@@ -29,6 +35,12 @@ paths:
                   $ref: '#/components/schemas/BusinessDay'
                 type: array
                 title: Response List Calendar Calendar Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
   /calendar/next:
     get:
       summary: 指定日以降で最初の営業日を取得
@@ -49,6 +61,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/BusinessDay'
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+        '404':
+          description: 該当なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MissingRecord'
         '422':
           description: Validation Error
           content:
@@ -73,14 +97,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/BusinessDay'
-        '404':
-          description: 該当なし
-        '422':
-          description: Validation Error
+        '500':
+          description: サーバー内部のエラー
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPValidationError'
+                $ref: '#/components/schemas/InternalServerError'
+        '404':
+          description: 該当なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MissingRecord'
   /offices:
     get:
       summary: 事業所ごとの営業日件数を集計
@@ -95,6 +123,12 @@ paths:
                   $ref: '#/components/schemas/BusinessDayCount'
                 type: array
                 title: Response By Office Offices Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
   /opening-hours:
     get:
       summary: 営業時間の合計を取得
@@ -106,6 +140,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/BusinessDayTotal'
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
 components:
   schemas:
     BusinessDay:
@@ -165,6 +205,29 @@ components:
           default: ok
       type: object
       title: Health
+    InternalServerError:
+      properties:
+        error_code:
+          type: string
+          const: INTERNAL_ERROR
+          title: Error Code
+        detail:
+          type: string
+          title: Detail
+      type: object
+      required:
+      - error_code
+      - detail
+      title: InternalServerError
+    MissingRecord:
+      properties:
+        detail:
+          type: string
+          title: Detail
+      type: object
+      required:
+      - detail
+      title: MissingRecord
     ValidationError:
       properties:
         loc:

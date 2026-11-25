@@ -5,6 +5,20 @@ from datetime import datetime
 from typing import Literal, NotRequired, TypedDict
 
 
+#: サーバー内部のエラー
+class InternalServerError(TypedDict):
+    #: 問い合わせ用のエラー分類
+    error_code: Literal["INTERNAL_ERROR"]
+    #: 利用者に表示するエラー内容
+    detail: str
+
+
+#: HTTPエラーの内容
+class ErrorDetail(TypedDict):
+    #: 利用者に表示するエラー内容
+    detail: str
+
+
 #: サービスの稼働状態
 class Health(TypedDict):
     #: サービスの稼働状態
@@ -127,12 +141,17 @@ class PersonNames(TypedDict):
     display_name: str | None
 
 
-#: 利用者の識別情報
-class Person(PersonNames):
+#: 権限設定で選択する利用者
+class MemberIdentity(TypedDict):
     #: 対象利用者の識別子
     subject: str
     #: ログイン名
     username: str
+
+
+#: 利用者の識別情報
+class Person(MemberIdentity, PersonNames):
+    pass
 
 
 #: 編集用の利用者プロフィール
@@ -477,7 +496,7 @@ class OperationPolicy(TypedDict):
     #: 対象のAPI操作
     operations: list[str]
     #: 対象の利用者一覧
-    members: list[Person]
+    members: list[MemberIdentity]
     #: 利用者ごとに許可されたAPI操作
     permissions: dict[str, list[str]]
 
@@ -515,7 +534,7 @@ class CredentialOptions(TypedDict):
     #: 発行対象に選べるAPI
     assets: list[CredentialAsset]
     #: 対象の利用者一覧
-    members: list[Person]
+    members: list[MemberIdentity]
     #: 組織別の有効期間上限
     limits: list[UnitLimit]
     #: トークンの有効期間上限（分）

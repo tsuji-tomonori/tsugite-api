@@ -1,0 +1,68 @@
+extends: [minimal]
+rules:
+  no-unresolved-refs: error
+  operation-2xx-response: error
+  operation-operationId-unique: error
+  rule/explicit-server-error:
+    subject:
+      type: Responses
+    assertions:
+      required: ['500']
+    severity: error
+    message: 共通の500応答を公開仕様に定義してください。
+  rule/server-error-json:
+    subject:
+      type: Response
+      filterInParentKeys: ['500']
+      property: content
+    assertions:
+      defined: true
+      schema:
+        type: object
+        required: [application/json]
+        properties:
+          application/json:
+            type: object
+            required: [schema]
+    severity: error
+    message: 500応答にJSON本文のスキーマを指定してください。
+  rule/shared-server-error:
+    where:
+      - subject:
+          type: Response
+          filterInParentKeys: ['500']
+        assertions:
+          defined: true
+    subject:
+      type: MediaType
+      property: schema
+    assertions:
+      ref: '#/components/schemas/InternalServerError$'
+    severity: error
+    message: 500応答では共通のInternalServerErrorモデルを参照してください。
+  rule/server-error-code:
+    subject:
+      type: Components
+      property: schemas
+    assertions:
+      defined: true
+      schema:
+        type: object
+        additionalProperties: true
+        required: [InternalServerError]
+        properties:
+          InternalServerError:
+            type: object
+            additionalProperties: true
+            required: [required, properties]
+            properties:
+              properties:
+                type: object
+                additionalProperties: true
+                required: [error_code]
+              required:
+                type: array
+                contains:
+                  const: error_code
+    severity: error
+    message: サーバー内部エラーにはerror_codeが必須です。

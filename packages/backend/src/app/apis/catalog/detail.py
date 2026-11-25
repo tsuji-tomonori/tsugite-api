@@ -7,6 +7,7 @@ from app.core.releases import history
 from app.core.workspace import allowed_audience
 from app.dependencies import DB, User
 from app.schemas.catalog import Detail
+from app.schemas.errors import domain_errors
 from fastapi import APIRouter, HTTPException
 from sqlalchemy import select
 from tsugite_db.models import Access
@@ -15,7 +16,9 @@ router = APIRouter()
 
 
 #: APIの詳細と公開仕様を取得する
-@router.get("/apis/{key}", response_model=Detail, operation_id="detail")
+@router.get(
+    "/apis/{key}", responses=domain_errors(403, 404, 503), response_model=Detail, operation_id="detail"
+)
 def detail(
     #: カタログ掲載APIの識別子
     key: str,

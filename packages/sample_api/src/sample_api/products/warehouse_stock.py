@@ -3,7 +3,7 @@ from fastapi import Query
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from sample_api.database import SampleDatabase
+from sample_api.database import MissingStock, SampleDatabase
 
 
 class StockItem(BaseModel):
@@ -36,7 +36,11 @@ def list_items() -> StockList:
     return {"items": db.all("SELECT sku, stock FROM records ORDER BY sku")}
 
 
-@app.get("/items/{sku}", summary="商品の詳細を取得", responses={404: {"description": "該当なし"}})
+@app.get(
+    "/items/{sku}",
+    summary="商品の詳細を取得",
+    responses={404: {"model": MissingStock, "description": "該当なし"}},
+)
 def detail(sku: str) -> StockItem:
     return db.one("SELECT sku, stock FROM records WHERE sku = ?", sku)
 

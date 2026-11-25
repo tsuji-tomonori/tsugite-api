@@ -92,6 +92,35 @@ jobs:
             artifacts/coverage.xml
           if-no-files-found: error
 
+  http-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      #: 操作ごとに公開仕様の全ステータスを観測し、実応答の本文を検査する。
+      - name: バックエンドと商品APIのHTTP契約を検証
+        run: uv run --locked --all-packages python -m packages.tools.testing.http_contracts
+      #: IBMのREST設計規則と共通エラーのOpenAPI規約を満たす。
+      - name: IBM ValidatorとRedoclyで全公開仕様を検査
+        run: |
+          lint=packages/tools/testing/openapi-lint
+          npm ci --prefix "$lint" --ignore-scripts
+          "$lint/node_modules/.bin/lint-openapi" -r "$lint/ibm.cjs" artifacts/http-contracts/backend.json docs/generated/sample-api/*.yaml
+          "$lint/node_modules/.bin/redocly" lint --config "$lint/redocly.yaml" artifacts/http-contracts/backend.json docs/generated/sample-api/*.yaml
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: http-contracts
+          path: artifacts/http-contracts
+          if-no-files-found: error
+
   package:
     name: Verify ${{ matrix.package }}
     needs: plan

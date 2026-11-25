@@ -6,6 +6,7 @@ from app.core.workspace import workspace_targets
 from app.dependencies import DB, User
 from app.integrations.upstream import probe
 from app.schemas.catalog import Listing
+from app.schemas.errors import domain_errors
 from fastapi import APIRouter, HTTPException, Request
 
 router = APIRouter()
@@ -33,7 +34,12 @@ def set_suspension(
 
 
 #: APIの公開・掲載取り下げを切り替える
-@router.put("/apis/{key}/publication", response_model=Listing, operation_id="publish")
+@router.put(
+    "/apis/{key}/publication",
+    responses=domain_errors(403, 502, 503),
+    response_model=Listing,
+    operation_id="publish",
+)
 def publish(
     #: カタログ掲載APIの識別子
     key: str,

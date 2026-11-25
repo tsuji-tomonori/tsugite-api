@@ -15,6 +15,7 @@ from app.core.workspace import populate, private_project, stopped, units
 from app.dependencies import DB, User
 from app.schemas import outputs
 from app.schemas.credentials import Exchange, Issue
+from app.schemas.errors import domain_errors
 from fastapi import APIRouter, HTTPException, Request, Response
 from fastapi.responses import JSONResponse
 from tsugite_db.models import Asset, CredentialLease, PortalKey, new_id
@@ -99,7 +100,7 @@ def mint(db, key, actor, session_channel):
 @router.post(
     "/credentials",
     status_code=201,
-    responses={201: {"model": outputs.IssuedBearer | outputs.IssuedClient}},
+    responses={**domain_errors(403), 201: {"model": outputs.IssuedBearer | outputs.IssuedClient}},
 )
 def issue(data: Issue, actor: User, db: DB, request: Request, response: Response):
     response.headers["Cache-Control"] = "no-store"
@@ -160,7 +161,9 @@ def issue(data: Issue, actor: User, db: DB, request: Request, response: Response
 
 
 #: ポータルから短期アクセストークンを取得する
-@router.post("/credentials/{key_id}/token", responses={200: {"model": outputs.Token}})
+@router.post(
+    "/credentials/{key_id}/token", responses={**domain_errors(401), 200: {"model": outputs.Token}}
+)
 def portal_token(
     #: 認証情報の識別子
     key_id: str,
@@ -187,6 +190,8 @@ TOKEN_EXCHANGE = "urn:ietf:params:oauth:grant-type:token-exchange"
 @router.post(
     "/credentials/{key_id}/token-exchange",
     responses={
+        401: {"model": outputs.TokenExchangeError},
+        403: {"model": outputs.TokenExchangeError | outputs.ErrorDetail},
         200: {"model": outputs.ExchangedToken},
         400: {
             "model": outputs.TokenExchangeError,
@@ -322,7 +327,10 @@ def exchange(data: Exchange, db: DB, request: Request, response: Response):
 
 
 #: クライアントシークレットを再発行する
-@router.post("/credentials/{key_id}/rotate", responses={200: {"model": outputs.ClientCredential}})
+@router.post(
+    "/credentials/{key_id}/rotate",
+    responses={**domain_errors(404), 200: {"model": outputs.ClientCredential}},
+)
 def rotate(
     #: 認証情報の識別子
     key_id: str,
