@@ -92,3 +92,66 @@ def test_generated_catalog_search(portal, contract_cache):
         assert response.status_code == 200
 
     search()
+
+
+def test_missing_grants_and_catalog_entries(portal):
+    """存在しない商品・申請を指定したときは、利用申請・承認・キー発行で404を返す。"""
+    user = headers(portal, "consumer")
+    owner = headers(portal, "provider")
+    form = {"project": "finance", "environment": "sandbox", "reason": "参照先の確認"}
+    assert portal.post("/api/apis/missing/requests", headers=user, json=form).status_code == 404
+    key = portal.post("/api/apis", headers=owner, json=FORM).raise_for_status().json()["id"]
+    for suffix in ("", "/consumer"):
+        response = portal.post(
+            f"/api/requests/{key}/finance/sandbox{suffix}",
+            headers=owner,
+            json={"action": "approve", "reason": "利用条件を確認", "revision": 1},
+        )
+        assert response.status_code == 404
+    response = portal.post(
+        "/api/keys",
+        headers=user,
+        json={
+            "project": "finance",
+            "name": "利用申請の確認",
+            "kind": "personal",
+            "api_ids": ["missing"],
+        },
+    )
+    assert response.status_code == 404
+
+
+def test_catalog_publication_conflicts(portal, monkeypatch):
+    """更新前の版番号または登録時の接続設定が無効になった場合は409を返す。"""
+    owner = headers(portal, "provider")
+    asset = portal.post("/api/apis", headers=owner, json=FORM).raise_for_status().json()
+    path = "/api/apis/" + asset["id"]
+    response = portal.put(
+        path + "/policy", params={"revision": asset["revision"] + 1}, headers=owner, json={}
+    )
+    assert response.status_code == 409
+    monkeypatch.setattr("app.apis.catalog.publish.workspace_targets", lambda db: {})
+    response = portal.put(path + "/publication", params={"published": True}, headers=owner)
+    assert response.status_code == 409
+
+
+def test_chat_worker_failure_responses(portal, monkeypatch):
+    """チャット受付の送信制限で429を、ワーカーに接続できないときは503を返す。"""
+    from uuid import uuid4
+
+    import chat_jobs
+    from botocore.exceptions import EndpointConnectionError
+
+    monkeypatch.setenv("CHAT_WORKER", "worker")
+    actor = headers(portal, "consumer")
+    for error, status in [
+        (chat_jobs.RateLimited(), 429),
+        (EndpointConnectionError(endpoint_url="worker"), 503),
+    ]:
+        submit = Mock(side_effect=error)
+        monkeypatch.setattr(chat_jobs, "submit", submit)
+        response = portal.post(
+            "/api/chat", headers=actor, json={"job_id": str(uuid4()), "question": "利用方法を確認したい"}
+        )
+        submit.assert_called_once()
+        assert response.status_code == status

@@ -19,7 +19,7 @@ _lock = Lock()
 
 
 #: チャットの質問を受け付ける
-@router.post("/chat", response_model=ChatReceipt, status_code=202)
+@router.post("/chat", responses=domain_errors(429, 503), response_model=ChatReceipt, status_code=202)
 def start_chat(data: ChatQuestion, actor: User, db: DB, request: Request):
     question = data.question.strip()
     if len(question) < 2:

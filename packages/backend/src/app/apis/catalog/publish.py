@@ -36,7 +36,7 @@ def set_suspension(
 #: APIの公開・掲載取り下げを切り替える
 @router.put(
     "/apis/{key}/publication",
-    responses=domain_errors(403, 502, 503),
+    responses=domain_errors(403, 409, 502, 503),
     response_model=Listing,
     operation_id="publish",
 )

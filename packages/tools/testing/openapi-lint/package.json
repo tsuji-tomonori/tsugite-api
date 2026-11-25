@@ -1,1 +1,8 @@
-{"name":"tsugite-openapi-checks","private":true,"devDependencies":{"@redocly/cli":"2.83.0","ibm-openapi-validator":"1.38.9"}}
+{
+  "name": "tsugite-openapi-checks",
+  "private": true,
+  "devDependencies": {
+    "@redocly/cli": "2.83.0",
+    "ibm-openapi-validator": "1.38.9"
+  }
+}

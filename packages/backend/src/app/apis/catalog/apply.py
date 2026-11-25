@@ -16,7 +16,7 @@ router = APIRouter()
 #: 特定の環境でのAPI利用を申請する
 @router.post(
     "/apis/{key}/requests",
-    responses=domain_errors(403, 409),
+    responses=domain_errors(403, 404, 409),
     status_code=201,
     response_model=Right,
     operation_id="apply",

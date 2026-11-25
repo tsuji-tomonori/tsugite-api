@@ -79,7 +79,9 @@ def key_assets(actor: User, db: DB):
 
 
 #: 従来方式のAPIキーを発行する
-@router.post("/keys", status_code=201, responses={201: {"model": outputs.IssuedKey}})
+@router.post(
+    "/keys", status_code=201, responses={**domain_errors(404), 201: {"model": outputs.IssuedKey}}
+)
 def issue(data: KeyInput, request: Request, actor: User, db: DB):
     private = data.project == private_project(actor.subject)
     if data.project not in actor.projects and not (private and data.kind == "personal"):

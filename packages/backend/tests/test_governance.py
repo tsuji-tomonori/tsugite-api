@@ -25,6 +25,26 @@ def test_member_lifecycle(portal):
     portal.delete(
         "/api/members/" + member["subject"], params={"username": data["email"]}, headers=admin
     ).raise_for_status()
+    assert (
+        portal.put(
+            "/api/workspace/memberships",
+            headers=admin,
+            json={"subject": member["subject"], "unit_id": "finance"},
+        ).status_code
+        == 409
+    )
+    assert (
+        portal.delete(
+            "/api/workspace/memberships",
+            headers=admin,
+            params={"subject": member["subject"], "unit_id": "absent"},
+        ).status_code
+        == 404
+    )
+    assert (
+        portal.delete("/api/members/absent", headers=admin, params={"username": "absent"}).status_code
+        == 404
+    )
     assert portal.get("/api/dashboard", headers=user).status_code == 403
     assert portal.post("/api/demo/" + data["email"]).status_code == 404
     second = portal.post("/api/members", headers=admin, json=data).json()

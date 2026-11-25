@@ -166,7 +166,9 @@ def unit(
 
 
 #: 利用者の所属・役職・管理権限を設定する
-@router.put("/workspace/memberships", responses={**domain_errors(403, 404), 200: {"model": Membership}})
+@router.put(
+    "/workspace/memberships", responses={**domain_errors(403, 404, 409), 200: {"model": Membership}}
+)
 def assign(data: Membership, request: Request, actor: User, db: DB):
     request.state.target_subject_id = data.subject
     administrator(actor)
@@ -187,7 +189,9 @@ def assign(data: Membership, request: Request, actor: User, db: DB):
 
 
 #: 利用者の所属を解除する
-@router.delete("/workspace/memberships", responses={200: {"model": outputs.Removed}})
+@router.delete(
+    "/workspace/memberships", responses={**domain_errors(404), 200: {"model": outputs.Removed}}
+)
 def unassign(
     #: 対象利用者の識別子
     subject: str,

@@ -202,7 +202,7 @@ def invite(data: Invitation, request: Request, actor: User, db: DB):
 
 #: ポータルの利用者を削除する
 @router.delete(
-    "/members/{subject}", responses={**domain_errors(409, 503), 200: {"model": outputs.Deleted}}
+    "/members/{subject}", responses={**domain_errors(404, 409, 503), 200: {"model": outputs.Deleted}}
 )
 def remove_member(
     #: 対象利用者の識別子

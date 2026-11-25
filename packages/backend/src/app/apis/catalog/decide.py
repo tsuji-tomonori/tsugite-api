@@ -15,14 +15,14 @@ router = APIRouter()
 #: 個人の利用申請を承認・却下・取り下げ・取消する
 @router.post(
     "/requests/{key}/{project}/{environment}/{principal}",
-    responses=domain_errors(403, 409),
+    responses=domain_errors(403, 404, 409),
     response_model=Right,
     operation_id="decidePersonal",
 )
 #: プロジェクトの利用申請を承認・却下・取り下げ・取消する
 @router.post(
     "/requests/{key}/{project}/{environment}",
-    responses=domain_errors(403, 409),
+    responses=domain_errors(403, 404, 409),
     response_model=Right,
     operation_id="decide",
 )

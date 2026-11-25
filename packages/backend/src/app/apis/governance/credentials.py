@@ -290,7 +290,7 @@ async def oauth_exchange(
 #: クライアント認証情報をアクセストークンに交換する
 @router.post(
     "/auth/token",
-    responses={200: {"model": outputs.Token}},
+    responses={**domain_errors(400, 401), 200: {"model": outputs.Token}},
     openapi_extra={
         "x-design-auth": "ボディのclient_id・client_secretが必須。appでは本人のAuthorization: Bearerが必須。systemではAuthorizationを送信すると400。"
     },
