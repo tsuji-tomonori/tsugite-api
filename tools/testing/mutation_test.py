@@ -25,12 +25,28 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
-        "model-layer",
-        "判定モデルを専用Layerと異なるパスから読む",
-        "packages/model/src/decision.py",
-        'Path("/opt/models/decision")',
-        'Path("/tmp/models/decision")',
-        "packages/model/tests/test_model_workers.py::test_embedding_load_reuses_cpu_model_and_tokenizer",
+        "origin-boundary",
+        "画面操作APIが入口の検証を省く",
+        "packages/backend/src/app/core/request_logs.py",
+        'if os.getenv("AWS_LAMBDA_FUNCTION_NAME") and not secrets.compare_digest(',
+        "if False and not secrets.compare_digest(",
+        "packages/backend/tests/test_auth.py::test_portal_origin_with_valid_access_token",
+    ),
+    Mutation(
+        "origin-boundary",
+        "商品APIが入口の検証を省く",
+        "packages/backend/src/app/authorizer.py",
+        'if not secrets.compare_digest(headers.get("x-tsugite-origin", ""), os.environ["ORIGIN_SECRET"]):',
+        "if False:",
+        "packages/backend/tests/test_gateway_event.py::test_gateway_authorizer_rechecks_each_invocation",
+    ),
+    Mutation(
+        "origin-boundary",
+        "配信元に送るヘッダーの名前を変更する",
+        "packages/infra/src/components/delivery.py",
+        'custom_headers={"X-Tsugite-Origin":',
+        'custom_headers={"X-Other-Origin":',
+        "packages/infra/tests/test_stack.py::test_access_boundaries",
     ),
     Mutation(
         "requirements",
@@ -421,6 +437,14 @@ MUTATIONS = (
         "if screen.path in by_path:",
         "if False:",
         "packages/frontend/tests/test_screen_registry.py::test_duplicate_screen_path_is_rejected",
+    ),
+    Mutation(
+        "model-layer",
+        "判定モデルを専用Layerと異なるパスから読む",
+        "packages/model/src/decision.py",
+        'Path("/opt/models/decision")',
+        'Path("/tmp/models/decision")',
+        "packages/model/tests/test_model_workers.py::test_embedding_load_reuses_cpu_model_and_tokenizer",
     ),
     Mutation(
         "model-layer",
