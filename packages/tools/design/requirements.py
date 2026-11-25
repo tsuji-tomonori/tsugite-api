@@ -2,10 +2,12 @@
 """要件のMarkdown原本を検査し、相対リンクで読める二つの索引を生成する。"""
 
 import argparse
+import os
 import re
 import subprocess
 from collections import defaultdict
 from dataclasses import dataclass
+from datetime import date
 from pathlib import Path
 from urllib.parse import quote
 
@@ -116,6 +118,59 @@ def check_feature(branch: str, base: str | None, items: list[Requirement]) -> No
         raise ValueError("featブランチには新規の要件ファイルが1件以上必要です")
 
 
+def check_maintenance(branch: str, base: str, items: list[Requirement], title: str, body: str) -> None:
+    """PR差分に含まれる機能追加と要件原本の変更理由を検査する。"""
+
+    def git(*args: str) -> str:
+        return subprocess.check_output(["git", *args], encoding="utf-8")
+
+    body = re.sub(r"<!--.*?-->", "", body, flags=re.DOTALL)
+    subjects = git("log", "--no-merges", "--format=%s", f"{base}..HEAD").splitlines()
+    signal = re.compile(r"^feat(?:ure)?(?:\([^()]+\))?!?[:：]", re.IGNORECASE)
+    feature = (
+        branch.split("/")[0].lower() in {"feat", "feature"}
+        or any(signal.match(line.lstrip("-* ")) for line in [title, *subjects, *body.splitlines()])
+        or "要件への影響：機能追加" in body.splitlines()
+    )
+    if feature:
+        check_feature("feat", base, items)
+
+    diff = f"{base}...HEAD"
+    changed = set(git("diff", "--no-renames", "--name-only", "-z", diff, "--").split("\0"))
+    updated = [item for item in items if item.path.as_posix() in changed]
+    runtime = any(
+        path.startswith("packages/") and ("/src/" in path or "/public/" in path) for path in changed
+    )
+    if (
+        runtime
+        and not updated
+        and not any(
+            line.removeprefix("要件への影響なし：").strip()
+            for line in body.splitlines()
+            if line.startswith("要件への影響なし：")
+        )
+    ):
+        raise ValueError(
+            "実装を変更した場合は要件原本を更新するか、PR本文に「要件への影響なし：理由」を記載してください"
+        )
+
+    for item in updated:
+        history = item.body.partition("\n### 変更履歴\n")[2].splitlines()
+        added = {
+            line[1:]
+            for line in git(
+                "diff", "--no-ext-diff", "--unified=0", diff, "--", item.path.as_posix()
+            ).splitlines()
+            if line.startswith("+- ")
+        }
+        for line in history:
+            if line in added and re.fullmatch(r"- [0-9]{4}-[0-9]{2}-[0-9]{2} \S.*", line):
+                date.fromisoformat(line[2:12])
+                break
+        else:
+            raise ValueError(f"{item.path}: 「### 変更履歴」に日付と今回の変更理由を追記してください")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--branch", default="")
@@ -123,7 +178,16 @@ def main() -> None:
     args = parser.parse_args()
     try:
         items = generate(ITEMS, Path("artifacts/requirements"))
-        check_feature(args.branch, args.base, items)
+        if args.base:
+            check_maintenance(
+                args.branch,
+                args.base,
+                items,
+                os.environ.get("PR_TITLE", ""),
+                os.environ.get("PR_BODY", ""),
+            )
+        else:
+            check_feature(args.branch, args.base, items)
     except ValueError as error:
         parser.exit(1, f"{error}\n")
     print(f"要件{len(items)}件から要件一覧と用語一覧を生成しました")

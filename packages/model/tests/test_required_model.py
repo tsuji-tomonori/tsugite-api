@@ -1,8 +1,8 @@
 # 推論Lambdaの応答・ウォーム再利用・外部推論の失敗を小さな入力で確認する。
-import importlib
 import json
 import sys
 from collections import OrderedDict
+from importlib import import_module, util
 from pathlib import Path
 from types import ModuleType, SimpleNamespace
 from unittest.mock import Mock
@@ -15,7 +15,7 @@ def workers(monkeypatch):
     packages = Path(__file__).resolve().parents[2]
     monkeypatch.syspath_prepend(str(packages / "backend/src/app/core"))
     monkeypatch.syspath_prepend(str(packages / "model/src"))
-    return importlib.import_module
+    return import_module
 
 
 @pytest.fixture
@@ -23,12 +23,13 @@ def decision_worker(workers, monkeypatch):
     for name in ("numpy", "onnxruntime", "tokenizers"):
         module = ModuleType(name)
         if name == "tokenizers":
-            module.Tokenizer = Mock()
+            monkeypatch.setattr(module, "Tokenizer", Mock(), raising=False)
         monkeypatch.setitem(sys.modules, name, module)
     # テスト用の推論依存が他の呼び出しに残らないよう専用の名前でワーカーを読み込む。
     path = Path(__file__).resolve().parents[1] / "src/decision.py"
-    spec = importlib.util.spec_from_file_location("required_embedding_worker", path)
-    worker = importlib.util.module_from_spec(spec)
+    spec = util.spec_from_file_location("required_embedding_worker", path)
+    assert spec is not None and spec.loader is not None
+    worker = util.module_from_spec(spec)
     spec.loader.exec_module(worker)
     return worker
 

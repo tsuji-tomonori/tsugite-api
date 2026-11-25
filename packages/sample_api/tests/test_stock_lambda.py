@@ -31,6 +31,7 @@ from sample_api.main import handler
         ),
     ],
 )
+@pytest.mark.usefixtures("lambda_event_loop")
 def test_stock_response(path: str, status: int, body: dict[str, object]) -> None:
     """在庫サンプルが操作に応じたステータスとJSON応答を返す。"""
     result = handler(

@@ -58,6 +58,14 @@ MUTATIONS = (
         "packages/tools/tests/test_unit_coverage.py::test_coverage_compares_exact_line_and_branch_counts",
     ),
     Mutation(
+        "requirements",
+        "変更した要件の古い履歴を新しい変更理由として認める",
+        "packages/tools/design/requirements.py",
+        "line in added and re.fullmatch",
+        "re.fullmatch",
+        "tests/architecture/core/test_requirement_maintenance.py::test_changed_item_requires_new_reason",
+    ),
+    Mutation(
         "metadata",
         "任意属性の役職を既存の自動承認条件に含める",
         "packages/backend/src/app/core/workspace.py",

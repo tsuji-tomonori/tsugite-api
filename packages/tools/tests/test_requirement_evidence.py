@@ -115,3 +115,14 @@ def test_missing_parameter_result_fails(tmp_path: Path) -> None:
     assert not render(
         {"配備条件": [CHECK]}, {CASE: [case]}, {"packages/tools/tests"}, tmp_path, tmp_path, []
     )
+
+
+def test_evidence_links_verified_requirement(tmp_path, monkeypatch):
+    """要件別レポートから検証時点のコミットにある日本語名の原本へ移動できる。"""
+    from urllib.parse import unquote
+
+    monkeypatch.setenv("EVIDENCE_COMMIT", "a" * 40)
+    monkeypatch.setenv("GITHUB_REPOSITORY", "example/catalog")
+    assert render({"配備条件": [CHECK]}, {}, set(), tmp_path, tmp_path, [])
+    page = unquote((tmp_path / "items/配備条件.md").read_text())
+    assert f"https://github.com/example/catalog/blob/{'a' * 40}/{ITEMS}/配備条件.md" in page
