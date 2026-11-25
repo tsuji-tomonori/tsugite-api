@@ -13,6 +13,6 @@ def test_runtime_dependencies_respect_layer_boundaries():
         covered.add(layer(source_module(relative)))
         errors.extend(dependency_violations(relative, path.read_bytes()))
     assert not (ROOT / "agent").exists(), "エージェントは packages/agent に配置してください"
-    check_model_artifacts(ROOT / "packages/agent/src/agent/models")
+    check_model_artifacts(ROOT / "packages/model/src")
     assert covered == set(ALLOWED), f"検査できていない層: {set(ALLOWED) - covered}"
     assert not errors, "\n".join(errors)

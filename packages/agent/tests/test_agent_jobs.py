@@ -2,7 +2,7 @@ import json
 from io import BytesIO
 from unittest.mock import Mock
 
-from agent import jobs
+import chat_jobs as jobs
 from app.core.auth import Actor
 
 

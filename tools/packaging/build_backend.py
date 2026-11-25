@@ -77,8 +77,8 @@ def build_layers():
     for name, python_version, selection in (
         ("runtime", "3.15", ["--package", "tsugite-backend", "--no-dev"]),
         ("sample-api", "3.14", ["--package", "tsugite-sample-api", "--no-dev"]),
-        ("decision-model", "3.14", ["--only-group", "decision-model"]),
-        ("model-sdk", "3.14", ["--only-group", "model-sdk"]),
+        ("decision-model", "3.14", ["--package", "tsugite-model", "--no-dev", "--extra", "decision"]),
+        ("model-sdk", "3.14", ["--package", "tsugite-model", "--no-dev"]),
     ):
         requirements = build_dir / f"{name}.txt"
         subprocess.run(
@@ -134,9 +134,10 @@ def build():
     )
     shutil.copy(ROOT / "packages/database/alembic.ini", dest)
     shutil.copytree(
-        ROOT / "packages/agent/src/agent",
-        dest / "agent",
-        ignore=shutil.ignore_patterns("__pycache__", "models"),
+        ROOT / "packages/agent/src",
+        dest,
+        dirs_exist_ok=True,
+        ignore=shutil.ignore_patterns("__pycache__"),
     )
     guide_path = Path("packages/frontend/src/web_app/content")
     (dest / guide_path).mkdir(parents=True)

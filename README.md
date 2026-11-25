@@ -31,7 +31,7 @@ task demo
 
 ## 開発完了の判定
 
-[分野別の完了の定義](docs/generated/dev-rules/definition-of-done.md)で、変更時の検査、行カバレッジの基準、個々のテストが確かめる内容を確認できます。各PRの Verify は、そのコミットの定義と対象ブランチの有効なルールで文書を再生成し、成果物 `definition-of-done` に保存します。手元ではGitHub CLIにログインして `task docs:quality` を実行すると掲載版を更新できます。
+[分野別の完了の定義](docs/generated/dev-rules/definition-of-done.md)で、変更時の検査、行カバレッジの基準、個々のテストが確かめる内容を確認できます。各PRの Verify は、そのコミットの定義と対象ブランチの有効なルールで文書を再生成し、成果物 `definition-of-done` に保存します。エージェントとモデルは、各パッケージの `pyproject.toml` の `[tool.tsugite.verify]` と `tests/` から完了の定義に掲載されます。Verifyは差分に該当するパッケージを並列ジョブで検証します。手元ではGitHub CLIにログインして `task docs:quality` を実行すると掲載版を更新できます。
 
 ## コミットとプッシュの前に
 
@@ -49,6 +49,8 @@ task demo
 | --- | --- | --- |
 | `packages/frontend` | PuePy画面と単体テスト | `task test:frontend` |
 | `packages/backend` | FastAPIルーター、認証、業務処理とテスト | `task test:backend` |
+| [`packages/agent`](packages/agent/README.md) | チャットジョブの受付・検索・回答 | `task test:agent` |
+| [`packages/model`](packages/model/README.md) | モデルの判定・推論・重み取得 | `task test:model` |
 | `packages/database` | SQLAlchemyモデル、接続、Alembic移行とテスト | `task test:database` |
 | `packages/infra` | AWS CDKとテンプレートのテスト | `task test:infra` |
 | [`tests/architecture`](tests/architecture/README.md) | 全層の依存・文書規則と検査器のテスト | `task test:architecture` |
@@ -71,7 +73,7 @@ API操作はルートデコレーター、引数・モデル・項目・列挙�
 
 [インフラ設計書](docs/generated/infra/README.md)には、CDKコンポーネントごとのリソース一覧とパラメーターシートがあります。`task docs:infra` はCDKを合成し、`packages/infra/cdk.out/TsugiteApi.template.json` から各表を更新します。接続先を指定する場合は `task docs:infra -- --bindings <ファイル>` を使います。既に合成したテンプレートから表だけを更新するときは `task docs:infra:render` を実行します。
 
-ログイン後のホームでは日本語で公開APIを探し、操作手順を確認し、運営に問い合わせできます。モデルの構成と配備方法は[チャットの設計](packages/agent/README.md)を参照してください。
+ログイン後のホームでは日本語で公開APIを探し、操作手順を確認し、運営に問い合わせできます。モデルの構成と配備方法は[推論モデルと配備](packages/model/README.md)を参照してください。
 
 CIはPRで設計書を生成して成果物に含めます。既定ブランチの検証が通ると、生成結果に差分がある場合だけ `docs/generated/` を自動コミットします。
 
