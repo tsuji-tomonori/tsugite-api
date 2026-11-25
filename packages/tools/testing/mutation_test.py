@@ -26,6 +26,30 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
+        "formal",
+        "利用者別の禁止操作を許可する",
+        "packages/backend/src/app/core/credential_policy.py",
+        'if allowed is not None and operation not in allowed:\n        raise HTTPException(403, "この利用者',
+        'if False:\n        raise HTTPException(403, "この利用者',
+        "packages/backend/tests/test_quint_policy.py::test_operation_policy",
+    ),
+    Mutation(
+        "formal",
+        "本人限定の利用権を共有キーにも認める",
+        "packages/backend/src/app/apis/gateway.py",
+        "not actor.machine and not actor.key_shared:",
+        "not actor.machine:",
+        "packages/backend/tests/test_quint_policy.py::test_entitlement_policy",
+    ),
+    Mutation(
+        "formal",
+        "取消を実行しても利用権を承認済みに残す",
+        "packages/backend/src/app/core/catalog.py",
+        '"revoke": ("approved", "revoked")',
+        '"revoke": ("approved", "approved")',
+        "packages/backend/tests/test_quint_grants.py::test_grant_history",
+    ),
+    Mutation(
         "http-contract",
         "サーバー内部エラーの本文から必須のエラーコードを取り除く",
         "packages/backend/src/app/core/request_logs.py",

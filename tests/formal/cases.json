@@ -1,0 +1,1081 @@
+{
+  "audience.visibilityTest": [
+    {
+      "source": "none",
+      "visible": false
+    },
+    {
+      "source": "public",
+      "visible": true
+    },
+    {
+      "source": "owner",
+      "visible": true
+    },
+    {
+      "source": "project",
+      "visible": true
+    },
+    {
+      "source": "ancestor",
+      "visible": true
+    },
+    {
+      "source": "unrelated",
+      "visible": false
+    },
+    {
+      "source": "directAttribute",
+      "visible": true
+    },
+    {
+      "source": "attributeParent",
+      "visible": false
+    }
+  ],
+  "audit.auditLogTest": [
+    {
+      "own": true,
+      "response": 200,
+      "role": "member",
+      "view": "personal",
+      "within": false
+    },
+    {
+      "own": false,
+      "response": 200,
+      "role": "lead",
+      "view": "audit",
+      "within": true
+    },
+    {
+      "own": false,
+      "response": 404,
+      "role": "lead",
+      "view": "audit",
+      "within": false
+    },
+    {
+      "own": false,
+      "response": 403,
+      "role": "member",
+      "view": "audit",
+      "within": true
+    },
+    {
+      "own": false,
+      "response": 200,
+      "role": "admin",
+      "view": "audit",
+      "within": false
+    },
+    {
+      "own": false,
+      "response": 200,
+      "role": "auditor",
+      "view": "audit",
+      "within": false
+    }
+  ],
+  "audit.personalLogTest": [
+    {
+      "own": true,
+      "response": 200,
+      "role": "member",
+      "view": "personal",
+      "within": false
+    },
+    {
+      "own": false,
+      "response": 404,
+      "role": "member",
+      "view": "personal",
+      "within": true
+    },
+    {
+      "own": false,
+      "response": 404,
+      "role": "admin",
+      "view": "personal",
+      "within": true
+    },
+    {
+      "own": false,
+      "response": 404,
+      "role": "lead",
+      "view": "personal",
+      "within": true
+    }
+  ],
+  "automatic.autoTest": [
+    {
+      "consent": true,
+      "matches": false,
+      "response": 201,
+      "route": "legacy",
+      "status": "pending"
+    },
+    {
+      "consent": true,
+      "matches": true,
+      "response": 201,
+      "route": "legacy",
+      "status": "approved"
+    },
+    {
+      "consent": false,
+      "matches": true,
+      "response": 422,
+      "route": "auto",
+      "status": "absent"
+    },
+    {
+      "consent": true,
+      "matches": false,
+      "response": 201,
+      "route": "auto",
+      "status": "approved"
+    }
+  ],
+  "credentials.lifetimeTest": [
+    {
+      "age": 0,
+      "apiMinutes": 60,
+      "currentGeneration": true,
+      "keyAllows": true,
+      "projectMinutes": 60,
+      "response": 200,
+      "userAllows": true
+    },
+    {
+      "age": 119,
+      "apiMinutes": 60,
+      "currentGeneration": true,
+      "keyAllows": true,
+      "projectMinutes": 2,
+      "response": 200,
+      "userAllows": true
+    },
+    {
+      "age": 120,
+      "apiMinutes": 60,
+      "currentGeneration": true,
+      "keyAllows": true,
+      "projectMinutes": 2,
+      "response": 401,
+      "userAllows": true
+    },
+    {
+      "age": 60,
+      "apiMinutes": 1,
+      "currentGeneration": true,
+      "keyAllows": true,
+      "projectMinutes": 2,
+      "response": 401,
+      "userAllows": true
+    },
+    {
+      "age": 59,
+      "apiMinutes": 1,
+      "currentGeneration": true,
+      "keyAllows": true,
+      "projectMinutes": 2,
+      "response": 200,
+      "userAllows": true
+    },
+    {
+      "age": 3600,
+      "apiMinutes": 60,
+      "currentGeneration": true,
+      "keyAllows": true,
+      "projectMinutes": 60,
+      "response": 401,
+      "userAllows": true
+    }
+  ],
+  "credentials.operationsTest": [
+    {
+      "age": 0,
+      "apiMinutes": 60,
+      "currentGeneration": true,
+      "keyAllows": true,
+      "projectMinutes": 60,
+      "response": 200,
+      "userAllows": true
+    },
+    {
+      "age": 0,
+      "apiMinutes": 60,
+      "currentGeneration": true,
+      "keyAllows": true,
+      "projectMinutes": 60,
+      "response": 403,
+      "userAllows": false
+    },
+    {
+      "age": 0,
+      "apiMinutes": 60,
+      "currentGeneration": true,
+      "keyAllows": false,
+      "projectMinutes": 60,
+      "response": 403,
+      "userAllows": true
+    },
+    {
+      "age": 0,
+      "apiMinutes": 60,
+      "currentGeneration": true,
+      "keyAllows": false,
+      "projectMinutes": 60,
+      "response": 403,
+      "userAllows": false
+    }
+  ],
+  "credentials.rotatedTest": [
+    {
+      "age": 0,
+      "apiMinutes": 60,
+      "currentGeneration": true,
+      "keyAllows": true,
+      "projectMinutes": 60,
+      "response": 200,
+      "userAllows": true
+    },
+    {
+      "age": 0,
+      "apiMinutes": 60,
+      "currentGeneration": false,
+      "keyAllows": true,
+      "projectMinutes": 60,
+      "response": 401,
+      "userAllows": true
+    }
+  ],
+  "directory.transferTest": [
+    {
+      "operation": "init",
+      "parent": "source",
+      "response": 0
+    },
+    {
+      "operation": "delete",
+      "parent": "source",
+      "response": 409
+    },
+    {
+      "operation": "child",
+      "parent": "source",
+      "response": 422
+    },
+    {
+      "operation": "self",
+      "parent": "source",
+      "response": 422
+    },
+    {
+      "operation": "otherKind",
+      "parent": "source",
+      "response": 422
+    },
+    {
+      "operation": "transfer",
+      "parent": "successor",
+      "response": 200
+    },
+    {
+      "operation": "transfer",
+      "parent": "successor",
+      "response": 200
+    }
+  ],
+  "email.contactTest": [
+    {
+      "operation": "init",
+      "updated": false,
+      "verified": false
+    },
+    {
+      "operation": "preview",
+      "updated": false,
+      "verified": false
+    },
+    {
+      "operation": "mismatch",
+      "updated": false,
+      "verified": true
+    },
+    {
+      "operation": "disabled",
+      "updated": false,
+      "verified": true
+    },
+    {
+      "operation": "retired",
+      "updated": false,
+      "verified": false
+    },
+    {
+      "operation": "apply",
+      "updated": true,
+      "verified": true
+    },
+    {
+      "operation": "apply",
+      "updated": true,
+      "verified": false
+    }
+  ],
+  "entitlement.principalTest": [
+    {
+      "caller": "holder",
+      "gate": "open",
+      "permitted": false,
+      "scope": "absent"
+    },
+    {
+      "caller": "holder",
+      "gate": "open",
+      "permitted": true,
+      "scope": "personal"
+    },
+    {
+      "caller": "colleague",
+      "gate": "open",
+      "permitted": false,
+      "scope": "personal"
+    },
+    {
+      "caller": "shared",
+      "gate": "open",
+      "permitted": false,
+      "scope": "personal"
+    },
+    {
+      "caller": "machine",
+      "gate": "open",
+      "permitted": false,
+      "scope": "personal"
+    },
+    {
+      "caller": "colleague",
+      "gate": "open",
+      "permitted": true,
+      "scope": "project"
+    },
+    {
+      "caller": "machine",
+      "gate": "open",
+      "permitted": true,
+      "scope": "project"
+    }
+  ],
+  "entitlement.stopTest": [
+    {
+      "caller": "holder",
+      "gate": "open",
+      "permitted": false,
+      "scope": "absent"
+    },
+    {
+      "caller": "holder",
+      "gate": "open",
+      "permitted": true,
+      "scope": "project"
+    },
+    {
+      "caller": "holder",
+      "gate": "suspended",
+      "permitted": false,
+      "scope": "project"
+    },
+    {
+      "caller": "holder",
+      "gate": "stopped",
+      "permitted": false,
+      "scope": "project"
+    },
+    {
+      "caller": "holder",
+      "gate": "outside",
+      "permitted": false,
+      "scope": "project"
+    },
+    {
+      "caller": "holder",
+      "gate": "revokedKey",
+      "permitted": false,
+      "scope": "project"
+    },
+    {
+      "caller": "holder",
+      "gate": "open",
+      "permitted": true,
+      "scope": "project"
+    }
+  ],
+  "exchange.exchangeTest": [
+    {
+      "identity": true,
+      "mode": "app",
+      "response": 200,
+      "secretValid": true
+    },
+    {
+      "identity": false,
+      "mode": "app",
+      "response": 401,
+      "secretValid": true
+    },
+    {
+      "identity": true,
+      "mode": "app",
+      "response": 401,
+      "secretValid": false
+    },
+    {
+      "identity": false,
+      "mode": "system",
+      "response": 200,
+      "secretValid": true
+    },
+    {
+      "identity": true,
+      "mode": "system",
+      "response": 400,
+      "secretValid": true
+    },
+    {
+      "identity": false,
+      "mode": "system",
+      "response": 401,
+      "secretValid": false
+    }
+  ],
+  "grants.closedTest": [
+    {
+      "forwarded": false,
+      "listed": true,
+      "operation": "init",
+      "response": 0,
+      "status": "absent"
+    },
+    {
+      "forwarded": false,
+      "listed": true,
+      "operation": "apply",
+      "response": 201,
+      "status": "pending"
+    },
+    {
+      "forwarded": false,
+      "listed": true,
+      "operation": "withdraw",
+      "response": 200,
+      "status": "withdrawn"
+    },
+    {
+      "forwarded": false,
+      "listed": false,
+      "operation": "unpublish",
+      "response": 200,
+      "status": "withdrawn"
+    },
+    {
+      "forwarded": false,
+      "listed": false,
+      "operation": "apply",
+      "response": 409,
+      "status": "withdrawn"
+    }
+  ],
+  "grants.lifecycleTest": [
+    {
+      "forwarded": false,
+      "listed": true,
+      "operation": "init",
+      "response": 0,
+      "status": "absent"
+    },
+    {
+      "forwarded": false,
+      "listed": true,
+      "operation": "apply",
+      "response": 201,
+      "status": "pending"
+    },
+    {
+      "forwarded": false,
+      "listed": true,
+      "operation": "invoke",
+      "response": 403,
+      "status": "pending"
+    },
+    {
+      "forwarded": false,
+      "listed": true,
+      "operation": "approve",
+      "response": 200,
+      "status": "approved"
+    },
+    {
+      "forwarded": true,
+      "listed": true,
+      "operation": "invoke",
+      "response": 200,
+      "status": "approved"
+    },
+    {
+      "forwarded": false,
+      "listed": false,
+      "operation": "unpublish",
+      "response": 200,
+      "status": "approved"
+    },
+    {
+      "forwarded": true,
+      "listed": false,
+      "operation": "invoke",
+      "response": 200,
+      "status": "approved"
+    },
+    {
+      "forwarded": false,
+      "listed": false,
+      "operation": "revoke",
+      "response": 200,
+      "status": "revoked"
+    },
+    {
+      "forwarded": false,
+      "listed": false,
+      "operation": "invoke",
+      "response": 403,
+      "status": "revoked"
+    }
+  ],
+  "grants.reapplyTest": [
+    {
+      "forwarded": false,
+      "listed": true,
+      "operation": "init",
+      "response": 0,
+      "status": "absent"
+    },
+    {
+      "forwarded": false,
+      "listed": true,
+      "operation": "apply",
+      "response": 201,
+      "status": "pending"
+    },
+    {
+      "forwarded": false,
+      "listed": true,
+      "operation": "apply",
+      "response": 409,
+      "status": "pending"
+    },
+    {
+      "forwarded": false,
+      "listed": true,
+      "operation": "reject",
+      "response": 200,
+      "status": "rejected"
+    },
+    {
+      "forwarded": false,
+      "listed": true,
+      "operation": "apply",
+      "response": 201,
+      "status": "pending"
+    },
+    {
+      "forwarded": false,
+      "listed": true,
+      "operation": "withdraw",
+      "response": 200,
+      "status": "withdrawn"
+    },
+    {
+      "forwarded": false,
+      "listed": true,
+      "operation": "apply",
+      "response": 201,
+      "status": "pending"
+    },
+    {
+      "forwarded": false,
+      "listed": true,
+      "operation": "approve",
+      "response": 200,
+      "status": "approved"
+    },
+    {
+      "forwarded": false,
+      "listed": true,
+      "operation": "approve",
+      "response": 409,
+      "status": "approved"
+    },
+    {
+      "forwarded": false,
+      "listed": true,
+      "operation": "revoke",
+      "response": 200,
+      "status": "revoked"
+    },
+    {
+      "forwarded": false,
+      "listed": true,
+      "operation": "apply",
+      "response": 201,
+      "status": "pending"
+    }
+  ],
+  "grants.scopeTest": [
+    {
+      "forwarded": false,
+      "listed": true,
+      "operation": "init",
+      "response": 0,
+      "status": "absent"
+    },
+    {
+      "forwarded": false,
+      "listed": true,
+      "operation": "apply",
+      "response": 201,
+      "status": "pending"
+    },
+    {
+      "forwarded": false,
+      "listed": true,
+      "operation": "approve",
+      "response": 200,
+      "status": "approved"
+    },
+    {
+      "forwarded": true,
+      "listed": true,
+      "operation": "invoke",
+      "response": 200,
+      "status": "approved"
+    },
+    {
+      "forwarded": false,
+      "listed": true,
+      "operation": "otherEnvironment",
+      "response": 403,
+      "status": "approved"
+    },
+    {
+      "forwarded": false,
+      "listed": true,
+      "operation": "otherProject",
+      "response": 403,
+      "status": "approved"
+    },
+    {
+      "forwarded": false,
+      "listed": true,
+      "operation": "otherProduct",
+      "response": 403,
+      "status": "approved"
+    }
+  ],
+  "inquiries.inquiryTest": [
+    {
+      "answered": false,
+      "operation": "init",
+      "response": 0,
+      "submitted": false
+    },
+    {
+      "answered": false,
+      "operation": "submit",
+      "response": 201,
+      "submitted": true
+    },
+    {
+      "answered": false,
+      "operation": "submit",
+      "response": 201,
+      "submitted": true
+    },
+    {
+      "answered": false,
+      "operation": "otherReply",
+      "response": 403,
+      "submitted": true
+    },
+    {
+      "answered": true,
+      "operation": "adminReply",
+      "response": 200,
+      "submitted": true
+    }
+  ],
+  "membership.membershipTest": [
+    {
+      "leader": false,
+      "member": false,
+      "operation": "init"
+    },
+    {
+      "leader": false,
+      "member": true,
+      "operation": "join"
+    },
+    {
+      "leader": true,
+      "member": true,
+      "operation": "lead"
+    },
+    {
+      "leader": false,
+      "member": true,
+      "operation": "join"
+    },
+    {
+      "leader": false,
+      "member": false,
+      "operation": "leave"
+    }
+  ],
+  "notifications.readTest": [
+    {
+      "operation": "init",
+      "seen": {
+        "#set": []
+      },
+      "sent": false
+    },
+    {
+      "operation": "send",
+      "seen": {
+        "#set": []
+      },
+      "sent": true
+    },
+    {
+      "operation": "consumer",
+      "seen": {
+        "#set": [
+          "consumer"
+        ]
+      },
+      "sent": true
+    },
+    {
+      "operation": "consumer",
+      "seen": {
+        "#set": [
+          "consumer"
+        ]
+      },
+      "sent": true
+    },
+    {
+      "operation": "provider",
+      "seen": {
+        "#set": [
+          "consumer",
+          "provider"
+        ]
+      },
+      "sent": true
+    }
+  ],
+  "products.deleteTest": [
+    {
+      "listed": false,
+      "operation": "init",
+      "removed": false,
+      "status": "absent"
+    },
+    {
+      "listed": true,
+      "operation": "publish",
+      "removed": false,
+      "status": "absent"
+    },
+    {
+      "listed": true,
+      "operation": "apply",
+      "removed": false,
+      "status": "pending"
+    },
+    {
+      "listed": true,
+      "operation": "approve",
+      "removed": false,
+      "status": "approved"
+    },
+    {
+      "listed": false,
+      "operation": "delete",
+      "removed": true,
+      "status": "revoked"
+    }
+  ],
+  "products.editTest": [
+    {
+      "listed": false,
+      "operation": "init",
+      "removed": false,
+      "status": "absent"
+    },
+    {
+      "listed": true,
+      "operation": "publish",
+      "removed": false,
+      "status": "absent"
+    },
+    {
+      "listed": true,
+      "operation": "apply",
+      "removed": false,
+      "status": "pending"
+    },
+    {
+      "listed": true,
+      "operation": "approve",
+      "removed": false,
+      "status": "approved"
+    },
+    {
+      "listed": true,
+      "operation": "rename",
+      "removed": false,
+      "status": "approved"
+    },
+    {
+      "listed": false,
+      "operation": "structure",
+      "removed": false,
+      "status": "revoked"
+    }
+  ],
+  "products.pendingEditTest": [
+    {
+      "listed": false,
+      "operation": "init",
+      "removed": false,
+      "status": "absent"
+    },
+    {
+      "listed": true,
+      "operation": "publish",
+      "removed": false,
+      "status": "absent"
+    },
+    {
+      "listed": true,
+      "operation": "apply",
+      "removed": false,
+      "status": "pending"
+    },
+    {
+      "listed": false,
+      "operation": "structure",
+      "removed": false,
+      "status": "rejected"
+    }
+  ],
+  "profiles.profileTest": [
+    {
+      "named": false,
+      "operation": "init",
+      "response": 0
+    },
+    {
+      "named": true,
+      "operation": "selfSet",
+      "response": 200
+    },
+    {
+      "named": true,
+      "operation": "other",
+      "response": 403
+    },
+    {
+      "named": true,
+      "operation": "stale",
+      "response": 409
+    },
+    {
+      "named": false,
+      "operation": "adminClear",
+      "response": 200
+    }
+  ],
+  "quota.thresholdTest": [
+    {
+      "calls": 0,
+      "notified": 0,
+      "operation": "init",
+      "response": 0
+    },
+    {
+      "calls": 1,
+      "notified": 0,
+      "operation": "invoke",
+      "response": 200
+    },
+    {
+      "calls": 2,
+      "notified": 1,
+      "operation": "invoke",
+      "response": 200
+    },
+    {
+      "calls": 2,
+      "notified": 1,
+      "operation": "invoke",
+      "response": 429
+    },
+    {
+      "calls": 0,
+      "notified": 1,
+      "operation": "nextWindow",
+      "response": 0
+    },
+    {
+      "calls": 1,
+      "notified": 1,
+      "operation": "invoke",
+      "response": 200
+    },
+    {
+      "calls": 2,
+      "notified": 2,
+      "operation": "invoke",
+      "response": 200
+    }
+  ],
+  "review.orderedTest": [
+    {
+      "operation": "init",
+      "response": 0,
+      "stage": "",
+      "status": "absent"
+    },
+    {
+      "operation": "submit",
+      "response": 201,
+      "stage": "department",
+      "status": "pending"
+    },
+    {
+      "operation": "provider",
+      "response": 403,
+      "stage": "department",
+      "status": "pending"
+    },
+    {
+      "operation": "applicant",
+      "response": 403,
+      "stage": "department",
+      "status": "pending"
+    },
+    {
+      "operation": "invoke",
+      "response": 403,
+      "stage": "department",
+      "status": "pending"
+    },
+    {
+      "operation": "department",
+      "response": 200,
+      "stage": "provider",
+      "status": "pending"
+    },
+    {
+      "operation": "invoke",
+      "response": 403,
+      "stage": "provider",
+      "status": "pending"
+    },
+    {
+      "operation": "provider",
+      "response": 200,
+      "stage": "",
+      "status": "approved"
+    },
+    {
+      "operation": "invoke",
+      "response": 200,
+      "stage": "",
+      "status": "approved"
+    }
+  ],
+  "review.termsTest": [
+    {
+      "operation": "init",
+      "response": 0,
+      "stage": "",
+      "status": "absent"
+    },
+    {
+      "operation": "staleTerms",
+      "response": 409,
+      "stage": "",
+      "status": "absent"
+    },
+    {
+      "operation": "noConsent",
+      "response": 422,
+      "stage": "",
+      "status": "absent"
+    },
+    {
+      "operation": "wrongAnswer",
+      "response": 422,
+      "stage": "",
+      "status": "absent"
+    },
+    {
+      "operation": "submit",
+      "response": 201,
+      "stage": "department",
+      "status": "pending"
+    }
+  ],
+  "slug.reservedTest": [
+    {
+      "lifecycle": "available",
+      "operation": "init",
+      "response": 0
+    },
+    {
+      "lifecycle": "available",
+      "operation": "invalid",
+      "response": 422
+    },
+    {
+      "lifecycle": "listed",
+      "operation": "create",
+      "response": 201
+    },
+    {
+      "lifecycle": "listed",
+      "operation": "create",
+      "response": 409
+    },
+    {
+      "lifecycle": "listed",
+      "operation": "rename",
+      "response": 409
+    },
+    {
+      "lifecycle": "reserved",
+      "operation": "delete",
+      "response": 200
+    },
+    {
+      "lifecycle": "reserved",
+      "operation": "create",
+      "response": 409
+    }
+  ]
+}
