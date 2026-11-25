@@ -84,3 +84,25 @@ def test_people_and_machines(signer):
     with pytest.raises(HTTPException) as exc:
         auth.human(machine)
     assert exc.value.status_code == 403
+
+
+@pytest.mark.parametrize(
+    "direct_headers",
+    [
+        pytest.param({}, id="missing", marks=pytest.mark.case_detail("入口ヘッダーがない場合は403")),
+        pytest.param(
+            {"x-tsugite-origin": "incorrect"},
+            id="incorrect",
+            marks=pytest.mark.case_detail("入口ヘッダーが一致しない場合は403"),
+        ),
+    ],
+)
+def test_portal_origin_with_valid_access_token(portal, signer, monkeypatch, direct_headers):
+    """署名が有効な同じ利用者トークンで、正規入口の本人照会は成功し、直接の本人照会は403になる。"""
+    monkeypatch.setenv("AWS_LAMBDA_FUNCTION_NAME", "portal-api")
+    monkeypatch.setenv("ORIGIN_SECRET", "fixture-origin")
+    token = {"Authorization": "Bearer " + signer()}
+    allowed = portal.get("/api/me", headers={**token, "x-tsugite-origin": "fixture-origin"})
+    assert allowed.status_code == 200 and allowed.json()["subject"] == "user-id"
+    denied = portal.get("/api/me", headers={**token, **direct_headers})
+    assert denied.status_code == 403 and denied.json() == {"detail": "入口を確認してください"}

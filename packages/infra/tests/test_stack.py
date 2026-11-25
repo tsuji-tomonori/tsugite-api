@@ -76,6 +76,26 @@ def test_access_boundaries(tmp_path, request):
             }
         },
     )
+    (distribution,) = template.find_resources("AWS::CloudFront::Distribution").values()
+    config = distribution["Properties"]["DistributionConfig"]
+    (behavior,) = [route for route in config["CacheBehaviors"] if route["PathPattern"] == "api/*"]
+    (origin,) = [item for item in config["Origins"] if item["Id"] == behavior["TargetOriginId"]]
+    assert origin["CustomOriginConfig"]["OriginProtocolPolicy"] == "https-only"
+    (header,) = [
+        h for h in origin["OriginCustomHeaders"] if h["HeaderName"].lower() == "x-tsugite-origin"
+    ]
+    secret_id = "OriginKey10CF34FB"
+    assert secret_id in template.find_resources("AWS::SecretsManager::Secret")
+    assert header["HeaderValue"] == {
+        "Fn::Join": ["", ["{{resolve:secretsmanager:", {"Ref": secret_id}, ":SecretString:::}}"]]
+    }
+    for handler in ("app.main.handler", "app.authorizer.handler"):
+        (function,) = template.find_resources(
+            "AWS::Lambda::Function", {"Properties": {"Handler": handler}}
+        ).values()
+        assert (
+            function["Properties"]["Environment"]["Variables"]["ORIGIN_SECRET"] == header["HeaderValue"]
+        )
     template.resource_count_is("AWS::CloudFront::OriginAccessControl", 1)
     template.resource_count_is("Custom::AWSCDKOpenIdConnectProvider", 0)
     template.has_resource_properties(

@@ -9,6 +9,14 @@
     "AWS::Logs::LogGroup": 4
   },
   "Outputs": {
+    "GatewayEndpoint": {
+      "Value": {
+        "Fn::GetAtt": [
+          "Gateway43CB3636",
+          "ApiEndpoint"
+        ]
+      }
+    },
     "PortalUrl": {
       "Value": {
         "Fn::Join": [

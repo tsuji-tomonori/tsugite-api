@@ -30,6 +30,9 @@ def main():
         cmd.add_argument("--bindings", type=Path, help="プロジェクトと接続先を指定するJSONファイル")
         if name == "deploy":
             cmd.add_argument(
+                "--outputs-file", type=Path, help="配備後のスタック出力を保存するJSONファイル"
+            )
+            cmd.add_argument(
                 "--require-approval",
                 choices=("never", "any-change", "broadening"),
                 help="CDKがデプロイ時に対話で承認を求める条件",
@@ -92,6 +95,8 @@ def main():
             cdk_args = ["-c", "bindings=" + str(args.bindings.resolve())] if args.bindings else []
             if args.command == "deploy" and args.require_approval:
                 cdk_args.extend(["--require-approval", args.require_approval])
+            if args.command == "deploy" and args.outputs_file:
+                cdk_args.extend(["--outputs-file", str(args.outputs_file.resolve())])
             subprocess.run(
                 ["npx", "--yes", "--package", "aws-cdk@2.1149.0", "cdk", args.command, *cdk_args],
                 cwd=ROOT / "packages/infra",
