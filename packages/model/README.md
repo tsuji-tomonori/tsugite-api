@@ -6,9 +6,9 @@
 | 検索先とクエリの生成 | [Qwen2.5-0.5B-Instruct](https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF) | Q3_K_M、約432 MB | Apache-2.0 |
 | 日本語回答の出典・手順選択 | [Qwen2.5-0.5B-Instruct-Ja-SFT](https://huggingface.co/jaeyong2/Qwen2.5-0.5B-Instruct-Ja-SFT) の [GGUF 配布版](https://huggingface.co/tensorblock/Qwen2.5-0.5B-Instruct-Ja-SFT-GGUF) | Q2_K、約339 MB | Apache-2.0 |
 
-モデルごとに Python 3.14 の ZIP 版 Lambda Event Function を用意します。埋め込みは ONNX Runtime、生成はローカルで起動する CPU 版 llama.cpp を使用します。生成の温度とシードを固定し、JSON スキーマで出力を制限します。API とチャット処理はそれぞれ Python 3.15 の ZIP として動作します。
+判定モデルは Python 3.14、検索語生成と回答生成は Python 3.15 の ZIP 版 Lambda Event Function を使用します。埋め込みは ONNX Runtime、生成はローカルで起動する CPU 版 llama.cpp を使用します。生成の温度とシードを固定し、JSON スキーマで出力を制限します。API とチャット処理はそれぞれ Python 3.15 の ZIP として動作します。
 
-チャット処理は API・認可・DB 移行と同じ Python 3.15 用の依存 Layer を参照します。判定モデルは Python 3.14 用の `decision-model` Layer（ONNX Runtime、NumPy、Tokenizers、AWS SDK）、検索語生成と回答生成は `model-sdk` Layer（AWS SDK）を参照します。これらの外部パッケージの版と wheel のハッシュはルートの `uv.lock` に記録します。固定コミットからビルドした `llama-server` は生成用の関数 ZIP に含めます。
+チャット処理は API・認可・DB 移行と同じ Python 3.15 用の依存 Layer を参照します。判定モデルは Python 3.14 用の `decision-model` Layer（ONNX Runtime、NumPy、Tokenizers、AWS SDK）、検索語生成と回答生成は `model-sdk` Layer（AWS SDK）を参照します。ONNX Runtime 1.32.0 の Linux x86_64 用 wheel は Python 3.14 までに対応します。判定用の依存は `packages/model/decision-model/uv.lock`、Python 3.15 用の依存はルートの `uv.lock` で管理します。固定コミットからビルドした `llama-server` は生成用の関数 ZIP に含めます。
 
 判定用の重みとトークナイザーは合計 43,773,448 バイトです。ビルド時に固定版を取得し、両方の SHA-256 を検証して、依存 Layer とは独立した `decision-weights` Layer にライセンスとともに格納します。判定関数は初回の推論時に `/opt/models/decision/` から直接読み込み、同じ実行環境では推論セッションを再利用します。この関数にはモデル取得用の S3 権限はありません。
 

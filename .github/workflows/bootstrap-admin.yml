@@ -25,6 +25,9 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
+        with:
+          enable-cache: false
       - uses: aws-actions/configure-aws-credentials@61815dcd50bd041e203e49132bacad1fd04d2708 # v5
         with:
           role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
@@ -33,7 +36,7 @@ jobs:
       - id: invite
         env:
           BOOTSTRAP_ADMIN_EMAIL: ${{ secrets.BOOTSTRAP_ADMIN_EMAIL }}
-        run: python3 packages/tools/operations/bootstrap_admin.py invite
+        run: uv run --no-project --python 3.15 python packages/tools/operations/bootstrap_admin.py invite
 
   grant:
     needs: invite
@@ -48,6 +51,9 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
+        with:
+          enable-cache: false
       - uses: aws-actions/configure-aws-credentials@61815dcd50bd041e203e49132bacad1fd04d2708 # v5
         with:
           role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
@@ -56,4 +62,4 @@ jobs:
       - env:
           INVITED_POOL: ${{ needs.invite.outputs.pool }}
           INVITED_SUBJECT: ${{ needs.invite.outputs.subject }}
-        run: python3 packages/tools/operations/bootstrap_admin.py grant
+        run: uv run --no-project --python 3.15 python packages/tools/operations/bootstrap_admin.py grant

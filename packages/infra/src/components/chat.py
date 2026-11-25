@@ -64,13 +64,13 @@ class PortalChat(Construct):
                 self,
                 construct_id,
                 code=fn.Code.from_asset(str(ROOT / "build" / f"{name}-layer.zip")),
-                compatible_runtimes=[fn.Runtime.PYTHON_3_14],
+                compatible_runtimes=[runtime],
                 compatible_architectures=[fn.Architecture.X86_64],
             )
-            for name, construct_id in (
-                ("decision-model", "DecisionDependencies"),
-                ("decision-weights", "DecisionWeights"),
-                ("model-sdk", "SdkDependencies"),
+            for name, construct_id, runtime in (
+                ("decision-model", "DecisionDependencies", fn.Runtime.PYTHON_3_14),
+                ("decision-weights", "DecisionWeights", fn.Runtime.PYTHON_3_14),
+                ("model-sdk", "SdkDependencies", EVENT_PYTHON),
             )
         }
         for model, timeout in (("decision", 35), ("tool", 65), ("generate", 65)):
@@ -83,7 +83,7 @@ class PortalChat(Construct):
             inference = fn.Function(
                 self,
                 name,
-                runtime=fn.Runtime.PYTHON_3_14,
+                runtime=fn.Runtime.PYTHON_3_14 if model == "decision" else EVENT_PYTHON,
                 handler="decision.handler" if model == "decision" else "completion.handler",
                 code=fn.Code.from_asset(
                     str(ROOT / "build" / ("chat-decision" if model == "decision" else "chat-llm"))
@@ -103,16 +103,17 @@ class PortalChat(Construct):
                 ephemeral_storage_size=Size.mebibytes(512),
                 timeout=Duration.seconds(timeout),
             )
-            NagSuppressions.add_resource_suppressions(
-                inference,
-                [
-                    {
-                        "id": "AwsSolutions-L1",
-                        "reason": "Native inference packages target the stable Python 3.14 Lambda runtime.",
-                    }
-                ],
-            )
-            if model != "decision":
+            if model == "decision":
+                NagSuppressions.add_resource_suppressions(
+                    inference,
+                    [
+                        {
+                            "id": "AwsSolutions-L1",
+                            "reason": "ONNX Runtime has no CPython 3.15 Linux x86_64 wheel.",
+                        }
+                    ],
+                )
+            else:
                 inference.add_environment("MODEL_BUCKET", bucket)
                 inference.add_to_role_policy(
                     iam.PolicyStatement(

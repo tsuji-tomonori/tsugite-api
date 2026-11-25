@@ -29,17 +29,15 @@
 | `Metadata.Tsugite.Component` | `Bindings` |
 | `Metadata.Tsugite.ManagedBy` | `AWS-CDK` |
 | `Metadata.aws:asset:is-bundled` | `false` |
-| `Metadata.aws:asset:path` | `asset.42dedf150e7c6719fa9475609d30b007cbd761b3eaa18306e8156f17c006c9e5` |
+| `Metadata.aws:asset:path` | `asset.19f19e4f404e94f836c541993346c071acca77bbce3c8675a33977e769cdab9c` |
 | `Metadata.aws:asset:property` | `Code` |
 | `Metadata.aws:cdk:path` | `TsugiteApi/Bindings/ProductionSample/Resource` |
-| `Metadata.cdk_nag.rules_to_suppress[0].id` | `AwsSolutions-L1` |
-| `Metadata.cdk_nag.rules_to_suppress[0].reason` | `The sample uses the stable Python 3.14 runtime for AWS Emulator compatibility.` |
 | `Properties.Code.S3Bucket.Fn::Sub` | `cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}` |
-| `Properties.Code.S3Key` | `42dedf150e7c6719fa9475609d30b007cbd761b3eaa18306e8156f17c006c9e5.zip` |
+| `Properties.Code.S3Key` | `19f19e4f404e94f836c541993346c071acca77bbce3c8675a33977e769cdab9c.zip` |
 | `Properties.Handler` | `sample_api.main.handler` |
 | `Properties.MemorySize` | `256` |
 | `Properties.Role` | `${GetAtt:BindingsProductionSampleServiceRole4AC78C87.Arn}` |
-| `Properties.Runtime` | `python3.14` |
+| `Properties.Runtime` | `python3.15` |
 | `Properties.Tags[0].Key` | `Application` |
 | `Properties.Tags[0].Value` | `TsugiteAPI` |
 | `Properties.Tags[1].Key` | `Component` |
@@ -77,17 +75,15 @@
 | `Metadata.Tsugite.Component` | `Bindings` |
 | `Metadata.Tsugite.ManagedBy` | `AWS-CDK` |
 | `Metadata.aws:asset:is-bundled` | `false` |
-| `Metadata.aws:asset:path` | `asset.42dedf150e7c6719fa9475609d30b007cbd761b3eaa18306e8156f17c006c9e5` |
+| `Metadata.aws:asset:path` | `asset.19f19e4f404e94f836c541993346c071acca77bbce3c8675a33977e769cdab9c` |
 | `Metadata.aws:asset:property` | `Code` |
 | `Metadata.aws:cdk:path` | `TsugiteApi/Bindings/StagingSample/Resource` |
-| `Metadata.cdk_nag.rules_to_suppress[0].id` | `AwsSolutions-L1` |
-| `Metadata.cdk_nag.rules_to_suppress[0].reason` | `The sample uses the stable Python 3.14 runtime for AWS Emulator compatibility.` |
 | `Properties.Code.S3Bucket.Fn::Sub` | `cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}` |
-| `Properties.Code.S3Key` | `42dedf150e7c6719fa9475609d30b007cbd761b3eaa18306e8156f17c006c9e5.zip` |
+| `Properties.Code.S3Key` | `19f19e4f404e94f836c541993346c071acca77bbce3c8675a33977e769cdab9c.zip` |
 | `Properties.Handler` | `sample_api.main.handler` |
 | `Properties.MemorySize` | `256` |
 | `Properties.Role` | `${GetAtt:BindingsStagingSampleServiceRoleBB2519F8.Arn}` |
-| `Properties.Runtime` | `python3.14` |
+| `Properties.Runtime` | `python3.15` |
 | `Properties.Tags[0].Key` | `Application` |
 | `Properties.Tags[0].Value` | `TsugiteAPI` |
 | `Properties.Tags[1].Key` | `Component` |
@@ -161,17 +157,15 @@
 | `Metadata.Tsugite.Component` | `Bindings` |
 | `Metadata.Tsugite.ManagedBy` | `AWS-CDK` |
 | `Metadata.aws:asset:is-bundled` | `false` |
-| `Metadata.aws:asset:path` | `asset.42dedf150e7c6719fa9475609d30b007cbd761b3eaa18306e8156f17c006c9e5` |
+| `Metadata.aws:asset:path` | `asset.19f19e4f404e94f836c541993346c071acca77bbce3c8675a33977e769cdab9c` |
 | `Metadata.aws:asset:property` | `Code` |
 | `Metadata.aws:cdk:path` | `TsugiteApi/Bindings/Sample/Resource` |
-| `Metadata.cdk_nag.rules_to_suppress[0].id` | `AwsSolutions-L1` |
-| `Metadata.cdk_nag.rules_to_suppress[0].reason` | `The sample uses the stable Python 3.14 runtime for AWS Emulator compatibility.` |
 | `Properties.Code.S3Bucket.Fn::Sub` | `cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}` |
-| `Properties.Code.S3Key` | `42dedf150e7c6719fa9475609d30b007cbd761b3eaa18306e8156f17c006c9e5.zip` |
+| `Properties.Code.S3Key` | `19f19e4f404e94f836c541993346c071acca77bbce3c8675a33977e769cdab9c.zip` |
 | `Properties.Handler` | `sample_api.main.handler` |
 | `Properties.MemorySize` | `256` |
 | `Properties.Role` | `${GetAtt:SampleServiceRole93281BDB.Arn}` |
-| `Properties.Runtime` | `python3.14` |
+| `Properties.Runtime` | `python3.15` |
 | `Properties.Tags[0].Key` | `Application` |
 | `Properties.Tags[0].Value` | `TsugiteAPI` |
 | `Properties.Tags[1].Key` | `Component` |

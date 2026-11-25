@@ -1,7 +1,7 @@
 [project]
 name = "tsugite-api"
 version = "0.1.0"
-requires-python = ">=3.14,<3.16"
+requires-python = ">=3.15,<3.16"
 dependencies = []
 
 [tool.uv.workspace]
@@ -16,7 +16,7 @@ tsugite-frontend = { workspace = true }
 tsugite-infra = { workspace = true }
 
 [tool.uv]
-constraint-dependencies = ["pydantic>=2,<3", "sqlalchemy>=2,<3", "aws-cdk-lib>=2.220,<3"]
+constraint-dependencies = ["pydantic>=2,<3", "sqlalchemy>=2,<3", "aws-cdk-lib>=2.278,<3"]
 
 [dependency-groups]
 quality-docs = ["pyyaml"]
@@ -48,7 +48,7 @@ omit = ["*/tests/*", "*/cdk.out/*", "*/__pycache__/*"]
 include_namespace_packages = true
 
 [tool.ruff]
-target-version = "py314"
+target-version = "py315"
 line-length = 105
 extend-exclude = ["build", "cdk.out", "dist", "artifacts"]
 
@@ -58,7 +58,8 @@ select = ["E4", "E7", "E9", "F", "I", "F631", "PT011", "PT012"]
 [tool.pyright]
 include = ["packages/agent","packages/model","packages/backend/src/app","packages/database/src/tsugite_db"]
 extraPaths = ["packages/agent/src","packages/model/src","packages/backend/src","packages/backend/src/app/core","packages/database/src"]
-pythonVersion = "3.14"
+pythonVersion = "3.15"
+exclude = ["packages/model/src/decision.py", "**/.venv", "**/__pycache__"]
 strict = ["packages/database/src/tsugite_db/models", "packages/backend/src/app/schemas/catalog.py", "packages/backend/src/app/schemas/base.py"]
 
 [tool.mypy]

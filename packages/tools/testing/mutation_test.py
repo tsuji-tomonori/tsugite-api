@@ -472,6 +472,14 @@ MUTATIONS = (
         "packages/frontend/tests/test_screen_registry.py::test_duplicate_screen_path_is_rejected",
     ),
     Mutation(
+        "infra",
+        "サンプルAPIを以前のPythonランタイムに戻す",
+        "packages/infra/src/components/bindings.py",
+        "runtime=EVENT_PYTHON,",
+        "runtime=fn.Runtime.PYTHON_3_14,",
+        "packages/infra/tests/test_cdk_regression.py::test_sample_functions_use_python_315",
+    ),
+    Mutation(
         "model-layer",
         "判定モデルを専用Layerと異なるパスから読む",
         "packages/model/src/decision.py",
@@ -483,7 +491,7 @@ MUTATIONS = (
         "model-layer",
         "判定モデルの依存群をSDKだけに置き換える",
         "packages/tools/packaging/build_backend.py",
-        '["--package", "tsugite-model", "--no-dev", "--extra", "decision"]',
+        '["--project", "packages/model/decision-model", "--no-dev"]',
         '["--package", "tsugite-model", "--no-dev"]',
         "packages/tools/tests/test_lambda_layer.py::test_each_lambda_layer_exports_its_locked_dependencies",
     ),

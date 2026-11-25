@@ -25,6 +25,11 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
       - uses: astral-sh/setup-uv@v6
+      # 実行準備
+      - name: Use the project Python for runner scripts
+        run: |
+          uv python install --default
+          echo "$(uv python dir --bin)" >> "$GITHUB_PATH"
       #: 分野別のテスト定義と有効なカバレッジ基準から完了の定義を生成できる。
       - name: 完了の定義を生成
         env:
@@ -133,6 +138,11 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
       - uses: astral-sh/setup-uv@v6
+      # 実行準備
+      - name: Use the project Python for runner scripts
+        run: |
+          uv python install --default
+          echo "$(uv python dir --bin)" >> "$GITHUB_PATH"
       - uses: actions/download-artifact@v4
         with:
           name: verify-plan
@@ -200,7 +210,7 @@ jobs:
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
-          if ! git diff --quiet "$BASE_SHA...HEAD" -- uv.lock packages/tools/packaging/build_backend.py packages/tools/packaging/build_chat.py; then
+          if ! git diff --quiet "$BASE_SHA...HEAD" -- uv.lock packages/model/decision-model/uv.lock packages/tools/packaging/build_backend.py packages/tools/packaging/build_chat.py; then
             sha256sum build/sample-api-layer.zip build/runtime-layer.zip build/decision-model-layer.zip build/model-sdk-layer.zip > "$RUNNER_TEMP/runtime-layer.sha256"
             uv run --locked --all-packages python packages/tools/packaging/build_backend.py
             sha256sum --check "$RUNNER_TEMP/runtime-layer.sha256"

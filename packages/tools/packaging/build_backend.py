@@ -13,7 +13,7 @@ from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 ROOT = Path(__file__).resolve().parents[3]
 
 
-def sync_layer(requirements, archive, python_version="3.14"):
+def sync_layer(requirements, archive, python_version="3.15"):
     """Sync hash-locked Lambda wheels and publish a reproducible python/ archive."""
     with TemporaryDirectory(dir=archive.parent) as directory:
         stage = Path(directory)
@@ -72,14 +72,14 @@ def sync_layer(requirements, archive, python_version="3.14"):
 
 
 def build_layers():
-    """Export each Lambda's runtime dependencies directly from the shared uv.lock."""
+    """Export each Lambda's runtime dependencies directly from its lockfile."""
     build_dir = ROOT / "build"
     build_dir.mkdir(exist_ok=True)
     for name, python_version, selection in (
         ("runtime", "3.15", ["--package", "tsugite-backend", "--no-dev"]),
-        ("sample-api", "3.14", ["--package", "tsugite-sample-api", "--no-dev"]),
-        ("decision-model", "3.14", ["--package", "tsugite-model", "--no-dev", "--extra", "decision"]),
-        ("model-sdk", "3.14", ["--package", "tsugite-model", "--no-dev"]),
+        ("sample-api", "3.15", ["--package", "tsugite-sample-api", "--no-dev"]),
+        ("decision-model", "3.14", ["--project", "packages/model/decision-model", "--no-dev"]),
+        ("model-sdk", "3.15", ["--package", "tsugite-model", "--no-dev"]),
     ):
         requirements = build_dir / f"{name}.txt"
         subprocess.run(

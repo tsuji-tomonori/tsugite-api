@@ -1,7 +1,7 @@
 [project]
 name = "tsugite-agent"
 version = "0.1.0"
-requires-python = ">=3.14,<3.16"
+requires-python = ">=3.15,<3.16"
 dependencies = ["boto3", "sqlalchemy>=2,<3", "tsugite-backend", "tsugite-database"]
 
 [build-system]

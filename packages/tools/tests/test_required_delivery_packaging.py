@@ -108,9 +108,9 @@ def test_backend_build_includes_migrations_and_reproducible_layers(distribution_
         assert (package / name).read_bytes() == Path(name).name.encode()
     assert versions == {
         "runtime": "3.15",
-        "sample-api": "3.14",
+        "sample-api": "3.15",
         "decision-model": "3.14",
-        "model-sdk": "3.14",
+        "model-sdk": "3.15",
     }
     archives = {}
     for name in versions:

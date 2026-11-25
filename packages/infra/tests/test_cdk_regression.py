@@ -83,6 +83,7 @@ def test_backend_layer_changes_only_with_dependencies(tmp_path):
             and (props := resource["Properties"]).get("Handler") in handlers
         }
         assert functions.keys() == handlers
+        assert all(props["Runtime"] == "python3.15" for props in functions.values())
         layer_id = functions["app.main.handler"]["Layers"][0]["Ref"]
         assert all(props["Layers"] == [{"Ref": layer_id}] for props in functions.values())
         layer = resources[layer_id]
@@ -117,6 +118,7 @@ def test_model_layer_changes_are_isolated(tmp_path):
             props = resource["Properties"]
             role = props.get("Environment", {}).get("Variables", {}).get("MODEL_ROLE")
             if role:
+                expected_runtime = "python3.14" if role == "decision" else "python3.15"
                 refs = props["Layers"]
                 assert len(refs) == (2 if role == "decision" else 1)
                 assert ("MODEL_BUCKET" in props["Environment"]["Variables"]) == (role != "decision")
@@ -126,7 +128,9 @@ def test_model_layer_changes_are_isolated(tmp_path):
                     layer = resources[ref["Ref"]]
                     assert layer["Type"] == "AWS::Lambda::LayerVersion"
                     assert (
-                        layer["Properties"]["CompatibleRuntimes"] == [props["Runtime"]] == ["python3.14"]
+                        layer["Properties"]["CompatibleRuntimes"]
+                        == [props["Runtime"]]
+                        == [expected_runtime]
                     )
                     layers[role].append(layer["Properties"]["Content"])
         assert set(layers) == {"decision", "tool", "generate"}
@@ -151,6 +155,13 @@ def test_model_layer_changes_are_isolated(tmp_path):
     assert weight_layers["decision"][0] == final_layers["decision"][0]
     assert weight_layers["decision"][1] != final_layers["decision"][1]
     assert weight_layers["tool"] == final_layers["tool"]
+
+
+def test_sample_functions_use_python_315(catalog_stack):
+    """3環境のサンプルAPIがすべてPython 3.15で動作する構成になっている。"""
+    Template.from_stack(catalog_stack).resource_properties_count_is(
+        "AWS::Lambda::Function", {"Handler": "sample_api.main.handler", "Runtime": "python3.15"}, 3
+    )
 
 
 def test_schema_waits_for_chat_models(catalog_stack):

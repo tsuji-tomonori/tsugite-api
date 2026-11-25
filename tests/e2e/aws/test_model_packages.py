@@ -1,6 +1,5 @@
 # 配備用コードとLayerだけでモデルを読み込み、外部パッケージの読み込み元を確認する。
 import subprocess
-import sys
 from pathlib import Path
 from zipfile import ZipFile
 
@@ -10,23 +9,25 @@ BUILD = Path(__file__).resolve().parents[3] / "build"
 
 
 @pytest.mark.parametrize(
-    "code,layer,handler",
+    "code,layer,handler,version",
     [
         pytest.param(
             "chat-decision",
             "decision-model",
             "decision",
+            "3.14",
             marks=pytest.mark.case_detail("判定用の依存からネイティブ推論ライブラリを読み込む"),
         ),
         pytest.param(
             "chat-llm",
             "model-sdk",
             "completion",
+            "3.15",
             marks=pytest.mark.case_detail("生成用の依存からモデル取得用SDKを読み込む"),
         ),
     ],
 )
-def test_model_imports_from_deployment_packages(tmp_path, code, layer, handler):
+def test_model_imports_from_deployment_packages(tmp_path, code, layer, handler, version):
     """配備用コードとLayerだけでモデルを読み込み、外部パッケージの読み込み元を確認する。"""
     code_dir = BUILD / code
     layer_dir = tmp_path / "opt"
@@ -58,7 +59,21 @@ for name in names:
     assert Path(importlib.import_module(name).__file__).is_relative_to(dependencies), name
 """
     subprocess.run(
-        [sys.executable, "-I", "-S", "-c", script, str(code_dir), str(layer_dir / "python"), handler],
+        [
+            "uv",
+            "run",
+            "--no-project",
+            "--python",
+            version,
+            "python",
+            "-I",
+            "-S",
+            "-c",
+            script,
+            str(code_dir),
+            str(layer_dir / "python"),
+            handler,
+        ],
         cwd=tmp_path,
         check=True,
     )
