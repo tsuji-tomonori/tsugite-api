@@ -121,7 +121,7 @@
 | ONNXが埋め込みの代わりに異なる型を返した場合は、検索に使えるベクトルとして返さない。 | — | [test_non_dense_onnx_output_fails_the_embedding_request](../../../packages/model/tests/test_required_model.py#L170) |
 | 固定版のトークナイザーを一度取得し、メモリキャッシュを作り直した後も一時ファイルを再利用する。 | — | [test_warm_worker_reuses_downloaded_versioned_tokenizer](../../../packages/model/tests/test_required_model.py#L194) |
 
-### アーキテクチャ（50項目）
+### アーキテクチャ（51項目）
 
 | 確認内容 | 条件別の確認内容 | テスト定義 |
 | --- | --- | --- |
@@ -142,15 +142,16 @@
 | 全パッケージに適用する行と分岐の下限、およびuvの既定のPyPI取得先を確認する。 | — | [test_workspace_coverage_and_index](../../../tests/architecture/core/test_packages.py#L38) |
 | すべてのPythonファイルの先頭に、そのファイルの役割を説明する日本語コメントがある。 | — | [test_python_files_start_with_japanese_purpose](../../../tests/architecture/core/test_packages.py#L50) |
 | どの単体テストでも定数だけのassertや同一式同士の等価比較を検出する。 | — | [test_unit_assertions_check_observations](../../../tests/architecture/core/test_packages.py#L63) |
-| 各層の違反をインポートの別名・相対参照・完全修飾名でも行番号付きで報告する。 | — | [test_boundary_checker_rejects_cross_layer_imports](../../../tests/architecture/core/test_rule_checks.py#L15) |
-| APIのジョブ受付、エージェントのガイド共有、モデル内の参照を許可する。 | — | [test_boundary_checker_accepts_supported_collaboration](../../../tests/architecture/core/test_rule_checks.py#L48) |
-| 所属する層を定義していない新規パッケージを検査対象から漏らさない。 | — | [test_new_package_requires_layer_rules](../../../tests/architecture/core/test_rule_checks.py#L61) |
-| コード例の日本語を表題に数えず、例の後に続く日本語の表題を採用する。 | — | [test_document_checker_uses_title_outside_code_examples](../../../tests/architecture/core/test_rule_checks.py#L67) |
-| 新しい配下の文書と生成設計書を自動で検査し、ビルドの一時コピーを除外する。 | — | [test_project_discovery_includes_new_components](../../../tests/architecture/core/test_rule_checks.py#L74) |
-| 取得元が可変または重みのハッシュが不正なモデルについて両方の原因を報告する。 | — | [test_model_checker_rejects_unpinned_weight](../../../tests/architecture/core/test_rule_checks.py#L88) |
-| クラス内の非同期テストも説明の検査対象に含め、補助関数を除く。 | — | [test_case_discovery_includes_async_class_methods](../../../tests/architecture/core/test_rule_checks.py#L96) |
-| 正常な説明を受け付け、英語だけの説明・複数行・短すぎる説明を検出する。 | — | [test_case_explanation_requires_one_japanese_sentence](../../../tests/architecture/core/test_rule_checks.py#L105) |
-| 三つの役割がそろった配布物は通過し、一つでも定義が欠けると失敗する。 | — | [test_model_distribution_requires_all_three_roles](../../../tests/architecture/core/test_rule_checks.py#L112) |
+| 各層の違反をインポートの別名・相対参照・完全修飾名でも行番号付きで報告する。 | — | [test_boundary_checker_rejects_cross_layer_imports](../../../tests/architecture/core/test_rule_checks.py#L16) |
+| APIのジョブ受付、エージェントのガイド共有、モデル内の参照を許可する。 | — | [test_boundary_checker_accepts_supported_collaboration](../../../tests/architecture/core/test_rule_checks.py#L49) |
+| 所属する層を定義していない新規パッケージを検査対象から漏らさない。 | — | [test_new_package_requires_layer_rules](../../../tests/architecture/core/test_rule_checks.py#L62) |
+| コード例の日本語を表題に数えず、例の後に続く日本語の表題を採用する。 | — | [test_document_checker_uses_title_outside_code_examples](../../../tests/architecture/core/test_rule_checks.py#L68) |
+| 新しい配下の文書と生成設計書を自動で検査し、ビルドの一時コピーを除外する。 | — | [test_project_discovery_includes_new_components](../../../tests/architecture/core/test_rule_checks.py#L75) |
+| 取得元が可変または重みのハッシュが不正なモデルについて両方の原因を報告する。 | — | [test_model_checker_rejects_unpinned_weight](../../../tests/architecture/core/test_rule_checks.py#L89) |
+| クラス内の非同期テストも説明の検査対象に含め、補助関数を除く。 | — | [test_case_discovery_includes_async_class_methods](../../../tests/architecture/core/test_rule_checks.py#L97) |
+| 正常な説明を受け付け、英語だけの説明・複数行・短すぎる説明を検出する。 | — | [test_case_explanation_requires_one_japanese_sentence](../../../tests/architecture/core/test_rule_checks.py#L106) |
+| 三つの役割がそろった配布物は通過し、一つでも定義が欠けると失敗する。 | — | [test_model_distribution_requires_all_three_roles](../../../tests/architecture/core/test_rule_checks.py#L113) |
+| 同階層と親階層からの相対インポートを、別名に左右されず元の行番号と絶対名で報告する。 | — | [test_relative_imports_resolve_with_original_line_numbers](../../../tests/architecture/core/test_rule_checks.py#L126) |
 | DB層はHTTPのルーターに依存しない | — | [test_persistence_has_no_http_dependencies](../../../tests/architecture/database/test_persistence.py#L5) |
 | 各テーブルと同名のファイルにモデルを1件置き、全モデルを共通のメタデータに登録する。 | — | [test_model_files_match_registered_tables](../../../tests/architecture/database/test_persistence.py#L15) |
 | 全画面で機能ごとの定義を検査し、共通コードへの画面登録と個別画面間の直接依存を検出する。 | — | [test_portal_screens_keep_their_feature_boundaries](../../../tests/architecture/frontend/test_frontend_screens.py#L10) |

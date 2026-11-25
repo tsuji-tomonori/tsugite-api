@@ -227,8 +227,8 @@ MUTATIONS = (
         "completion",
         "ワークフローの実行条件をすべてのPRとして掲載する",
         "packages/tools/design/completion.py",
-        'condition = fields["if"].value if "if" in fields else ""',
-        'condition = ""',
+        'conditions = [node["if"].value for node in (mapping(job), fields) if "if" in node]',
+        'conditions = []',
         "packages/tools/tests/test_completion.py::test_workflow_comments_follow_steps",
     ),
     Mutation(
@@ -477,7 +477,7 @@ MUTATIONS = (
         "tests/architecture/core/dependencies.py",
         "elif isinstance(node, ast.ImportFrom):",
         "elif isinstance(node, ast.ImportFrom) and not node.level:",
-        "tests/architecture/core/test_rule_checks.py::test_boundary_checker_rejects_cross_layer_imports",
+        "tests/architecture/core/test_rule_checks.py::test_relative_imports_resolve_with_original_line_numbers",
     ),
     Mutation(
         "architecture",

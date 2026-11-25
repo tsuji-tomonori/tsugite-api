@@ -1,4 +1,5 @@
 # 各層の違反をインポートの別名・相対参照・完全修飾名でも行番号付きで報告する。
+import ast
 import json
 from pathlib import Path
 
@@ -6,7 +7,7 @@ import pytest
 
 from ..model.model_artifacts import check_model_artifacts, manifest_errors
 from .case_text import is_japanese_case_text
-from .dependencies import dependency_violations
+from .dependencies import dependencies, dependency_violations
 from .project import project_files
 from .test_case_descriptions import case_functions
 from .test_documents import japanese_title
@@ -120,3 +121,17 @@ def test_model_distribution_requires_all_three_roles(tmp_path):
     path.write_text(json.dumps(manifest), encoding="utf-8")
     with pytest.raises(AssertionError, match="decision"):
         check_model_artifacts(tmp_path)
+
+
+def test_relative_imports_resolve_with_original_line_numbers():
+    """同階層と親階層からの相対インポートを、別名に左右されず元の行番号と絶対名で報告する。"""
+    tree = ast.parse(
+        "# 画面から参照する二つの依存先。\n"
+        "from . import metrics as totals\n"
+        "\n"
+        "from .. import audit as history\n"
+    )
+    assert list(dependencies(tree, "portal.views")) == [
+        (2, "portal.views.metrics"),
+        (4, "portal.audit"),
+    ]
