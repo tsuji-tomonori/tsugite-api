@@ -228,7 +228,7 @@ MUTATIONS = (
         "ワークフローの実行条件をすべてのPRとして掲載する",
         "packages/tools/design/completion.py",
         'conditions = [node["if"].value for node in (mapping(job), fields) if "if" in node]',
-        'conditions = []',
+        "conditions = []",
         "packages/tools/tests/test_completion.py::test_workflow_comments_follow_steps",
     ),
     Mutation(
