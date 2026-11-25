@@ -26,6 +26,30 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
+        "formal",
+        "利用者別の禁止操作を許可する",
+        "packages/backend/src/app/core/credential_policy.py",
+        'if allowed is not None and operation not in allowed:\n        raise HTTPException(403, "この利用者',
+        'if False:\n        raise HTTPException(403, "この利用者',
+        "packages/backend/tests/test_quint_policy.py::test_operation_policy",
+    ),
+    Mutation(
+        "formal",
+        "本人限定の利用権を共有キーにも認める",
+        "packages/backend/src/app/apis/gateway.py",
+        "not actor.machine and not actor.key_shared:",
+        "not actor.machine:",
+        "packages/backend/tests/test_quint_policy.py::test_entitlement_policy",
+    ),
+    Mutation(
+        "formal",
+        "取消を実行しても利用権を承認済みに残す",
+        "packages/backend/src/app/core/catalog.py",
+        '"revoke": ("approved", "revoked")',
+        '"revoke": ("approved", "approved")',
+        "packages/backend/tests/test_quint_grants.py::test_grant_history",
+    ),
+    Mutation(
         "frontend",
         "認証情報の初期更新時刻を有効期間の5分前に固定する",
         "packages/frontend/src/web_app/components/credential_views.py",
@@ -823,7 +847,9 @@ MUTATIONS = (
 
 
 def copy_sources(workspace):
-    ignore = shutil.ignore_patterns("dist", "cdk.out", ".venv", "__pycache__", "*.egg-info")
+    ignore = shutil.ignore_patterns(
+        "dist", "cdk.out", "node_modules", ".venv", "__pycache__", "*.egg-info"
+    )
     for folder in ("packages", "deploy/config", "docs/examples", "tests"):
         shutil.copytree(ROOT / folder, workspace / folder, ignore=ignore)
     shutil.copyfile(ROOT / "pyproject.toml", workspace / "pyproject.toml")

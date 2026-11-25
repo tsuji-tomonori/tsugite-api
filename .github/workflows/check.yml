@@ -42,6 +42,29 @@ jobs:
           name: definition-of-done
           path: artifacts/definition-of-done.md
           if-no-files-found: error
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      # 実行準備
+      - name: 固定版のQuintを用意
+        run: npm ci --prefix tests/formal --ignore-scripts --no-audit
+      #: 全形式モデルの不変条件と生成差分を調べ、要件の操作列を単体・結合テストで再生する。
+      - name: 要件とQuintの操作列を照合
+        run: bash tests/formal/check.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: formal-verification
+          path: |
+            artifacts/formal/*.log
+            artifacts/formal/replay.xml
+            artifacts/formal/coverage.md
+            tests/formal/cases.json
+          if-no-files-found: error
       #: 各要件に実在する受入テストと証跡の取得方法が定義されている。
       - name: 要件別の受入テスト定義を検査
         run: python3 -m packages.tools.testing.requirement_evidence --check
