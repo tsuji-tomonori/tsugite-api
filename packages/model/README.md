@@ -8,9 +8,11 @@
 
 モデルごとに Python 3.14 の ZIP 版 Lambda Event Function を用意します。埋め込みは ONNX Runtime、生成はローカルで起動する CPU 版 llama.cpp を使用します。生成の温度とシードを固定し、JSON スキーマで出力を制限します。API とチャット処理はそれぞれ Python 3.15 の ZIP として動作します。
 
-チャット処理は API・認可・DB 移行と同じ Python 3.15 用の依存 Layer を参照します。判定モデルは Python 3.14 用の `decision-model` Layer（ONNX Runtime、NumPy、Tokenizers、AWS SDK）、検索語生成と回答生成は `model-sdk` Layer（AWS SDK）を参照します。これらの外部パッケージの版と wheel のハッシュはルートの `uv.lock` に記録します。モデルの重みは S3 から読み込み、固定コミットからビルドした `llama-server` は生成用の関数 ZIP に含めます。
+チャット処理は API・認可・DB 移行と同じ Python 3.15 用の依存 Layer を参照します。判定モデルは Python 3.14 用の `decision-model` Layer（ONNX Runtime、NumPy、Tokenizers、AWS SDK）、検索語生成と回答生成は `model-sdk` Layer（AWS SDK）を参照します。これらの外部パッケージの版と wheel のハッシュはルートの `uv.lock` に記録します。固定コミットからビルドした `llama-server` は生成用の関数 ZIP に含めます。
 
-GitHub にはソース、取得元、版、チェックサムを置きます。配備時には既定の CDK ブートストラップ用 S3 の `tsugite-chat-models/` にモデル重みをアップロードします。既存の同一版を再利用します。モデルの Lambda は最初の呼び出し時に担当モデルを `/tmp` に取得し、ウォーム実行時にモデルと埋め込みを再利用します。3モデルは Apache-2.0 で、再配布時にはライセンスや通知を添える条件があります。
+判定用の重みとトークナイザーは合計 43,773,448 バイトです。ビルド時に固定版を取得し、両方の SHA-256 を検証して、依存 Layer とは独立した `decision-weights` Layer にライセンスとともに格納します。判定関数は初回の推論時に `/opt/models/decision/` から直接読み込み、同じ実行環境では推論セッションを再利用します。この関数にはモデル取得用の S3 権限はありません。
+
+検索語生成用の重みは 432,041,824 バイト、回答生成用の重みは 338,607,296 バイトで、どちらも Lambda の ZIP 配備上限（関数本体と全 Layer の展開後合計 250 MiB）を超えます。この2件は配備時に CDK ブートストラップ用 S3 の `tsugite-chat-models/` に保存し、各実行環境の初回推論時に自分の重みを `/tmp` に取得して再利用します。ビルドでは関数ごとに本体と利用する全 Layer の展開後のサイズを合算し、上限に達したら配備を止めます。
 
 ローカルのデモでは既存の語句・概念検索と登録済みの手順でチャットを試せます。量子化モデルの精度、コールドスタート時間、スループットの計測には AWS 上のモデル Lambda を使用します。
 

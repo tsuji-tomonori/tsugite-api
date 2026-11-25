@@ -25,6 +25,14 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
+        "model-layer",
+        "判定モデルを専用Layerと異なるパスから読む",
+        "packages/model/src/decision.py",
+        'Path("/opt/models/decision")',
+        'Path("/tmp/models/decision")',
+        "packages/model/tests/test_model_workers.py::test_embedding_load_reuses_cpu_model_and_tokenizer",
+    ),
+    Mutation(
         "metadata",
         "任意属性の役職を既存の自動承認条件に含める",
         "packages/backend/src/app/core/workspace.py",
