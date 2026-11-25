@@ -68,6 +68,7 @@ class PortalChat(Construct):
             )
             for name, construct_id in (
                 ("decision-model", "DecisionDependencies"),
+                ("decision-weights", "DecisionWeights"),
                 ("model-sdk", "SdkDependencies"),
             )
         }
@@ -86,9 +87,12 @@ class PortalChat(Construct):
                 code=fn.Code.from_asset(
                     str(ROOT / "build" / ("chat-decision" if model == "decision" else "chat-llm"))
                 ),
-                layers=[model_layers["decision-model" if model == "decision" else "model-sdk"]],
+                layers=(
+                    [model_layers["decision-model"], model_layers["decision-weights"]]
+                    if model == "decision"
+                    else [model_layers["model-sdk"]]
+                ),
                 environment={
-                    "MODEL_BUCKET": bucket,
                     "MODEL_ROLE": model,
                     "TOKENIZERS_PARALLELISM": "false",
                 },
@@ -107,16 +111,18 @@ class PortalChat(Construct):
                     }
                 ],
             )
-            inference.add_to_role_policy(
-                iam.PolicyStatement(
-                    actions=["s3:GetObject"],
-                    resources=[
-                        f"arn:{Aws.PARTITION}:s3:::{bucket}/tsugite-chat-models/{model}/"
-                        f"{item.get('sha256', item['revision'])}/{item['name']}"
-                        for item in artifacts[model]
-                    ],
+            if model != "decision":
+                inference.add_environment("MODEL_BUCKET", bucket)
+                inference.add_to_role_policy(
+                    iam.PolicyStatement(
+                        actions=["s3:GetObject"],
+                        resources=[
+                            f"arn:{Aws.PARTITION}:s3:::{bucket}/tsugite-chat-models/{model}/"
+                            f"{item.get('sha256', item['revision'])}/{item['name']}"
+                            for item in artifacts[model]
+                        ],
+                    )
                 )
-            )
             role.add_to_policy(
                 iam.PolicyStatement(
                     actions=["lambda:InvokeFunction"], resources=[inference.function_arn]

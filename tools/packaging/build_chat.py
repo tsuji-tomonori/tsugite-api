@@ -6,7 +6,8 @@ import os
 import shutil
 import subprocess
 from pathlib import Path
-from zipfile import ZipFile
+from tempfile import TemporaryDirectory
+from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 
 ROOT = Path(__file__).resolve().parents[2]
 MODELS = ROOT / "packages/model/src"
@@ -23,8 +24,13 @@ def stage():
         if target.exists():
             shutil.rmtree(target)
         target.mkdir(parents=True)
-        for name in (entry, "model_runtime.py", "manifest.json"):
+        for name in (entry, "model_runtime.py"):
             shutil.copy2(MODELS / name, target)
+        if label == "llm":
+            manifest = json.loads((MODELS / "manifest.json").read_text())
+            (target / "manifest.json").write_text(
+                json.dumps({role: manifest[role] for role in ("tool", "generate")}), encoding="utf-8"
+            )
         shutil.copy2(ROOT / "packages/backend/src/app/core/log_record.py", target)
 
 
@@ -78,12 +84,57 @@ def build():
     shutil.copy2(out / "bin/llama-server", llm)
     shutil.copy2(source / "LICENSE", llm / "llama.cpp-LICENSE")
     subprocess.run([str(llm / "llama-server"), "--version"], check=True)
-    for target, layer in ((decision, "decision-model-layer.zip"), (llm, "model-sdk-layer.zip")):
-        code_bytes = sum(path.stat().st_size for path in target.rglob("*") if path.is_file())
+    build_decision_weights()
+    check_package_size(decision, ["decision-model-layer.zip", "decision-weights-layer.zip"])
+    check_package_size(llm, ["model-sdk-layer.zip"])
+
+
+def check_package_size(target, layers):
+    size = sum(path.stat().st_size for path in target.rglob("*") if path.is_file())
+    for layer in layers:
         with ZipFile(BUILD / layer) as archive:
-            dependency_bytes = sum(entry.file_size for entry in archive.infolist())
-        if code_bytes + dependency_bytes > 250 * 1024**2:
-            raise ValueError(f"{target.name} and {layer} exceed the Lambda uncompressed package limit")
+            size += sum(entry.file_size for entry in archive.infolist())
+    print(f"{target.name} with layers: {size:,} bytes uncompressed")
+    if size >= 250 * 1024**2:
+        raise ValueError(f"{target.name} with its layers exceeds the Lambda package limit")
+
+
+def download(item, dest):
+    def digest(path):
+        with path.open("rb") as stream:
+            return hashlib.file_digest(stream, "sha256").hexdigest()
+
+    if dest.exists() and digest(dest) == item["sha256"]:
+        return
+    url = f"https://huggingface.co/{item['repo']}/resolve/{item['revision']}/{item['file']}"
+    with TemporaryDirectory(dir=dest.parent) as directory:
+        temp = Path(directory) / dest.name
+        subprocess.run(
+            ["curl", "--fail", "--location", "--retry", "3", "-o", str(temp), url], check=True
+        )
+        if digest(temp) != item["sha256"]:
+            raise ValueError(f"Model checksum mismatch: {item['repo']}/{item['file']}")
+        temp.replace(dest)
+
+
+def build_decision_weights():
+    items = json.loads((MODELS / "manifest.json").read_text(encoding="utf-8"))["decision"]
+    storage = BUILD / "model-weights"
+    storage.mkdir(parents=True, exist_ok=True)
+    files = {"LICENSE": MODELS.parent / "licenses/ruri-Apache-2.0.txt"}
+    for item in items:
+        path = storage / f"decision-{item['name']}"
+        download(item, path)
+        files[item["name"]] = path
+    with TemporaryDirectory(dir=BUILD) as directory:
+        archive = Path(directory) / "decision-weights-layer.zip"
+        with ZipFile(archive, "w") as layer:
+            for name, path in sorted(files.items()):
+                info = ZipInfo(f"models/decision/{name}")
+                info.create_system = 3
+                info.external_attr = 0o100644 << 16
+                layer.writestr(info, path.read_bytes(), compress_type=ZIP_DEFLATED)
+        archive.replace(BUILD / archive.name)
 
 
 def publish():
@@ -112,8 +163,8 @@ def publish():
     artifacts = json.loads((MODELS / "manifest.json").read_text(encoding="utf-8"))
     storage = BUILD / "model-weights"
     storage.mkdir(parents=True, exist_ok=True)
-    for role, files in artifacts.items():
-        for item in files:
+    for role in ("tool", "generate"):
+        for item in artifacts[role]:
             tag = item.get("sha256", item["revision"])
             key = f"tsugite-chat-models/{role}/{tag}/{item['name']}"
             try:
@@ -123,27 +174,5 @@ def publish():
                 if exc.response["Error"]["Code"] not in ("403", "404", "NoSuchKey"):
                     raise
             dest = storage / f"{role}-{item['name']}"
-            temporary = dest.with_suffix(".part")
-            base = f"https://huggingface.co/{item['repo']}/resolve/{item['revision']}/"
-            try:
-                subprocess.run(
-                    [
-                        "curl",
-                        "--fail",
-                        "--location",
-                        "--retry",
-                        "3",
-                        "--output",
-                        str(temporary),
-                        base + item["file"],
-                    ],
-                    check=True,
-                )
-                if "sha256" in item:
-                    with temporary.open("rb") as stream:
-                        if hashlib.file_digest(stream, "sha256").hexdigest() != tag:
-                            raise ValueError(f"Model checksum mismatch: {item['repo']}/{item['file']}")
-                temporary.replace(dest)
-                s3.upload_file(str(dest), bucket, key, ExtraArgs={"Metadata": {"source": tag}})
-            finally:
-                temporary.unlink(missing_ok=True)
+            download(item, dest)
+            s3.upload_file(str(dest), bucket, key, ExtraArgs={"Metadata": {"source": tag}})

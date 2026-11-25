@@ -2,11 +2,14 @@
 
 from collections import OrderedDict
 from functools import cache
+from pathlib import Path
 
 import numpy as np
 import onnxruntime as ort
-from model_runtime import logged_model, model_file
+from model_runtime import logged_model
 from tokenizers import Tokenizer
+
+MODEL_DIR = Path("/opt/models/decision")
 
 
 @cache
@@ -15,9 +18,9 @@ def load():
     options.inter_op_num_threads = 1
     options.intra_op_num_threads = 2
     session = ort.InferenceSession(
-        model_file("decision", "model.onnx"), sess_options=options, providers=["CPUExecutionProvider"]
+        str(MODEL_DIR / "model.onnx"), sess_options=options, providers=["CPUExecutionProvider"]
     )
-    tokenizer = Tokenizer.from_file(model_file("decision", "tokenizer.json"))
+    tokenizer = Tokenizer.from_file(str(MODEL_DIR / "tokenizer.json"))
     tokenizer.enable_truncation(max_length=192)
     tokenizer.enable_padding(pad_id=3, pad_token="[PAD]")
     return session, tokenizer

@@ -11,7 +11,8 @@
       "name": "tokenizer.json",
       "repo": "cl-nagoya/ruri-v3-30m",
       "revision": "08c17d3",
-      "file": "tokenizer.json"
+      "file": "tokenizer.json",
+      "sha256": "0a94ac9a0a02c067bdef25b72ae9f4ee33f48f552e55988d444f6d25eeb1d062"
     }
   ],
   "tool": [
