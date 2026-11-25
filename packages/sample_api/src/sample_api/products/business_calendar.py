@@ -1,3 +1,4 @@
+# business_calendar 商品のサンプル操作と応答を定義する。
 from datetime import date
 
 from pydantic import BaseModel

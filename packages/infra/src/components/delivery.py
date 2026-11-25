@@ -1,3 +1,4 @@
+# ポータルの配信リソースを構成する。
 from aws_cdk import Stack
 from aws_cdk import aws_cloudfront as cf
 from aws_cdk import aws_cloudfront_origins as origins

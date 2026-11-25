@@ -1,3 +1,4 @@
+# access_rights テーブルの列と型を定義する。
 import json
 from typing import Any
 

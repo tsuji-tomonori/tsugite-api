@@ -1,3 +1,4 @@
+# unit_lifecycle のAPIで扱う入出力モデルを定義する。
 from app.schemas.base import Input
 
 

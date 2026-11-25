@@ -1,3 +1,4 @@
+# 管理者が招待時に氏名を入力し、本人の表示名とともに兼務先に表示して監査を確認する。
 """Browser verification for editing and reading a member profile."""
 
 import os

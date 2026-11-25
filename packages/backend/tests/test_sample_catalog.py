@@ -1,5 +1,6 @@
+# カタログでサンプル商品を検索・取得できることを検証する。
+from packages.tools.demo.seed_marketplace import CATALOG, offer, seed
 from tests.support.catalog import SPEC, headers, invocation_headers
-from tools.demo.seed_marketplace import CATALOG, offer, seed
 
 
 def test_seed_replaces_old_contract_and_calls_product(portal):

@@ -1,3 +1,4 @@
+# 配布単位間のPython依存を構文木から検査する。
 from typing import Annotated
 
 from fastapi import Depends

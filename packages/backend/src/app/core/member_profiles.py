@@ -1,3 +1,4 @@
+# アカウントから独立して利用者情報を読み書きする。
 """Read and update the directory profile independently of account permissions."""
 
 import re

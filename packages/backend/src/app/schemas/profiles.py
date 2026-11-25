@@ -1,3 +1,4 @@
+# profiles のAPIで扱う入出力モデルを定義する。
 from pydantic import Field
 
 from app.schemas.profile_fields import ProfileNames

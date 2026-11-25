@@ -1,3 +1,4 @@
+# 利用申請の承認と却下を受け付ける。
 import json
 
 from app.core.catalog import NEXT, event, record, right_id
@@ -29,7 +30,7 @@ def decide(
     request: Request,
     actor: User,
     db: DB,
-    #: 個人申請の対象利用者識別子
+    #: 申請一覧が返した個人申請IDの末尾の識別子
     principal: str = "",
 ):
     asset = record(db, key)

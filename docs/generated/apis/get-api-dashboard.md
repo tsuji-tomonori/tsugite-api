@@ -6,7 +6,7 @@ GET `/api/dashboard`
 
 [API一覧](README.md) · [CRUD一覧](../db/crud.md)
 
-共通 · `dashboard_api_dashboard_get` · [dashboard:286](../../../packages/backend/src/app/apis/governance/observability.py#L286)
+共通 · `dashboard_api_dashboard_get` · [dashboard:287](../../../packages/backend/src/app/apis/governance/observability.py#L287)
 
 ## 入力
 
@@ -46,25 +46,25 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | R | テーブルを結合 | join | [dashboard:289](../../../packages/backend/src/app/apis/governance/observability.py#L289) |
-| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | R | 検索 | select | [dashboard:289](../../../packages/backend/src/app/apis/governance/observability.py#L289) |
-| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:105](../../../packages/backend/src/app/core/workspace.py#L105) |
-| [APIカタログ](../db/database.md#assets) | assets | R | 検索 | select | [dashboard:287](../../../packages/backend/src/app/apis/governance/observability.py#L287) |
-| [APIカタログ](../db/database.md#assets) | assets | R | テーブルを結合 | join | [dashboard:289](../../../packages/backend/src/app/apis/governance/observability.py#L289) |
-| [APIカタログ](../db/database.md#assets) | assets | R | 検索 | select | [dashboard:311](../../../packages/backend/src/app/apis/governance/observability.py#L311) |
-| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:30](../../../packages/backend/src/app/core/workspace.py#L30) |
-| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:54](../../../packages/backend/src/app/core/workspace.py#L54) |
-| [API呼び出し履歴](../db/database.md#invocation_logs) | invocation_logs | R | 検索 | select | [dashboard:302](../../../packages/backend/src/app/apis/governance/observability.py#L302) |
-| [API呼び出しと組織の対応](../db/database.md#invocation_units) | invocation_units | R | 検索 | select | [unit_condition:270](../../../packages/backend/src/app/apis/governance/directory.py#L270) |
-| [通知](../db/database.md#notices) | notices | R | 検索 | select | [unread:28](../../../packages/backend/src/app/apis/governance/notifications.py#L28) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:123](../../../packages/backend/src/app/core/auth.py#L123) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:91](../../../packages/backend/src/app/core/workspace.py#L91) |
+| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | R | テーブルを結合 | join | [dashboard:290](../../../packages/backend/src/app/apis/governance/observability.py#L290) |
+| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | R | 検索 | select | [dashboard:290](../../../packages/backend/src/app/apis/governance/observability.py#L290) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:107](../../../packages/backend/src/app/core/workspace.py#L107) |
+| [APIカタログ](../db/database.md#assets) | assets | R | 検索 | select | [dashboard:288](../../../packages/backend/src/app/apis/governance/observability.py#L288) |
+| [APIカタログ](../db/database.md#assets) | assets | R | テーブルを結合 | join | [dashboard:290](../../../packages/backend/src/app/apis/governance/observability.py#L290) |
+| [APIカタログ](../db/database.md#assets) | assets | R | 検索 | select | [dashboard:312](../../../packages/backend/src/app/apis/governance/observability.py#L312) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:55](../../../packages/backend/src/app/core/workspace.py#L55) |
+| [API呼び出し履歴](../db/database.md#invocation_logs) | invocation_logs | R | 検索 | select | [dashboard:303](../../../packages/backend/src/app/apis/governance/observability.py#L303) |
+| [API呼び出しと組織の対応](../db/database.md#invocation_units) | invocation_units | R | 検索 | select | [unit_condition:282](../../../packages/backend/src/app/apis/governance/directory.py#L282) |
+| [通知](../db/database.md#notices) | notices | R | 検索 | select | [unread:29](../../../packages/backend/src/app/apis/governance/notifications.py#L29) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:126](../../../packages/backend/src/app/core/auth.py#L126) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:92](../../../packages/backend/src/app/core/workspace.py#L92) |
 
 ### AWSサービス
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:53](../../../packages/backend/src/app/core/config.py#L53) |
+| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:54](../../../packages/backend/src/app/core/config.py#L54) |
 
 <details><summary>解析した関数・依存</summary>
 

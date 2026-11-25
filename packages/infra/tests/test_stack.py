@@ -1,3 +1,4 @@
+# 非公開S3、呼び出しの認可、キャッシュと配信の設定が設計どおりである。
 import json
 from pathlib import Path
 
@@ -175,3 +176,27 @@ def test_existing_resources_keep_their_logical_ids(tmp_path):
     for component, logical_ids in old_groups.items():
         for logical_id in logical_ids:
             assert resources[logical_id]["Metadata"]["Tsugite"]["Component"] == component
+
+
+def test_upstream_bindings_validate_target_and_secret(tmp_path):
+    """提供先の所有者・環境・種類とARNを検査し、不正な接続設定で配備を進めない。"""
+    target = {
+        "owner": "team",
+        "environment": "sandbox",
+        "kind": "https",
+        "address": "https://example.test",
+    }
+    config = tmp_path / "bindings.json"
+    for index, (change, message) in enumerate(
+        (
+            ({"owner": "other"}, "owner or environment"),
+            ({"environment": "other"}, "owner or environment"),
+            ({"kind": "other"}, "unknown target"),
+            ({"kind": "lambda", "address": "*"}, "specific Lambda ARN"),
+            ({"secret_arn": "*"}, "specific secret ARN"),
+        )
+    ):
+        config.write_text(json.dumps({"projects": ["team"], "targets": {"target": target | change}}))
+        app = App(outdir=str(tmp_path / str(index)), context={"bindings": str(config)})
+        with pytest.raises(ValueError, match=message):
+            CatalogStack(app, "TsugiteApi")

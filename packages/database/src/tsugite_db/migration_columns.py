@@ -1,3 +1,4 @@
+# スキーマ更新前に既存の列を取得する。
 """Read the column names needed for idempotent schema upgrades."""
 
 from sqlalchemy import Connection, inspect, text

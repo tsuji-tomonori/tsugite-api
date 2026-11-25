@@ -1,3 +1,4 @@
+# ポータルの通知を配信・取得する。
 from app.apis.governance.members import projects
 from app.core.catalog import event, record
 from app.core.workspace import private_project

@@ -1,3 +1,4 @@
+# 配備用コードとLayerだけでモデルを読み込み、外部パッケージの読み込み元を確認する。
 import subprocess
 import sys
 from pathlib import Path

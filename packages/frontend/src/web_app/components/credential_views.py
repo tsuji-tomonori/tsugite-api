@@ -302,7 +302,9 @@ def render_form(
             refresh.max = raw
 
     number("トークンの有効期限（分）", "cred-ttl", default_ttl, 1, maximum, on_change=ttl_changed)
-    number("更新を開始できる経過時間（分）", "cred-refresh", max(1, default_ttl - 5), 1, default_ttl)
+    number(
+        "更新を開始できる経過時間（分）", "cred-refresh", max(1, default_ttl * 3 // 4), 1, default_ttl
+    )
     t.p(
         "更新開始は発行からの経過時間です。指定時間を過ぎて次に取得すると、新しいトークンが発行されます。",
         classes="muted",

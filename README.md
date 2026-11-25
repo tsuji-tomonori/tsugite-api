@@ -20,14 +20,14 @@ task demo
 | `deploy/config/` | 画面ビルドと CDK が共有する HTTP 設定 |
 | `docs/examples/` | 配備時の接続先の記入例、デモの商品データ、出品用 OpenAPI の例 |
 | `tests/support/` | 全テスト共通の補助コードと pytest プラグイン |
-| `tools/packaging/` | フロントと Lambda の配布物を作るスクリプト |
-| `tools/operations/` | 起動・配備コマンドと初回管理者の登録 |
-| `tools/demo/` | デモ商品の投入 |
-| `tools/design/` | 設計書・要件一覧の生成 |
-| `tools/ci/` | CI の実行対象の選択、カバレッジ・テキスト・インフラの検査 |
-| `tools/testing/` | AWS Emulator、Git フック、ミューテーションテストの実行とテストレポートの生成 |
-| `tools/tests/` | 開発ツール自体の単体テスト |
-| `tools/vendor/` | 同梱する外部ツールとライセンス |
+| `packages/tools/packaging/` | フロントと Lambda の配布物を作るスクリプト |
+| `packages/tools/operations/` | 起動・配備コマンドと初回管理者の登録 |
+| `packages/tools/demo/` | デモ商品の投入 |
+| `packages/tools/design/` | 設計書・要件一覧の生成 |
+| `packages/tools/ci/` | CI の実行対象の選択、カバレッジ・テキスト・インフラの検査 |
+| `packages/tools/testing/` | AWS Emulator、Git フック、ミューテーションテストの実行とテストレポートの生成 |
+| `packages/tools/tests/` | 開発ツール自体の単体テスト |
+| `packages/tools/vendor/` | 同梱する外部ツールとライセンス |
 
 ## 開発完了の判定
 
@@ -55,7 +55,7 @@ task demo
 | `packages/infra` | AWS CDKとテンプレートのテスト | `task test:infra` |
 | [`tests/architecture`](tests/architecture/README.md) | 全層の依存・文書規則と検査器のテスト | `task test:architecture` |
 | `tests/e2e` | ブラウザー操作とAWS Emulatorを使う横断テスト | `task test:e2e`、`task test:aws` |
-| `tools` | ビルド、設計書生成、監査、テストレポート | `task test:tools` |
+| `packages/tools` | ビルド、設計書生成、監査、テストレポート | `task test:tools` |
 
 親の `pyproject.toml` にPythonの対象範囲、共通のバージョン制約、検査設定を置きます。各メンバーの `pyproject.toml` に直接依存を書き、ルートの単一ロックファイルを共有します。依存の追加には `task deps:add -- --package tsugite-backend パッケージ名`、各種コマンドの一覧には `task --list` を使います。
 

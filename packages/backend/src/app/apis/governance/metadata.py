@@ -1,3 +1,4 @@
+# 管理者が属性の種類を登録・編集するAPIを提供する。
 import json
 from typing import Annotated
 

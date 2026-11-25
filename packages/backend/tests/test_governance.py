@@ -1,3 +1,4 @@
+# 管理者が追加・削除し、同一メールで再登録しても旧利用権を復活させない。
 import json
 from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy

@@ -1,6 +1,8 @@
+# 部署やプロジェクトの情報を提供する。
 import json
 
 from app.apis.governance.members import administrator, projects
+from app.apis.governance.profiles import check_managed_identity
 from app.core.auth import DEMO_GROUPS
 from app.core.config import local_demo, settings
 from app.core.member_profiles import directory_accounts, directory_fields, directory_profiles
@@ -170,6 +172,7 @@ def assign(data: Membership, request: Request, actor: User, db: DB):
     member = db.get(Member, data.subject)
     if member and member.deleted:
         raise HTTPException(409, "削除済みのユーザーです")
+    check_managed_identity(data.subject, member)
     row = db.get(Affiliation, (data.subject, data.unit_id))
     if not row:
         row = Affiliation(subject=data.subject, unit_id=data.unit_id)

@@ -1,3 +1,4 @@
+# notifications のAPIで扱う入出力モデルを定義する。
 from pydantic import Field
 
 from app.schemas.base import Input

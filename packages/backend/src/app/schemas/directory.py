@@ -1,3 +1,4 @@
+# 部署とプロジェクトの設定・所属変更に使う入力項目を定義する。
 from pydantic import Field
 
 from app.schemas.base import Input

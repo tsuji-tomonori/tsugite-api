@@ -1,3 +1,4 @@
+# 認証情報の発行・更新を受け付ける。
 import hashlib
 import hmac
 import json
@@ -185,7 +186,13 @@ TOKEN_EXCHANGE = "urn:ietf:params:oauth:grant-type:token-exchange"
 #: 利用者のログイン情報を選択した認証情報の短期トークンに交換する
 @router.post(
     "/credentials/{key_id}/token-exchange",
-    responses={200: {"model": outputs.ExchangedToken}},
+    responses={
+        200: {"model": outputs.ExchangedToken},
+        400: {
+            "model": outputs.TokenExchangeError,
+            "description": "交換方式が未対応、またはフォームの入力内容が不正です。",
+        },
+    },
     openapi_extra={
         "x-design-auth": "フォームのsubject_tokenにログイン済み利用者のアクセストークンを指定し、本人が利用可能な認証情報に交換します。",
         "requestBody": {

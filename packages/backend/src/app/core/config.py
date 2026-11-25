@@ -1,3 +1,4 @@
+# アプリケーションの実行時設定を読み込む。
 import json
 import os
 from functools import lru_cache

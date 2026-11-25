@@ -25,4 +25,4 @@ jobs:
       - name: マージ順に要件別の証跡をコミット
         env:
           GH_TOKEN: ${{ github.token }}
-        run: bash tools/ci/publish_evidence.sh
+        run: bash packages/tools/ci/publish_evidence.sh

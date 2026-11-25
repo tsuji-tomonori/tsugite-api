@@ -1,3 +1,4 @@
+# 問い合わせと返信を受け付ける。
 from uuid import UUID
 
 from app.dependencies import DB, User

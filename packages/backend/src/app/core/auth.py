@@ -1,3 +1,4 @@
+# ログイン情報から利用者と操作権限を特定する。
 import secrets
 from dataclasses import dataclass, field
 from functools import lru_cache

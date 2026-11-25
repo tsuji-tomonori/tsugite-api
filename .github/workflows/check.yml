@@ -31,7 +31,7 @@ jobs:
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           BASE_BRANCH: ${{ github.base_ref }}
           GH_TOKEN: ${{ github.token }}
-        run: uv run --locked --only-group quality-docs python -m tools.design.completion --artifact
+        run: uv run --locked --only-group quality-docs python -m packages.tools.design.completion --artifact
       - uses: actions/upload-artifact@v4
         with:
           name: definition-of-done
@@ -39,7 +39,7 @@ jobs:
           if-no-files-found: error
       #: 各要件に実在する受入テストと証跡の取得方法が定義されている。
       - name: 要件別の受入テスト定義を検査
-        run: python3 -m tools.testing.requirement_evidence --check
+        run: python3 -m packages.tools.testing.requirement_evidence --check
       #: 機能追加には新しい要件があり、変更した要件には日付と変更理由がある。
       - name: 要件一覧と用語一覧を生成し、機能追加と要件の変更履歴を検査
         env:
@@ -47,7 +47,7 @@ jobs:
           PR_BODY: ${{ github.event.pull_request.body }}
           HEAD_BRANCH: ${{ github.head_ref }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: python3 tools/design/requirements.py --branch "$HEAD_BRANCH" --base "$BASE_SHA"
+        run: python3 packages/tools/design/requirements.py --branch "$HEAD_BRANCH" --base "$BASE_SHA"
       - uses: actions/upload-artifact@v4
         with:
           name: requirements
@@ -60,7 +60,7 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           BASE_BRANCH: ${{ github.base_ref }}
           GH_TOKEN: ${{ github.token }}
-        run: python3 -m tools.ci.ci_scope --inspect-base "$BASE_SHA"
+        run: python3 -m packages.tools.ci.ci_scope --inspect-base "$BASE_SHA"
       - uses: actions/setup-node@v4
         if: contains(fromJSON(steps.baseline.outputs.missing), 'packages/infra/tests')
         with:
@@ -71,13 +71,13 @@ jobs:
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           MISSING_SUITES: ${{ steps.baseline.outputs.missing }}
-        run: python3 -m tools.ci.ci_scope --measure-base "$BASE_SHA"
+        run: python3 -m packages.tools.ci.ci_scope --measure-base "$BASE_SHA"
       # 実行準備
       - name: PRで実行するテストと検証手順を決定
         id: scope
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: python3 -m tools.ci.ci_scope --base "$BASE_SHA"
+        run: python3 -m packages.tools.ci.ci_scope --base "$BASE_SHA"
       - uses: actions/upload-artifact@v4
         with:
           name: verify-plan
@@ -106,7 +106,7 @@ jobs:
       - name: パッケージの単体テストを実行
         env:
           PACKAGE: ${{ matrix.package }}
-        run: uv run --locked --package "tsugite-$PACKAGE" --group dev python -m tools.ci.ci_coverage_parts "packages/$PACKAGE/tests"
+        run: uv run --locked --package "tsugite-$PACKAGE" --group dev python -m packages.tools.ci.ci_coverage_parts "packages/$PACKAGE/tests"
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:
@@ -124,7 +124,8 @@ jobs:
       actions: read
       pull-requests: read
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    # 計測対象が変わった回は比較元でもブラウザーE2Eを再実行する。
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
         with:
@@ -145,17 +146,17 @@ jobs:
       # 実行準備
       - name: 検証計画を読み込む
         id: scope
-        run: python3 -c 'import json; from tools.ci.ci_scope import write_outputs; write_outputs(json.load(open("artifacts/ci-plan.json")))'
+        run: python3 -c 'import json; from packages.tools.ci.ci_scope import write_outputs; write_outputs(json.load(open("artifacts/ci-plan.json")))'
       #: 文書の最初のレベル1見出しに日本語がある。
       - name: Markdown文書の表題を検証
         if: steps.scope.outputs.documents == 'true'
-        run: python3 -m tests.architecture.test_documents
+        run: python3 -m tests.architecture.core.test_documents
       #: 変更したテキストはUTF-8（BOMなし）・LFで、末尾の改行が1つある。
       - name: 変更ファイルの文字コードと改行を検査
         if: steps.scope.outputs.full != 'true'
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: python3 tools/ci/check_text.py --base "$BASE_SHA"
+        run: python3 packages/tools/ci/check_text.py --base "$BASE_SHA"
       - uses: actions/setup-node@v4
         if: steps.scope.outputs.synth == 'true' || steps.scope.outputs.types == 'true' || contains(fromJSON(steps.scope.outputs.suites), 'packages/infra/tests')
         with:
@@ -199,13 +200,13 @@ jobs:
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
-          if ! git diff --quiet "$BASE_SHA...HEAD" -- uv.lock tools/packaging/build_backend.py tools/packaging/build_chat.py; then
+          if ! git diff --quiet "$BASE_SHA...HEAD" -- uv.lock packages/tools/packaging/build_backend.py packages/tools/packaging/build_chat.py; then
             sha256sum build/sample-api-layer.zip build/runtime-layer.zip build/decision-model-layer.zip build/model-sdk-layer.zip > "$RUNNER_TEMP/runtime-layer.sha256"
-            uv run --locked --all-packages python tools/packaging/build_backend.py
+            uv run --locked --all-packages python packages/tools/packaging/build_backend.py
             sha256sum --check "$RUNNER_TEMP/runtime-layer.sha256"
           fi
       #: フロントエンドの配布物を生成できる。
-      - run: uv run --locked --all-packages python tools/packaging/build_frontend.py
+      - run: uv run --locked --all-packages python packages/tools/packaging/build_frontend.py
         if: steps.scope.outputs.frontend_build == 'true'
       #: 合成済みテンプレートからリソース一覧とパラメーターシートを生成できる。
       - run: task docs:infra:render
@@ -226,7 +227,11 @@ jobs:
       - name: 対象テストを実行し、全体カバレッジを集計
         id: suites
         if: steps.scope.outputs.suites != '[]'
-        run: uv run --locked --all-packages python -m tools.ci.ci_scope --run-suites
+        run: uv run --locked --all-packages python -m packages.tools.ci.ci_scope --run-suites
+      #: パッケージ別に単体テストのみで行・分岐の両方が設定した下限を満たす。
+      - name: パッケージごとの単体テストカバレッジを検査
+        if: steps.scope.outputs.suites != '[]'
+        run: uv run --locked --all-packages python -m packages.tools.ci.unit_coverage
       #: AWSエミュレーターで対象のE2Eが成功する。
       - run: task test:aws
         if: ${{ !cancelled() && (success() || steps.suites.outcome == 'failure') && steps.scope.outputs.aws == 'true' && steps.scope.outputs.aws_portal_only != 'true' }}
@@ -240,7 +245,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           BASE_BRANCH: ${{ github.base_ref }}
           BASE_SHA: ${{ steps.scope.outputs.coverage_base }}
-        run: python3 tools/ci/check_coverage.py artifacts/coverage.xml
+        run: python3 packages/tools/ci/check_coverage.py artifacts/coverage.xml
       - name: Save coverage for future pull requests
         id: coverage_artifact
         if: steps.scope.outputs.coverage == 'true'
@@ -257,7 +262,7 @@ jobs:
         env:
           COVERAGE_ARTIFACT_URL: ${{ steps.coverage_artifact.outputs.artifact-url }}
         run: |
-          coverage=$(python3 -c 'import sys; from tools.ci.check_coverage import line_coverage; print(format(float(line_coverage(sys.argv[1])), ".2f"))' artifacts/coverage.xml)
+          coverage=$(python3 -c 'import sys; from packages.tools.ci.check_coverage import line_coverage; print(format(float(line_coverage(sys.argv[1])), ".2f"))' artifacts/coverage.xml)
           printf '## 行カバレッジ\n\n**%s%%**\n\n[カバレッジXMLを含む成果物](%s)\n' \
             "$coverage" "${COVERAGE_ARTIFACT_URL:?}" >> "$GITHUB_STEP_SUMMARY"
       #: 今回の実行対象となった要件について、JUnit結果と指定された証跡から合否を判定できる。
@@ -265,7 +270,7 @@ jobs:
         if: ${{ !cancelled() }}
         env:
           EVIDENCE_COMMIT: ${{ github.event.pull_request.head.sha }}
-        run: python3 -m tools.testing.requirement_evidence --plan artifacts/ci-plan.json
+        run: python3 -m packages.tools.testing.requirement_evidence --plan artifacts/ci-plan.json
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:

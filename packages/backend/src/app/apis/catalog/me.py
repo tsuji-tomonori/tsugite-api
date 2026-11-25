@@ -1,3 +1,4 @@
+# ログイン中の利用者の情報を取得する。
 from app.core.metadata import metadata_fields
 from app.core.workspace import private_project, project_label, units, workspace_targets
 from app.dependencies import DB, User

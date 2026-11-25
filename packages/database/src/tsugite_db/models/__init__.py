@@ -1,3 +1,4 @@
+# テーブルに対応するORMモデルを読み込み、公開する。
 """SQLAlchemy metadata and mapped tables used by the application and Alembic."""
 
 from .access_rights import Access as Access

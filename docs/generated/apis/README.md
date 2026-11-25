@@ -2,7 +2,7 @@
 
 # API実装設計書
 
-72操作。[SQL・AWS CRUD一覧](../db/crud.md) · [入出力スキーマ](../db/schemas.md) · [テーブル・レコード・カラム定義](../db/database.md)
+73操作。[SQL・AWS CRUD一覧](../db/crud.md) · [入出力スキーマ](../db/schemas.md) · [テーブル・レコード・カラム定義](../db/database.md)
 
 FastAPIに登録された業務ルートをメソッド別に掲載します。認証条件・入力・応答・呼び出し先は各操作を開いて確認できます。
 
@@ -75,6 +75,7 @@ FastAPIに登録された業務ルートをメソッド別に掲載します。�
 | 組織の構成と利用者の所属を確認する | [GET `/api/workspace`](get-api-workspace.md) | 共通 | workspace_api_workspace_get | 認証ヘッダー（Authorization: Bearer <資格情報>） |
 | 利用者の所属を解除する | [DELETE `/api/workspace/memberships`](delete-api-workspace-memberships.md) | 共通 | unassign_api_workspace_memberships_delete | 認証ヘッダー（Authorization: Bearer <資格情報>） |
 | 利用者の所属・役職・管理権限を設定する | [PUT `/api/workspace/memberships`](put-api-workspace-memberships.md) | 共通 | assign_api_workspace_memberships_put | 認証ヘッダー（Authorization: Bearer <資格情報>） |
+| メタデータ項目の表示名と選択肢の公開範囲を設定する | [PUT `/api/workspace/metadata/{key}`](put-api-workspace-metadata-key.md) | 共通 | save_field_api_workspace_metadata__key__put | 認証ヘッダー（Authorization: Bearer <資格情報>） |
 | 未使用の部署・プロジェクトを削除する | [DELETE `/api/workspace/units/{key}`](delete-api-workspace-units-key.md) | 共通 | delete_unit_api_workspace_units__key__delete | 認証ヘッダー（Authorization: Bearer <資格情報>） |
 | 部署・プロジェクトを登録または更新する | [PUT `/api/workspace/units/{key}`](put-api-workspace-units-key.md) | 共通 | unit_api_workspace_units__key__put | 認証ヘッダー（Authorization: Bearer <資格情報>） |
 | 部署・プロジェクトの利用を停止または再開する | [PUT `/api/workspace/units/{key}/state`](put-api-workspace-units-key-state.md) | 共通 | change_state_api_workspace_units__key__state_put | 認証ヘッダー（Authorization: Bearer <資格情報>） |

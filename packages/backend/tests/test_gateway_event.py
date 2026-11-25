@@ -1,3 +1,4 @@
+# 権限を毎回照合し、取消後は同じトークンでも拒否する。
 from app.authorizer import handler
 
 from tests.support.catalog import FORM, headers, invocation_headers

@@ -1,3 +1,4 @@
+# 商品の呼び出し名に対応するDBスキーマへ移行する。
 """Reserve a unique invocation name for each catalog product."""
 
 import sqlalchemy as sa

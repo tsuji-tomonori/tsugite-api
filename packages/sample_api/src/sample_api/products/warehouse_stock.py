@@ -1,3 +1,4 @@
+# warehouse_stock 商品のサンプル操作と応答を定義する。
 from fastapi import Query
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel

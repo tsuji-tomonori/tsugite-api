@@ -24,22 +24,22 @@ jobs:
       - if: matrix.suite == 'browser'
         run: |
           uv run --locked playwright install --with-deps chromium --only-shell
-          uv run --locked python tools/packaging/build_frontend.py
+          uv run --locked python packages/tools/packaging/build_frontend.py
       - if: matrix.suite == 'agent' || matrix.suite == 'model'
         env:
           PACKAGE: ${{ matrix.suite }}
         run: uv run --locked pytest -q "packages/$PACKAGE/tests" --junitxml="artifacts/$PACKAGE.xml"
       - if: matrix.suite == 'api'
         run: |
-          uv run --locked python -m tools.operations.manage contracts
-          uv run --locked python -m tools.design.generate
-          uv run --locked pytest -q packages/backend/tests packages/database/tests tools/tests --junitxml=artifacts/api.xml
+          uv run --locked python -m packages.tools.operations.manage contracts
+          uv run --locked python -m packages.tools.design.generate
+          uv run --locked pytest -q packages/backend/tests packages/database/tests packages/tools/tests --junitxml=artifacts/api.xml
       - if: matrix.suite == 'browser'
         run: uv run --locked pytest -q tests/e2e/browser --junitxml=artifacts/browser.xml
       - if: matrix.suite == 'cdk'
         run: uv run --locked pytest -q packages/infra/tests --junitxml=artifacts/cdk.xml
       - if: matrix.suite == 'synth'
-        run: uv run --locked python -m tools.operations.manage synth --help && uv run --locked python -m tools.operations.manage synth
+        run: uv run --locked python -m packages.tools.operations.manage synth --help && uv run --locked python -m packages.tools.operations.manage synth
       - if: always()
         uses: actions/upload-artifact@v4
         with:

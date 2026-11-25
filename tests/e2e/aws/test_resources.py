@@ -1,3 +1,4 @@
+# 構築したS3・API Gateway・Lambdaのタグを取得し、在庫APIが商品を返す。
 import json
 import os
 import ssl
@@ -100,7 +101,7 @@ def test_openapi_archive_versions(aws, resources, monkeypatch):
 
 def test_packaged_sample_products(resources, tmp_path):
     """登録済みのLambda配布ZIPをCPythonで実行し、全商品のヘルスチェックと業務応答を検証する。"""
-    from tools.demo.seed_marketplace import CATALOG
+    from packages.tools.demo.seed_marketplace import CATALOG
 
     with ZipFile(resources["sample-package"]) as archive:
         archive.extractall(tmp_path)

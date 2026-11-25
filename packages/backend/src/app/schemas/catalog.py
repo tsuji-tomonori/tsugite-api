@@ -1,3 +1,4 @@
+# APIのリクエストとレスポンスの型を定義する。
 import re
 from datetime import datetime
 from typing import Annotated, Any, Literal, Self

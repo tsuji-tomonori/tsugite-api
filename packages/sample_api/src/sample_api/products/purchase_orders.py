@@ -1,3 +1,4 @@
+# purchase_orders 商品のサンプル操作と応答を定義する。
 from pydantic import BaseModel, Field
 
 from sample_api.database import SampleDatabase

@@ -1,3 +1,4 @@
+# 管理機能のルーターを集約する。
 from fastapi import APIRouter
 
 from . import (

@@ -3089,6 +3089,89 @@
 
 </details>
 
+<a id="metadatafield"></a>
+
+## 利用者のメタデータ項目（MetadataField）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| メタデータのキー | key | 必須 | 文字列 |
+| 項目の表示名 | label | 必須 | 文字列 |
+| 業務機能で使用中のデータパーツか | builtin | 必須 | 真偽値 |
+| 値の名称を全利用者に公開するか | public_values | 必須 | 真偽値 |
+
+<details><summary>JSON Schema</summary>
+
+```json
+{
+  "properties": {
+    "builtin": {
+      "title": "業務機能で使用中のデータパーツか",
+      "type": "boolean"
+    },
+    "key": {
+      "title": "メタデータのキー",
+      "type": "string"
+    },
+    "label": {
+      "title": "項目の表示名",
+      "type": "string"
+    },
+    "public_values": {
+      "title": "値の名称を全利用者に公開するか",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "key",
+    "label",
+    "builtin",
+    "public_values"
+  ],
+  "title": "利用者のメタデータ項目",
+  "type": "object"
+}
+```
+
+</details>
+
+<a id="metadatasettings"></a>
+
+## 利用者メタデータの項目設定（MetadataSettings）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 画面に表示する項目名 | label | 必須 | 文字列、最小文字数 `1`、最大文字数 `120` |
+| 値の名称を全利用者に公開するか | public_values | 任意 | 真偽値、既定値 `false` |
+
+<details><summary>JSON Schema</summary>
+
+```json
+{
+  "additionalProperties": false,
+  "properties": {
+    "label": {
+      "maxLength": 120,
+      "minLength": 1,
+      "title": "画面に表示する項目名",
+      "type": "string"
+    },
+    "public_values": {
+      "default": false,
+      "title": "値の名称を全利用者に公開するか",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "label"
+  ],
+  "title": "利用者メタデータの項目設定",
+  "type": "object"
+}
+```
+
+</details>
+
 <a id="metricpoint"></a>
 
 ## 集計区間ごとの呼び出し実績（MetricPoint）
@@ -3637,6 +3720,7 @@
 | APIの公開範囲 | visibility | 任意 | 文字列、既定値 `"all"`、指定値 全体公開（`all`）、限定公開（`restricted`） |
 | 閲覧を許可するプロジェクト | projects | 任意 | 配列 / 文字列 |
 | 閲覧を許可する部署 | departments | 任意 | 配列 / 文字列 |
+| 閲覧を許可する任意メタデータの値 | metadata_values | 任意 | 配列 / 文字列 |
 | 自動承認の対象部署 | auto_departments | 任意 | 配列 / 文字列 |
 | 自動承認の対象役職 | auto_titles | 任意 | 配列 / 文字列 |
 | 承認を委任する部署 | delegates | 任意 | 配列 / 文字列 |
@@ -3673,6 +3757,13 @@
         "type": "string"
       },
       "title": "閲覧を許可する部署",
+      "type": "array"
+    },
+    "metadata_values": {
+      "items": {
+        "type": "string"
+      },
+      "title": "閲覧を許可する任意メタデータの値",
       "type": "array"
     },
     "projects": {
@@ -3751,6 +3842,8 @@
 
 | 項目の和名 | 物理名 | 指定 | 型・制約 |
 | --- | --- | --- | --- |
+| ナビゲーションに表示するメタデータ項目 | metadata_fields | 必須 | 配列 / [利用者のメタデータ項目（MetadataField）](#metadatafield) |
+| 本人のメタデータ（項目キーごとの値の識別子） | metadata | 必須 | オブジェクト（キーに対応する値は配列 / 文字列） |
 | 管理者が参照できるプロジェクト | known_projects | 必須 | 配列 / 文字列 |
 | 管理者が参照できるプロジェクトの識別子と表示名の対応 | known_project_labels | 任意 | オブジェクト（キーに対応する値は文字列） |
 | 個人用プロジェクトの識別子 | personal_project | 必須 | 文字列 |
@@ -3805,6 +3898,23 @@
       "title": "管理権限を持つ組織",
       "type": "array"
     },
+    "metadata": {
+      "additionalProperties": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "title": "本人のメタデータ（項目キーごとの値の識別子）",
+      "type": "object"
+    },
+    "metadata_fields": {
+      "items": {
+        "$ref": "#/components/schemas/MetadataField"
+      },
+      "title": "ナビゲーションに表示するメタデータ項目",
+      "type": "array"
+    },
     "owners": {
       "items": {
         "type": "string"
@@ -3843,6 +3953,8 @@
     }
   },
   "required": [
+    "metadata_fields",
+    "metadata",
     "known_projects",
     "personal_project",
     "leads",
@@ -4750,6 +4862,40 @@
 
 </details>
 
+<a id="tokenexchangeerror"></a>
+
+## OAuthトークン交換のエラー応答（TokenExchangeError）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| エラーを識別するコード | error | 必須 | 文字列 |
+| 利用者向けのエラーの説明 | error_description | 必須 | 文字列 |
+
+<details><summary>JSON Schema</summary>
+
+```json
+{
+  "properties": {
+    "error": {
+      "title": "エラーを識別するコード",
+      "type": "string"
+    },
+    "error_description": {
+      "title": "利用者向けのエラーの説明",
+      "type": "string"
+    }
+  },
+  "required": [
+    "error",
+    "error_description"
+  ],
+  "title": "OAuthトークン交換のエラー応答",
+  "type": "object"
+}
+```
+
+</details>
+
 <a id="transfer"></a>
 
 ## 組織の移管先（Transfer）
@@ -4786,7 +4932,7 @@
 | 項目の和名 | 物理名 | 指定 | 型・制約 |
 | --- | --- | --- | --- |
 | 部署・プロジェクトの識別子 | id | 必須 | 文字列 |
-| 組織の種類（部署・プロジェクト） | kind | 必須 | 文字列、指定値 部署（`department`）、プロジェクト（`project`） |
+| 所属先を分類するメタデータのキー | kind | 必須 | 文字列 |
 | 部署・プロジェクト名 | name | 必須 | 文字列 |
 | 親部署の識別子 | parent | 必須 | 文字列 |
 | 組織の利用を停止中か | stopped | 必須 | 真偽値 |
@@ -4801,11 +4947,7 @@
       "type": "string"
     },
     "kind": {
-      "enum": [
-        "department",
-        "project"
-      ],
-      "title": "組織の種類（部署・プロジェクト）",
+      "title": "所属先を分類するメタデータのキー",
       "type": "string"
     },
     "name": {
@@ -4841,7 +4983,7 @@
 
 | 項目の和名 | 物理名 | 指定 | 型・制約 |
 | --- | --- | --- | --- |
-| 組織の種類（部署・プロジェクト） | kind | 必須 | 文字列、指定値 プロジェクト（`project`）、部署（`department`） |
+| 所属先を分類するメタデータのキー | kind | 必須 | 文字列 |
 | 部署・プロジェクト名 | name | 必須 | 文字列、最小文字数 `1`、最大文字数 `120` |
 | 親部署の識別子 | parent | 任意 | 文字列、既定値 `""` |
 
@@ -4852,11 +4994,7 @@
   "additionalProperties": false,
   "properties": {
     "kind": {
-      "enum": [
-        "project",
-        "department"
-      ],
-      "title": "組織の種類（部署・プロジェクト）",
+      "title": "所属先を分類するメタデータのキー",
       "type": "string"
     },
     "name": {
@@ -5110,6 +5248,7 @@
 
 | 項目の和名 | 物理名 | 指定 | 型・制約 |
 | --- | --- | --- | --- |
+| 設定可能なメタデータ項目 | metadata_fields | 必須 | 配列 / [利用者のメタデータ項目（MetadataField）](#metadatafield) |
 | 全体管理者か | admin | 必須 | 真偽値 |
 | 部署・プロジェクトの一覧 | units | 必須 | 配列 / [部署・プロジェクトの登録情報（Unit）](#unit) |
 | 管理権限を持つ組織 | leads | 必須 | 配列 / 文字列 |
@@ -5139,6 +5278,13 @@
         "$ref": "#/components/schemas/Affiliation"
       },
       "title": "利用者と組織の所属関係",
+      "type": "array"
+    },
+    "metadata_fields": {
+      "items": {
+        "$ref": "#/components/schemas/MetadataField"
+      },
+      "title": "設定可能なメタデータ項目",
       "type": "array"
     },
     "my_units": {
@@ -5171,6 +5317,7 @@
     }
   },
   "required": [
+    "metadata_fields",
     "admin",
     "units",
     "leads",

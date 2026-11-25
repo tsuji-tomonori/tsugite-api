@@ -1,3 +1,4 @@
+# 標準構成のリソース型と論理ID、スタック出力をスナップショットと照合する。
 import csv
 import json
 from collections import Counter
@@ -9,7 +10,7 @@ from aws_cdk.assertions import Template
 
 from packages.infra.src import stack
 from packages.infra.src.stack import CatalogStack
-from tools.ci.audit_infra import synthesize_report
+from packages.tools.ci.audit_infra import synthesize_report
 
 HERE = Path(__file__).resolve().parent
 

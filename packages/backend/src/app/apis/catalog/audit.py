@@ -1,3 +1,4 @@
+# 監査履歴を取得する。
 from datetime import UTC, datetime
 
 from app.core.log_visibility import led_calls

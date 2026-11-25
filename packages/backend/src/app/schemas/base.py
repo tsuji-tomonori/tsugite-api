@@ -1,3 +1,4 @@
+# base のAPIで扱う入出力モデルを定義する。
 from pydantic import BaseModel, ConfigDict
 
 

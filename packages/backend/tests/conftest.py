@@ -1,3 +1,4 @@
+# backend のテストで使う共通フィクスチャを提供する。
 from pathlib import Path
 
 import pytest

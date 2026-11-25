@@ -1,3 +1,4 @@
+# inquiries のAPIで扱う入出力モデルを定義する。
 from datetime import datetime
 from uuid import UUID
 

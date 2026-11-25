@@ -1,3 +1,4 @@
+# 宣言内のコメントから設計書に載せる業務名を取得する。
 """Project the source comments of registered routes and models onto their OpenAPI contract."""
 
 import ast

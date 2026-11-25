@@ -1,3 +1,4 @@
+# 商品詳細の入出力形式を定義する。
 """OpenAPI shapes for product details serialized as flexible JSON, including older grants."""
 
 from dataclasses import dataclass

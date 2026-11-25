@@ -83,10 +83,11 @@
 | 組織の構成と利用者の所属を確認する<br>[GET `/api/workspace`](../apis/get-api-workspace.md) | — | R | — | — | — | — | — | — | — | — | R | — | — | — | — | — | R | R | — |
 | 利用者の所属を解除する<br>[DELETE `/api/workspace/memberships`](../apis/delete-api-workspace-memberships.md) | — | C/R/U | — | — | — | — | — | C | — | — | R | — | — | — | — | — | — | R | — |
 | 利用者の所属・役職・管理権限を設定する<br>[PUT `/api/workspace/memberships`](../apis/put-api-workspace-memberships.md) | — | C/R/U | — | — | — | — | — | C | — | — | R | — | — | — | — | — | — | R | — |
-| 未使用の部署・プロジェクトを削除する<br>[DELETE `/api/workspace/units/{key}`](../apis/delete-api-workspace-units-key.md) | R/U/D | R/D | — | R/D | R/U | — | R/U | C | — | R/D | C/R/U | — | — | — | — | — | — | R | — |
+| メタデータ項目の表示名と選択肢の公開範囲を設定する<br>[PUT `/api/workspace/metadata/{key}`](../apis/put-api-workspace-metadata-key.md) | — | R | — | — | — | — | — | C | — | — | C/R/U | — | — | — | — | — | — | R | — |
+| 未使用の部署・プロジェクトを削除する<br>[DELETE `/api/workspace/units/{key}`](../apis/delete-api-workspace-units-key.md) | R/U/D | R/U/D | — | R/D | R/U | — | R/U | C | — | R/D | C/R/U | — | — | — | — | — | — | R | — |
 | 部署・プロジェクトを登録または更新する<br>[PUT `/api/workspace/units/{key}`](../apis/put-api-workspace-units-key.md) | — | R | — | — | — | — | — | C | — | — | C/R/U | — | — | — | — | — | — | R | — |
 | 部署・プロジェクトの利用を停止または再開する<br>[PUT `/api/workspace/units/{key}/state`](../apis/put-api-workspace-units-key-state.md) | — | R | — | — | — | — | — | C | — | — | C/R/U | — | — | — | — | — | — | R | — |
-| 関連する所属と利用設定を既存の組織へ移管し、移管元を廃止する<br>[POST `/api/workspace/units/{key}/transfer`](../apis/post-api-workspace-units-key-transfer.md) | R/U/D | R/D | — | R/D | R/U | — | R/U | C | — | R/D | C/R/U | — | — | — | — | — | — | R | — |
+| 関連する所属と利用設定を既存の組織へ移管し、移管元を廃止する<br>[POST `/api/workspace/units/{key}/transfer`](../apis/post-api-workspace-units-key-transfer.md) | R/U/D | R/U/D | — | R/D | R/U | — | R/U | C | — | R/D | C/R/U | — | — | — | — | — | — | R | — |
 | 部署・プロジェクトの所属者とAPI利用実績を取得する<br>[GET `/api/workspace/units/{key}/usage`](../apis/get-api-workspace-units-key-usage.md) | — | R | — | — | — | — | R | — | — | — | R | — | R | R | — | — | R | R | — |
 
 <a id="aws"></a>
@@ -163,7 +164,8 @@
 | 個人の利用申請を承認・却下・取り下げ・取消する<br>[POST `/api/requests/{key}/{project}/{environment}/{principal}`](../apis/post-api-requests-key-project-environment-principal.md) | — | — | — | — | R |
 | 組織の構成と利用者の所属を確認する<br>[GET `/api/workspace`](../apis/get-api-workspace.md) | — | — | — | — | R |
 | 利用者の所属を解除する<br>[DELETE `/api/workspace/memberships`](../apis/delete-api-workspace-memberships.md) | — | — | — | — | R |
-| 利用者の所属・役職・管理権限を設定する<br>[PUT `/api/workspace/memberships`](../apis/put-api-workspace-memberships.md) | — | — | — | — | R |
+| 利用者の所属・役職・管理権限を設定する<br>[PUT `/api/workspace/memberships`](../apis/put-api-workspace-memberships.md) | R | — | — | — | R |
+| メタデータ項目の表示名と選択肢の公開範囲を設定する<br>[PUT `/api/workspace/metadata/{key}`](../apis/put-api-workspace-metadata-key.md) | — | — | — | — | R |
 | 未使用の部署・プロジェクトを削除する<br>[DELETE `/api/workspace/units/{key}`](../apis/delete-api-workspace-units-key.md) | — | — | — | — | R |
 | 部署・プロジェクトを登録または更新する<br>[PUT `/api/workspace/units/{key}`](../apis/put-api-workspace-units-key.md) | — | — | — | — | R |
 | 部署・プロジェクトの利用を停止または再開する<br>[PUT `/api/workspace/units/{key}/state`](../apis/put-api-workspace-units-key-state.md) | — | — | — | — | R |

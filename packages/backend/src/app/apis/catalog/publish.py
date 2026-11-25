@@ -1,3 +1,4 @@
+# 商品を公開する。
 from app.core.catalog import event, listing, record
 from app.core.diagnostics import asset_object
 from app.core.releases import record_release

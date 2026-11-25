@@ -1,3 +1,4 @@
+# 検証画面を撮影して保存する。
 import pytest
 from playwright.sync_api import Locator, Page
 

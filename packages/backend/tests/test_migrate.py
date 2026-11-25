@@ -1,3 +1,4 @@
+# 移行時は public のスキーマ権限を変更せず、実行ロールに対象テーブルの権限を付与する。
 from unittest.mock import MagicMock
 
 import pytest

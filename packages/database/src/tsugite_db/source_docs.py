@@ -1,3 +1,4 @@
+# Pythonの宣言と直前の業務名コメントを対応付ける。
 """Bind standalone #: comments to Python declarations using AST and COMMENT tokens."""
 
 import ast

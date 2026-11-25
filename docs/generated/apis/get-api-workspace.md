@@ -6,7 +6,7 @@ GET `/api/workspace`
 
 [API一覧](README.md) · [CRUD一覧](../db/crud.md)
 
-共通 · `workspace_api_workspace_get` · [workspace:80](../../../packages/backend/src/app/apis/governance/directory.py#L80)
+共通 · `workspace_api_workspace_get` · [workspace:87](../../../packages/backend/src/app/apis/governance/directory.py#L87)
 
 ## 入力
 
@@ -28,10 +28,15 @@ GET `/api/workspace`
 
 | 項目の和名 | 物理名 | 指定 | 型・制約 |
 | --- | --- | --- | --- |
+| 設定可能なメタデータ項目 | metadata_fields | 必須 | 配列 / [利用者のメタデータ項目（MetadataField）](../db/schemas.md#metadatafield) |
+| メタデータのキー | metadata_fields[].key | 必須 | 文字列 |
+| 項目の表示名 | metadata_fields[].label | 必須 | 文字列 |
+| 業務機能で使用中のデータパーツか | metadata_fields[].builtin | 必須 | 真偽値 |
+| 値の名称を全利用者に公開するか | metadata_fields[].public_values | 必須 | 真偽値 |
 | 全体管理者か | admin | 必須 | 真偽値 |
 | 部署・プロジェクトの一覧 | units | 必須 | 配列 / [部署・プロジェクトの登録情報（Unit）](../db/schemas.md#unit) |
 | 部署・プロジェクトの識別子 | units[].id | 必須 | 文字列 |
-| 組織の種類（部署・プロジェクト） | units[].kind | 必須 | 文字列、指定値 部署（`department`）、プロジェクト（`project`） |
+| 所属先を分類するメタデータのキー | units[].kind | 必須 | 文字列 |
 | 部署・プロジェクト名 | units[].name | 必須 | 文字列 |
 | 親部署の識別子 | units[].parent | 必須 | 文字列 |
 | 組織の利用を停止中か | units[].stopped | 必須 | 真偽値 |
@@ -65,28 +70,28 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [roster:41](../../../packages/backend/src/app/apis/governance/directory.py#L41) |
-| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:105](../../../packages/backend/src/app/core/workspace.py#L105) |
-| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:30](../../../packages/backend/src/app/core/workspace.py#L30) |
-| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:54](../../../packages/backend/src/app/core/workspace.py#L54) |
-| [利用者プロフィール](../db/database.md#portal_member_profiles) | portal_member_profiles | R | 検索 | select | [directory_profiles:36](../../../packages/backend/src/app/core/member_profiles.py#L36) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 検索 | select | [roster:35](../../../packages/backend/src/app/apis/governance/directory.py#L35) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 検索 | select | [roster:45](../../../packages/backend/src/app/apis/governance/directory.py#L45) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [roster:50](../../../packages/backend/src/app/apis/governance/directory.py#L50) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [roster:66](../../../packages/backend/src/app/apis/governance/directory.py#L66) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:123](../../../packages/backend/src/app/core/auth.py#L123) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 検索 | select | [directory_accounts:44](../../../packages/backend/src/app/core/member_profiles.py#L44) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:91](../../../packages/backend/src/app/core/workspace.py#L91) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [roster:44](../../../packages/backend/src/app/apis/governance/directory.py#L44) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:107](../../../packages/backend/src/app/core/workspace.py#L107) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [metadata_fields:17](../../../packages/backend/src/app/core/metadata.py#L17) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:55](../../../packages/backend/src/app/core/workspace.py#L55) |
+| [利用者プロフィール](../db/database.md#portal_member_profiles) | portal_member_profiles | R | 検索 | select | [directory_profiles:37](../../../packages/backend/src/app/core/member_profiles.py#L37) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 検索 | select | [roster:38](../../../packages/backend/src/app/apis/governance/directory.py#L38) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 検索 | select | [roster:48](../../../packages/backend/src/app/apis/governance/directory.py#L48) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [roster:53](../../../packages/backend/src/app/apis/governance/directory.py#L53) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [roster:69](../../../packages/backend/src/app/apis/governance/directory.py#L69) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:126](../../../packages/backend/src/app/core/auth.py#L126) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 検索 | select | [directory_accounts:45](../../../packages/backend/src/app/core/member_profiles.py#L45) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:92](../../../packages/backend/src/app/core/workspace.py#L92) |
 
 ### AWSサービス
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:53](../../../packages/backend/src/app/core/config.py#L53) |
+| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:54](../../../packages/backend/src/app/core/config.py#L54) |
 
 <details><summary>解析した関数・依存</summary>
 
-- `app.apis.governance.directory.manages`
 - `app.apis.governance.directory.roster`
 - `app.apis.governance.directory.workspace`
 - `app.core.auth.check_member`
@@ -99,6 +104,7 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 - `app.core.member_profiles.directory_accounts`
 - `app.core.member_profiles.directory_fields`
 - `app.core.member_profiles.directory_profiles`
+- `app.core.metadata.metadata_fields`
 - `app.core.workspace.ancestry`
 - `app.core.workspace.configured_projects`
 - `app.core.workspace.populate`

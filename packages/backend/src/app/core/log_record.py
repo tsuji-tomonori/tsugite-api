@@ -1,3 +1,4 @@
+# ブラウザーとサーバーで共用するログ形式を定義する。
 """Application log contract shared with the browser build (standard library only)."""
 
 import re

@@ -1,3 +1,4 @@
+# 利用者属性を編集するための入力を定義する。
 from pydantic import Field
 
 from app.schemas.base import Input

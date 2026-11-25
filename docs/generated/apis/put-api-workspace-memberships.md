@@ -6,7 +6,7 @@ PUT `/api/workspace/memberships`
 
 [API一覧](README.md) · [CRUD一覧](../db/crud.md)
 
-共通 · `assign_api_workspace_memberships_put` · [assign:156](../../../packages/backend/src/app/apis/governance/directory.py#L156)
+共通 · `assign_api_workspace_memberships_put` · [assign:167](../../../packages/backend/src/app/apis/governance/directory.py#L167)
 
 ## 入力
 
@@ -68,30 +68,34 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| [利用者の組織所属](../db/database.md#affiliations) | affiliations | C | レコードを追加 | db.add | [assign:167](../../../packages/backend/src/app/apis/governance/directory.py#L167) |
-| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 主キーで取得 | db.get | [assign:164](../../../packages/backend/src/app/apis/governance/directory.py#L164) |
-| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:105](../../../packages/backend/src/app/core/workspace.py#L105) |
-| [利用者の組織所属](../db/database.md#affiliations) | affiliations | U | 所属が有効かを設定 | active に代入 | [assign:168](../../../packages/backend/src/app/apis/governance/directory.py#L168) |
-| [利用者の組織所属](../db/database.md#affiliations) | affiliations | U | 所属先の管理権限があるかを設定 | leader に代入 | [assign:168](../../../packages/backend/src/app/apis/governance/directory.py#L168) |
-| [利用者の組織所属](../db/database.md#affiliations) | affiliations | U | 所属先での役職名を設定 | title に代入 | [assign:168](../../../packages/backend/src/app/apis/governance/directory.py#L168) |
-| [監査履歴](../db/database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [audit:19](../../../packages/backend/src/app/apis/governance/directory.py#L19) |
-| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:30](../../../packages/backend/src/app/core/workspace.py#L30) |
-| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:54](../../../packages/backend/src/app/core/workspace.py#L54) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [assign:161](../../../packages/backend/src/app/apis/governance/directory.py#L161) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:123](../../../packages/backend/src/app/core/auth.py#L123) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:91](../../../packages/backend/src/app/core/workspace.py#L91) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | C | レコードを追加 | db.add | [assign:179](../../../packages/backend/src/app/apis/governance/directory.py#L179) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 主キーで取得 | db.get | [assign:176](../../../packages/backend/src/app/apis/governance/directory.py#L176) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:107](../../../packages/backend/src/app/core/workspace.py#L107) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | U | 所属が有効かを設定 | active に代入 | [assign:180](../../../packages/backend/src/app/apis/governance/directory.py#L180) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | U | 所属先の管理権限があるかを設定 | leader に代入 | [assign:180](../../../packages/backend/src/app/apis/governance/directory.py#L180) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | U | 所属先での役職名を設定 | title に代入 | [assign:180](../../../packages/backend/src/app/apis/governance/directory.py#L180) |
+| [監査履歴](../db/database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [audit:22](../../../packages/backend/src/app/apis/governance/directory.py#L22) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:55](../../../packages/backend/src/app/core/workspace.py#L55) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [assign:172](../../../packages/backend/src/app/apis/governance/directory.py#L172) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:126](../../../packages/backend/src/app/core/auth.py#L126) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:92](../../../packages/backend/src/app/core/workspace.py#L92) |
 
 ### AWSサービス
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:53](../../../packages/backend/src/app/core/config.py#L53) |
+| 利用者・グループの管理（Cognitoユーザープール） | cognito-idp | R | 識別子で利用者を検索する | list_users | [check_managed_identity:38](../../../packages/backend/src/app/apis/governance/profiles.py#L38) |
+| 利用者・グループの管理（Cognitoユーザープール） | cognito-idp | R | 対象利用者の有効性を確認する | admin_get_user | [check_managed_identity:43](../../../packages/backend/src/app/apis/governance/profiles.py#L43) |
+| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:54](../../../packages/backend/src/app/core/config.py#L54) |
 
 <details><summary>解析した関数・依存</summary>
 
 - `app.apis.governance.directory.assign`
 - `app.apis.governance.directory.audit`
 - `app.apis.governance.members.administrator`
+- `app.apis.governance.members.pool`
+- `app.apis.governance.profiles.check_managed_identity`
 - `app.core.auth.check_member`
 - `app.core.auth.current`
 - `app.core.auth.human`

@@ -1,3 +1,4 @@
+# Lambda関数と実行権限を構成する。
 from pathlib import Path
 
 from aws_cdk import Duration

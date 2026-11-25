@@ -1,3 +1,4 @@
+# 商品カタログを検索する。
 from app.core.catalog import listing
 from app.core.catalog_rank import rank_assets
 from app.core.catalog_visibility import visible_collection

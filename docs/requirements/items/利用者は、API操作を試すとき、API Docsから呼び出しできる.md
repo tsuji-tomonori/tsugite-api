@@ -14,10 +14,20 @@
 
 操作の仕様と実行欄を横に並べ、狭い画面では縦に並べる。OpenAPI原本はJSONでダウンロードできる。利用申請は専用画面で行う。入力欄には必須・任意を示し、送信中はボタンの色・文字・砂時計で状態を伝える。実行後はURLと本文を反映したcurlコマンドをコピーできる。認証トークンはシェル変数で参照する。
 
+トークン交換で未対応の方式を指定した場合はHTTP 400と `unsupported_grant_type`、トークン種別が不正な場合はHTTP 400と `invalid_request` を返す。利用者は応答の `error_description` で入力のどこを見直すか確認できる。
+
 ### 受入テスト
+
+- 受入テスト `packages/backend/tests/test_required_credentials.py::test_oauth_exchange_form_accepts_only_documented_token_types`
+
+- 受入テスト `packages/frontend/tests/test_required_product_trial.py::test_api_docs_runs_and_copies_curl`
 
 - 受入テスト `tests/e2e/browser/test_api_docs.py::test_openapi_key_console` / `response.png`
 
 ## 却下した方針
 
 画面での操作選択だけで認可を完了する方法は採用しない。
+
+### 変更履歴
+
+- 2026-11-25 OAuth交換に失敗した際の入力修正に必要な応答と、操作実行の受入テストを明記した。

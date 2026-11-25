@@ -1,3 +1,4 @@
+# 商品情報の取得とカタログ操作を共通化する。
 from app.core.diagnostics import asset_object
 from app.schemas.catalog import Listing
 from fastapi import HTTPException

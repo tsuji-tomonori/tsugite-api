@@ -105,7 +105,7 @@ jobs:
 
       - name: Deploy the CDK stack and run its database migration
         if: steps.current.outputs.deploy == 'true'
-        run: uv run --locked --all-packages python -m tools.operations.manage deploy --require-approval never --outputs-file "$RUNNER_TEMP/stack-outputs.json"
+        run: uv run --locked --all-packages python -m packages.tools.operations.manage deploy --require-approval never --outputs-file "$RUNNER_TEMP/stack-outputs.json"
 
       - name: Verify the deployed CloudFront and API Gateway origin boundary
         if: steps.current.outputs.deploy == 'true'

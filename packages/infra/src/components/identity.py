@@ -1,3 +1,4 @@
+# ポータルの認証基盤を構成する。
 import hashlib
 import re
 

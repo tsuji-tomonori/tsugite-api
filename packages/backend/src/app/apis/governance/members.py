@@ -1,3 +1,4 @@
+# 利用者の所属や権限を管理する。
 import boto3
 from app.core.auth import DEMO_GROUPS
 from app.core.config import local_demo, settings
@@ -83,11 +84,16 @@ def list_members(
         )
         next_cursor = ""
     else:
-        idp = boto3.client("cognito-idp")
-        #: 利用者・グループの管理（Cognitoユーザープール） / 利用者の一覧を取得
-        page = idp.list_users(
-            UserPoolId=pool(), Limit=limit, **({"PaginationToken": cursor} if cursor else {})
-        )
+        try:
+            idp = boto3.client("cognito-idp")
+            #: 利用者・グループの管理（Cognitoユーザープール） / 利用者の一覧を取得
+            page = idp.list_users(
+                UserPoolId=pool(), Limit=limit, **({"PaginationToken": cursor} if cursor else {})
+            )
+        except ClientError, BotoCoreError:
+            raise HTTPException(
+                503, "利用者を確認できませんでした。時間をおいて再実行してください"
+            ) from None
         users = {
             attrs["sub"]: user["Username"]
             for user in page.get("Users", [])
@@ -151,6 +157,10 @@ def invite(data: Invitation, request: Request, actor: User, db: DB):
             )["User"]
         except idp.exceptions.UsernameExistsException as exc:
             raise HTTPException(409, "登録済みです") from exc
+        except idp.exceptions.InternalErrorException, idp.exceptions.TooManyRequestsException:
+            raise HTTPException(
+                503, "招待サービスが一時的に利用できません。時間をおいて再実行してください"
+            ) from None
         try:
             subject = next(a["Value"] for a in user["Attributes"] if a["Name"] == "sub")
             request.state.target_subject_id = subject

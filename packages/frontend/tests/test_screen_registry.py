@@ -11,7 +11,7 @@ from xml.dom.minidom import Document
 import pytest
 from puepy.core import Tag
 
-from tools.packaging.build_frontend import bundle_styles, copy_app_modules
+from packages.tools.packaging.build_frontend import bundle_styles, copy_app_modules
 
 
 def test_new_screen_is_packaged_loaded_and_rendered(

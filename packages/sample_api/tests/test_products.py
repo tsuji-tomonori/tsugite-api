@@ -1,3 +1,4 @@
+# 商品ごとのAPI操作・スキーマ・ヘルスチェックを検証する。
 import json
 
 import pytest
@@ -5,8 +6,8 @@ from fastapi.testclient import TestClient
 from openapi_spec_validator import validate
 from sample_api.main import PRODUCTS, app, handler
 
-from tools.demo.seed_marketplace import CATALOG, offer
-from tools.design.sample_openapi import OUTPUT, generate
+from packages.tools.demo.seed_marketplace import CATALOG, offer
+from packages.tools.design.sample_openapi import OUTPUT, generate
 
 
 def test_generated_product_contracts(tmp_path):

@@ -1,3 +1,4 @@
+# 所属と公開条件から商品の閲覧範囲を判定する。
 from app.core.diagnostics import asset_object
 from app.core.workspace import allowed_audience
 from sqlalchemy import select

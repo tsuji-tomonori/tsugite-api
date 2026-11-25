@@ -6,7 +6,7 @@ GET `/api/config`
 
 [API一覧](README.md) · [CRUD一覧](../db/crud.md)
 
-共通 · `config_api_config_get` · [config:36](../../../packages/backend/src/app/main.py#L36)
+共通 · `config_api_config_get` · [config:37](../../../packages/backend/src/app/main.py#L37)
 
 ## 入力
 
@@ -45,7 +45,7 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:53](../../../packages/backend/src/app/core/config.py#L53) |
+| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:54](../../../packages/backend/src/app/core/config.py#L54) |
 
 <details><summary>解析した関数・依存</summary>
 

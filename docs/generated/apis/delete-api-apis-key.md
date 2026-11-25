@@ -6,7 +6,7 @@ DELETE `/api/apis/{key}`
 
 [API一覧](README.md) · [CRUD一覧](../db/crud.md)
 
-共通 · `delete_api_apis__key__delete` · [delete:170](../../../packages/backend/src/app/apis/catalog/register.py#L170)
+共通 · `delete_api_apis__key__delete` · [delete:171](../../../packages/backend/src/app/apis/catalog/register.py#L171)
 
 ## 入力
 
@@ -55,25 +55,25 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | R | 検索 | select | [close_rights:157](../../../packages/backend/src/app/apis/catalog/register.py#L157) |
-| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | U | 現在の承認担当を設定 | stage に代入 | [close_rights:161](../../../packages/backend/src/app/apis/catalog/register.py#L161) |
-| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | U | 審査・取消の理由を設定 | decision_note に代入 | [close_rights:163](../../../packages/backend/src/app/apis/catalog/register.py#L163) |
-| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | U | 利用申請の審査状態を設定 | status に代入 | [close_rights:164](../../../packages/backend/src/app/apis/catalog/register.py#L164) |
-| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:105](../../../packages/backend/src/app/core/workspace.py#L105) |
-| [APIカタログ](../db/database.md#assets) | assets | R | 主キーで取得 | db.get | [record:25](../../../packages/backend/src/app/core/catalog.py#L25) |
-| [APIカタログ](../db/database.md#assets) | assets | U | カタログから削除した日時を設定 | removed_at に代入 | [delete:184](../../../packages/backend/src/app/apis/catalog/register.py#L184) |
-| [APIカタログ](../db/database.md#assets) | assets | U | カタログで公開中かを設定 | published に代入 | [delete:185](../../../packages/backend/src/app/apis/catalog/register.py#L185) |
-| [監査履歴](../db/database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [event:10](../../../packages/backend/src/app/core/catalog.py#L10) |
-| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:30](../../../packages/backend/src/app/core/workspace.py#L30) |
-| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:54](../../../packages/backend/src/app/core/workspace.py#L54) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:123](../../../packages/backend/src/app/core/auth.py#L123) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:91](../../../packages/backend/src/app/core/workspace.py#L91) |
+| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | R | 検索 | select | [close_rights:158](../../../packages/backend/src/app/apis/catalog/register.py#L158) |
+| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | U | 現在の承認担当を設定 | stage に代入 | [close_rights:162](../../../packages/backend/src/app/apis/catalog/register.py#L162) |
+| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | U | 審査・取消の理由を設定 | decision_note に代入 | [close_rights:164](../../../packages/backend/src/app/apis/catalog/register.py#L164) |
+| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | U | 利用申請の審査状態を設定 | status に代入 | [close_rights:165](../../../packages/backend/src/app/apis/catalog/register.py#L165) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:107](../../../packages/backend/src/app/core/workspace.py#L107) |
+| [APIカタログ](../db/database.md#assets) | assets | R | 主キーで取得 | db.get | [record:26](../../../packages/backend/src/app/core/catalog.py#L26) |
+| [APIカタログ](../db/database.md#assets) | assets | U | カタログから削除した日時を設定 | removed_at に代入 | [delete:185](../../../packages/backend/src/app/apis/catalog/register.py#L185) |
+| [APIカタログ](../db/database.md#assets) | assets | U | カタログで公開中かを設定 | published に代入 | [delete:186](../../../packages/backend/src/app/apis/catalog/register.py#L186) |
+| [監査履歴](../db/database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [event:11](../../../packages/backend/src/app/core/catalog.py#L11) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:55](../../../packages/backend/src/app/core/workspace.py#L55) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:126](../../../packages/backend/src/app/core/auth.py#L126) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:92](../../../packages/backend/src/app/core/workspace.py#L92) |
 
 ### AWSサービス
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:53](../../../packages/backend/src/app/core/config.py#L53) |
+| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:54](../../../packages/backend/src/app/core/config.py#L54) |
 
 <details><summary>解析した関数・依存</summary>
 

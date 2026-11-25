@@ -1,3 +1,4 @@
+# モデルを取得して実行環境にキャッシュする。
 """Download the pinned model once per Lambda execution environment."""
 
 import hashlib

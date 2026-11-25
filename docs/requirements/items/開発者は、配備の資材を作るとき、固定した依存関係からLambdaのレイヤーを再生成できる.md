@@ -14,7 +14,7 @@
 
 ### 受入テスト
 
-- 受入テスト `tools/tests/test_lambda_layer.py::test_layer_rebuild_is_reproducible`
+- 受入テスト `packages/tools/tests/test_lambda_layer.py::test_layer_rebuild_is_reproducible`
 - 受入テスト `packages/infra/tests/test_cdk_regression.py::test_backend_layer_changes_only_with_dependencies`
 
 ## 却下した方針
@@ -24,4 +24,5 @@
 ### 変更履歴
 
 - 2026-11-25 #17 の再現可能なレイヤー配布を受入条件にした。
+- 2026-11-25 開発ツールとアーキテクチャテストをパッケージ構成に合わせて移設したため、受入テストの参照先を更新した。
 - 2026-11-25 判定モデルも専用レイヤーで配布するため、用語にデータを含めた。

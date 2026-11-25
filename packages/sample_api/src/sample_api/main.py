@@ -1,3 +1,4 @@
+# 商品に対応するFastAPIアプリを選んでLambdaから呼び出す。
 """商品別のFastAPIをベースパスに取り付け、環境ごとのLambdaで実行する。"""
 
 from fastapi import FastAPI

@@ -1,3 +1,4 @@
+# 商品の利用申請を受け付ける。
 from app.core.catalog import event, record, right_id
 from app.core.diagnostics import asset_object
 from app.core.offers import submission

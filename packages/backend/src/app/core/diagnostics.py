@@ -1,3 +1,4 @@
+# 障害の原因と対処情報を記録する。
 """Operational errors carry only operator-authored instructions into application logs."""
 
 import json

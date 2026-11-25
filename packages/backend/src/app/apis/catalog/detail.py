@@ -1,3 +1,4 @@
+# 商品の詳細を取得する。
 from app.core.catalog import listing, record
 from app.core.credential_policy import individual
 from app.core.diagnostics import asset_object

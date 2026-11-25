@@ -6,7 +6,7 @@ PATCH `/api/members/{subject}/profile`
 
 [API一覧](README.md) · [CRUD一覧](../db/crud.md)
 
-共通 · `update_managed_profile_api_members__subject__profile_patch` · [update_managed_profile:114](../../../packages/backend/src/app/apis/governance/profiles.py#L114)
+共通 · `update_managed_profile_api_members__subject__profile_patch` · [update_managed_profile:115](../../../packages/backend/src/app/apis/governance/profiles.py#L115)
 
 ## 入力
 
@@ -70,24 +70,24 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:105](../../../packages/backend/src/app/core/workspace.py#L105) |
-| [監査履歴](../db/database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [member_event:38](../../../packages/backend/src/app/apis/governance/members.py#L38) |
-| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:30](../../../packages/backend/src/app/core/workspace.py#L30) |
-| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:54](../../../packages/backend/src/app/core/workspace.py#L54) |
-| [利用者プロフィール](../db/database.md#portal_member_profiles) | portal_member_profiles | C | レコードを追加 | db.add | [edit:76](../../../packages/backend/src/app/apis/governance/profiles.py#L76) |
-| [利用者プロフィール](../db/database.md#portal_member_profiles) | portal_member_profiles | R | 主キーで取得 | db.get | [edit:65](../../../packages/backend/src/app/apis/governance/profiles.py#L65) |
-| [利用者プロフィール](../db/database.md#portal_member_profiles) | portal_member_profiles | U | 指定されたカラムの値を更新 | setattr による属性更新 | [edit:78](../../../packages/backend/src/app/apis/governance/profiles.py#L78) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [existing_account:21](../../../packages/backend/src/app/apis/governance/profiles.py#L21) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:123](../../../packages/backend/src/app/core/auth.py#L123) |
-| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:91](../../../packages/backend/src/app/core/workspace.py#L91) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:107](../../../packages/backend/src/app/core/workspace.py#L107) |
+| [監査履歴](../db/database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [member_event:39](../../../packages/backend/src/app/apis/governance/members.py#L39) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:55](../../../packages/backend/src/app/core/workspace.py#L55) |
+| [利用者プロフィール](../db/database.md#portal_member_profiles) | portal_member_profiles | C | レコードを追加 | db.add | [edit:77](../../../packages/backend/src/app/apis/governance/profiles.py#L77) |
+| [利用者プロフィール](../db/database.md#portal_member_profiles) | portal_member_profiles | R | 主キーで取得 | db.get | [edit:66](../../../packages/backend/src/app/apis/governance/profiles.py#L66) |
+| [利用者プロフィール](../db/database.md#portal_member_profiles) | portal_member_profiles | U | 指定されたカラムの値を更新 | setattr による属性更新 | [edit:79](../../../packages/backend/src/app/apis/governance/profiles.py#L79) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [existing_account:22](../../../packages/backend/src/app/apis/governance/profiles.py#L22) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:126](../../../packages/backend/src/app/core/auth.py#L126) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:92](../../../packages/backend/src/app/core/workspace.py#L92) |
 
 ### AWSサービス
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| 利用者・グループの管理（Cognitoユーザープール） | cognito-idp | R | 識別子で利用者を検索する | list_users | [check_managed_identity:37](../../../packages/backend/src/app/apis/governance/profiles.py#L37) |
-| 利用者・グループの管理（Cognitoユーザープール） | cognito-idp | R | 対象利用者の有効性を確認する | admin_get_user | [check_managed_identity:42](../../../packages/backend/src/app/apis/governance/profiles.py#L42) |
-| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:53](../../../packages/backend/src/app/core/config.py#L53) |
+| 利用者・グループの管理（Cognitoユーザープール） | cognito-idp | R | 識別子で利用者を検索する | list_users | [check_managed_identity:38](../../../packages/backend/src/app/apis/governance/profiles.py#L38) |
+| 利用者・グループの管理（Cognitoユーザープール） | cognito-idp | R | 対象利用者の有効性を確認する | admin_get_user | [check_managed_identity:43](../../../packages/backend/src/app/apis/governance/profiles.py#L43) |
+| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:54](../../../packages/backend/src/app/core/config.py#L54) |
 
 <details><summary>解析した関数・依存</summary>
 

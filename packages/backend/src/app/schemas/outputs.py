@@ -1,3 +1,4 @@
+# APIの応答モデルを定義する。
 """Response contracts for handlers that build JSON dictionaries directly."""
 
 from datetime import datetime
@@ -443,6 +444,14 @@ class Token(TypedDict):
 class ExchangedToken(Token):
     #: 交換して発行したトークンの種類
     issued_token_type: str
+
+
+#: OAuthトークン交換のエラー応答
+class TokenExchangeError(TypedDict):
+    #: エラーを識別するコード
+    error: str
+    #: 利用者向けのエラーの説明
+    error_description: str
 
 
 #: クライアント認証情報

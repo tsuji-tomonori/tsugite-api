@@ -1,3 +1,4 @@
+# HTTPの結果と原因から重要度を決め、対象APIと画面を安全に記録する。
 import asyncio
 import json
 from types import SimpleNamespace
@@ -210,7 +211,7 @@ def test_packaged_model_reports_weight_repair(tmp_path, monkeypatch, capsys):
     import importlib.util
     from pathlib import Path
 
-    from tools.packaging import build_chat
+    from packages.tools.packaging import build_chat
 
     monkeypatch.setattr(build_chat, "BUILD", tmp_path)
     build_chat.stage()

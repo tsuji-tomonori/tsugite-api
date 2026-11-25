@@ -1,3 +1,4 @@
+# 推論サービスとの境界だけを置き換えて、Lambdaの入力処理とモデル取得を検証する。
 """推論サービスとの境界だけを置き換えて、Lambdaの入力処理とモデル取得を検証する。"""
 
 import hashlib
@@ -143,3 +144,40 @@ def test_embedding_load_reuses_cpu_model_and_tokenizer(monkeypatch):
     tokenizers.Tokenizer.from_file.assert_called_once_with("/opt/models/decision/tokenizer.json")
     tokenizer.enable_truncation.assert_called_once_with(max_length=192)
     tokenizer.enable_padding.assert_called_once_with(pad_id=3, pad_token="[PAD]")
+
+
+def test_model_runtime_logs_failures_and_preserves_exceptions(monkeypatch, capsys):
+    """成功時は戻り値を保ち、重みの検証エラーは診断ログを出して呼び出し元へ伝える。"""
+    import json
+
+    worker = load_worker("model_runtime", monkeypatch)
+    assert worker.manifest()["decision"]
+    assert worker.logged_model(lambda event, ctx: "成功")({}, None) == "成功"
+
+    @worker.logged_model
+    def fail(event, context):
+        raise worker.WeightMismatch("checksum")
+
+    with pytest.raises(worker.WeightMismatch, match="checksum"):
+        fail({"log_context": {"request_id": "check-123"}}, None)
+    record = json.loads(capsys.readouterr().out)
+    assert "check-123" in record.values()
+    assert any("SHA-256" in str(value) for value in record.values())
+
+
+def test_completion_startup_handles_crash_and_timeout(monkeypatch):
+    """起動中に終了したプロセスと応答期限を超えたプロセスを区別して後片付けする。"""
+    worker = load_worker("completion", monkeypatch, runtime=Mock())
+    monkeypatch.setattr(worker, "model_file", lambda *args: "model")
+    monkeypatch.setattr(worker, "request", Mock(side_effect=OSError))
+    monkeypatch.setattr(worker, "sleep", Mock())
+    for status in (1, None):
+        proc = Mock()
+        proc.poll.return_value = status
+        monkeypatch.setattr(worker, "monotonic", Mock(side_effect=[0, 1, 21]))
+        monkeypatch.setattr(worker, "process", None)
+        monkeypatch.setattr(worker.subprocess, "Popen", Mock(return_value=proc))
+        with pytest.raises(RuntimeError, match="did not become ready"):
+            worker.ready("generate")
+        assert proc.kill.call_count == (status is None)
+        assert proc.wait.call_count == (status is None)
