@@ -1,4 +1,5 @@
-// 時刻は発行後の秒数。個人と認証情報の両方が許す操作だけを認める。
+/// 認証情報の期限と操作範囲
+/// 発行後の経過秒数、プロジェクトとAPIの有効期間、利用者と認証情報の操作権限、認証情報の世代を扱う。
 module credentials {
   var age: int
   var projectMinutes: int
@@ -22,6 +23,7 @@ module credentials {
     nondet current = Bool.oneOf()
     check(seconds, projectCap, apiCap, keyOK, userOK, current)
   }
+  /// 呼び出しが成功するには、利用者と認証情報の双方が操作を許可し、現行世代の認証情報を使い、プロジェクトとAPIの両方の有効期限に達していないことが必要である。
   val safe = response != 200 or (keyAllows and userAllows and currentGeneration
     and age < projectMinutes * 60 and age < apiMinutes * 60)
   run lifetimeTest = init.then(check(119, 2, 60, true, true, true)).then(check(120, 2, 60, true, true, true))

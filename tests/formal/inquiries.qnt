@@ -1,4 +1,5 @@
-// 固定した受付番号の再送と回答の閲覧者を扱う。
+/// 問い合わせの受付と回答
+/// 一つの受付番号に対する送信・再送と、管理者や第三者による回答操作を扱う。
 module inquiries {
   var operation: str
   var submitted: bool
@@ -12,6 +13,7 @@ module inquiries {
   action otherReply = all { submitted, result("otherReply", true, answered, 403) }
   action adminReply = all { submitted, result("adminReply", true, true, 200) }
   action step = any { submit, otherReply, adminReply }
+  /// 回答済みの問い合わせは、受付済みである。
   val safe = answered implies submitted
   run inquiryTest = init.then(submit).then(submit).then(otherReply).then(adminReply)
 }

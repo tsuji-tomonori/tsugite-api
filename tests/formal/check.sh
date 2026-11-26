@@ -6,6 +6,7 @@ cd "$root"
 quint="$root/tests/formal/node_modules/.bin/quint"
 out="$root/artifacts/formal"
 mkdir -p "$out"
+python3 tests/formal/document.py --quint "$quint" --check
 python3 tests/formal/generate.py --quint "$quint"
 for spec in "$root"/tests/formal/*.qnt; do
     model=$(basename "$spec" .qnt)

@@ -1,4 +1,5 @@
-// 利用権の状態と、現在の操作によるHTTP応答を独立に記述する。
+/// 利用申請と利用権
+/// 申請、承認、却下、取下げ、利用権の取消、商品の掲載停止による状態の変化と、APIへの転送可否を扱う。
 module grants {
   var status: str
   var listed: bool
@@ -29,6 +30,7 @@ module grants {
   action step = any { apply, approve, reject, withdraw, revoke, unpublish,
                       invoke("invoke"), invoke("otherEnvironment"), invoke("otherProject"),
                       invoke("otherProduct") }
+  /// API呼び出しが転送されるのは、利用権が承認済みで、商品・環境・プロジェクトが利用権と一致する場合に限る。
   val safe = not(forwarded) or (status == "approved" and operation == "invoke")
   run lifecycleTest = init.then(apply).then(invoke("invoke")).then(approve)
     .then(invoke("invoke")).then(unpublish).then(invoke("invoke")).then(revoke).then(invoke("invoke"))
