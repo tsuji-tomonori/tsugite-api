@@ -257,6 +257,9 @@ def test_openapi_key_console(tmp_path: Path, request: pytest.FixtureRequest) -> 
                     busy = docs.locator('button[aria-busy="true"]')
                     expect(busy).to_be_disabled()
                     expect(busy).to_contain_text("実行中")
+                    capture(
+                        busy, "busy-hourglass", "送信中のボタンの右側に文字と同色の砂時計が表示される"
+                    )
                     with page.expect_response(lambda r: "/invoke/" in r.url) as invocation:
                         held[0].continue_()
                     page.unroute("**/token-exchange")
