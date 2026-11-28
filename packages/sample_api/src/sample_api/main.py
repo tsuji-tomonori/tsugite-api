@@ -3,7 +3,7 @@
 from fastapi import FastAPI
 from mangum import Mangum
 
-from sample_api.products import (
+from sample_api.apis import (
     bundle_recipes,
     business_calendar,
     count_variances,

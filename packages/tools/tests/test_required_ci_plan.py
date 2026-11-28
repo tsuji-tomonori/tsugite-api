@@ -256,7 +256,7 @@ def test_baseline_measurement_uses_clean_checkout(project, monkeypatch, per_suit
             marks=pytest.mark.case_detail("生成設計書の変更では設計生成とツール検証を選ぶ"),
         ),
         pytest.param(
-            "packages/sample_api/src/sample_api/database.py",
+            "packages/sample_api/src/sample_api/core/database.py",
             ["synth", "design", "aws"],
             ["packages/sample_api/tests"],
             id="sample",

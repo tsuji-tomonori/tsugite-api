@@ -6,7 +6,7 @@ from unittest.mock import Mock
 import pytest
 import yaml
 from fastapi.testclient import TestClient
-from sample_api.database import SampleDatabase
+from sample_api.core.database import SampleDatabase
 from sample_api.main import PRODUCTS, app
 
 from packages.tools.design.sample_openapi import OUTPUT
