@@ -1,12 +1,15 @@
 # ポータルのログインフォームを描画する。
 from __future__ import annotations
 
+import asyncio
 from collections.abc import Awaitable, Callable
 from typing import Any
+from urllib.parse import quote, urlencode
 
+import segno
 from apis import client
 from apis.portal_auth import PortalLogin
-from js import document
+from js import document, window
 from puepy import t
 
 STEPS = {
@@ -18,7 +21,7 @@ STEPS = {
     ),
     "setup": (
         "認証アプリの登録",
-        "認証アプリで設定キーを手入力し、時間ベースのアカウントを追加してください。",
+        "認証アプリでQRコードを読み取り、アプリに表示される6桁の確認コードを入力してください。",
         "登録してログイン",
     ),
     "mfa": ("本人確認", "認証アプリに表示された6桁のコードを入力してください。", "確認してログイン"),
@@ -45,6 +48,39 @@ def auth_input(label: str, name: str, **attrs: Any) -> None:
     with t.label(classes="field"):
         t.span(label)
         t.input(id=name, name=name, classes="form-control", required=True, **attrs)
+
+
+def registration_codes(username: str, secret: str) -> None:
+    """認証アプリ用のQRコードと、手動登録用の設定コードを表示する。"""
+    issuer = "継手API"
+    label = quote(issuer, safe="") + ":" + quote(username.replace(":", "："), safe="")
+    query = urlencode({"secret": secret, "issuer": issuer})
+    qr = segno.make_qr(f"otpauth://totp/{label}?{query}")
+    t.img(
+        src=qr.png_data_uri(scale=5, border=4, dark="black", light="white"),
+        alt="認証アプリ登録用のQRコード",
+        classes="auth-qr",
+    )
+
+    async def copy_code() -> None:
+        status = document.getElementById("auth-copy-status")
+        try:
+            await window.navigator.clipboard.writeText(secret)
+            status.textContent = "設定コードをコピーしました。"
+        except Exception:
+            status.textContent = "設定コードを選択してコピーしてください。"
+
+    with t.details(classes="auth-manual"):
+        t.summary("設定コードを表示")
+        t.p("認証アプリで時間ベースの登録を選び、次の設定コードを入力してください。")
+        t.code(secret, classes="auth-key")
+        t.button(
+            "設定コードをコピー",
+            type="button",
+            classes="btn",
+            on_click=lambda event: asyncio.ensure_future(copy_code()),
+        )
+        t.span("", id="auth-copy-status", role="status")
 
 
 def portal_form(
@@ -93,8 +129,7 @@ def portal_form(
                 "ユーザー名", "login-user", type="text", value=flow.username, autocomplete="username"
             )
         if step == "setup":
-            t.strong("設定キー")
-            t.code(flow.secret, classes="auth-key")
+            registration_codes(flow.username, flow.secret)
         if step in {"mfa", "setup", "confirm_reset"}:
             auth_input(
                 "確認コード",

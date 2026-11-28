@@ -319,6 +319,8 @@ def test_frontend_build_serves_runtime_locally_and_reuses_verified_assets(tmp_pa
     assert (dist / "vendor/pyscript/core.js").read_bytes() == b"fixture for dist/core.js"
     assert (dist / "vendor/pyodide/pyodide.asm.wasm").is_file()
     assert (dist / "vendor/puepy/LICENSE").stat().st_size > 0
+    assert config["files"]["/vendor/segno/encoder.py"] == "./segno/encoder.py"
+    assert (dist / "vendor/segno/LICENSE").stat().st_size > 0
     build_frontend.build()
     assert fetch.call_count == len(entries)
 

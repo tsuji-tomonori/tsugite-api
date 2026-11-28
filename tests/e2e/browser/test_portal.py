@@ -481,3 +481,64 @@ def test_portal_login_on_mobile(demo_url: str, request: pytest.FixtureRequest) -
         assert page.url.startswith(demo_url + "/")
         assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
         browser.close()
+
+
+def test_mfa_registration_codes(demo_url: str, request: pytest.FixtureRequest) -> None:
+    """登録用QRを先に表示し、設定コードを開いてコピー・再収納してから登録できる。"""
+    from playwright.sync_api import expect, sync_playwright
+
+    secret = "JBSWY3DPEHPK3PXP"  # このテスト専用の固定値
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch(executable_path=os.getenv("CHROMIUM_PATH") or None)
+        page = browser.new_page(viewport={"width": 390, "height": 844})
+        page.context.grant_permissions(["clipboard-read", "clipboard-write"], origin=demo_url)
+        token = page.request.post(demo_url + "/api/demo/consumer").json()["access_token"]
+        page.route(
+            "**/api/config",
+            lambda route: route.fulfill(
+                json={"demo": False, "client_id": "portal", "identity_endpoint": demo_url + "/identity"}
+            ),
+        )
+        operations = []
+        responses = {
+            "InitiateAuth": {"ChallengeName": "MFA_SETUP", "Session": "start"},
+            "AssociateSoftwareToken": {"Session": "setup", "SecretCode": secret},
+            "VerifySoftwareToken": {"Session": "verified", "Status": "SUCCESS"},
+            "RespondToAuthChallenge": {"AuthenticationResult": {"AccessToken": token}},
+        }
+
+        def identity(route: Route) -> None:
+            operation = route.request.headers["x-amz-target"].split(".")[-1]
+            operations.append(operation)
+            route.fulfill(json=responses[operation])
+
+        page.route("**/identity", identity)
+        page.goto(demo_url + "/#/catalog")
+        page.get_by_label("ユーザー名", exact=True).fill("qr+demo@example.test")
+        page.get_by_label("パスワード", exact=True).fill("example-password")
+        page.get_by_role("button", name="ログイン", exact=True).click()
+
+        qr = page.get_by_role("img", name="認証アプリ登録用のQRコード")
+        expect(qr).to_be_visible()
+        assert qr.evaluate("img => img.src.startsWith('data:image/png;base64,') && img.naturalWidth > 0")
+        disclosure = page.get_by_text("設定コードを表示", exact=True)
+        key = page.get_by_text(secret, exact=True)
+        copy = page.get_by_role("button", name="設定コードをコピー")
+        expect(key).to_be_hidden()
+        expect(copy).to_be_hidden()
+        capture_image(request.node, "login", page, "mfa-qr", "認証アプリ登録の初期表示（テスト用QR）")
+        page.get_by_label("確認コード").fill("012345")
+        disclosure.click()
+        expect(key).to_be_visible()
+        copy.click()
+        expect(page.get_by_text("設定コードをコピーしました。")).to_be_visible()
+        assert page.evaluate("navigator.clipboard.readText()") == secret
+        disclosure.click()
+        expect(key).to_be_hidden()
+        expect(copy).to_be_hidden()
+        expect(page.get_by_label("確認コード")).to_have_value("012345")
+        page.get_by_role("button", name="登録してログイン").click()
+        expect(page.get_by_role("heading", name="APIカタログ", exact=True)).to_be_visible()
+        expect(qr).to_have_count(0)
+        assert operations == list(responses)
+        browser.close()

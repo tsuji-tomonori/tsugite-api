@@ -16,3 +16,7 @@
   display: block; margin: .4rem 0 1rem; padding: .75rem; background: var(--page);
   border: 1px solid var(--line); border-radius: 4px; overflow-wrap: anywhere; user-select: all;
 }
+
+.auth-qr { display: block; width: min(100%, 15rem); height: auto; margin: 0 auto; image-rendering: pixelated; }
+.auth-manual { margin: .5rem 0 1rem; }
+.auth-manual summary { padding: .65rem 0; cursor: pointer; color: var(--link); }

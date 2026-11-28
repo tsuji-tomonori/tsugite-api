@@ -26,6 +26,14 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
+        "frontend",
+        "MFA登録時に設定コードを最初から開く",
+        "packages/frontend/src/web_app/components/login_views.py",
+        't.details(classes="auth-manual")',
+        't.details(classes="auth-manual", open=True)',
+        "packages/frontend/tests/test_required_guide_home.py::test_registration_qr_matches_manual_code",
+    ),
+    Mutation(
         "chat-inquiry",
         "モデルが類似と判定した商品をすべて候補に戻す",
         "packages/agent/src/chat_retrieval.py",
