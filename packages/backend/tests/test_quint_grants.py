@@ -128,8 +128,15 @@ def test_product_history(states, portal):
         op = step["operation"]
         record = portal.get(url, headers=owner).raise_for_status().json()
         params = {"revision": record["revision"]}
-        if op == "publish":
-            publish_asset(portal, url, owner).raise_for_status()
+        if op == "submitPublication":
+            pending = portal.put(url + "/publication?published=true", headers=owner).raise_for_status()
+            assert pending.json()["publication_stage"] == "admin"
+        elif op == "publish":
+            portal.post(
+                url + "/publication-decisions",
+                headers=headers(portal, "admin"),
+                json={"approved": True, "reason": "公開確認", **params},
+            ).raise_for_status()
         elif op == "apply":
             grant = (
                 portal.post(

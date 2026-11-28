@@ -26,7 +26,7 @@ python packages/tools/design/requirements.py
 1. 最新のmainからの差分で、利用者・提供者・管理者・開発者が新しくできることを洗い出す。新機能ごとに原本を追加し、既存機能の条件変更は該当原本を更新する。参照する画面仕様とREADMEの操作名も照合する。
 2. 変更した原本の「受入テスト」に実在するpytest関数を指定する。ブラウザーE2Eでは成功時にそのケースが保存する画像名も指定する。「変更履歴」に `- YYYY-MM-DD 理由` を1行追記する。
 3. Verifyは `feat/`・`feature/` ブランチ、PR件名・本文の行またはコミット件名の `feat:`・`feat(範囲):`、PR本文の独立した行 `要件への影響：機能追加` を検出する。機能追加には新規原本が必要。実装（packages配下のsrc・public）だけを変えた場合は、PR本文の独立した行 `要件への影響なし：理由` で、利用者から見た動作が変わらない根拠を示す。
-4. コミット後に `python tools/design/requirements.py --branch "$(git branch --show-current)" --base origin/main` と `python -m tools.testing.requirement_evidence --check` で検査する。ローカルでPRの記述も検証するときは環境変数 `PR_TITLE` と `PR_BODY` を渡す。
+4. コミット後に `python packages/tools/design/requirements.py --branch "$(git branch --show-current)" --base origin/main` と `python -m packages.tools.testing.requirement_evidence --check` で検査する。ローカルでPRの記述も検証するときは環境変数 `PR_TITLE` と `PR_BODY` を渡す。
 5. PRではVerifyの成果物で対象要件の成否を確認する。マージ後は当該コミットの「Deploy to AWS」と「Publish requirement evidence」の成功、証跡の `Source-merge` を確認する。[証跡と保存履歴](../../evidence/README.md)
 
 ### 2026年11月25日の見直し
@@ -38,3 +38,10 @@ python packages/tools/design/requirements.py
 「決めた方針」の各段落の直後に検証方法を置く。`> Quint grants.scopeTest — 商品・環境・プロジェクトを個別に変えて転送先を観測する。` は、Quintの実行履歴を再生する指定。対応するpytest関数を同じ原本の「受入テスト」に記載する。`> 実装検証 test_関数名 — 確認する内容` は、実際のDB、画面、配布物などを観測する指定。両方を併記できる。方針を追加したら独立した段落にし、条件・操作・観測結果を記載する。
 
 モデル、生成と実装再生は[形式仕様の実行方法](../../tests/formal/README.md)を参照する。Quintで表した範囲と実装で観測する範囲を分けて読み取れる。日本語で書き忘れた業務条件の自動発見は対象外となる。
+
+### PRで業務ルールを変えるとき
+
+- 権限、承認、状態遷移などを変更するときは、該当する方針段落の `> Quint` にケースを指定し、同じPRでそのケースまたは同じモデルの定義（操作・不変条件など）を更新する。変更が複数の段落に及ぶ場合は段落ごとに対応させる。生成した操作列が変わる場合は `cases.json` も再生成する。
+- 表示だけを変える段落には `> 実装検証 test_banner — 表示のみ：閉じた後のバナーの非表示をブラウザーで確認する。` のように、実装で検査する理由と観測先を書く。「受入テスト」に実在するテストを登録する。開発者向けのCI・ビルド手順を変える段落には `開発工程：理由` を使える。
+- Verifyは分岐点から方針の追加・変更・削除を調べ、参照したQuintの構文木を比較する。別モデル・同じモデル内の別ケースだけの編集、コメント、整形、生成JSONだけの編集では業務ルールの差分を満たせない。変更履歴だけの追記や方針段落の並べ替えは許可する。
+- ローカルでは、固定版のQuintを `npm ci --prefix tests/formal --ignore-scripts --no-audit` で準備し、コミット後に `python -m packages.tools.design.formal_changes --base origin/main` を実行する。

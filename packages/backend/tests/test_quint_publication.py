@@ -72,43 +72,41 @@ def test_publication_review(states, portal):
         assert bool(portal.get("/api/apis", headers=admin).json()) == state["listed"]
 
 
-def test_publication_rejection_and_edits(portal):
+@pytest.mark.parametrize("states", histories("publicationchanges"))
+def test_publication_rejection_and_edits(states, portal):
     """公開申請の却下・修正・取り下げは以前の申請を終了し、古い判断では公開できない。"""
     owner, admin = headers(portal, "provider"), headers(portal, "admin")
     asset = portal.post("/api/apis", headers=owner, json=FORM).raise_for_status().json()
     url = "/api/apis/" + asset["id"]
     publish = url + "/publication?published=true"
-    pending = portal.put(publish, headers=owner).json()
-    reason = {"approved": False, "reason": "責任者を確認", "revision": pending["revision"]}
+    reason = {"approved": False, "reason": "責任者を確認", "revision": asset["revision"]}
     assert (
         portal.post("/api/apis/missing/publication-decisions", headers=admin, json=reason).status_code
         == 404
     )
     assert portal.put("/api/apis/missing/publication?published=true", headers=owner).status_code == 404
-    result = (
-        portal.post(url + "/publication-decisions", headers=admin, json=reason).raise_for_status().json()
-    )
-    assert not result["publication_stage"] and not result["published"]
-    for cancel in ("edit", "withdraw"):
-        pending = portal.put(publish, headers=owner).json()
-        if cancel == "edit":
-            portal.put(
-                url, headers=owner, params={"revision": pending["revision"]}, json=FORM
-            ).raise_for_status()
+    for state in states[1:]:
+        op = state["operation"]
+        current = portal.get(url, headers=owner).raise_for_status().json()
+        if op == "submit":
+            result = portal.put(publish, headers=owner)
+        elif op == "edit":
+            result = portal.put(url, headers=owner, params={"revision": current["revision"]}, json=FORM)
+        elif op == "withdraw":
+            result = portal.put(url + "/publication?published=false", headers=owner)
         else:
-            portal.put(url + "/publication?published=false", headers=owner).raise_for_status()
-        assert (
-            portal.post(
-                url + "/publication-decisions",
-                headers=admin,
-                json={**reason, "revision": pending["revision"]},
-            ).status_code
-            == 409
-        )
+            if op == "reject":
+                reason["revision"] = current["revision"]
+            result = portal.post(url + "/publication-decisions", headers=admin, json=reason)
+        assert result.status_code == state["response"], result.text
+        product = portal.get(url, headers=owner).raise_for_status().json()
+        assert (product["publication_stage"] == "admin") == state["pending"]
+        assert not product["published"]
     assert portal.get("/api/publication-requests", headers=admin).json() == []
 
 
-def test_named_and_project_usage_approvals(portal):
+@pytest.mark.parametrize("states", histories("usagereview"))
+def test_named_and_project_usage_approvals(states, portal):
     """指名された利用者と提供プロジェクトのリーダーが順番に承認した場合だけ利用権を発行する。"""
     owner, applicant, admin = (headers(portal, who) for who in ("provider", "consumer", "admin"))
     subject, lead = member(portal, admin, "leader")
@@ -134,20 +132,21 @@ def test_named_and_project_usage_approvals(portal):
         .raise_for_status()
         .json()
     )
-    for actor, status, next_stage in (
-        (owner, 403, None),
-        (admin, 200, "project_leader"),
-        (lead, 200, None),
-    ):
+    actors = {"provider": owner, "person/admin": admin, "project_leader": lead}
+    for state in states[1:]:
         response = portal.post(
             "/api/requests/" + grant["id"],
-            headers=actor,
+            headers=actors[state["caller"]],
             json={"action": "approve", "reason": "用途確認", "revision": grant["revision"]},
         )
-        assert response.status_code == status
-        if status == 200:
-            grant = response.json()
-            assert grant["stage"] == next_stage
+        assert response.status_code == state["response"], response.text
+        grant = next(
+            row
+            for row in portal.get("/api/requests", headers=applicant).json()
+            if row["id"] == grant["id"]
+        )
+        assert (grant["stage"] or "") == state["stage"]
+        assert (grant["status"] == "approved") == state["approved"]
     assert grant["status"] == "approved"
 
 
