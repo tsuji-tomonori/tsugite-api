@@ -428,7 +428,7 @@
 | ライト・ダークを選ぶと選択した表示モードを文書に反映しブラウザーに記憶する。 | — | [test_theme_is_applied_and_remembered](../../../packages/frontend/tests/test_required_guide_navigation.py#L79) |
 | 初回パスワードの確認結果に応じて、ログインを確定するか入力をやり直す。 | 初回のパスワードが一致するとログインを完了できる。<br>確認入力が一致しなければ認証を送信せず再入力を案内する。 | [test_initial_password_requires_confirmation_before_login](../../../packages/frontend/tests/test_required_guide_navigation.py#L110) |
 | モバイルの検索でカタログへ進むと、検索語を引き継ぎメニューを閉じる。 | — | [test_search_from_mobile_navigation_opens_catalog_with_query](../../../packages/frontend/tests/test_required_guide_navigation.py#L154) |
-| デモの利用者として入ると本人の所属を読み込み、ログアウトでホームの匿名状態に戻る。 | — | [test_demo_login_and_logout_restore_anonymous_home](../../../packages/frontend/tests/test_required_guide_navigation.py#L172) |
+| デモの利用者として入ると本人の所属を読み込み、ログアウトで未ログイン状態に戻る。 | — | [test_demo_login_and_logout_restore_anonymous_home](../../../packages/frontend/tests/test_required_guide_navigation.py#L172) |
 | 追加確認の回答は最初のログインと同じユーザープールと継続セッションに送り、成功後にログインする。 | 認証アプリの確認コードを招待先利用者の継続セッションで送る。<br>初回パスワードを同じ利用者の継続セッションで設定する。 | [test_login_challenge_continues_the_same_user_pool_session](../../../packages/frontend/tests/test_required_guide_navigation.py#L223) |
 | 認証サービスから資格情報も次の操作も返らないときは、再ログインを日本語で案内する。 | — | [test_incomplete_authentication_asks_for_a_new_login](../../../packages/frontend/tests/test_required_guide_navigation.py#L256) |
 | ガイド記事のブックマークは対象の内容を表示し、元の一覧に戻れる。 | 共有されたガイドURLから認証情報の手順を直接開ける。<br>見つからないガイドでは一覧へ戻る案内を表示する。 | [test_guide_article_can_be_opened_from_a_bookmark](../../../packages/frontend/tests/test_required_guide_navigation.py#L285) |
@@ -626,7 +626,7 @@
 | 雇用区分を登録して利用者に割り当てると本人のプロフィールに値が表示される。 | — | [test_metadata_assignment_console](../../../tests/e2e/browser/test_metadata_console.py#L12) |
 | 提供者が利用者の操作を選び、送料1,400円のHTTPS応答と権限変更直後の転送停止を照合する | — | [test_person_operation_console](../../../tests/e2e/browser/test_operation_console.py#L16) |
 | デモの提供者と利用者が公開・申請・承認・実行・権限取消を画面で完了できる | — | [test_user_flow](../../../tests/e2e/browser/test_portal.py#L27) |
-| ホームで商品と手順を調べ、運営への問い合わせを明示的に送信できる。 | — | [test_home_chat_and_inquiry](../../../tests/e2e/browser/test_portal.py#L32) |
+| ログイン直後のチャットで商品と手順を調べ、運営への問い合わせを明示的に送信できる。 | — | [test_home_chat_and_inquiry](../../../tests/e2e/browser/test_portal.py#L32) |
 | 利用者が問い合わせ画面から送信すると受付番号が表示され、再訪しても回答待ちの履歴を確認できる。 | — | [test_submit_from_inquiries](../../../tests/e2e/browser/test_portal.py#L65) |
 | 12業務・20拠点の公開240件を全件照合し、PC・スマートフォンの検索とページ送りを確認する | — | [test_large_catalog](../../../tests/e2e/browser/test_portal.py#L98) |
 | 11月の外観変更を反映した明暗テーマの文字コントラストとキーボード操作を確認する | — | [test_console_visual_modes](../../../tests/e2e/browser/test_portal.py#L173) |
