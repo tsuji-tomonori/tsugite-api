@@ -1,4 +1,5 @@
-# 管理者向けの利用者一覧を取得する。
+"""管理者向けの利用者一覧を取得する。"""
+
 from __future__ import annotations
 
 from urllib.parse import urlencode

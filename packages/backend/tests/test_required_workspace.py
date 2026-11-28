@@ -1,4 +1,5 @@
-# 組織編成・兼務・担当者の交代を、公開APIから利用者が確認できる結果で検証する。
+"""組織編成・兼務・担当者の交代を、公開APIから利用者が確認できる結果で検証する。"""
+
 import pytest
 
 from tests.support.catalog import headers

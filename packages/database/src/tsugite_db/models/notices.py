@@ -1,4 +1,5 @@
-# notices テーブルの列と型を定義する。
+"""notices テーブルの列と型を定義する。"""
+
 from datetime import datetime
 
 from sqlalchemy import DateTime, String, Text

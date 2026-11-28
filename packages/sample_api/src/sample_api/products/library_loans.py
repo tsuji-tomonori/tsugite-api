@@ -1,4 +1,5 @@
-# library_loans 商品のサンプル操作と応答を定義する。
+"""library_loans 商品のサンプル操作と応答を定義する。"""
+
 from fastapi import Query
 from pydantic import BaseModel
 

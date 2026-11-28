@@ -1,9 +1,9 @@
-# パッケージの追加時にもテストの配置、依存の取得先、カバレッジ設定とファイルの説明を検査する。
+"""パッケージの追加時にもテストの配置、依存の取得先、カバレッジ設定とファイルの説明を検査する。"""
+
 import ast
 import tomllib
 
-from .case_text import KANA
-from .project import ROOT, project_files
+from .project import ROOT, has_japanese_module_docstring, project_files
 from .test_case_descriptions import case_functions
 
 
@@ -48,15 +48,13 @@ def test_workspace_coverage_and_index():
 
 
 def test_python_files_start_with_japanese_purpose():
-    """すべてのPythonファイルの先頭に、そのファイルの役割を説明する日本語コメントがある。"""
-    invalid = []
-    for path in project_files(ROOT, ".py"):
-        with path.open(encoding="utf-8") as stream:
-            line = stream.readline()
-            if line.startswith("#!"):
-                line = stream.readline()
-        if not line.startswith("# ") or not KANA.search(line):
-            invalid.append(path.relative_to(ROOT))
+    """Pythonの実装と型定義の冒頭に、役割を示す日本語のモジュール説明が一つだけある。"""
+    invalid = [
+        path.relative_to(ROOT)
+        for suffix in (".py", ".pyi")
+        for path in project_files(ROOT, suffix)
+        if not has_japanese_module_docstring(path.read_text(encoding="utf-8"))
+    ]
     assert not invalid, invalid
 
 

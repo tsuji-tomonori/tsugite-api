@@ -1,5 +1,4 @@
-# デプロイ後にCloudFrontとAPI Gatewayの両経路が想定した応答を返すことを確認する。
-"""デプロイした同一スタックの2経路を、利用者の認証情報を使わずに照合する。"""
+"""配備後の同一スタックで、利用者の認証情報を使わずにCloudFrontとAPI Gatewayの両経路の応答を照合する。"""
 
 import json
 import os

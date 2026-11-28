@@ -1,4 +1,5 @@
-# 監視画面に共通の操作制御と障害報告を、利用者が操作を再開できる条件で検証する。
+"""監視画面に共通の操作制御と障害報告を、利用者が操作を再開できる条件で検証する。"""
+
 import asyncio
 from unittest.mock import AsyncMock, Mock
 

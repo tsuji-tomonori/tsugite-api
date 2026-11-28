@@ -1,4 +1,5 @@
-# OpenAPIの参照とパラメーターを解決する。
+"""OpenAPIの参照とパラメーターを解決する。"""
+
 from __future__ import annotations
 
 from typing import Any

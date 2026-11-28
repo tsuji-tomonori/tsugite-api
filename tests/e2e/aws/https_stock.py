@@ -1,4 +1,5 @@
-# テスト用の在庫APIをHTTPSで提供する。
+"""テスト用の在庫APIをHTTPSで提供する。"""
+
 import json
 import secrets
 import ssl

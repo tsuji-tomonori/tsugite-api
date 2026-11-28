@@ -1,4 +1,5 @@
-# 一覧の検索条件と結果表に共通する部品を描画する。
+"""一覧の検索条件と結果表に共通する部品を描画する。"""
+
 from collections.abc import Callable, Iterator, Sequence
 from contextlib import contextmanager
 from typing import Any

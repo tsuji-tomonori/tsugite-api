@@ -1,4 +1,5 @@
-# 新しい商品を登録する。
+"""新しい商品を登録する。"""
+
 import json
 
 from app.core.catalog import allowed_spec, event, listing, record

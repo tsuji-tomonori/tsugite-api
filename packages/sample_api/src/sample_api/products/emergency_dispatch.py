@@ -1,4 +1,5 @@
-# 緊急交換手配の商品別APIと見本データを定義する。
+"""緊急交換手配の商品別APIと見本データを定義する。"""
+
 from fastapi import Query
 from pydantic import BaseModel
 

@@ -1,5 +1,4 @@
-# 役割と検索語で使い方を絞り込み、手順から対象画面を開ける。
-"""Exercise local hybrid search, role filters, article navigation and read-only component previews."""
+"""役割と検索語で使い方を絞り込み、記事から対象画面を開く操作と読み取り専用の部品プレビューを検証する。"""
 
 import os
 from pathlib import Path

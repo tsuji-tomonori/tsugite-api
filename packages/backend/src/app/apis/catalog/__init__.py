@@ -1,4 +1,5 @@
-# カタログ操作のルーターを登録する。
+"""カタログ操作のルーターを登録する。"""
+
 from fastapi import APIRouter
 
 from .apply import router as apply_router

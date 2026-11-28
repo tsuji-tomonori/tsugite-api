@@ -1,4 +1,5 @@
-# 利用状況画面の部品とルートを定義する。
+"""利用状況画面の部品とルートを定義する。"""
+
 from components.dashboard import dashboard_view
 from routing.screen_registry import Screen
 

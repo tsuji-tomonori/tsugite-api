@@ -1,4 +1,5 @@
-# 部署・プロジェクト・利用者のAPIを呼び出す。
+"""部署・プロジェクト・利用者のAPIを呼び出す。"""
+
 from __future__ import annotations
 
 from typing import Any

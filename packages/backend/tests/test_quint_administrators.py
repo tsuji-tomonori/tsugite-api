@@ -1,4 +1,5 @@
-# 個人アカウントへの管理者権限の引き継ぎを検証する。
+"""個人アカウントへの管理者権限の引き継ぎを検証する。"""
+
 import pytest
 
 from tests.support.catalog import headers

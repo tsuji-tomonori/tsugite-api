@@ -1,4 +1,5 @@
-# 監視画面の期間・検索条件と業務履歴の保存を、画面とAPIの公開契約から検証する。
+"""監視画面の期間・検索条件と業務履歴の保存を、画面とAPIの公開契約から検証する。"""
+
 import asyncio
 from datetime import datetime, timedelta
 from types import SimpleNamespace

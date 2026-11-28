@@ -1,4 +1,5 @@
-# 使い方ガイド画面の部品とルートを定義する。
+"""使い方ガイド画面の部品とルートを定義する。"""
+
 from components import guide_views
 from routing.screen_registry import Screen
 from runtime.portal_ui import ctx

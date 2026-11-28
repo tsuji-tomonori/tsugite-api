@@ -1,4 +1,5 @@
-# pytestが保存した単体テストの計測結果からパッケージごとの行・分岐カバレッジを判定する。
+"""pytestが保存した単体テストの計測結果からパッケージごとの行・分岐カバレッジを判定する。"""
+
 import json
 import sys
 import tempfile

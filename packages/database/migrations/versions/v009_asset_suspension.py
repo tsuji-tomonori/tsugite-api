@@ -1,5 +1,4 @@
-# 商品の停止状態に対応するDBスキーマへ移行する。
-"""Store the administrator's invocation suspension independently of publication."""
+"""管理者による呼び出し停止の状態を、商品の公開状態と独立して保存できるようにする。"""
 
 import sqlalchemy as sa
 from alembic import op

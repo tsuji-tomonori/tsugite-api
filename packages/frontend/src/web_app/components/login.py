@@ -1,4 +1,5 @@
-# ログイン方法に応じた操作欄を描画する。
+"""ログイン方法に応じた操作欄を描画する。"""
+
 from __future__ import annotations
 
 from apis import client

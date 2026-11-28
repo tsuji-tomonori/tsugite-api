@@ -1,5 +1,4 @@
-# Git管理対象のテキストの文字コードと改行を検査する。
-"""Check Git index blobs, respecting binary attributes and partial staging."""
+"""ステージされたテキストの文字コードと改行を検査し、バイナリ指定と部分的なステージングを考慮する。"""
 
 import argparse
 import os

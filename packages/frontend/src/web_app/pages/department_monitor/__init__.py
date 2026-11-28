@@ -1,4 +1,5 @@
-# 部署のモニタリング画面を組み立てる。
+"""部署のモニタリング画面を組み立てる。"""
+
 from actions.workspace import load_workspace
 from components.workspace import monitor_panel, page_title, view
 from routing.screen_registry import Screen

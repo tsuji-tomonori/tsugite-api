@@ -1,4 +1,5 @@
-# 一時リポジトリの分岐点と変更した方針から、同じPRの形式仕様だけを照合する。
+"""一時リポジトリの分岐点と変更した方針から、同じPRの形式仕様だけを照合する。"""
+
 import json
 import subprocess
 from pathlib import Path

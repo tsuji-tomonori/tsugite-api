@@ -1,4 +1,5 @@
-# 固定版Quintの実際の構文木で、注釈と文字列リテラルを区別する。
+"""固定版Quintの実際の構文木で、注釈と文字列リテラルを区別する。"""
+
 from packages.tools.design.formal_changes import model_declarations
 
 

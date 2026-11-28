@@ -1,4 +1,5 @@
-# 実際のHTTP応答を公開仕様と照合する。
+"""実際のHTTP応答を公開仕様と照合する。"""
+
 from functools import cached_property
 
 import schemathesis

@@ -1,4 +1,5 @@
-# 利用権を確認し上流APIの操作を呼び出す。
+"""利用権を確認し上流APIの操作を呼び出す。"""
+
 import json
 import re
 from typing import Annotated

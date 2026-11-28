@@ -1,4 +1,5 @@
-# 要件「ポータルにログインできる」「通知を配信できる」で、起動と個人別の未読表示を検証する。
+"""要件「ポータルにログインできる」「通知を配信できる」で、起動と個人別の未読表示を検証する。"""
+
 import asyncio
 import sys
 from collections.abc import Coroutine

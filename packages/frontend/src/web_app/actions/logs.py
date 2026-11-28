@@ -1,4 +1,5 @@
-# アクセスログの取得・ページ移動・出力を扱う。
+"""アクセスログの取得・ページ移動・出力を扱う。"""
+
 from __future__ import annotations
 
 from typing import Any

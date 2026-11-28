@@ -1,5 +1,4 @@
-# モデル用Lambdaの配布物と重みを準備する。
-"""Package native model functions and upload model weights directly to the CDK asset bucket."""
+"""モデル用Lambdaの配布物を作り、モデルの重みをCDKのアセット用バケットへ直接格納する。"""
 
 import hashlib
 import json

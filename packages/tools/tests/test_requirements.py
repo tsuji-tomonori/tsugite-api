@@ -1,4 +1,5 @@
-# 本文の定義を一度だけ掲載し、両方の一覧から日本語名の要件を開ける。
+"""本文の定義を一度だけ掲載し、両方の一覧から日本語名の要件を開ける。"""
+
 from subprocess import check_output
 from urllib.parse import unquote
 

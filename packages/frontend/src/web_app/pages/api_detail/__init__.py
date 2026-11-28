@@ -1,4 +1,5 @@
-# APIの詳細画面の部品とルートを定義する。
+"""APIの詳細画面の部品とルートを定義する。"""
+
 from actions.listing_data import load_listing
 from components import api_docs, operation_views
 from components.controls import btn, field

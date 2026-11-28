@@ -1,4 +1,5 @@
-# 利用状況と監視情報を集計する。
+"""利用状況と監視情報を集計する。"""
+
 import json
 from datetime import UTC, datetime, timedelta
 from typing import Annotated, Literal

@@ -1,4 +1,3 @@
-# Cognitoのメール属性をsubjectで照合し、所属一覧の表示用メールに反映する。
 """Cognitoのメール属性をsubjectで照合し、所属一覧の表示用メールに反映する。"""
 
 import argparse

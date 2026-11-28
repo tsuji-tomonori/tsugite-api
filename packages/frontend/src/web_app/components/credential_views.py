@@ -1,4 +1,5 @@
-# 認証情報の発行・更新フォームを表示する。
+"""認証情報の発行・更新フォームを表示する。"""
+
 from __future__ import annotations
 
 import json

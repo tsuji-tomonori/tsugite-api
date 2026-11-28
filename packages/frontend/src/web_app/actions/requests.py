@@ -1,4 +1,5 @@
-# 利用申請の確認と審査を扱う。
+"""利用申請の確認と審査を扱う。"""
+
 from __future__ import annotations
 
 from typing import Any

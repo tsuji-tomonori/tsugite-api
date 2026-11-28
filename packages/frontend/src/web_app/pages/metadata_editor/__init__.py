@@ -1,4 +1,5 @@
-# 属性設定の画面を定義する。
+"""属性設定の画面を定義する。"""
+
 from actions.workspace import load_workspace
 from components.metadata import field_editor
 from routing.screen_registry import Screen

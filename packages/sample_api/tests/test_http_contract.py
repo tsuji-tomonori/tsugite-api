@@ -1,4 +1,5 @@
-# 公開YAMLを基準に商品ごとの各応答を照合する。
+"""公開YAMLを基準に商品ごとの各応答を照合する。"""
+
 import sqlite3
 from unittest.mock import Mock
 

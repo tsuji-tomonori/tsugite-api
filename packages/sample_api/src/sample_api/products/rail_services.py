@@ -1,4 +1,5 @@
-# rail_services 商品のサンプル操作と応答を定義する。
+"""rail_services 商品のサンプル操作と応答を定義する。"""
+
 from fastapi import Query
 from pydantic import BaseModel
 

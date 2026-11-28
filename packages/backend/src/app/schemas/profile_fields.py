@@ -1,5 +1,4 @@
-# 招待やプロフィール変更時の名前を検証する。
-"""Validate profile names consistently at invitation and at later edits."""
+"""招待時とプロフィール編集時に同じ規則で名前を検証する。"""
 
 from typing import Annotated
 from unicodedata import category

@@ -1,4 +1,5 @@
-# API Docsの実行操作をブラウザーイベントから呼び、入力・送信中・結果・コピーを検証する。
+"""API Docsの実行操作をブラウザーイベントから呼び、入力・送信中・結果・コピーを検証する。"""
+
 import asyncio
 from collections.abc import Callable
 from types import SimpleNamespace

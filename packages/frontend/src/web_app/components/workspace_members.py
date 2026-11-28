@@ -1,4 +1,5 @@
-# 組織の所属メンバーと編集欄を表示する。
+"""組織の所属メンバーと編集欄を表示する。"""
+
 from __future__ import annotations
 
 from typing import Any

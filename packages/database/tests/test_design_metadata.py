@@ -1,4 +1,5 @@
-# テーブル定義とPython宣言に付いた業務名の対応を検証する。
+"""テーブル定義とPython宣言に付いた業務名の対応を検証する。"""
+
 import pytest
 from tsugite_db.design_names import design_tables, table_names
 from tsugite_db.source_docs import SourceDocs, read_source

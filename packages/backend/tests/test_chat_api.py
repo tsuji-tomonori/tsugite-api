@@ -1,4 +1,5 @@
-# チャットが公開中の商品だけを勧め、別の利用者や取り下げ後の閲覧を拒む。
+"""チャットが公開中の商品だけを勧め、別の利用者や取り下げ後の閲覧を拒む。"""
+
 import json
 from unittest.mock import Mock
 from uuid import uuid4

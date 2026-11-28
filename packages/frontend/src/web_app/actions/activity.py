@@ -1,4 +1,5 @@
-# 集計の期間と対象を管理する。
+"""集計の期間と対象を管理する。"""
+
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone

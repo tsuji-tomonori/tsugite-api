@@ -1,4 +1,5 @@
-# 商品を公開する。
+"""商品を公開する。"""
+
 import json
 
 from app.apis.governance.directory import audit

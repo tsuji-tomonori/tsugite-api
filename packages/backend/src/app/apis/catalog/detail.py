@@ -1,4 +1,5 @@
-# 商品の詳細を取得する。
+"""商品の詳細を取得する。"""
+
 import json
 
 from app.core.catalog import listing, record

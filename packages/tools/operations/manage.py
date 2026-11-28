@@ -1,4 +1,3 @@
-# 継手APIの起動・検証・AWS配備。リポジトリ直下のTaskfileから実行する。
 """継手APIの起動・検証・AWS配備。リポジトリ直下のTaskfileから実行する。"""
 
 import argparse

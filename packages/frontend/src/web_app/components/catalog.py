@@ -1,4 +1,5 @@
-# カタログと提供一覧の商品を表示する。
+"""カタログと提供一覧の商品を表示する。"""
+
 from __future__ import annotations
 
 from actions.catalog import search, turn_page

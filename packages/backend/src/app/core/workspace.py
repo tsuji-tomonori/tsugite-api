@@ -1,5 +1,4 @@
-# 所属組織に基づいて商品の公開範囲と利用権を判定する。
-"""Effective membership, catalog audience and invocation boundaries."""
+"""所属組織に基づいて商品の公開範囲と利用権を判定する。"""
 
 import hashlib
 import json

@@ -1,4 +1,5 @@
-# 個人の管理者権限を付与・剥奪する。
+"""個人の管理者権限を付与・剥奪する。"""
+
 from app.apis.governance.members import administrator, member_event, portal_admins
 from app.apis.governance.profiles import check_managed_identity, existing_account
 from app.core.admin_roles import save_admins

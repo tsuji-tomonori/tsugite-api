@@ -1,4 +1,5 @@
-# APIクライアントの選択状態を管理する。
+"""APIクライアントの選択状態を管理する。"""
+
 from __future__ import annotations
 
 import asyncio

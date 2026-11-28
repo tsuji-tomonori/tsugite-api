@@ -1,4 +1,5 @@
-# 利用申請画面の部品とルートを定義する。
+"""利用申請画面の部品とルートを定義する。"""
+
 from components.application import application_page, application_panel
 from content import guide_examples as example
 from routing.screen_registry import Screen

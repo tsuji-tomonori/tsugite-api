@@ -1,4 +1,5 @@
-# 内部参照の連鎖とJSON Pointerのエスケープを解決し、パス順を保つ。
+"""内部参照の連鎖とJSON Pointerのエスケープを解決し、パス順を保つ。"""
+
 import pytest
 from app.core.openapi import path_items
 

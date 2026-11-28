@@ -1,4 +1,5 @@
-# API商品詳細の公開設定と仕様を表示する。
+"""API商品詳細の公開設定と仕様を表示する。"""
+
 from __future__ import annotations
 
 import json

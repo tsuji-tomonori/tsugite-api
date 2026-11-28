@@ -1,4 +1,5 @@
-# DB層はHTTPのルーターに依存しない。
+"""DB層はHTTPのルーターに依存しない。"""
+
 from ..core.project import ROOT
 
 

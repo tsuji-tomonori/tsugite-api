@@ -1,4 +1,5 @@
-# 商品の公開・仕様・操作権限のAPIを呼び出す。
+"""商品の公開・仕様・操作権限のAPIを呼び出す。"""
+
 from __future__ import annotations
 
 from typing import Any

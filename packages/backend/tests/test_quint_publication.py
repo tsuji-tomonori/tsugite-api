@@ -1,4 +1,5 @@
-# 公開申請と利用申請の承認者をAPI経由で検証する。
+"""公開申請と利用申請の承認者をAPI経由で検証する。"""
+
 import pytest
 
 from tests.support.catalog import FORM, headers, publish_asset

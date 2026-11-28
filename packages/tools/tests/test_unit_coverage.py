@@ -1,4 +1,5 @@
-# 行と分岐のカバレッジ下限が独立して適用されることを検証する。
+"""行と分岐のカバレッジ下限が独立して適用されることを検証する。"""
+
 from packages.tools.ci.unit_coverage import check_totals
 
 

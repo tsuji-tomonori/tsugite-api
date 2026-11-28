@@ -1,5 +1,4 @@
-# 配備時にデータベースのマイグレーションを実行する。
-"""CloudFormation provider. Delete retains catalog data and audit history."""
+"""CloudFormationによる配備時にデータベースを更新し、削除時もカタログと監査履歴を保持する。"""
 
 import os
 import re

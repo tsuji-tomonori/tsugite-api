@@ -1,4 +1,4 @@
-# Cognitoを利用する会員名簿で、招待・閲覧・退会と外部サービスの応答を検証する。
+"""Cognitoを利用する会員名簿で、招待・閲覧・退会と外部サービスの応答を検証する。"""
 
 from unittest.mock import Mock
 

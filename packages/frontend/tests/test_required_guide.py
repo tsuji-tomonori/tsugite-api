@@ -1,4 +1,5 @@
-# 要件「使い方ガイドを検索できる」と利用手順に基づき、検索と閲覧専用の画面例を検証する。
+"""要件「使い方ガイドを検索できる」と利用手順に基づき、検索と閲覧専用の画面例を検証する。"""
+
 from collections.abc import Callable
 from typing import Any
 from unittest.mock import AsyncMock, Mock

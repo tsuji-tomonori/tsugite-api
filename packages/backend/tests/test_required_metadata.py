@@ -1,4 +1,5 @@
-# メタデータの公開設定、所属の訂正、グループリーダーの閲覧範囲をAPI経由で検証する。
+"""メタデータの公開設定、所属の訂正、グループリーダーの閲覧範囲をAPI経由で検証する。"""
+
 import pytest
 
 from tests.support.catalog import headers, publish_asset

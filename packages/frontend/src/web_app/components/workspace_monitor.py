@@ -1,4 +1,5 @@
-# 組織の利用件数と内訳を表示する。
+"""組織の利用件数と内訳を表示する。"""
+
 from __future__ import annotations
 
 from typing import Any

@@ -1,4 +1,5 @@
-# 実行予定の単体テストにJUnit結果がなければ、要件を未実行として不合格にする。
+"""実行予定の単体テストにJUnit結果がなければ、要件を未実行として不合格にする。"""
+
 import base64
 from pathlib import Path
 from xml.etree import ElementTree

@@ -1,4 +1,5 @@
-# CIとコミット時のテキスト検査を一時リポジトリの実際の差分で確かめる。
+"""CIとコミット時のテキスト検査を一時リポジトリの実際の差分で確かめる。"""
+
 import subprocess
 import sys
 from pathlib import Path

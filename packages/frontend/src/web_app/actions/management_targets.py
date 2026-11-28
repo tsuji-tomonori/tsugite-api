@@ -1,4 +1,5 @@
-# 通知とアラートの対象を共有する。
+"""通知とアラートの対象を共有する。"""
+
 from __future__ import annotations
 
 from apis import activity as activity_api

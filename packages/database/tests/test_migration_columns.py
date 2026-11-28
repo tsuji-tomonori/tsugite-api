@@ -1,4 +1,5 @@
-# Aurora DSQL では公開スキーマの現行カラム名をシステムカタログから取得する。
+"""Aurora DSQL では公開スキーマの現行カラム名をシステムカタログから取得する。"""
+
 from unittest.mock import Mock, patch
 
 from tsugite_db.migration_columns import column_names

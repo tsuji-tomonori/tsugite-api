@@ -1,4 +1,5 @@
-# テーマ生成はCSSの文字列とコメントを除外し、入れ子の変数と代替値を取得する。
+"""テーマ生成はCSSの文字列とコメントを除外し、入れ子の変数と代替値を取得する。"""
+
 from packages.tools.packaging.build_frontend import cloudscape_tokens
 
 

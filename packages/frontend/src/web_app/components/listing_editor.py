@@ -1,4 +1,5 @@
-# 掲載商品の編集フォームを描画する。
+"""掲載商品の編集フォームを描画する。"""
+
 from __future__ import annotations
 
 import json

@@ -1,4 +1,5 @@
-# アクセスポリシーを管理する。
+"""アクセスポリシーを管理する。"""
+
 import json
 
 from app.core.catalog import event, record

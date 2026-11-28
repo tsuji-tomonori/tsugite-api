@@ -1,4 +1,3 @@
-# 形式仕様の操作をFastAPIで再生し、応答・保存状態・実際の転送回数を照合する。
 """形式仕様の操作をFastAPIで再生し、応答・保存状態・実際の転送回数を照合する。"""
 
 from unittest.mock import Mock

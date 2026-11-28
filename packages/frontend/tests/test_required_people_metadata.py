@@ -1,4 +1,5 @@
-# 利用者属性の定義、値の所属とプロフィール表示を要件・利用手順・組織APIの公開契約から検証する。
+"""利用者属性の定義、値の所属とプロフィール表示を要件・利用手順・組織APIの公開契約から検証する。"""
+
 import asyncio
 from types import SimpleNamespace
 from typing import Any

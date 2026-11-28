@@ -1,4 +1,5 @@
-# 売場補充指示の商品別APIと見本データを定義する。
+"""売場補充指示の商品別APIと見本データを定義する。"""
+
 from fastapi import Query
 from pydantic import BaseModel
 

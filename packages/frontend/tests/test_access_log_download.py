@@ -1,4 +1,5 @@
-# アクセスログのダウンロードを検証する。
+"""アクセスログのダウンロードを検証する。"""
+
 from __future__ import annotations
 
 import asyncio

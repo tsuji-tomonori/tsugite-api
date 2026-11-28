@@ -1,4 +1,5 @@
-# ブラウザーで生成したファイルを保存する。
+"""ブラウザーで生成したファイルを保存する。"""
+
 from __future__ import annotations
 
 from typing import Any

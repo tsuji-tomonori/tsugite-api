@@ -1,4 +1,5 @@
-# 各層の違反をインポートの別名・相対参照・完全修飾名でも行番号付きで報告する。
+"""各層の違反をインポートの別名・相対参照・完全修飾名でも行番号付きで報告する。"""
+
 import ast
 import json
 from pathlib import Path
@@ -8,7 +9,7 @@ import pytest
 from ..model.model_artifacts import check_model_artifacts, manifest_errors
 from .case_text import is_japanese_case_text
 from .dependencies import dependencies, dependency_violations
-from .project import project_files
+from .project import has_japanese_module_docstring, project_files
 from .test_case_descriptions import case_functions
 from .test_documents import japanese_title
 
@@ -135,3 +136,18 @@ def test_relative_imports_resolve_with_original_line_numbers():
         (2, "portal.views.metrics"),
         (4, "portal.audit"),
     ]
+
+
+def test_module_purpose_requires_one_japanese_docstring():
+    """日本語のモジュール説明を受理し、旧コメント形式と重複した英訳を検出する。"""
+    purpose = '"""商品の公開範囲と利用権を判定する。"""\n'
+    assert has_japanese_module_docstring(purpose + "from __future__ import annotations")
+    assert has_japanese_module_docstring("#!/usr/bin/env python3\n" + purpose)
+    for invalid in (
+        "# 商品の公開範囲を判定する。\n" + purpose,
+        '"商品の公開範囲を判定する。"',
+        '"""Catalog access."""',
+        '"""商品の公開範囲を判定する。\nCatalog access.\n"""',
+        purpose + '"""Catalog access."""',
+    ):
+        assert not has_japanese_module_docstring(invalid), invalid

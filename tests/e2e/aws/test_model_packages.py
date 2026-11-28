@@ -1,4 +1,5 @@
-# 配備用コードとLayerだけでモデルを読み込み、外部パッケージの読み込み元を確認する。
+"""配備用コードとLayerだけでモデルを読み込み、外部パッケージの読み込み元を確認する。"""
+
 import subprocess
 from pathlib import Path
 from zipfile import ZipFile

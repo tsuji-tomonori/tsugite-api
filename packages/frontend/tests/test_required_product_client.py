@@ -1,4 +1,5 @@
-# 公開されたOpenAPIと操作契約から、クライアントが構成する呼び出しと表示用コマンドを検証する。
+"""公開されたOpenAPIと操作契約から、クライアントが構成する呼び出しと表示用コマンドを検証する。"""
+
 import json
 import shlex
 from collections.abc import Callable

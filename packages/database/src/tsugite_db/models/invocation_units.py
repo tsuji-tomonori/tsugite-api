@@ -1,4 +1,5 @@
-# invocation_units テーブルの列と型を定義する。
+"""invocation_units テーブルの列と型を定義する。"""
+
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column
 

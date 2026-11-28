@@ -1,4 +1,5 @@
-# 画面ディレクトリからルートとメニューを組み立てる。
+"""画面ディレクトリからルートとメニューを組み立てる。"""
+
 from __future__ import annotations
 
 from collections.abc import Awaitable, Callable

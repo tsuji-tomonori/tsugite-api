@@ -1,4 +1,5 @@
-# 環境別の承認条件を守り、複数の承認を指定の順序で行う。
+"""環境別の承認条件を守り、複数の承認を指定の順序で行う。"""
+
 from copy import deepcopy
 
 from packages.backend.tests.test_org_access import setup_people

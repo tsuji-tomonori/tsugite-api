@@ -1,4 +1,5 @@
-# 画面の配布・自動登録・表示を検証する。
+"""画面の配布・自動登録・表示を検証する。"""
+
 from __future__ import annotations
 
 import asyncio

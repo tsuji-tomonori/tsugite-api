@@ -1,5 +1,4 @@
-# ブラウザーで3方式を発行し、実時計で1分後に更新、シークレット変更・失効まで確認する。
-"""Issue tokens and change inherited lifetime from the signed-in portal."""
+"""ログイン中のポータルで三方式の認証情報を発行し、有効期間の変更、実時間での更新、シークレット変更、失効を確かめる。"""
 
 import hashlib
 import os

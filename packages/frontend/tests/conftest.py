@@ -1,4 +1,5 @@
-# ダミーのブラウザー境界を用意する。
+"""ダミーのブラウザー境界を用意する。"""
+
 from __future__ import annotations
 
 import sys

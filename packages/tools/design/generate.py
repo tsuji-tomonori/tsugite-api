@@ -1,5 +1,4 @@
-# 業務コードからAPIとデータベースの設計書を生成する。
-"""Generate reviewable Markdown from the app and its local implementation."""
+"""APIとデータベースの実装から、レビュー用の設計書をMarkdownで生成する。"""
 
 import ast
 import inspect

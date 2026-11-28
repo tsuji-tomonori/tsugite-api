@@ -1,4 +1,5 @@
-# 商品の利用条件と公開履歴を表示する。
+"""商品の利用条件と公開履歴を表示する。"""
+
 from __future__ import annotations
 
 from collections.abc import Callable

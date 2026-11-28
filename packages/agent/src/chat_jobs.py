@@ -1,5 +1,4 @@
-# 非同期ジョブを保存し、処理結果をAPIに返す。
-"""Durable asynchronous responses shared by the HTTP and worker Lambdas."""
+"""HTTP受付用とワーカー用のLambdaで非同期ジョブを共有し、保存した処理結果をAPIに返す。"""
 
 import json
 import os

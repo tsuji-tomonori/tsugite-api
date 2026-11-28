@@ -1,4 +1,5 @@
-# 問い合わせ画面の部品とルートを定義する。
+"""問い合わせ画面の部品とルートを定義する。"""
+
 from actions.inquiries import load_inquiries
 from components.inquiries import inquiries
 from routing.screen_registry import Screen

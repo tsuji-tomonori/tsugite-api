@@ -1,4 +1,5 @@
-# 件数・時系列・直近ログを並行して取得する。
+"""件数・時系列・直近ログを並行して取得する。"""
+
 from __future__ import annotations
 
 import asyncio

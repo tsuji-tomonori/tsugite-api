@@ -1,4 +1,5 @@
-# 利用者ごとのAPI操作権限を表示する。
+"""利用者ごとのAPI操作権限を表示する。"""
+
 from __future__ import annotations
 
 from collections.abc import Awaitable, Callable

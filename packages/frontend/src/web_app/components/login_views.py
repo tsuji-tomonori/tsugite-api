@@ -1,4 +1,5 @@
-# ポータルのログインフォームを描画する。
+"""ポータルのログインフォームを描画する。"""
+
 from __future__ import annotations
 
 import asyncio

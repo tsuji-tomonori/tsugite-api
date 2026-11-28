@@ -1,4 +1,5 @@
-# 初回割り当てから引き継いだ管理者の名簿を版管理する。
+"""初回割り当てから引き継いだ管理者の名簿を版管理する。"""
+
 import json
 
 from tsugite_db.models import DirectoryTree

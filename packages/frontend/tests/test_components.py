@@ -1,4 +1,5 @@
-# 表示部品と操作ガイドを検証する。
+"""表示部品と操作ガイドを検証する。"""
+
 from __future__ import annotations
 
 import json

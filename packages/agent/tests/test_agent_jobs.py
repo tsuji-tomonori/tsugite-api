@@ -1,4 +1,5 @@
-# 同じ受付番号の再送はワーカーを増やさず、本人が有効期間内に結果を取得できる。
+"""同じ受付番号の再送はワーカーを増やさず、本人が有効期間内に結果を取得できる。"""
+
 import json
 from io import BytesIO
 from unittest.mock import Mock

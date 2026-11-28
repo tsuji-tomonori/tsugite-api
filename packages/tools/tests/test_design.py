@@ -1,4 +1,5 @@
-# 全APIの入出力を出力し、再生成時に不要な文書を取り除く。
+"""全APIの入出力を出力し、再生成時に不要な文書を取り除く。"""
+
 import re
 
 from packages.tools.ci.check_text import violations

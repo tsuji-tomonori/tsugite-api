@@ -1,4 +1,5 @@
-# 通知・チャット・問い合わせのAPIを呼び出す。
+"""通知・チャット・問い合わせのAPIを呼び出す。"""
+
 from __future__ import annotations
 
 import asyncio

@@ -1,4 +1,5 @@
-# 利用申請の状態と審査操作を表示する。
+"""利用申請の状態と審査操作を表示する。"""
+
 from __future__ import annotations
 
 from typing import Any

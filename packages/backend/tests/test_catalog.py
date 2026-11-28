@@ -1,4 +1,5 @@
-# API識別名が必須かつ一意で、登録後に変更や再利用ができない。
+"""API識別名が必須かつ一意で、登録後に変更や再利用ができない。"""
+
 from copy import deepcopy
 
 from app.apis.gateway import allowed_path, operation_template

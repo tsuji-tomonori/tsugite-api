@@ -1,4 +1,5 @@
-# Alembicの接続とマイグレーション実行環境を構成する。
+"""Alembicの接続とマイグレーション実行環境を構成する。"""
+
 from alembic import context
 from alembic.ddl.postgresql import PostgresqlImpl
 from tsugite_db.models import Base

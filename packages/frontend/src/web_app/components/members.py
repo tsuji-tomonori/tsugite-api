@@ -1,4 +1,5 @@
-# 利用者の一覧と招待フォームを表示する。
+"""利用者の一覧と招待フォームを表示する。"""
+
 from __future__ import annotations
 
 from collections.abc import Sequence

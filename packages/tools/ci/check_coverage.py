@@ -1,5 +1,4 @@
-# 対象ブランチのカバレッジ規則を検証する。
-"""Enforce active GitHub line coverage rules on a pull request."""
+"""プルリクエストの対象ブランチで有効な行カバレッジの規則を検証する。"""
 
 import hashlib
 import json

@@ -1,4 +1,5 @@
-# PuePyの描画タグと子要素を追加するコンテキストを宣言する。
+"""PuePyの描画タグと子要素を追加するコンテキストを宣言する。"""
+
 from types import TracebackType
 from typing import Self
 

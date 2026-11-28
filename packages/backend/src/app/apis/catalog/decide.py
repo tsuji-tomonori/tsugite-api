@@ -1,4 +1,5 @@
-# 利用申請の承認と却下を受け付ける。
+"""利用申請の承認と却下を受け付ける。"""
+
 import json
 
 from app.core.catalog import NEXT, event, record, right_id

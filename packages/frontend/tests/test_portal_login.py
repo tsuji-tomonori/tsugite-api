@@ -1,4 +1,5 @@
-# ログイン手順と認証チャレンジを検証する。
+"""ログイン手順と認証チャレンジを検証する。"""
+
 from __future__ import annotations
 
 import asyncio

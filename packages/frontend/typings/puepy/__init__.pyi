@@ -1,4 +1,5 @@
-# ポータルが使うPuePyの描画と起動の境界を宣言する。
+"""ポータルが使うPuePyの描画と起動の境界を宣言する。"""
+
 from collections.abc import Callable
 from typing import Any, TypeVar
 

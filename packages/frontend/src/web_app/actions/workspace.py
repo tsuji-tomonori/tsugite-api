@@ -1,4 +1,5 @@
-# 部署とプロジェクトの画面状態を扱う。
+"""部署とプロジェクトの画面状態を扱う。"""
+
 from __future__ import annotations
 
 from typing import Any

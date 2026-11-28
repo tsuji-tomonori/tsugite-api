@@ -1,4 +1,5 @@
-# ログインと認証アプリ登録の手順を管理する。
+"""ログインと認証アプリ登録の手順を管理する。"""
+
 from __future__ import annotations
 
 import json

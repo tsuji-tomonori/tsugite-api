@@ -1,5 +1,4 @@
-# 宣言内のコメントから設計書に載せる業務名を取得する。
-"""Project the source comments of registered routes and models onto their OpenAPI contract."""
+"""登録済みのルートとモデルのコメントから業務名を読み取り、OpenAPIの定義に反映する。"""
 
 import ast
 import inspect

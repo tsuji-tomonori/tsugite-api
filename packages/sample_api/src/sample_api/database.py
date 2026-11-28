@@ -1,5 +1,4 @@
-# サンプルAPIが参照するSQLiteのデータを準備する。
-"""商品ごとに固定の見本データを持つ読み取り専用SQLite。"""
+"""サンプル商品ごとに固定の見本データを用意し、読み取り専用のSQLiteから参照できるようにする。"""
 
 import sqlite3
 from functools import cached_property

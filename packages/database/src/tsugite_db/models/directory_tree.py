@@ -1,4 +1,5 @@
-# directory_tree テーブルの列と型を定義する。
+"""directory_tree テーブルの列と型を定義する。"""
+
 from sqlalchemy import String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 

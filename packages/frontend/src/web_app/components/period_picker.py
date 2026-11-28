@@ -1,4 +1,5 @@
-# 集計期間の選択肢と、日付を直接入力できる月間カレンダーを表示する。
+"""集計期間の選択肢と、日付を直接入力できる月間カレンダーを表示する。"""
+
 from __future__ import annotations
 
 from calendar import monthrange

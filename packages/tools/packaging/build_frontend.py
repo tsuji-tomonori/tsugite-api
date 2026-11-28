@@ -1,5 +1,4 @@
-# ポータルとブラウザー実行環境の静的配布物を作る。
-"""Build a self-hosted PuePy distribution. Downloads are pinned by digest."""
+"""配布元のハッシュを照合し、ポータルとPuePyの実行環境を自前で配信する静的ファイルにまとめる。"""
 
 import json
 import shutil

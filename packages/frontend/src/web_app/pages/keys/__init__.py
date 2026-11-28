@@ -1,4 +1,5 @@
-# APIキー画面の部品とルートを定義する。
+"""APIキー画面の部品とルートを定義する。"""
+
 from components import credential_views
 from components.controls import btn, field
 from components.keys import key_form, keys_view

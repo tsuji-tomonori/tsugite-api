@@ -1,4 +1,5 @@
-# ピッキング指示の商品別APIと見本データを定義する。
+"""ピッキング指示の商品別APIと見本データを定義する。"""
+
 from fastapi import Query
 from pydantic import BaseModel
 

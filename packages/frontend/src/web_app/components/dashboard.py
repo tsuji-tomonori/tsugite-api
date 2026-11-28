@@ -1,4 +1,5 @@
-# 利用状況の集計と直近ログを表示する。
+"""利用状況の集計と直近ログを表示する。"""
+
 from __future__ import annotations
 
 from puepy import t

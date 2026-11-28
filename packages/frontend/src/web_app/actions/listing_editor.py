@@ -1,4 +1,5 @@
-# 掲載商品の登録と編集を扱う。
+"""掲載商品の登録と編集を扱う。"""
+
 from __future__ import annotations
 
 import json

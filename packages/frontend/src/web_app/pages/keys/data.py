@@ -1,4 +1,5 @@
-# 所属・キー・対象商品を読み込む。
+"""所属・キー・対象商品を読み込む。"""
+
 from __future__ import annotations
 
 import asyncio

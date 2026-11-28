@@ -1,4 +1,5 @@
-# アクセスログの一件を表示用に整える。
+"""アクセスログの一件を表示用に整える。"""
+
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone

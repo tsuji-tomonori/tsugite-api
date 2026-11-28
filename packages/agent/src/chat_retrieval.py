@@ -1,5 +1,4 @@
-# 質問に対応するガイドと根拠を検索する。
-"""Stable routing, hybrid retrieval and evidence-bound presentation."""
+"""質問を分類し、キーワードと意味の両方でガイドを検索して、根拠のある回答を組み立てる。"""
 
 import math
 import re

@@ -1,5 +1,4 @@
-# EmulatorのCognitoと共有・本人キーでHTTPS接続先を呼び、別人・範囲外・失効を拒否する。
-"""Exercise issued keys across the HTTP boundary with Cognito and a TLS upstream."""
+"""AWSエミュレーターで共有キーと本人用キーによるHTTPS接続を試し、別人・範囲外・失効済みのキーが拒否されることを確かめる。"""
 
 import json
 import os

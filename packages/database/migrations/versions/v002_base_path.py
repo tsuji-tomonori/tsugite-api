@@ -1,5 +1,4 @@
-# APIのベースパスに対応するDBスキーマへ移行する。
-"""Allow multiple APIs to share one team-owned HTTPS origin."""
+"""複数のAPIが同じチームのHTTPS接続先を共有できるように、ベースパスを追加する。"""
 
 import sqlalchemy as sa
 from alembic import op

@@ -1,4 +1,5 @@
-# 利用者が選ぶ認証方式・利用範囲・期限を、発行、更新、失効の公開手順で検証する。
+"""利用者が選ぶ認証方式・利用範囲・期限を、発行、更新、失効の公開手順で検証する。"""
+
 import pytest
 
 from tests.support.catalog import approved, headers

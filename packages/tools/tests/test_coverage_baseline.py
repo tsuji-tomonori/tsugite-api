@@ -1,4 +1,5 @@
-# 旧方式で測った成果物は比較元に階層付き画面がなく計測器の他の部分が一致するときだけ使う。
+"""旧方式で測った成果物は比較元に階層付き画面がなく計測器の他の部分が一致するときだけ使う。"""
+
 import subprocess
 
 from packages.tools.ci import check_coverage as coverage

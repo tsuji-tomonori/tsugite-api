@@ -1,4 +1,5 @@
-# exchange_rates 商品のサンプル操作と応答を定義する。
+"""exchange_rates 商品のサンプル操作と応答を定義する。"""
+
 from fastapi import Query
 from pydantic import BaseModel
 
