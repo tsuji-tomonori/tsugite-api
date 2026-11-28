@@ -232,9 +232,28 @@ def test_openapi_key_console(tmp_path: Path, request: pytest.FixtureRequest) -> 
                     page.set_viewport_size({"width": 1280, "height": 1000})
                     schemas = docs.get_by_text("application/json のスキーマ", exact=True)
                     schemas.first.click()
-                    expect(docs.locator("pre").filter(has_text='"packages"').first).to_be_visible()
+                    request_schema = schemas.first.locator("..").locator("pre")
+                    expect(request_schema.locator(".json-number")).to_have_text("1")
                     schemas.nth(1).click()
-                    expect(docs.locator("pre").filter(has_text='"currency"').first).to_be_visible()
+                    response_schema = schemas.nth(1).locator("..").locator("pre")
+                    key_token = response_schema.locator(".json-key").filter(has_text='"currency"')
+                    value_token = response_schema.locator(".json-string").filter(has_text='"string"')
+                    expect(key_token).to_be_visible()
+                    palettes = []
+                    for mode in ("dark", "light"):
+                        page.get_by_label("表示モード").select_option(mode)
+                        colors = tuple(
+                            token.evaluate("(el) => getComputedStyle(el).color")
+                            for token in (key_token, value_token)
+                        )
+                        assert colors[0] != colors[1]
+                        palettes.append(colors)
+                    assert palettes[0] != palettes[1]
+                    models = docs.get_by_text("データモデル", exact=True)
+                    models.click()
+                    model = models.locator("..").locator("pre").first
+                    expect(model.locator(".json-number")).to_have_text("1")
+                    models.click()
                     docs.get_by_role("heading", name="API Docs").scroll_into_view_if_needed()
                     capture(
                         page,

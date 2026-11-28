@@ -67,6 +67,14 @@ MUTATIONS = (
     ),
     Mutation(
         "frontend",
+        "JSONスキーマの項目名を文字列値と同じ色にする",
+        "packages/frontend/src/web_app/components/api_docs.py",
+        'kind = "key"',
+        'kind = "string"',
+        "packages/frontend/tests/test_components.py::test_schema_block_preserves_json_tokens",
+    ),
+    Mutation(
+        "frontend",
         "認証情報の初期更新時刻を有効期間の5分前に固定する",
         "packages/frontend/src/web_app/components/credential_views.py",
         "default_ttl * 3 // 4",

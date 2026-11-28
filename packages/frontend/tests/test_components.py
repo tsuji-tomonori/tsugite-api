@@ -1,6 +1,7 @@
 # 表示部品と操作ガイドを検証する。
 from __future__ import annotations
 
+import json
 from collections.abc import Callable
 from types import ModuleType, SimpleNamespace
 from typing import Any
@@ -323,3 +324,31 @@ def test_log_search_starts_collapsed_and_shows_active_conditions(portal_module: 
     assert fields["access-id"].getAttribute("value") == "one-request"
     assert "f-status" in fields
     assert "アクセスログをダウンロード" not in panel.toxml()
+
+
+def test_schema_block_preserves_json_tokens(portal_module: Callable[[str], ModuleType]) -> None:
+    """参照先のJSONでキーと各値を色分けし、引用符・タグ文字・改行を含む原文を保持する。"""
+    docs = portal_module("components.api_docs")
+    key = '項目"名'
+    value = 'true: "a"\\\n<b>&</b>'
+    schema = {key: [value, -1.25e-10, True, False, None, {}, []]}
+    _, dom = render(
+        docs.schema_block,
+        {"components": {"schemas": {"例": schema}}},
+        {"$ref": "#/components/schemas/例"},
+    )
+    block = dom.getElementsByTagName("pre")[0]
+    assert json.dumps(schema, ensure_ascii=False, indent=2) == "".join(
+        node.data if node.nodeType == node.TEXT_NODE else node.firstChild.data
+        for node in block.childNodes
+    )
+    assert [
+        (span.getAttribute("class"), span.firstChild.data) for span in block.getElementsByTagName("span")
+    ] == [
+        ("json-key", json.dumps(key, ensure_ascii=False)),
+        ("json-string", json.dumps(value, ensure_ascii=False)),
+        ("json-number", "-1.25e-10"),
+        ("json-boolean", "true"),
+        ("json-boolean", "false"),
+        ("json-null", "null"),
+    ]
