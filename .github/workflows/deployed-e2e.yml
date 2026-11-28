@@ -2,7 +2,6 @@ name: CloudFront portal E2E
 
 on:
   workflow_dispatch:
-  workflow_call:
 
 permissions:
   contents: read
@@ -16,32 +15,14 @@ jobs:
     concurrency:
       group: tsugite-cloudfront-e2e
       queue: max
-    env:
-      E2E_PORTAL_URL: ${{ vars.E2E_PORTAL_URL }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
-      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
+      - uses: ./.github/actions/cloudfront-portal-e2e
         with:
-          enable-cache: false
-      - name: Install locked test dependencies
-        run: uv sync --locked --package tsugite-e2e
-      - name: Check CloudFront health, configuration and anonymous access
-        run: |
-          : "${E2E_PORTAL_URL:?Set E2E_PORTAL_URL in the cloudfront-e2e environment}"
-          .venv/bin/python -m pytest -q tests/e2e/deployed/test_portal.py::test_public_cloudfront_api
-      - name: Install Chromium
-        run: .venv/bin/playwright install --with-deps chromium --only-shell
-      - name: Sign in with MFA and read the catalog
-        env:
-          E2E_SUBJECT: ${{ vars.E2E_SUBJECT }}
-          E2E_USERNAME: ${{ secrets.E2E_USERNAME }}
-          E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
-          E2E_TOTP_SEED: ${{ secrets.E2E_TOTP_SEED }}
-        run: |
-          : "${E2E_SUBJECT:?Set E2E_SUBJECT in the cloudfront-e2e environment}"
-          : "${E2E_USERNAME:?Set E2E_USERNAME in the cloudfront-e2e environment}"
-          : "${E2E_PASSWORD:?Set E2E_PASSWORD in the cloudfront-e2e environment}"
-          : "${E2E_TOTP_SEED:?Set E2E_TOTP_SEED in the cloudfront-e2e environment}"
-          .venv/bin/python -m pytest -q -s -rN --tb=no tests/e2e/deployed/test_portal.py::test_consumer_login_and_catalog
+          portal_url: ${{ vars.E2E_PORTAL_URL }}
+          subject: ${{ vars.E2E_SUBJECT }}
+          username: ${{ secrets.E2E_USERNAME }}
+          password: ${{ secrets.E2E_PASSWORD }}
+          totp_seed: ${{ secrets.E2E_TOTP_SEED }}
