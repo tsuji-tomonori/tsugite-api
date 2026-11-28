@@ -2,7 +2,7 @@
 
 import pytest
 
-from tests.e2e.deployed.account import is_test_consumer, portal_origin, totp
+from tests.e2e.deployed.account import gateway_origin, is_test_consumer, portal_origin, totp
 
 
 def test_totp_reference_vector() -> None:
@@ -17,6 +17,21 @@ def test_portal_origin() -> None:
     for url in (origin + ".example.org", origin + "/login", origin.replace("https:", "http:")):
         with pytest.raises(ValueError, match="PortalUrl"):
             portal_origin(url)
+
+
+def test_gateway_origin() -> None:
+    """Bearerの送信先にはHTTPSのAPI Gateway標準エンドポイントだけを受け付ける。"""
+    origin = "https://example123.execute-api.ap-northeast-1.amazonaws.com"
+    assert gateway_origin(origin + "/") == origin
+    for url in (
+        "",
+        origin + ".example.org",
+        origin + "/path",
+        origin + "?q",
+        origin.replace("https:", "http:"),
+    ):
+        with pytest.raises(ValueError, match="GatewayEndpoint"):
+            gateway_origin(url)
 
 
 def test_only_expected_consumer() -> None:
