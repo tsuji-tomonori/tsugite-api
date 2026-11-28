@@ -12,6 +12,7 @@ from js import document, window
 from puepy import t
 
 from components.list_layout import disclosure, result_table
+from components.member_identity import person_label
 
 MODES = {
     "bearer": "短期Bearer",
@@ -285,7 +286,7 @@ def render_form(
         )
         with t.div(id="cred-user-list", hidden=True):
             for i, r in enumerate(members):
-                checkbox(f"cred-user-{i}", r["username"])
+                checkbox(f"cred-user-{i}", person_label(r))
     maximum = cap
     t.p(f"この範囲で選べる有効期限　最長{maximum}分", id="cred-policy-cap")
     if options.get("limits"):
@@ -413,7 +414,7 @@ def credentials_view(
             await reload()
             ctx["message"] = "認証情報を失効しました"
 
-    users = {u["subject"]: u["username"] for u in directory.get("users", [])}
+    users = {u["subject"]: person_label(u) for u in directory.get("users", [])}
     with result_table("認証情報一覧", ("名前", "認証方式・所有者・状態", "有効期限・利用範囲", "操作")):
         for row in modern:
             with t.tr():

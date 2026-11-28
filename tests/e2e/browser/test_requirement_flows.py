@@ -116,7 +116,12 @@ def test_ordered_review(portal_session: PortalSession) -> None:
         api.post(
             "/api/members",
             headers=admin,
-            json={"email": "lead@example.org", "role": "consumer", "project": "finance"},
+            json={
+                "full_name": "試験 花子",
+                "email": "lead@example.org",
+                "role": "consumer",
+                "project": "finance",
+            },
         )
         .raise_for_status()
         .json()
