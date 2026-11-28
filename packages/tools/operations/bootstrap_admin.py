@@ -7,8 +7,6 @@ import os
 import subprocess
 from uuid import UUID
 
-USERNAME = "initial-admin"
-
 
 def aws(*args):
     # CLI の応答には個人情報が含まれるため、必要な値だけ呼び出し元に返す。
@@ -57,7 +55,7 @@ def invite(email):
         "--user-pool-id",
         pool,
         "--username",
-        USERNAME,
+        email.lower(),
         "--user-attributes",
         json.dumps([{"Name": "email", "Value": email}]),
         "--desired-delivery-mediums",
@@ -68,13 +66,13 @@ def invite(email):
         print(f"pool={pool}\nsubject={subject}", file=output)
 
 
-def grant(pool, subject):
+def grant(pool, subject, email):
     if pool != pool_id():
         raise SystemExit("招待後にユーザープールが変更されました。")
     if has_admin(pool):
         print("管理者が登録済みのため、権限の付与を終了しました。")
         return
-    user = aws("cognito-idp", "admin-get-user", "--user-pool-id", pool, "--username", USERNAME)
+    user = aws("cognito-idp", "admin-get-user", "--user-pool-id", pool, "--username", email.lower())
     if not any(attr == {"Name": "sub", "Value": subject} for attr in user["UserAttributes"]):
         raise SystemExit("招待したユーザーと現在のユーザーの識別子が一致しません。")
     aws(
@@ -83,7 +81,7 @@ def grant(pool, subject):
         "--user-pool-id",
         pool,
         "--username",
-        USERNAME,
+        email.lower(),
         "--group-name",
         "admin",
     )
@@ -95,4 +93,8 @@ if __name__ == "__main__":
     if parser.parse_args().operation == "invite":
         invite(os.environ["BOOTSTRAP_ADMIN_EMAIL"])
     else:
-        grant(os.environ["INVITED_POOL"], os.environ["INVITED_SUBJECT"])
+        grant(
+            os.environ["INVITED_POOL"],
+            os.environ["INVITED_SUBJECT"],
+            os.environ["BOOTSTRAP_ADMIN_EMAIL"],
+        )

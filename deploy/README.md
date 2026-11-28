@@ -42,7 +42,11 @@ GitHub Job に Environment を設定すると、OIDC トークンの `sub` は E
 1. `TsugiteApi` の配備後、AWS 管理者が下記のコマンドで既存の OIDC スタックを更新します。`BootstrapAdminUserPoolId` に指定したプールだけを CD ロールで操作できます。既存の OIDC プロバイダー設定は引き継ぎます。
 2. GitHub の **Settings → Environments → main → Environment secrets** に `BOOTSTRAP_ADMIN_EMAIL` を登録します。値は初回ログインを担当する本人のメールアドレスです。
 3. **Actions → Create initial administrator → Run workflow** でブランチ `main` を選んで実行します。`invite` で Cognito が招待メールを送信し、`grant` でそのユーザーを `admin` グループに追加します。
-4. 両ジョブの成功後、ポータルの **社内アカウントでログイン** を開きます。ユーザー名 `initial-admin` とメールの仮パスワードで入り、新しいパスワードと認証アプリの MFA を設定します。
+4. 両ジョブの成功後、ポータルの **社内アカウントでログイン** を開きます。招待先のメールアドレス（小文字）とメールの仮パスワードで入り、新しいパスワードと認証アプリの MFA を設定します。
+
+日常の付与・剥奪はポータルの **ユーザー管理** で行います。対象者の行で **管理者権限を付与** または **管理者権限を剥奪** を選びます。最初に権限を変更した時点で、既存の Cognito 管理者をポータルの管理者名簿に引き継ぎます。以降はその名簿が権限の変更元です。
+
+既存環境で `initial-admin` を使っている場合は、そのアカウントでログインし、担当者個人のメールアドレスのユーザーに管理者権限を付与してください。未登録の人は先に招待します。個人のメールアドレスと本人の MFA でログインして **ユーザー管理** を開けることを確認した後、旧アカウントの管理者権限を剥奪できます。
 
 ```bash
 region=ap-northeast-1
@@ -57,7 +61,7 @@ aws cloudformation deploy --region "$region" --stack-name tsugite-github-actions
 
 ## CloudFront 経由の実環境 E2E
 
-`Deploy to AWS` は配備が成功すると `CloudFront portal E2E` を呼び出します。配備をスキップしたコミットでは実行しません。**Actions → CloudFront portal E2E → Run workflow → main** から、再配備せずに同じ確認を実行できます。
+`Deploy to AWS` は配備に成功すると、`cloudfront-e2e` Environment を使うジョブでポータルを検証します。手動実行も同じテスト手順を使います。配備をスキップしたコミットでは実行しません。**Actions → CloudFront portal E2E → Run workflow → main** から、再配備せずに同じ確認を実行できます。
 
 | 確認 | 合格条件 |
 | --- | --- |
