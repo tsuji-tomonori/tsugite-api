@@ -211,6 +211,15 @@ textarea.form-control { min-height: 76px; resize: vertical; }
   .console-tools .guide-shortcut { grid-column: 2; grid-row: 1; padding-block: 8px; }
 }
 
+@media (max-width: 400px) {
+  .console-tools { grid-template-columns: 44px minmax(0, 1fr) auto; column-gap: 8px; }
+  .console-tools .crumb, .console-tools:has(.guide-shortcut) .crumb {
+    grid-column: 2; grid-row: 1; min-width: 0; padding: 0; gap: 6px;
+  }
+  .crumb strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .console-tools .guide-shortcut { grid-column: 3; }
+}
+
 /* 高さが限られるときは、画面名の上余白を保ち、下の間隔を詰める。 */
 @media (max-height: 800px) {
   .page-heading { margin-bottom: 8px; }
