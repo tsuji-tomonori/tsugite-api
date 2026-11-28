@@ -1,4 +1,5 @@
-// 初期担当者と個人ユーザーの二人について、管理者ロールの引き継ぎを検査する。
+/// 管理者権限の引き継ぎ
+/// 初期担当者と個人ユーザー間の管理者権限の付与・剥奪を扱う。
 module administrators {
   var project: str
   var first: bool
@@ -22,6 +23,7 @@ module administrators {
     nondet enable = Bool.oneOf()
     change(by, who, enable)
   }
+  /// 少なくとも一人が管理者であり、対象プロジェクトは supply のままである。
   val safe = (first or second) and project == "supply"
   run handoverTest = init.then(change("first", "first", false)).then(change("second", "second", true))
     .then(change("first", "second", true)).then(change("first", "second", true))

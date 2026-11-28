@@ -1,4 +1,5 @@
-// 削除後も予約する識別名を一つ選び、作成・改名・削除・再登録を調べる。
+/// 商品のAPI識別名
+/// 一つの識別名について、商品の作成、改名、削除、再登録を扱う。
 module slug {
   var lifecycle: str
   var operation: str
@@ -13,6 +14,7 @@ module slug {
   action rename = all { lifecycle == "listed", record("rename", lifecycle, 409) }
   action remove = all { lifecycle == "listed", record("delete", "reserved", 200) }
   action step = any { create, invalid, rename, remove }
+  /// 作成がHTTP 201で成功した識別名は使用中となり、商品を削除した後の識別名は予約済みとなる。
   val safe = (response == 201 implies lifecycle == "listed") and
              (operation == "delete" implies lifecycle == "reserved")
   run reservedTest = init.then(invalid).then(create).then(create).then(rename).then(remove).then(create)

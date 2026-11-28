@@ -1,4 +1,5 @@
-// 二段の公開審査において申請者と段階を飛ばした審査を拒否する。
+/// 商品の二段階公開承認
+/// 申請者、プロジェクトリーダー、管理者による公開審査を扱う。
 module publication {
   var stage: int
   var caller: str
@@ -13,6 +14,7 @@ module publication {
   }
   action step = { nondet by = Set("lead", "admin", "applicant").oneOf()
                   review(by) }
+  /// 商品が掲載されているのは、二段階の承認が完了したときに限る。
   val safe = listed == (stage == 2)
   run orderedTest = init.then(review("admin")).then(review("applicant")).then(review("lead"))
     .then(review("lead")).then(review("admin")).then(review("admin"))

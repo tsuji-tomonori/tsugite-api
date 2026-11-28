@@ -1,4 +1,5 @@
-// 所属部署→提供者の順番、本人による判断の禁止、環境別利用条件。
+/// 利用申請の段階別承認
+/// 環境別の利用条件、部署から提供者への承認順、申請者本人による判断を扱う。
 module review {
   var status: str
   var stage: str
@@ -19,6 +20,7 @@ module review {
     else if (role == "department") result(role, 200, "pending", "provider")
     else result(role, 200, "approved", "") }
   action call = result("invoke", if (status == "approved") 200 else 403, status, stage)
+  /// 承認済みの利用申請には、未完了の承認段階が残らない。
   val safe = status != "approved" or stage == ""
   action step = any { submit("submit"), submit("staleTerms"), submit("wrongAnswer"), submit("noConsent"),
                       reviewAs("department"), reviewAs("provider"), reviewAs("applicant"), call }

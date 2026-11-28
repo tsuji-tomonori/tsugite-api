@@ -74,6 +74,14 @@ MUTATIONS = (
     ),
     Mutation(
         "formal",
+        "Verifyで形式仕様の日本語文書の再生成チェックを省く",
+        "tests/formal/check.sh",
+        'python3 tests/formal/document.py --quint "$quint" --check\n',
+        "",
+        "tests/architecture/core/test_formal_contracts.py::test_verify_runs_models_and_replays",
+    ),
+    Mutation(
+        "formal",
         "利用者別の禁止操作を許可する",
         "packages/backend/src/app/core/credential_policy.py",
         'if allowed is not None and operation not in allowed:\n        raise HTTPException(403, "この利用者',
@@ -1004,6 +1012,9 @@ def copy_sources(workspace):
     for folder in ("packages", "deploy/config", "docs/examples", "tests"):
         shutil.copytree(ROOT / folder, workspace / folder, ignore=ignore)
     shutil.copyfile(ROOT / "pyproject.toml", workspace / "pyproject.toml")
+    workflow = workspace / ".github/workflows/check.yml"
+    workflow.parent.mkdir(parents=True)
+    shutil.copyfile(ROOT / ".github/workflows/check.yml", workflow)
 
 
 def run_test(workspace, target):

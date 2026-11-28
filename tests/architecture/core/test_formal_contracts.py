@@ -94,13 +94,19 @@ def test_formal_requirement_coverage():
 
 
 def test_verify_runs_models_and_replays():
-    """Verifyがモデル検査・再生成差分・実装再生と証跡の保存を毎回実行する。"""
+    """Verifyが一覧と操作列を再生成し、モデル検査・実装再生と証跡の保存を毎回実行する。"""
     workflow = yaml.load((ROOT / ".github/workflows/check.yml").read_text(), Loader=yaml.BaseLoader)
     plan = workflow["jobs"]["plan"]["steps"]
     assert any(step.get("run") == "bash tests/formal/check.sh" and "if" not in step for step in plan)
-    assert any(step.get("with", {}).get("name") == "formal-verification" for step in plan)
+    artifact = next(
+        step["with"] for step in plan if step.get("with", {}).get("name") == "formal-verification"
+    )
+    assert {"docs/generated/formal/domains.md", "tests/formal/*.qnt"} <= set(
+        artifact["path"].splitlines()
+    )
     script = (FORMAL / "check.sh").read_text()
     for command in (
+        'python3 tests/formal/document.py --quint "$quint" --check',
         "tests/formal/generate.py",
         "--backend=tlc --invariant=safe",
         "packages/backend/tests/test_quint",

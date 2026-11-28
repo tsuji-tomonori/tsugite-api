@@ -18,3 +18,9 @@ python3 tests/formal/generate.py --quint tests/formal/node_modules/.bin/quint --
 TLCは有限モデルの到達状態を検査する。別の工程で、Quintが出力したITFの日時・内部番号を取り除き、テスト用の操作と期待値をcases.jsonに保存する。Pythonの再生テストは業務関数またはFastAPIを呼び、観測結果を比較する。拒否時の転送有無は接続先の呼び出し回数でも確かめる。単体テストで扱う参照モデルと境界は各テストのfixtureに記述する。
 
 Verifyのformal-verification成果物に用語・方針・再生テストの対応表（coverage.md）、TLCログ、再生JUnit、操作列を保存する。要件原本の受入テストは既存の要件別証跡にも掲載される。名前付きの再生ケース数とTLCの到達状態数は別の指標として扱う。
+
+## ドメインと不変条件の一覧を更新する
+
+[ドメインと不変条件](../../docs/generated/formal/domains.md)は、`quint parse` のJSONとソースマップから生成する。モジュール直前の `///` の1行目にドメインの和名、2行目以降にモデルの対象を書く。TLCが検査する `val safe` の直前にも `///` で説明を書き、論理式が保証する範囲を記す。
+
+固定版のQuintを準備した後、リポジトリ直下で `task docs:formal` を実行する。Verifyは毎回この一覧を再生成し、必須コメントの欠落やコミット済みの一覧との差分があれば失敗する。一覧とリンク先のQuint定義は **formal-verification** 成果物にも保存される。

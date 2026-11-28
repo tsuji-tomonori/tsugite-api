@@ -1,4 +1,5 @@
-// 指名された利用者から提供プロジェクトのリーダーへ、順番に審査する。
+/// 利用申請の指名審査
+/// 指名された利用者から提供プロジェクトのリーダーへ進む審査を扱う。
 module usagereview {
   var stage: str
   var caller: str
@@ -13,6 +14,7 @@ module usagereview {
   }
   action step = { nondet by = Set("provider", "person/admin", "project_leader").oneOf()
                   decide(by) }
+  /// 利用申請が承認済みであるのは、未完了の審査段階が残っていないときに限る。
   val safe = approved == (stage == "")
   run orderedTest = init.then(decide("provider")).then(decide("project_leader"))
     .then(decide("person/admin")).then(decide("person/admin")).then(decide("project_leader")).then(decide("provider"))
