@@ -1,10 +1,11 @@
 # ログイン情報から利用者と操作権限を特定する。
 import secrets
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from functools import lru_cache
 from typing import Annotated
 
 import jwt
+from app.core.admin_roles import assigned_admins
 from app.core.config import local_demo, settings
 from fastapi import Depends, HTTPException, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -121,6 +122,13 @@ def identify(token: str) -> Actor:
         raise HTTPException(401, "認証情報を確認してください") from exc
 
 
+def identify_session(db, token):
+    actor = identify(token)
+    if not actor.machine and (admins := assigned_admins(db)) is not None:
+        return replace(actor, admin=actor.subject in admins)
+    return actor
+
+
 def check_member(db, actor):
     if not actor.machine:
         member = db.get(Member, actor.subject)
@@ -135,7 +143,7 @@ def current(
 ) -> Actor:
     if credentials is None:
         raise HTTPException(401, "ログインしてください")
-    actor = identify(credentials.credentials)
+    actor = identify_session(db, credentials.credentials)
     request.state.actor_id = actor.subject
     check_member(db, actor)
     from app.core.workspace import populate

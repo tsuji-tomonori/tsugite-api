@@ -10,7 +10,7 @@ from app.apis.governance.directory import audit, manages
 from app.apis.governance.keys import key_assets, metadata
 from app.core import credential_policy as policy
 from app.core.access_token import encode, machine_actor, may_use
-from app.core.auth import check_member, identify
+from app.core.auth import check_member, identify_session
 from app.core.workspace import populate, private_project, stopped, units
 from app.dependencies import DB, User
 from app.schemas import outputs
@@ -273,7 +273,7 @@ async def oauth_exchange(
     ):
         return error("invalid_request", "利用者のアクセストークンが必要です")
     try:
-        actor = populate(db, identify(form["subject_token"]))
+        actor = populate(db, identify_session(db, form["subject_token"]))
         request.state.actor_id = actor.subject
         check_member(db, actor)
         if actor.machine:
@@ -310,7 +310,7 @@ def exchange(data: Exchange, db: DB, request: Request, response: Response):
         scheme, _, access = request.headers.get("authorization", "").partition(" ")
         if scheme.lower() != "bearer" or not access:
             raise unavailable()
-        actor = populate(db, identify(access))
+        actor = populate(db, identify_session(db, access))
         request.state.actor_id = actor.subject
         check_member(db, actor)
         if actor.machine:

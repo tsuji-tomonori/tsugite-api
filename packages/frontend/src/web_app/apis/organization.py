@@ -77,3 +77,8 @@ async def update_profile(endpoint: str, data: dict[str, Any]) -> dict[str, Any]:
 async def save_field(key: str, data: dict[str, Any]) -> None:
     """メタデータ項目の設定を保存する。"""
     await client.api("/workspace/metadata/" + quote(key, safe=""), "PUT", data)
+
+
+async def set_admin_role(subject: str, admin: bool) -> None:
+    """利用者の管理者権限を設定する。"""
+    await client.api("/members/" + quote(subject, safe="") + "/admin-role", "PUT", {"admin": admin})

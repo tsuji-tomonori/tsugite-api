@@ -1,5 +1,6 @@
 # 利用者の所属や権限を管理する。
 import boto3
+from app.core.admin_roles import assigned_admins, save_admins
 from app.core.auth import DEMO_GROUPS
 from app.core.config import local_demo, settings
 from app.core.diagnostics import OperationalRepair
@@ -56,6 +57,31 @@ def pool():
     return settings()["pool_id"]
 
 
+def portal_admins(db):
+    assigned = assigned_admins(db)
+    if assigned is not None:
+        return assigned
+    if local_demo():
+        return {key for key, groups in DEMO_GROUPS.items() if "admin" in groups}
+    client = boto3.client("cognito-idp")
+    subjects = set()
+    params = {"UserPoolId": pool(), "GroupName": "admin"}
+    try:
+        while True:
+            #: 利用者・グループの管理（Cognitoユーザープール） / 初期管理者の所属を確認
+            page = client.list_users_in_group(**params)
+            for user in page["Users"]:
+                if user.get("Enabled"):
+                    subjects.update(a["Value"] for a in user["Attributes"] if a["Name"] == "sub")
+            if not page.get("NextToken"):
+                break
+            params["NextToken"] = page["NextToken"]
+    except ClientError, BotoCoreError:
+        raise HTTPException(503, "管理者の一覧を確認できませんでした") from None
+    accounts = directory_accounts(db, subjects)
+    return {s for s in subjects if s not in accounts or not accounts[s].deleted}
+
+
 #: ポータルの利用者を一覧する
 @router.get("/members", responses={**domain_errors(503), 200: {"model": outputs.MemberPage}})
 def list_members(
@@ -71,7 +97,9 @@ def list_members(
     if local_demo():
         accounts = {m.subject: m for m in db.scalars(select(Member))}
         rows = [
-            {"subject": key, "username": key, "role": key} for key in DEMO_GROUPS if key not in accounts
+            {"subject": key, "username": key, "role": "external" if key == "admin" else key}
+            for key in DEMO_GROUPS
+            if key not in accounts
         ]
         rows.extend(
             {
@@ -115,8 +143,13 @@ def list_members(
             )
         next_cursor = page.get("PaginationToken", "")
     profiles = directory_profiles(db, (row["subject"] for row in rows))
+    admins = portal_admins(db)
     items = [
-        {**row, **directory_fields(profiles.get(row["subject"]), accounts.get(row["subject"]))}
+        {
+            **row,
+            "admin": row["subject"] in admins,
+            **directory_fields(profiles.get(row["subject"]), accounts.get(row["subject"])),
+        }
         for row in rows
     ]
     return {"items": items, "next": next_cursor, "projects": projects(db)}
@@ -237,6 +270,10 @@ def remove_member(
         row = Member(subject=subject, username=username, project="", role="external")
         db.add(row)
     if not row.deleted:
+        admins = assigned_admins(db)
+        if admins is not None:
+            admins.discard(subject)
+        save_admins(db, admins)
         row.deleted = True
         forget_profile(db, subject)
         member_event(db, request, actor, "member.delete", subject, username)
