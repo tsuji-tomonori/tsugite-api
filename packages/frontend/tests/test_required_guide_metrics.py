@@ -138,11 +138,13 @@ def test_selected_metric_filters_reach_the_api(
         "f-env": "production",
         "f-status": "503",
         "f-minutes": "15",
-        "f-hours": "24",
+        "f-hours": "custom" if explicit else "24",
         "f-unit": "",
         "f-measure": "errors",
-        "f-start": START if explicit else "",
-        "f-end": END if explicit else "",
+        "f-start-date": START[:10],
+        "f-start-time": START[11:16],
+        "f-end-date": END[:10],
+        "f-end-time": END[11:16],
     }
     monkeypatch.setattr(controls, "value", fields.__getitem__)
     monkeypatch.setattr(controls, "load", AsyncMock())
