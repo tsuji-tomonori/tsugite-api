@@ -5,18 +5,30 @@ from fastapi import FastAPI
 from mangum import Mangum
 
 from sample_api.products import (
+    bundle_recipes,
     business_calendar,
+    count_variances,
+    counter_holds,
+    emergency_dispatch,
     exchange_rates,
     library_loans,
     meeting_rooms,
     museum_collection,
+    packing_cartons,
     parcel_tracking,
+    pick_waves,
     power_meters,
+    presale_quotas,
     purchase_orders,
     rail_services,
+    receipt_inspections,
+    return_grading,
+    service_intervals,
+    shelf_replenishment,
     store_directory,
     warehouse_stock,
     weather_stations,
+    web_assortments,
 )
 
 PRODUCTS = {
@@ -34,6 +46,18 @@ PRODUCTS = {
         rail_services,
         power_meters,
         museum_collection,
+        web_assortments,
+        bundle_recipes,
+        pick_waves,
+        presale_quotas,
+        receipt_inspections,
+        shelf_replenishment,
+        service_intervals,
+        counter_holds,
+        packing_cartons,
+        count_variances,
+        emergency_dispatch,
+        return_grading,
     )
 }
 

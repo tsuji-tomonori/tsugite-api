@@ -1,0 +1,262 @@
+openapi: 3.1.0
+info:
+  title: 緊急交換手配
+  description: 故障受付ごとに派遣拠点、交換部品、現場到着までの分数を確認します。
+  version: 1.0.0
+paths:
+  /health:
+    get:
+      summary: データベースの稼働状態を確認
+      operationId: health_health_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+  /dispatches:
+    get:
+      summary: 緊急交換手配を一覧で取得
+      operationId: list_dispatches_dispatches_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Dispatch'
+                type: array
+                title: Response List Dispatches Dispatches Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+  /dispatches/{dispatch_id}:
+    get:
+      summary: 緊急交換手配の明細を照会
+      operationId: detail_dispatches__dispatch_id__get
+      parameters:
+      - name: dispatch_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Dispatch Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dispatch'
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+        '404':
+          description: 該当なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MissingRecord'
+  /dispatch-depots:
+    get:
+      summary: 緊急交換手配を派遣拠点別に集計
+      operationId: by_depot_dispatch_depots_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/DispatchCount'
+                type: array
+                title: Response By Depot Dispatch Depots Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+  /nearby-dispatches:
+    get:
+      summary: 到着予定分数が指定値以下の緊急交換手配を取得
+      operationId: below_limit_nearby_dispatches_get
+      parameters:
+      - name: maximum
+        in: query
+        required: false
+        schema:
+          type: integer
+          description: 到着予定分数の上限
+          default: 20
+          title: Maximum
+        description: 到着予定分数の上限
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Dispatch'
+                title: Response Below Limit Nearby Dispatches Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /dispatch-times:
+    get:
+      summary: 到着予定分数の最小値と最大値を取得
+      operationId: eta_minutes_summary_dispatch_times_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DispatchRange'
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+components:
+  schemas:
+    Dispatch:
+      properties:
+        dispatch_id:
+          type: string
+          title: Dispatch Id
+        depot:
+          type: string
+          title: Depot
+        replacement_part:
+          type: string
+          title: Replacement Part
+        eta_minutes:
+          type: integer
+          title: Eta Minutes
+      type: object
+      required:
+      - dispatch_id
+      - depot
+      - replacement_part
+      - eta_minutes
+      title: Dispatch
+    DispatchCount:
+      properties:
+        depot:
+          type: string
+          title: Depot
+        count:
+          type: integer
+          title: Count
+      type: object
+      required:
+      - depot
+      - count
+      title: DispatchCount
+    DispatchRange:
+      properties:
+        minimum_eta_minutes:
+          type: integer
+          title: Minimum Eta Minutes
+        maximum_eta_minutes:
+          type: integer
+          title: Maximum Eta Minutes
+      type: object
+      required:
+      - minimum_eta_minutes
+      - maximum_eta_minutes
+      title: DispatchRange
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    Health:
+      properties:
+        status:
+          type: string
+          const: ok
+          title: Status
+          default: ok
+      type: object
+      title: Health
+    InternalServerError:
+      properties:
+        error_code:
+          type: string
+          const: INTERNAL_ERROR
+          title: Error Code
+        detail:
+          type: string
+          title: Detail
+      type: object
+      required:
+      - error_code
+      - detail
+      title: InternalServerError
+    MissingRecord:
+      properties:
+        detail:
+          type: string
+          title: Detail
+      type: object
+      required:
+      - detail
+      title: MissingRecord
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError

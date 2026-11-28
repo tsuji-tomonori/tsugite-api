@@ -1,0 +1,262 @@
+openapi: 3.1.0
+info:
+  title: 返品査定
+  description: 返品伝票の査定区分、再販可否の判定、再販価格を照会します。
+  version: 1.0.0
+paths:
+  /health:
+    get:
+      summary: データベースの稼働状態を確認
+      operationId: health_health_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+  /appraisals:
+    get:
+      summary: 返品査定を一覧で取得
+      operationId: list_appraisals_appraisals_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Appraisal'
+                type: array
+                title: Response List Appraisals Appraisals Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+  /appraisals/{return_id}:
+    get:
+      summary: 返品査定の明細を照会
+      operationId: detail_appraisals__return_id__get
+      parameters:
+      - name: return_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Return Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Appraisal'
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+        '404':
+          description: 該当なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MissingRecord'
+  /return-grades:
+    get:
+      summary: 返品査定を査定区分別に集計
+      operationId: by_grade_return_grades_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/AppraisalCount'
+                type: array
+                title: Response By Grade Return Grades Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+  /budget-resales:
+    get:
+      summary: 再販価格が指定値以下の返品査定を取得
+      operationId: below_limit_budget_resales_get
+      parameters:
+      - name: maximum
+        in: query
+        required: false
+        schema:
+          type: integer
+          description: 再販価格の上限
+          default: 800
+          title: Maximum
+        description: 再販価格の上限
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Appraisal'
+                title: Response Below Limit Budget Resales Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /resale-prices:
+    get:
+      summary: 再販価格の最小値と最大値を取得
+      operationId: resale_yen_summary_resale_prices_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppraisalRange'
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+components:
+  schemas:
+    Appraisal:
+      properties:
+        return_id:
+          type: string
+          title: Return Id
+        grade:
+          type: string
+          title: Grade
+        disposition:
+          type: string
+          title: Disposition
+        resale_yen:
+          type: integer
+          title: Resale Yen
+      type: object
+      required:
+      - return_id
+      - grade
+      - disposition
+      - resale_yen
+      title: Appraisal
+    AppraisalCount:
+      properties:
+        grade:
+          type: string
+          title: Grade
+        count:
+          type: integer
+          title: Count
+      type: object
+      required:
+      - grade
+      - count
+      title: AppraisalCount
+    AppraisalRange:
+      properties:
+        minimum_resale_yen:
+          type: integer
+          title: Minimum Resale Yen
+        maximum_resale_yen:
+          type: integer
+          title: Maximum Resale Yen
+      type: object
+      required:
+      - minimum_resale_yen
+      - maximum_resale_yen
+      title: AppraisalRange
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    Health:
+      properties:
+        status:
+          type: string
+          const: ok
+          title: Status
+          default: ok
+      type: object
+      title: Health
+    InternalServerError:
+      properties:
+        error_code:
+          type: string
+          const: INTERNAL_ERROR
+          title: Error Code
+        detail:
+          type: string
+          title: Detail
+      type: object
+      required:
+      - error_code
+      - detail
+      title: InternalServerError
+    MissingRecord:
+      properties:
+        detail:
+          type: string
+          title: Detail
+      type: object
+      required:
+      - detail
+      title: MissingRecord
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
