@@ -36,6 +36,7 @@ async def save_guidelines() -> None:
     rows = document.getElementById("publication-steps").querySelectorAll("select")
     await products.save_publication_policy(
         {
+            "revision": ctx["publication_policy"]["revision"],
             "guidelines": value("publication-guidelines"),
             "steps": [selected_step(rows.item(i)) for i in range(rows.length)],
         }

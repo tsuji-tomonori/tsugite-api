@@ -38,7 +38,11 @@ def test_publication_review(states, portal):
     policy = "/api/publication-policy"
     assert portal.put(policy, headers=applicant, json=rules).status_code == 403
     assert portal.get(policy, headers=applicant).json()["steps"] == ["admin"]
-    assert portal.put(policy, headers=admin, json=rules).raise_for_status().json() == rules
+    assert portal.put(policy, headers=admin, json=rules).raise_for_status().json() == {
+        **rules,
+        "revision": 1,
+    }
+    assert portal.put(policy, headers=admin, json=rules).status_code == 409
     assert portal.put(policy, headers=admin, json={"steps": []}).status_code == 422
     assert portal.put(policy, headers=admin, json={"steps": ["unit/missing"]}).status_code == 422
     row = (
@@ -52,6 +56,8 @@ def test_publication_review(states, portal):
         portal.put(url + "/publication?published=true", headers=applicant).raise_for_status().json()
     )
     assert not submission["published"]
+    # 設定更新前の申請は、提出したときの二段階を最後までたどる。
+    portal.put(policy, headers=admin, json={"revision": 1, "steps": ["admin"]}).raise_for_status()
     assert portal.get(url, headers=lead).json()["publication_guidelines"] == rules["guidelines"]
     assert portal.get("/api/publication-requests", headers=lead).json()[0]["id"] == row["id"]
     users = {"admin": admin, "lead": lead, "applicant": applicant}

@@ -12,7 +12,9 @@ from tsugite_db.models import DirectoryTree, Member
 
 def publication_policy(db):
     row = db.get(DirectoryTree, "publication")
-    return PublicationPolicy.model_validate_json(row.units) if row else PublicationPolicy()
+    return (
+        PublicationPolicy(**json.loads(row.units), revision=row.revision) if row else PublicationPolicy()
+    )
 
 
 def resolve_person(db, subject):

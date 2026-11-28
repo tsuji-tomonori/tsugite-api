@@ -60,8 +60,10 @@ ReviewStep = Annotated[
 
 #: 管理者が設定する商品公開の条件
 class PublicationPolicy(Input):
+    #: 提供ガイドラインの版（未設定は0）
+    revision: int = Field(default=0, ge=0)
     #: 申請者と審査者が参照する提供指針
-    guidelines: str = Field("", max_length=8000)
+    guidelines: str = Field(default="", max_length=8000)
     #: 承認を必要とする順序
     steps: list[ReviewStep] = Field(default_factory=lambda: ["admin"], min_length=1, max_length=12)
 

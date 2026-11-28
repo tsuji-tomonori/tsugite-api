@@ -89,19 +89,22 @@ def read_publication_policy(actor: User, db: DB):
 
 
 #: 管理者が提供ガイドラインと今後の公開申請の承認順を設定する
-@router.put("/publication-policy", response_model=PublicationPolicy)
+@router.put("/publication-policy", response_model=PublicationPolicy, responses=domain_errors(409))
 def configure_publication_policy(data: PublicationPolicy, request: Request, actor: User, db: DB):
     if not actor.admin:
         raise HTTPException(403)
     data.steps = validate_steps(db, data.steps)
     row = db.get(DirectoryTree, "publication")
+    if data.revision != (row.revision if row else 0):
+        raise HTTPException(409, "提供ガイドラインが更新されました。再読み込みしてください")
+    encoded = data.model_dump_json(exclude={"revision"})
     if row is None:
-        db.add(DirectoryTree(id="publication", units=data.model_dump_json()))
+        db.add(DirectoryTree(id="publication", units=encoded))
     else:
-        row.units = data.model_dump_json()
+        row.units = encoded
     audit(db, actor, request, "publication.policy", "", " → ".join(data.steps))
     db.commit()
-    return data
+    return publication_policy(db)
 
 
 #: 自分が現在審査できる公開申請を一覧する
