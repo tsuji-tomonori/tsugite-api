@@ -1,0 +1,2 @@
+<?xml version='1.0' encoding='utf-8'?>
+<testsuite name="開発者は、形式仕様を確認するとき、ドメインと不変条件を一覧で確認できる"><testcase classname="tests.architecture.core.test_formal_contracts" name="test_verify_runs_models_and_replays" file="tests/architecture/core/test_formal_contracts.py" line="96" time="0.012"><properties><property name="nodeid" value="tests/architecture/core/test_formal_contracts.py::test_verify_runs_models_and_replays" /><property name="variants" value="1" /><property name="case_description" value="Verifyが一覧と操作列を再生成し、モデル検査・実装再生と証跡の保存を毎回実行する。" /></properties></testcase></testsuite>
