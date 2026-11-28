@@ -26,12 +26,12 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
-        "member-profile",
-        "招待時に氏名を省略できる",
-        "packages/backend/src/app/schemas/members.py",
-        "full_name: FullName",
-        "full_name: FullName | None = None",
-        "packages/backend/tests/test_member_profiles.py::test_invitation_requires_login_and_full_name",
+        "chat-inquiry",
+        "モデルが類似と判定した商品をすべて候補に戻す",
+        "packages/agent/src/chat_retrieval.py",
+        "if key in grounded][:3]",
+        "if key in grounded or key in raw_semantic][:3]",
+        "packages/agent/tests/test_agent_retrieval.py::test_chat_does_not_promote_unrelated_sources",
     ),
     Mutation(
         "deployed-e2e",
@@ -40,14 +40,6 @@ MUTATIONS = (
         'and profile.get("subject") == subject',
         "and True",
         "packages/tools/tests/test_deployed_account.py::test_only_expected_consumer",
-    ),
-    Mutation(
-        "frontend",
-        "一覧で氏名を表示名に置き換える",
-        "packages/frontend/src/web_app/components/member_identity.py",
-        'name = person.get("full_name")',
-        'name = person.get("display_name")',
-        "packages/frontend/tests/test_workspace_screens.py::test_direct_members_have_aligned_table_columns",
     ),
     Mutation(
         "admin-role",
@@ -192,6 +184,22 @@ MUTATIONS = (
         'style=f"--buckets:{len(pts)}"',
         'style="--buckets:0"',
         "packages/frontend/tests/test_dashboard.py::test_dashboard_recovers_from_metrics_failure",
+    ),
+    Mutation(
+        "member-profile",
+        "招待時に氏名を省略できる",
+        "packages/backend/src/app/schemas/members.py",
+        "full_name: FullName",
+        "full_name: FullName | None = None",
+        "packages/backend/tests/test_member_profiles.py::test_invitation_requires_login_and_full_name",
+    ),
+    Mutation(
+        "frontend",
+        "一覧で氏名を表示名に置き換える",
+        "packages/frontend/src/web_app/components/member_identity.py",
+        'name = person.get("full_name")',
+        'name = person.get("display_name")',
+        "packages/frontend/tests/test_workspace_screens.py::test_direct_members_have_aligned_table_columns",
     ),
     Mutation(
         "member-profile",

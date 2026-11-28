@@ -39,7 +39,8 @@ def test_detail_timestamps_and_answers(portal_module: Callable[[str], ModuleType
     assert "rate_limited" in display.answer_log_question(ROW, "エラーの原因は？")
     assert "357 ms" in display.answer_log_question(ROW, "何秒？")
     assert "consumer" in display.answer_log_question(ROW, "誰が呼んだ？")
-    assert "判断できません" in display.answer_log_question(ROW, "天気は？")
+    assert display.answer_log_question(ROW, "明日の天気を教えて") is None
+    assert "処理時間" in display.answer_log_question(ROW, "概要を教えて")
     measured = {**ROW, "status": 200, "started_at": ROW["at"], "responded_at": ROW["at"]}
     assert "推定" not in str(display.timing(measured))
     assert "エラーコード" not in dict(display.detail_fields(measured))
