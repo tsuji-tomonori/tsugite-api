@@ -1,7 +1,7 @@
 # メタデータの公開設定、所属の訂正、グループリーダーの閲覧範囲をAPI経由で検証する。
 import pytest
 
-from tests.support.catalog import headers
+from tests.support.catalog import headers, publish_asset
 
 
 def save(portal, path, admin, data):
@@ -181,7 +181,7 @@ def test_public_metadata_restricts_catalog_to_direct_value_members(portal, direc
     )
     assert accepted.status_code == 200, accepted.text
     assert accepted.json()["metadata_values"] == ["staff"]
-    published = portal.put(path + "/publication", headers=provider, params={"published": True})
+    published = publish_asset(portal, path, provider)
     assert published.status_code == 200
 
     def catalog():

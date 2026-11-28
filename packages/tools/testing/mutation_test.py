@@ -26,6 +26,14 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
+        "publication",
+        "指定した順番を飛ばして管理者が公開を承認できる",
+        "packages/backend/src/app/core/publication.py",
+        'return actor.subject != pending["applicant"] and assigned(',
+        'return actor.admin or actor.subject != pending["applicant"] and assigned(',
+        "packages/backend/tests/test_quint_publication.py::test_publication_review",
+    ),
+    Mutation(
         "chat-wait",
         "回答待ちの表示からリングを外す",
         "packages/frontend/src/web_app/components/chat_views.py",
@@ -120,6 +128,14 @@ MUTATIONS = (
         'ctx.update(message="", error=False)',
         "ctx.update(error=False)",
         "packages/frontend/tests/test_required_guide_navigation.py::test_dismiss_current_notice",
+    ),
+    Mutation(
+        "frontend",
+        "MFA登録時に設定コードを最初から開く",
+        "packages/frontend/src/web_app/components/login_views.py",
+        't.details(classes="auth-manual")',
+        't.details(classes="auth-manual", open=True)',
+        "packages/frontend/tests/test_required_guide_home.py::test_registration_qr_matches_manual_code",
     ),
     Mutation(
         "frontend",

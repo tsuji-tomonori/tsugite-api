@@ -1,7 +1,7 @@
 # 公開範囲、委任判断、個人・プロジェクト別申請、部署・役職の自動承認を確認する。
 from app.core.auth import DEMO_GROUPS
 
-from tests.support.catalog import FORM, headers, invocation_headers
+from tests.support.catalog import FORM, headers, invocation_headers, publish_asset
 
 
 def setup_people(api, monkeypatch):
@@ -45,7 +45,7 @@ def test_delegation_search_and_personal_isolation(portal, monkeypatch):
     api = portal
     key = api.post("/api/apis", headers=owner, json={**FORM, "name": "倉庫の在庫"}).json()["id"]
     url = "/api/apis/" + key
-    api.put(url + "/publication?published=true", headers=owner).raise_for_status()
+    publish_asset(api, url, owner).raise_for_status()
 
     def policy(**data):
         rev = api.get(url, headers=owner).json()["revision"]

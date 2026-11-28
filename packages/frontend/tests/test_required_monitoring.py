@@ -242,7 +242,7 @@ def test_available_monitoring_dimensions_follow_scope(
         pytest.param(
             False,
             True,
-            "提供者",
+            "利用者",
             True,
             id="provider",
             marks=pytest.mark.case_detail("提供者には管理対象のAPI件数も表示する"),

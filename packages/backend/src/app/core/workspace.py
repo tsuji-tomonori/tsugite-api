@@ -88,7 +88,6 @@ def populate(db, actor):
         return actor
     tree = units(db)
     projects = set(actor.projects)
-    owners = set(actor.owners)
     account = db.get(Member, actor.subject)
     if (
         account
@@ -98,8 +97,6 @@ def populate(db, actor):
     ):
         inherited = project_ids(db, [account.project])
         projects.update(inherited)
-        if account.role == "provider":
-            owners.update(inherited)
     metadata = defaultdict(set)
     metadata_leads = set()
     leads = set()
@@ -110,7 +107,6 @@ def populate(db, actor):
             continue
         if not m.active:
             projects.discard(m.unit_id)
-            owners.discard(m.unit_id)
             continue
         kind = item["kind"]
         metadata[kind].add(m.unit_id)
@@ -129,7 +125,7 @@ def populate(db, actor):
         metadata={key: frozenset(values) for key, values in metadata.items() if values},
         metadata_leads=frozenset(metadata_leads),
         projects=frozenset(projects),
-        owners=frozenset(owners),
+        owners=frozenset(projects),
         departments=frozenset(ancestry(tree, metadata[DEPARTMENT])),
         leads=frozenset(leads),
         titles=frozenset(titles),

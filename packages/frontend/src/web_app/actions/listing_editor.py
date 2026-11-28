@@ -52,6 +52,10 @@ async def register(publish_now: bool = False) -> None:
         "targets": {bindings[k]["environment"]: k for k in chosen},
         "spec": spec,
     }
+    if responsible := value("responsible"):
+        data["responsible"] = responsible
+    elif editing:
+        data["responsible"] = None
     if editing:
         row = ctx["detail"]
         asset = await products_api.update_asset(row["id"], row["revision"], data)
@@ -71,3 +75,4 @@ async def register(publish_now: bool = False) -> None:
 async def load_directory(_page: str) -> None:
     """編集で選択できる部署とプロジェクトを取得する。"""
     ctx["policy_directory"] = await organization_api.workspace()
+    ctx["publication_policy"] = await products_api.publication_policy()

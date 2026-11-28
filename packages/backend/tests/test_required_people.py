@@ -58,7 +58,7 @@ def test_invitation_profile_and_retirement(portal, role):
         assert len(listing["items"]) <= 1
         members.extend(listing["items"])
     listed = [m for m in members if m["subject"] == subject]
-    assert len(listed) == 1 and listed[0]["role"] == role
+    assert len(listed) == 1 and "role" not in listed[0]
     workspace = portal.get("/api/workspace", headers=admin).json()
     assert any(
         m["subject"] == subject

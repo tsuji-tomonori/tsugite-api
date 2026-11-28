@@ -7,6 +7,7 @@ from typing import Any
 from apis import client
 from js import document
 from puepy import t
+from runtime.portal_ui import ctx
 
 ENV = {"sandbox": "基本版（検証）", "staging": "準本番", "production": "本番"}
 ROUTES = {
@@ -40,7 +41,30 @@ def field_row(spec: dict[str, Any]) -> None:
 
 def step_label(step: str) -> str:
     """承認ステップの表示名を返す。"""
-    return {"provider": "提供者", "department": "申請者の所属部署"}.get(step, step.removeprefix("unit/"))
+    return dict(approval_options()).get(step, step)
+
+
+def approval_options() -> list[tuple[str, str]]:
+    """指定可能な組織と利用者を名前付きの選択肢にする。"""
+    directory = ctx.get("policy_directory", {})
+    return [
+        ("admin", "管理者"),
+        ("project_leader", "提供プロジェクトのリーダー"),
+        ("provider", "提供プロジェクトのメンバー"),
+        ("department", "申請者の所属部署の上長"),
+        *[
+            ("unit/" + u["id"], u["name"] + "のリーダー")
+            for u in directory.get("units", [])
+            if u["kind"] in ("project", "department")
+        ],
+        *[
+            (
+                "person/" + u["subject"],
+                (u.get("full_name") or u["username"]) + "（" + u["username"] + "）",
+            )
+            for u in directory.get("users", [])
+        ],
+    ]
 
 
 def step_row(step: str, units: list[dict[str, Any]]) -> None:
@@ -49,11 +73,35 @@ def step_row(step: str, units: list[dict[str, Any]]) -> None:
         with t.label(classes="field"):
             t.span("承認先")
             with t.select(classes="form-select"):
-                for key, title in [("provider", "提供者"), ("department", "申請者の所属部署")] + [
-                    ("unit/" + u["id"], u["name"]) for u in units if u["kind"] == "department"
-                ]:
+                choices = dict(approval_options())
+                choices.update(
+                    {
+                        ("unit/" + u["id"]): u["name"] + "のリーダー"
+                        for u in units
+                        if u["kind"] in ("project", "department")
+                    }
+                )
+                if step:
+                    choices.setdefault(step, step)
+                for key, title in choices.items():
                     t.option(title, value=key, selected=key == step)
+                t.option("ユーザー名で指名", value="person/")
+                t.option("組織IDでリーダーを指定", value="unit/")
+        with t.label(classes="field step-identifier"):
+            t.span("承認先のユーザー名または組織ID")
+            t.input(classes="form-control", type="text")
         t.button("段階を削除", type="button", classes="btn", data_remove="step")
+
+
+def selected_step(element: Any) -> str:
+    """選択した承認先または入力した個別の宛先を読み取る。"""
+    key = str(element.value)
+    if key in ("person/", "unit/"):
+        identifier = str(element.closest(".approval-step").querySelector("input").value).strip()
+        if not identifier:
+            raise client.InputError("承認先のユーザー名または組織IDを入力してください")
+        return key + identifier
+    return key
 
 
 def offer_editor(
@@ -130,7 +178,7 @@ def read_offer(env: str, value: Callable[[str], str]) -> dict[str, Any]:
         )
     steps = document.getElementById(prefix + "-steps").querySelectorAll("select")
     return {
-        "steps": [str(steps.item(i).value) for i in range(steps.length)]
+        "steps": [selected_step(steps.item(i)) for i in range(steps.length)]
         if value(prefix + "-route") == "custom"
         else [],
         "instructions": value(prefix + "-instructions"),

@@ -4,8 +4,9 @@ import json
 from app.core.catalog import allowed_spec, event, listing, record
 from app.core.diagnostics import asset_object
 from app.core.offers import configured
+from app.core.publication import resolve_person, validate_steps
 from app.core.releases import record_release
-from app.core.workspace import units, workspace_targets
+from app.core.workspace import workspace_targets
 from app.dependencies import DB, User
 from app.integrations.spec_archive import archive_spec, canonical
 from app.schemas import outputs
@@ -30,14 +31,11 @@ def assign_slug(db, asset: Asset, slug: str) -> None:
 
 
 def validated_spec(data, db):
+    if data.responsible:
+        data.responsible = resolve_person(db, data.responsible)
     if data.offers is not None:
-        tree = units(db)
         for offer in data.offers.values():
-            if any(
-                step.startswith("unit/") and tree.get(step[5:], {}).get("kind") != "department"
-                for step in offer.steps
-            ):
-                raise HTTPException(422, "承認先の部署を確認してください")
+            offer.steps = validate_steps(db, offer.steps)
         if data.offers.keys() - data.targets.keys():
             raise HTTPException(422, "利用条件には出品する環境を指定してください")
         if len(canonical(data.model_dump()["offers"])) > 120000:
@@ -76,6 +74,7 @@ def register(data: NewListing, request: Request, actor: User, db: DB):
         name=data.name,
         summary=data.summary,
         owner=data.owner,
+        responsible=data.responsible,
         base_path=data.base_path,
         targets=json.dumps(data.targets),
         spec=spec,
@@ -93,7 +92,7 @@ def register(data: NewListing, request: Request, actor: User, db: DB):
 
 
 #: APIの登録内容を更新する
-@router.put("/apis/{key}", responses=domain_errors(403, 409), response_model=Listing)
+@router.put("/apis/{key}", responses=domain_errors(403, 409, 503), response_model=Listing)
 def edit(
     #: カタログ掲載APIの識別子
     key: str,
@@ -110,6 +109,10 @@ def edit(
     if row.revision != revision:
         raise HTTPException(409, "別の変更が入りました")
     spec = validated_spec(data, db)
+    row.publication_request = None
+    if "responsible" in data.model_fields_set and row.responsible != data.responsible:
+        row.responsible = data.responsible
+        row.published = False
     if data.slug is not None:
         assign_slug(db, row, data.slug)
         db.flush()

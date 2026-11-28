@@ -7,7 +7,8 @@ def test_demo_openapi_has_japanese_operation_and_input_labels(portal):
     assert operation.get("summary") == "ポータルに利用者を招待する"
     assert invitation["title"] == "ポータル利用者の招待内容"
     assert invitation["properties"]["email"]["title"] == "招待先メールアドレス"
-    assert invitation["properties"]["role"]["title"] == "利用者の役割"
+    assert invitation["properties"]["project"]["title"] == "招待先プロジェクトの識別子"
+    assert "role" not in invitation["properties"]
     response = operation["responses"]["201"]["content"]["application/json"]["schema"]
     schema_name = response["$ref"].rsplit("/", 1)[1]
     person = document["components"]["schemas"][schema_name]

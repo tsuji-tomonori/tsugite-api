@@ -3,7 +3,7 @@ import json
 from unittest.mock import Mock
 from uuid import uuid4
 
-from tests.support.catalog import FORM, headers
+from tests.support.catalog import FORM, headers, publish_asset
 
 
 def ask(api, actor, question):
@@ -22,7 +22,7 @@ def test_chat_only_returns_currently_visible_products(portal):
         "/api/apis", headers=provider, json={**FORM, "name": "在庫の下書き", "slug": "stock-draft"}
     ).raise_for_status()
     endpoint = f"/api/apis/{public}/publication"
-    assert portal.put(endpoint, headers=provider, params={"published": True}).status_code == 200
+    assert publish_asset(portal, endpoint.removesuffix("/publication"), provider).status_code == 200
     job, result = ask(portal, consumer, "在庫を確認できるAPIを探して")
     assert result["kind"] == "catalog"
     assert [row["id"] for row in result["products"]] == [public]
@@ -85,7 +85,7 @@ def test_async_chat_resolves_public_product_through_worker(portal, monkeypatch):
     provider = headers(portal, "provider")
     consumer = headers(portal, "consumer")
     product = portal.post("/api/apis", headers=provider, json=FORM).raise_for_status().json()["id"]
-    portal.put(f"/api/apis/{product}/publication?published=true", headers=provider).raise_for_status()
+    publish_asset(portal, f"/api/apis/{product}", provider).raise_for_status()
     rows = {}
     table = Mock()
     queue = Mock()
