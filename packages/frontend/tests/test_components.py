@@ -317,6 +317,7 @@ def test_log_search_starts_collapsed_and_shows_active_conditions(portal_module: 
     _, dom = render(logs.logs_view)
     panel = dom.getElementsByTagName("details")[0]
     assert not panel.hasAttribute("open")
+    assert "list-disclosure" in panel.getAttribute("class").split()
     summary = panel.getElementsByTagName("summary")[0].toxml()
     assert "検索条件" in summary and "過去24時間" in summary and "絞り込み中" in summary
     fields = elements(panel)
