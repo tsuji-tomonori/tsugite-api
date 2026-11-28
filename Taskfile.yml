@@ -147,6 +147,9 @@ tasks:
   test:model:
     desc: モデル推論と重み取得の単体テスト
     cmds: ['uv run --locked --package tsugite-model --group dev pytest -q packages/model/tests {{.CLI_ARGS}}']
+  test:api-auth:
+    desc: API呼び出し認証の単体テスト
+    cmds: ['uv run --locked --package tsugite-api-auth --group dev pytest -q packages/api-auth/tests {{.CLI_ARGS}}']
   test:backend:
     desc: バックエンドの単体・APIテスト
     cmds: ['{{.RUN}} pytest -q packages/backend/tests {{.CLI_ARGS}}']

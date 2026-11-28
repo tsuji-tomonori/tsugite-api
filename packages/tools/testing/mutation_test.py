@@ -25,6 +25,14 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
+        "api-auth",
+        "CDKの認証ハンドラーに存在しない関数を指定する",
+        "packages/infra/src/components/runtime.py",
+        '"api_auth.authorizer.handler"',
+        '"api_auth.authorizer.missing"',
+        "tests/architecture/api-auth/test_entrypoint.py::test_authorizer_handler_belongs_to_api_auth",
+    ),
+    Mutation(
         "page-heading",
         "画面名から共通の余白を適用するクラスを外す",
         "packages/frontend/src/web_app/components/page_heading.py",

@@ -75,7 +75,7 @@ def build_layers():
     build_dir = ROOT / "build"
     build_dir.mkdir(exist_ok=True)
     for name, python_version, selection in (
-        ("runtime", "3.15", ["--package", "tsugite-backend", "--no-dev"]),
+        ("runtime", "3.15", ["--package", "tsugite-api-auth", "--no-dev"]),
         ("sample-api", "3.15", ["--package", "tsugite-sample-api", "--no-dev"]),
         ("decision-model", "3.14", ["--project", "packages/model/decision-model", "--no-dev"]),
         ("model-sdk", "3.15", ["--package", "tsugite-model", "--no-dev"]),
@@ -143,6 +143,12 @@ def build():
     (dest / guide_path).mkdir(parents=True)
     for name in ("guide_content.py", "guide_search.py"):
         shutil.copy(ROOT / guide_path / name, dest / guide_path / name)
+    auth = ROOT / "build/api-auth"
+    if auth.exists():
+        shutil.rmtree(auth)
+    shutil.copytree(ROOT / "packages/api-auth/src", auth, ignore=shutil.ignore_patterns("__pycache__"))
+    for shared in ("app", "tsugite_db"):
+        shutil.copytree(dest / shared, auth / shared)
     for path in dest.rglob("__pycache__"):
         shutil.rmtree(path)
 

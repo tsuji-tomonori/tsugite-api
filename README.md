@@ -48,6 +48,7 @@ task demo
 | 配置 | 内容 | 実行例 |
 | --- | --- | --- |
 | `packages/frontend` | PuePy画面と単体テスト | `task test:frontend` |
+| [`packages/api-auth`](packages/api-auth/src/api_auth/authorizer.py) | API Gatewayが商品APIを呼び出す前に実行するLambdaオーソライザー | `task test:api-auth` |
 | `packages/backend` | FastAPIルーター、認証、業務処理とテスト | `task test:backend` |
 | [`packages/agent`](packages/agent/README.md) | チャットジョブの受付・検索・回答 | `task test:agent` |
 | [`packages/model`](packages/model/README.md) | モデルの判定・推論・重み取得 | `task test:model` |

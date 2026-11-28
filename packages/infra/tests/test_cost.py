@@ -22,7 +22,7 @@ def test_cost_drivers_are_bounded(tmp_path):
     for alias in template.find_resources("AWS::Lambda::Alias").values():
         assert "ProvisionedConcurrencyConfig" not in alias["Properties"]
 
-    for handler in ("app.main.handler", "app.authorizer.handler", "app.migrate.handler"):
+    for handler in ("app.main.handler", "api_auth.authorizer.handler", "app.migrate.handler"):
         template.has_resource_properties(
             "AWS::Lambda::Function",
             {"Handler": handler, "MemorySize": 768, "Timeout": 60, "LoggingConfig": Match.any_value()},

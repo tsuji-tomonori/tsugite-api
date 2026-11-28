@@ -45,7 +45,7 @@
 | `Properties.Environment.Variables.HUB_SETTINGS_PARAMETER` | `/TsugiteApi/portal` |
 | `Properties.Environment.Variables.ORIGIN_SECRET` | `{{resolve:secretsmanager:${Ref:OriginKey10CF34FB}:SecretString:::}}` |
 | `Properties.Environment.Variables.TOKEN_SIGNING_KEY` | `{{resolve:secretsmanager:${Ref:RuntimeTokenSigner23A3A8A2}:SecretString:::}}` |
-| `Properties.Handler` | `app.authorizer.handler` |
+| `Properties.Handler` | `api_auth.authorizer.handler` |
 | `Properties.Layers[0]` | `${Ref:RuntimeDependencies72FC0EEE}` |
 | `Properties.LoggingConfig.LogGroup` | `${Ref:AccessLogs8B620ECA}` |
 | `Properties.MemorySize` | `768` |

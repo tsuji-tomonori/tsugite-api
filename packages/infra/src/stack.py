@@ -37,9 +37,10 @@ class CatalogStack(Stack):
             raise ValueError("invalid project name")
         param = "/" + self.stack_name + "/portal"
         code = fn.Code.from_asset(str(ROOT / "build/lambda"))
+        auth_code = fn.Code.from_asset(str(ROOT / "build/api-auth"))
         dependency_code = fn.Code.from_asset(str(ROOT / "build/runtime-layer.zip"))
         database = CatalogDatabase(self, "Database")
-        runtime = ApiRuntime(self, "Runtime", database.cluster, param, code, dependency_code)
+        runtime = ApiRuntime(self, "Runtime", database.cluster, param, code, auth_code, dependency_code)
         chat = PortalChat(self, "Chat", runtime.api, database.cluster, code, runtime.dependencies)
         schema = database.install_schema(runtime.role, code, runtime.dependencies, chat.worker_role)
         schema.node.add_dependency(chat)

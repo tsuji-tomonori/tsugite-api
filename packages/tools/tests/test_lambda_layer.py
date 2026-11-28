@@ -73,7 +73,7 @@ def test_each_lambda_layer_exports_its_locked_dependencies(tmp_path, monkeypatch
     monkeypatch.setattr(build_backend, "sync_layer", install)
     build_backend.build_layers()
     assert installs == {
-        "runtime-layer.zip": (["--package", "tsugite-backend", "--no-dev"], "3.15"),
+        "runtime-layer.zip": (["--package", "tsugite-api-auth", "--no-dev"], "3.15"),
         "sample-api-layer.zip": (["--package", "tsugite-sample-api", "--no-dev"], "3.15"),
         "decision-model-layer.zip": (
             ["--project", "packages/model/decision-model", "--no-dev"],

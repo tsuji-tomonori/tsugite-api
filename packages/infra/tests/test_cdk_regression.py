@@ -73,7 +73,7 @@ def test_backend_layer_changes_only_with_dependencies(tmp_path):
         resources = Template.from_stack(CatalogStack(app, "TsugiteApi")).to_json()["Resources"]
         handlers = {
             "app.main.handler",
-            "app.authorizer.handler",
+            "api_auth.authorizer.handler",
             "app.migrate.handler",
             "chat_jobs.handler",
         }

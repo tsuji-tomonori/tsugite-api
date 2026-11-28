@@ -14,6 +14,7 @@ def cdk_test_assets(tmp_path, monkeypatch):
     root = tmp_path / "assets"
     for relative in (
         "build/lambda/handler.py",
+        "build/api-auth/api_auth/authorizer.py",
         "build/sample-api/sample_api/main.py",
         "build/chat-decision/decision.py",
         "build/chat-llm/completion.py",
