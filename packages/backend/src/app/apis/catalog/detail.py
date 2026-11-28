@@ -6,7 +6,7 @@ from app.core.catalog import listing, record
 from app.core.credential_policy import individual
 from app.core.diagnostics import asset_object
 from app.core.offers import configured, describe
-from app.core.publication import reviewer
+from app.core.publication import publication_policy, reviewer
 from app.core.releases import history
 from app.core.workspace import allowed_audience
 from app.dependencies import DB, User
@@ -14,7 +14,7 @@ from app.schemas.catalog import Detail
 from app.schemas.errors import domain_errors
 from fastapi import APIRouter, HTTPException
 from sqlalchemy import select
-from tsugite_db.models import Access, Member, MemberProfile
+from tsugite_db.models import Access, Event, Member, MemberProfile
 
 router = APIRouter()
 
@@ -49,11 +49,54 @@ def detail(
         raise HTTPException(404)
     contact = db.get(Member, a.responsible) if a.responsible else None
     profile = db.get(MemberProfile, a.responsible) if contact else None
+    summary = listing(a)
+    steps = []
+    outcome = None
+    reason = ""
+    if a.owner in actor.owners and not a.published:
+        if a.publication_request:
+            pending = json.loads(a.publication_request)
+            steps = pending.get("steps", [])
+            if not steps:
+                # 旧形式の申請も提出時の監査記録から元の順番を復元する。
+                submitted = db.scalar(
+                    select(Event.detail)
+                    .where(Event.asset_id == key, Event.action == "publication.submit")
+                    .order_by(Event.at.desc(), Event.id.desc())
+                    .limit(1)
+                )
+                remaining = pending["remaining"]
+                original = submitted.split(" → ") if submitted else []
+                if original[-len(remaining) :] == remaining:
+                    steps = original
+                    summary.publication_total = len(original)
+                    summary.publication_position = len(original) - len(remaining) + 1
+        else:
+            steps = publication_policy(db).steps
+            last = db.execute(
+                select(Event.action, Event.detail)
+                .where(
+                    Event.asset_id == key,
+                    Event.action.in_(
+                        ("edit", "unpublish", "publication.reject", "publication.withdraw")
+                    ),
+                )
+                .order_by(Event.at.desc(), Event.id.desc())
+                .limit(1)
+            ).first()
+            if last and last.action == "publication.reject":
+                outcome = "rejected"
+                reason = last.detail.partition(" ")[2]
+            elif last and last.action == "publication.withdraw":
+                outcome = "withdrawn"
     return Detail(
         responsible_label=(profile.full_name if profile else None)
         or (contact.username if contact else a.responsible)
         or a.owner,
-        **listing(a).model_dump(),
+        **summary.model_dump(),
+        publication_steps=steps,
+        publication_outcome=outcome,
+        publication_reason=reason,
         can_review_publication=can_review,
         publication_guidelines=json.loads(a.publication_request)["guidelines"]
         if a.publication_request

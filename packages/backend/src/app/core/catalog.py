@@ -33,14 +33,17 @@ def record(db: Session, key: str) -> Asset:
 
 
 def listing(row: Asset) -> Listing:
+    pending = json.loads(row.publication_request) if row.publication_request else {}
+    remaining = pending.get("remaining", [])
+    total = len(pending["steps"]) if "steps" in pending else None
     return Listing(
         id=row.id,
         slug=row.route.slug if row.route else None,
         owner=row.owner,
         responsible=row.responsible,
-        publication_stage=json.loads(row.publication_request)["remaining"][0]
-        if row.publication_request
-        else None,
+        publication_stage=remaining[0] if remaining else None,
+        publication_total=total,
+        publication_position=total - len(remaining) + 1 if total is not None else None,
         name=row.name,
         summary=row.summary,
         environments=list(asset_object(row, "targets")),

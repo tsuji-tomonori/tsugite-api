@@ -9,6 +9,7 @@ from runtime.portal_ui import action, ctx, route
 
 from components.controls import btn, field
 from components.list_layout import disclosure, result_table
+from components.product_views import publication_status
 
 
 def cards() -> None:
@@ -57,7 +58,7 @@ def cards() -> None:
                 t.td(row["owner"])
                 t.td("、".join(LABEL[env] for env in row["environments"]) or "—")
                 if inventory:
-                    t.td("公開中" if row["published"] else "下書き")
+                    t.td(publication_status(row))
     if pages > 1:
         with t.div(classes="pager"):
             if page > 1:

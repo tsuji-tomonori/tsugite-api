@@ -68,6 +68,7 @@ def publish(
         a.publication_request = json.dumps(
             {
                 "applicant": actor.subject,
+                "steps": rules.steps,
                 "remaining": rules.steps,
                 "departments": sorted(actor.departments),
                 "guidelines": rules.guidelines,

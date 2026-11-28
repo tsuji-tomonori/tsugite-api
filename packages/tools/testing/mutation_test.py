@@ -25,6 +25,14 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
+        "publication-progress",
+        "承認順の現在地を一段ずらして表示する",
+        "packages/frontend/src/web_app/components/product_views.py",
+        "if index == position:",
+        "if index == position + 1:",
+        "packages/frontend/tests/test_required_product_views.py::test_owner_sees_publication_progress",
+    ),
+    Mutation(
         "publication",
         "指定した順番を飛ばして管理者が公開を承認できる",
         "packages/backend/src/app/core/publication.py",

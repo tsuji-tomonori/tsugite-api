@@ -57,6 +57,7 @@ def test_publication_review(states, portal):
         portal.put(url + "/publication?published=true", headers=applicant).raise_for_status().json()
     )
     assert not submission["published"]
+    assert (submission["publication_position"], submission["publication_total"]) == (1, 2)
     # 設定更新前の申請は、提出したときの二段階を最後までたどる。
     portal.put(policy, headers=admin, json={"revision": 1, "steps": ["admin"]}).raise_for_status()
     assert portal.get(url, headers=lead).json()["publication_guidelines"] == rules["guidelines"]
@@ -71,6 +72,16 @@ def test_publication_review(states, portal):
         )
         assert result.status_code == state["response"], result.text
         assert bool(portal.get("/api/apis", headers=admin).json()) == state["listed"]
+        progress = portal.get(url, headers=applicant).raise_for_status().json()
+        if progress["published"]:
+            assert progress["publication_steps"] == []
+            assert progress["publication_position"] is None
+        else:
+            assert progress["publication_steps"] == rules["steps"]
+            assert progress["publication_total"] == 2
+            assert progress["publication_position"] == (
+                2 if progress["publication_stage"] == "admin" else 1
+            )
 
 
 @pytest.mark.parametrize("states", histories("publicationchanges"))
@@ -193,3 +204,56 @@ def test_external_contact_is_resolved_to_stable_identity(portal, monkeypatch):
         portal.put(url, headers=owner, params={"revision": row["revision"]}, json=form).status_code
         == 422
     )
+
+
+def test_existing_publication_progress(portal):
+    """旧形式の申請の現在地を申請時の順番から復元し、却下・取り下げ・再申請を区別する。"""
+    import json
+
+    from sqlalchemy import select
+    from sqlalchemy.orm import Session
+    from tsugite_db.models import Asset, Event
+    from tsugite_db.session import engine
+
+    owner, admin = headers(portal, "provider"), headers(portal, "admin")
+    rules = {"steps": ["admin", "admin", "project_leader"]}
+    portal.put("/api/publication-policy", headers=admin, json=rules).raise_for_status()
+    asset = portal.post("/api/apis", headers=owner, json=FORM).raise_for_status().json()
+    key = asset["id"]
+    url = "/api/apis/" + key
+    submit = url + "/publication?published=true"
+    draft = portal.get(url, headers=owner).raise_for_status().json()
+    assert draft["publication_steps"] == rules["steps"] and draft["publication_position"] is None
+    submitted = portal.put(submit, headers=owner).raise_for_status().json()
+    decision = {"approved": True, "reason": "確認済み", "revision": submitted["revision"]}
+    portal.post(url + "/publication-decisions", headers=admin, json=decision).raise_for_status()
+    with Session(engine()) as db:
+        row = db.get(Asset, key)
+        pending = json.loads(row.publication_request)
+        del pending["steps"]
+        row.publication_request = json.dumps(pending)
+        db.commit()
+    old = portal.get(url, headers=owner).raise_for_status().json()
+    assert old["publication_steps"] == rules["steps"]
+    assert (old["publication_position"], old["publication_total"]) == (2, 3)
+    with Session(engine()) as db:
+        event = db.scalars(
+            select(Event).where(Event.asset_id == key, Event.action == "publication.submit")
+        ).one()
+        db.delete(event)
+        db.commit()
+    incomplete = portal.get(url, headers=owner).raise_for_status().json()
+    assert incomplete["publication_stage"] == "admin" and incomplete["publication_position"] is None
+    assert incomplete["publication_steps"] == []
+    decision.update(approved=False, reason="仕様を修正してください", revision=old["revision"])
+    portal.post(url + "/publication-decisions", headers=admin, json=decision).raise_for_status()
+    rejected = portal.get(url, headers=owner).raise_for_status().json()
+    assert (
+        rejected["publication_outcome"] == "rejected"
+        and rejected["publication_reason"] == decision["reason"]
+    )
+    assert rejected["publication_position"] is None
+    assert portal.put(submit, headers=owner).raise_for_status().json()["publication_position"] == 1
+    portal.put(url + "/publication?published=false", headers=owner).raise_for_status()
+    withdrawn = portal.get(url, headers=owner).raise_for_status().json()
+    assert withdrawn["publication_outcome"] == "withdrawn" and withdrawn["publication_reason"] == ""

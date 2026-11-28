@@ -123,14 +123,15 @@ def detail_page() -> None:
         )
     t.p(a["owner"] + " · " + ("公開中" if a["published"] else "未掲載"), classes="muted")
     t.p("公開責任者　" + (a.get("responsible_label") or a.get("responsible") or a["owner"]))
-    if stage := a.get("publication_stage"):
-        t.p("公開承認待ち　" + product_views.step_label(stage))
+    if a.get("publication_stage"):
+        t.p(product_views.publication_status(a))
     if a.get("can_review_publication"):
         t.p(a.get("publication_guidelines", ""), classes="terms-text")
         field("公開判断の理由", "publication-reason", required=True)
         btn("公開申請を承認", review_publication, a, True, primary=True)
         btn("公開申請を却下", review_publication, a, False)
     if a["owner"] in ctx["me"]["owners"]:
+        product_views.publication_progress(a)
         publication_actions(a)
         policy_form(
             a,

@@ -62,6 +62,12 @@ def test_publish_and_apply_from_product_page(tmp_path: Path, request: pytest.Fix
         user.get_by_label("公開判断の理由").fill("提供規約を確認")
         user.get_by_role("button", name="公開申請を承認").click()
         expect(user.get_by_text("公開申請の判断を記録しました")).to_be_visible()
+        owner.reload()
+        expect(owner.get_by_text("公開承認待ち（2/2段階）　管理者", exact=True)).to_be_visible()
+        expect(owner.locator('li[aria-current="step"]')).to_have_text("管理者（承認待ち）")
+        capture_image(
+            request.node, "publication", owner, "review-progress", "提供者が確認する公開承認の現在地"
+        )
         approve_in_browser(browser, owner, url, "在庫")
         expect(owner.get_by_role("button", name="掲載を取り下げる")).to_be_visible()
         navigate(user, "APIカタログ")
