@@ -2,6 +2,7 @@
 from fastapi import APIRouter
 
 from . import (
+    admin_roles,
     alerts,
     credential_settings,
     credentials,
@@ -18,6 +19,7 @@ from . import (
 
 router = APIRouter()
 for feature in (
+    admin_roles,
     alerts,
     credential_settings,
     credentials,
