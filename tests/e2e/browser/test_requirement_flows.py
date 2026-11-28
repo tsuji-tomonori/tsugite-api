@@ -6,6 +6,7 @@ from collections.abc import Callable, Iterator
 from copy import deepcopy
 from pathlib import Path
 from typing import Any
+from urllib.parse import parse_qs, urlsplit
 
 import httpx
 import pytest
@@ -227,6 +228,14 @@ def test_access_log_detail_and_support(portal_session: PortalSession) -> None:
         )
         expect(page.get_by_label("照合するリクエストID")).to_be_hidden()
         assert visible_table_ratio(listing) >= 0.70
+        download = page.get_by_role("button", name="アクセスログをダウンロードして保存")
+        toggle = page.locator("summary").filter(has_text="検索条件")
+        position = download.bounding_box()
+        toggle.click()
+        expect(page.get_by_label("照合するリクエストID")).to_be_visible()
+        assert position is not None and download.bounding_box() == position
+        toggle.click()
+        assert download.bounding_box() == position
     capture(page, "log-list", "検索条件を閉じたスマートフォンのアクセスログ一覧")
     page.get_by_role("button", name="次へ", exact=True).click()
     expect(listing.get_by_role("link")).to_have_count(1)
@@ -251,6 +260,52 @@ def test_access_log_detail_and_support(portal_session: PortalSession) -> None:
     expect(page.get_by_role("row").filter(has_text=ids[0])).to_contain_text(
         "この呼び出しを確認してください"
     )
+
+
+def test_access_log_calendar_period(portal_session: PortalSession) -> None:
+    """月をまたぐ日付の選択・時刻の直接入力・不正な期間の修正・相対期間への復帰を確認する。"""
+    api, page, capture = portal_session
+    open_portal(api, page, "利用チーム")
+    navigate(page, "アクセスログ")
+    toggle = page.locator("summary").filter(has_text="検索条件")
+    toggle.click()
+    period = page.get_by_label("期間", exact=True)
+    period.select_option("custom")
+    page.set_viewport_size({"width": 320, "height": 640})
+    bounds = page.locator(".absolute-period").bounding_box()
+    assert bounds and 0 <= bounds["x"] and bounds["x"] + bounds["width"] <= 320
+    page.set_viewport_size({"width": 1280, "height": 800})
+    start = page.get_by_label("開始日", exact=True)
+    end = page.get_by_label("終了日", exact=True)
+    start.fill("2026-10-01")
+    end.fill("2026-10-01")
+    page.get_by_role("button", name="開始 2026-10-31").click()
+    expect(start).to_have_value("2026-10-31")
+    page.get_by_role("button", name="終了の翌月").click()
+    page.get_by_role("button", name="終了 2026-11-01").click()
+    page.get_by_role("button", name="終了の前月").click()
+    expect(end).to_have_value("2026-11-01")
+    page.get_by_role("button", name="終了の翌月").click()
+    page.get_by_label("開始時刻（UTC）").fill("23:45")
+    page.get_by_label("終了時刻（UTC）").fill("00:15")
+    capture(page.locator(".absolute-period"), "log-period", "月末から翌月にかけてUTC日時を指定")
+    end.fill("2026-10-30")
+    apply = page.get_by_role("button", name="条件を適用")
+    apply.click()
+    expect(start).to_have_value("2026-10-31")
+    expect(end).to_be_visible()
+    end.fill("2026-11-01")
+    with page.expect_request(lambda req: "/api/access-logs?" in req.url) as search:
+        apply.click()
+    query = parse_qs(urlsplit(search.value.url).query)
+    assert query["start"] == ["2026-10-31T23:45:00Z"] and query["end"] == ["2026-11-01T00:15:00Z"]
+    expect(toggle).to_contain_text("日時指定")
+    toggle.click()
+    expect(start).to_have_value("2026-10-31")
+    period.select_option("1")
+    expect(start).to_be_hidden()
+    apply.click()
+    expect(toggle).to_contain_text("過去1時間")
 
 
 def test_lead_access_audit(portal_session: PortalSession) -> None:
