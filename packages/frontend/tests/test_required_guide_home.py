@@ -445,6 +445,7 @@ def test_waiting_for_a_chat_answer_prevents_a_second_submission(
         await asyncio.wait_for(waiting.wait(), timeout=2)
         _, busy = render(chat.home, state, Mock())
         try:
+            assert any(p.getAttribute("class") == "chat-pending" for p in busy.getElementsByTagName("p"))
             assert busy.getElementsByTagName("input")[0].hasAttribute("disabled")
             events.dispatch(form, "submit", Mock())
         finally:

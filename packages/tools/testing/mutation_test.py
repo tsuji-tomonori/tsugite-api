@@ -26,12 +26,12 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
-        "frontend",
-        "MFA登録時に設定コードを最初から開く",
-        "packages/frontend/src/web_app/components/login_views.py",
-        't.details(classes="auth-manual")',
-        't.details(classes="auth-manual", open=True)',
-        "packages/frontend/tests/test_required_guide_home.py::test_registration_qr_matches_manual_code",
+        "chat-wait",
+        "回答待ちの表示からリングを外す",
+        "packages/frontend/src/web_app/components/chat_views.py",
+        'role="status", classes="chat-pending"',
+        'role="status"',
+        "packages/frontend/tests/test_required_guide_home.py::test_waiting_for_a_chat_answer_prevents_a_second_submission",
     ),
     Mutation(
         "chat-inquiry",
@@ -112,6 +112,14 @@ MUTATIONS = (
         'ctx.update(message="", error=False)',
         "ctx.update(error=False)",
         "packages/frontend/tests/test_required_guide_navigation.py::test_dismiss_current_notice",
+    ),
+    Mutation(
+        "frontend",
+        "MFA登録時に設定コードを最初から開く",
+        "packages/frontend/src/web_app/components/login_views.py",
+        't.details(classes="auth-manual")',
+        't.details(classes="auth-manual", open=True)',
+        "packages/frontend/tests/test_required_guide_home.py::test_registration_qr_matches_manual_code",
     ),
     Mutation(
         "frontend",
