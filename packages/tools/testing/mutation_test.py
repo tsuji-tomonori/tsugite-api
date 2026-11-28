@@ -99,11 +99,11 @@ MUTATIONS = (
     ),
     Mutation(
         "frontend",
-        "JSONスキーマの項目名を文字列値と同じ色にする",
-        "packages/frontend/src/web_app/components/api_docs.py",
-        'kind = "key"',
-        'kind = "string"',
-        "packages/frontend/tests/test_components.py::test_schema_block_preserves_json_tokens",
+        "閉じた通知を再描画で復活させる",
+        "packages/frontend/src/web_app/runtime/portal_shell.py",
+        'ctx.update(message="", error=False)',
+        "ctx.update(error=False)",
+        "packages/frontend/tests/test_required_guide_navigation.py::test_dismiss_current_notice",
     ),
     Mutation(
         "frontend",
@@ -256,6 +256,14 @@ MUTATIONS = (
         "return {k: v for k, v in base.items() if k not in retired_units(db)}",
         "return base",
         "packages/backend/tests/test_unit_lifecycle.py::test_project_transfer",
+    ),
+    Mutation(
+        "frontend",
+        "JSONスキーマの項目名を文字列値と同じ色にする",
+        "packages/frontend/src/web_app/components/api_docs.py",
+        'kind = "key"',
+        'kind = "string"',
+        "packages/frontend/tests/test_components.py::test_schema_block_preserves_json_tokens",
     ),
     Mutation(
         "frontend",

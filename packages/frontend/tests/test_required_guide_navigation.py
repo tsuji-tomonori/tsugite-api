@@ -585,3 +585,58 @@ def test_header_search_opens_a_catalog_for_the_entered_words(
     monkeypatch.setattr(shell, "go", go)
     asyncio.run(shell.global_search())
     go.assert_awaited_once_with("catalog", query="倉庫別の在庫")
+
+
+@pytest.mark.parametrize(
+    ("authenticated", "error"),
+    [
+        pytest.param(
+            False,
+            False,
+            id="login-success",
+            marks=pytest.mark.case_detail("ログイン前の完了通知を閉じる。"),
+        ),
+        pytest.param(
+            False, True, id="login-error", marks=pytest.mark.case_detail("ログイン前のエラーを閉じる。")
+        ),
+        pytest.param(
+            True,
+            False,
+            id="portal-success",
+            marks=pytest.mark.case_detail("ログイン後の完了通知を閉じる。"),
+        ),
+        pytest.param(
+            True, True, id="portal-error", marks=pytest.mark.case_detail("ログイン後のエラーを閉じる。")
+        ),
+    ],
+)
+def test_dismiss_current_notice(
+    portal_module: PortalModule, monkeypatch: pytest.MonkeyPatch, authenticated: bool, error: bool
+) -> None:
+    """全画面の閉じるボタンで現在の通知が消え、次の通知を表示できる。"""
+    events = BrowserEvents(monkeypatch)
+    shell = portal_module("runtime.portal_shell")
+    ui = portal_module("runtime.portal_ui")
+    window = Mock()
+    window.location.hash = "#/guide"
+    monkeypatch.setattr(shell, "window", window)
+    monkeypatch.setattr(ui, "window", window)
+    ui.ctx.update(config=CONFIG, me=profile() if authenticated else None, message="結果", error=error)
+    _, dom = render(shell.Portal.populate, Mock())
+    button = next(
+        node
+        for node in dom.getElementsByTagName("button")
+        if node.getAttribute("aria-label") == "メッセージを閉じる"
+    )
+    assert visible_text(button) == "×" and button.getAttribute("type") == "button"
+    message = button.parentNode.getElementsByTagName("span")[0]
+    assert visible_text(message) == "結果"
+    assert message.getAttribute("role") == ("alert" if error else "status")
+    event = Mock()
+    events.dispatch(button, "click", event)
+    event.currentTarget.closest.assert_called_once_with(".notice")
+    event.currentTarget.closest.return_value.remove.assert_called_once_with()
+    assert not ui.ctx["message"] and not ui.ctx["error"]
+    assert "メッセージを閉じる" not in render(shell.Portal.populate, Mock())[1].toxml()
+    ui.ctx["message"] = "次の結果"
+    assert "次の結果" in visible_text(render(shell.Portal.populate, Mock())[1])
