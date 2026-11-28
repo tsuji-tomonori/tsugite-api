@@ -9,6 +9,23 @@
 .chat-agent { justify-self: stretch; border: 1px solid var(--line); }
 .chat-text { white-space: pre-wrap; overflow-wrap: anywhere; }
 .chat-user p, .chat-agent > p { margin-block: 4px; }
+@media (prefers-reduced-motion: no-preference) {
+  .chat-pending::before {
+    content: "";
+    display: inline-block;
+    width: 0.85em;
+    height: 0.85em;
+    margin-inline-end: 0.5em;
+    vertical-align: -0.08em;
+    border: 2px solid currentColor;
+    border-inline-end-color: transparent;
+    border-radius: 50%;
+    animation: chat-spin 1s linear infinite;
+  }
+}
+@keyframes chat-spin {
+  to { transform: rotate(1turn); }
+}
 .chat-source { padding: 10px 12px; border-left: 2px solid var(--field-edge); margin-top: 10px; }
 .chat-source p { margin-block: 4px; }
 .chat-source ol { padding-left: 1.6em; }
