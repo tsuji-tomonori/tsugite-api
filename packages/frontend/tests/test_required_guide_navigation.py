@@ -173,7 +173,7 @@ def test_demo_login_and_logout_restore_anonymous_home(
     portal_module: PortalModule,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """デモの利用者として入ると本人の所属を読み込み、ログアウトでホームの匿名状態に戻る。"""
+    """デモの利用者として入ると本人の所属を読み込み、ログアウトで未ログイン状態に戻る。"""
     session = portal_module("runtime.portal_session")
     client = portal_module("apis.client")
     monkeypatch.setattr(client, "store", Mock())
