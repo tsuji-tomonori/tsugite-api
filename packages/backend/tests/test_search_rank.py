@@ -25,6 +25,8 @@ def test_hybrid_retrieval():
     assert set(rank_assets(rows, "inventory", "semantic")) == {stock, exact}
     assert rank_assets(rows, "inventory") == [exact, stock]
     assert rank_assets(reversed(rows), "inventory") == [exact, stock]
+    assert rank_assets(rows, "ｉｎｖ", "lexical") == [exact]
+    assert rank_assets(rows, "vent", "lexical") == []
     assert rank_assets(rows, "天体観測") == []
     assert set(rank_assets(rows, "readRecord", "lexical")) == set(rows)
     assert rank_assets(rows, " ") == sorted(rows, key=lambda a: (a.name, a.id))
