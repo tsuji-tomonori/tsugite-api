@@ -14,7 +14,7 @@ from runtime.portal_ui import ctx
 from components import product_views
 from components.controls import btn, field
 from components.list_layout import result_table
-from components.request_progress import request_progress
+from components.request_progress import request_progress, request_status
 
 
 def rights_page(incoming: bool, rows: list[dict[str, Any]]) -> None:
@@ -37,7 +37,7 @@ def rights_page(incoming: bool, rows: list[dict[str, Any]]) -> None:
                 else:
                     t.td(context)
                     with t.td():
-                        request_progress(row)
+                        request_status(row)
                 with t.td():
                     if row.get("applicant"):
                         t.p(
@@ -84,6 +84,9 @@ def rights_page(incoming: bool, rows: list[dict[str, Any]]) -> None:
                     if not incoming and row["status"] == "approved":
                         btn("APIを開く", go, "api/" + row["asset_id"])
                         btn("APIクライアントで開く", go, "console/" + row["asset_id"])
+            if not incoming:
+                with t.tr(), t.td(colspan=5):
+                    request_progress(row)
 
 
 def inbox() -> None:

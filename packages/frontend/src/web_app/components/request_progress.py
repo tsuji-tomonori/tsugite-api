@@ -22,18 +22,26 @@ def reviewer(step: str) -> str:
     return label
 
 
-def request_progress(row: dict[str, Any]) -> None:
-    """申請一覧に状態を示し、展開すると段階別に担当と判断結果を示す。"""
+def request_status(row: dict[str, Any]) -> None:
+    """一覧に申請状態と現在の段階番号・担当を示す。"""
     status = row["status"]
     evidence = row.get("application", {})
     steps = evidence.get("steps", [])
-    decisions = evidence.get("decisions", [])
     t.strong(LABEL[status], classes=status)
-    current = len(decisions)
+    current = len(evidence.get("decisions", []))
     if status == "pending" and steps and current < len(steps):
         t.p(f"{current + 1}/{len(steps)}段階　{reviewer(steps[current])}")
     elif status == "pending" and evidence.get("route") == "legacy":
         t.p("提供者または委任先が審査")
+
+
+def request_progress(row: dict[str, Any]) -> None:
+    """一覧の全列を使い、申請時の承認順と各段階の判断を表示する。"""
+    status = row["status"]
+    evidence = row.get("application", {})
+    steps = evidence.get("steps", [])
+    decisions = evidence.get("decisions", [])
+    current = len(decisions)
     with t.details():
         t.summary("承認経路")
         if not steps:
