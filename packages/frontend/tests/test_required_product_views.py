@@ -915,3 +915,44 @@ def test_owner_sees_publication_progress(portal_module: Module, portal: dict[str
     assert "却下されました。理由：仕様を修正" in text and "次回の公開申請（全3段階）" in text
     asset["publication_outcome"] = "withdrawn"
     assert "公開申請を取り下げました。" in visible(render(page)[1])
+
+
+def test_applicant_sees_request_progress(portal_module: Module, right: dict[str, Any]) -> None:
+    """同じ担当を含む経路の現在地、各段階の判断と申請の終了を区別できる。"""
+    render_request = portal_module("components.requests").rights_page
+    steps = ["admin", "admin", "unit/finance"]
+    approved = {"stage": "admin", "action": "approve", "actor": "山田", "reason": "用途を確認"}
+    rejected = {**approved, "action": "reject", "reason": "対象外の環境"}
+
+    def progress(status: str, decisions: list[dict[str, str]]) -> tuple[list[str], list[str]]:
+        doc = render(
+            render_request,
+            False,
+            [{**right, "status": status, "application": {"steps": steps, "decisions": decisions}}],
+        )[1]
+        rows = doc.getElementsByTagName("table")[1].getElementsByTagName("tbody")[0]
+        current = [visible(e) for e in doc.getElementsByTagName("p") if "段階" in visible(e)]
+        return [visible(r) for r in rows.getElementsByTagName("tr")], current
+
+    rows, current = progress("pending", [approved])
+    assert current == ["2/3段階　管理者"]
+    assert rows == [
+        "1 管理者 承認済み 山田　用途を確認",
+        "2 管理者 承認待ち —",
+        "3 financeのリーダー 未到達 —",
+    ]
+    rows, current = progress("rejected", [approved, rejected])
+    assert not current and "却下 山田　対象外の環境" in rows[1] and "未到達" in rows[2]
+    rows, current = progress("withdrawn", [approved])
+    assert not current and "取下げ" in rows[1] and "未到達" in rows[2]
+    for status in ("approved", "revoked"):
+        rows, current = progress(status, [approved, approved, {**approved, "stage": steps[2]}])
+        assert not current and all("承認済み" in row for row in rows)
+
+    for evidence, expected in [
+        ({"route": "auto"}, "自動承認"),
+        ({"route": "legacy"}, "商品共通の承認ルール"),
+        ({}, "この申請には承認経路の記録がありません。"),
+    ]:
+        doc = render(render_request, False, [{**right, "application": evidence}])[1]
+        assert expected in visible(doc)
