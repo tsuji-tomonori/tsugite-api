@@ -91,6 +91,14 @@ MUTATIONS = (
     ),
     Mutation(
         "frontend",
+        "待機アイコンをボタンの文字色から固定色に戻す",
+        "packages/frontend/public/ui.css",
+        "background-color: currentColor;",
+        "background-color: gold;",
+        "tests/e2e/browser/test_busy_icon.py::test_busy_icon_follows_button_color",
+    ),
+    Mutation(
+        "frontend",
         "JSONスキーマの項目名を文字列値と同じ色にする",
         "packages/frontend/src/web_app/components/api_docs.py",
         'kind = "key"',

@@ -15,7 +15,7 @@
 > Quint entitlement.principalTest — 本人に限定した権利は別人・共有キー・システムから使えない。
 > 実装検証 test_trial_uses_approved_environments_and_reuses_personal_credential — 実際の画面・トークン交換のエラー形式・利用申請への導線を確認する。
 
-操作の仕様と実行欄を横に並べ、狭い画面では縦に並べる。OpenAPI原本はJSONでダウンロードできる。利用申請は専用画面で行う。入力欄には必須・任意を示し、送信中はボタンの色・文字・砂時計で状態を伝える。実行後はURLと本文を反映したcurlコマンドをコピーできる。認証トークンはシェル変数で参照する。
+操作の仕様と実行欄を横に並べ、狭い画面では縦に並べる。OpenAPI原本はJSONでダウンロードできる。利用申請は専用画面で行う。入力欄には必須・任意を示し、送信中は実行中の文言を表示し、その右にボタンの文字と同じ色の砂時計を添える。実行後はURLと本文を反映したcurlコマンドをコピーできる。認証トークンはシェル変数で参照する。
 
 > 実装検証 test_api_docs_runs_and_copies_curl — 実際の画面・トークン交換のエラー形式・利用申請への導線を確認する。
 
@@ -36,6 +36,7 @@
 
 - 受入テスト `packages/frontend/tests/test_required_product_trial.py::test_api_docs_runs_and_copies_curl`
 
+- 受入テスト `tests/e2e/browser/test_api_docs.py::test_openapi_key_console` / `busy-hourglass.png`
 - 受入テスト `tests/e2e/browser/test_api_docs.py::test_openapi_key_console` / `response.png`
 - 受入テスト `packages/backend/tests/test_quint_policy.py::test_entitlement_policy`
 - 受入テスト `packages/frontend/tests/test_api_client.py::test_trial_uses_approved_environments_and_reuses_personal_credential`
@@ -51,3 +52,4 @@
 - 2026-11-26 方針ごとの検証先と観測する結果を明記した。
 
 - 2026-11-28 APIカタログでスキーマの項目名と値を読み分けられるようにした。
+- 2026-11-28 ライト・ダーク両方の配色に合わせるため、待機中の砂時計をボタンの文字と同じ色の線画に統一した。
