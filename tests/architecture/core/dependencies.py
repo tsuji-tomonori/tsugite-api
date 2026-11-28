@@ -9,6 +9,7 @@ from .project import ROOT
 MODULES = {
     "model": "モデル",
     "agent": "エージェント",
+    "api_auth": "API呼び出し認証",
     "app": "バックエンド",
     "tsugite_db": "データベース",
     "web_app": "フロント",
@@ -20,6 +21,7 @@ MODULES = {
 PACKAGE_MODULES = {
     "agent": "agent",
     "model": "model",
+    "api-auth": "api_auth",
     "backend": "app",
     "database": "tsugite_db",
     "frontend": "web_app",
@@ -47,6 +49,7 @@ LIBRARIES = {
     "tokenizers": "モデル",
 }
 ALLOWED = {
+    "API呼び出し認証": {"バックエンド", "データベース", "HTTPフレームワーク"},
     "バックエンド": {"データベース", "エージェント", "HTTPフレームワーク"},
     "サンプルAPI": {"HTTPフレームワーク"},
     "データベース": set(),

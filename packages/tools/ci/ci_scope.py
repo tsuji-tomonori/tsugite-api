@@ -28,6 +28,8 @@ TOOLS = "packages/tools/tests"
 ARCHITECTURE = "tests/architecture"
 AGENT = "packages/agent/tests"
 MODEL = "packages/model/tests"
+#: API呼び出し認証
+API_AUTH = "packages/api-auth/tests"
 #: バックエンド
 BACKEND = "packages/backend/tests"
 #: データベース
@@ -65,11 +67,25 @@ def affected(path, suites):
     ):
         return set()
     if path == "packages/backend/src/app/core/log_record.py":
-        return {AGENT, MODEL, BACKEND, FRONTEND, BROWSER, TOOLS, INFRA, "types", "aws", "aws_portal"}
+        return {
+            API_AUTH,
+            AGENT,
+            MODEL,
+            BACKEND,
+            FRONTEND,
+            BROWSER,
+            TOOLS,
+            INFRA,
+            "types",
+            "aws",
+            "aws_portal",
+        }
+    if path.startswith("packages/api-auth/"):
+        return {API_AUTH, BACKEND, INFRA, TOOLS, "types", "aws", "audit"}
     if path.startswith("packages/backend/"):
-        return {AGENT, BACKEND, BROWSER, TOOLS, "types", "design", "aws"}
+        return {API_AUTH, AGENT, BACKEND, BROWSER, TOOLS, "types", "design", "aws"}
     if path.startswith("packages/database/"):
-        return {DATABASE, AGENT, BACKEND, BROWSER, TOOLS, "types", "design", "aws"}
+        return {API_AUTH, DATABASE, AGENT, BACKEND, BROWSER, TOOLS, "types", "design", "aws"}
     if path.endswith(("/web_app/content/guide_content.py", "/web_app/content/guide_search.py")):
         return {AGENT, FRONTEND, BROWSER, BACKEND, "types"}
     if path == "packages/tools/packaging/build_frontend.py":
@@ -85,7 +101,7 @@ def affected(path, suites):
     if path.startswith("packages/frontend/"):
         return {FRONTEND, BROWSER}
     if path == "packages/agent/pyproject.toml":
-        return {AGENT, BACKEND, BROWSER, INFRA, TOOLS, "types", "audit", "aws"}
+        return {API_AUTH, AGENT, BACKEND, BROWSER, INFRA, TOOLS, "types", "audit", "aws"}
     if path.startswith("packages/agent/"):
         return {AGENT, BACKEND, BROWSER, INFRA, "types", "audit", "aws"}
     if path.startswith("packages/model/"):

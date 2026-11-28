@@ -59,6 +59,7 @@ def distribution_root(tmp_path, monkeypatch):
     for path in (
         "packages/agent/src/agent/retrieval.py",
         "packages/sample_api/src/sample_api/handler.py",
+        "packages/api-auth/src/api_auth/authorizer.py",
         "packages/backend/src/app/main.py",
         "packages/backend/src/app/core/log_record.py",
         "packages/database/src/tsugite_db/models.py",
@@ -107,6 +108,11 @@ def test_backend_build_includes_migrations_and_reproducible_layers(distribution_
         "packages/frontend/src/web_app/content/guide_content.py",
     ):
         assert (package / name).read_bytes() == Path(name).name.encode()
+    auth = out / "api-auth"
+    assert (auth / "api_auth/authorizer.py").read_bytes() == b"authorizer.py"
+    assert (auth / "app/core/log_record.py").is_file()
+    assert (auth / "tsugite_db/models.py").is_file()
+    assert not (package / "api_auth").exists()
     assert versions == {
         "runtime": "3.15",
         "sample-api": "3.15",

@@ -6,6 +6,7 @@ requires-python = "==3.15.*"
 members = [
     "tsugite-agent",
     "tsugite-api",
+    "tsugite-api-auth",
     "tsugite-backend",
     "tsugite-database",
     "tsugite-e2e",
@@ -1927,6 +1928,25 @@ dev = [
     { name = "schemathesis", specifier = ">=4,<5" },
 ]
 quality-docs = [{ name = "pyyaml" }]
+
+[[package]]
+name = "tsugite-api-auth"
+version = "0.1.0"
+source = { editable = "packages/api-auth" }
+dependencies = [
+    { name = "fastapi" },
+    { name = "sqlalchemy" },
+    { name = "tsugite-backend" },
+    { name = "tsugite-database" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "fastapi" },
+    { name = "sqlalchemy", specifier = ">=2,<3" },
+    { name = "tsugite-backend", editable = "packages/backend" },
+    { name = "tsugite-database", editable = "packages/database" },
+]
 
 [[package]]
 name = "tsugite-backend"

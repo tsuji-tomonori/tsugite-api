@@ -36,7 +36,7 @@ def test_access_boundaries(tmp_path, request):
         "AWS::CloudFormation::CustomResource", {"Properties": {"Revision": Match.any_value()}}
     )
     functions = template.find_resources("AWS::Lambda::Function")
-    for handler in ("app.main.handler", "app.authorizer.handler"):
+    for handler in ("app.main.handler", "api_auth.authorizer.handler"):
         (runtime,) = (f for f in functions.values() if f["Properties"].get("Handler") == handler)
         assert schema in runtime["DependsOn"]
     template.has_resource_properties(
@@ -90,7 +90,7 @@ def test_access_boundaries(tmp_path, request):
     assert header["HeaderValue"] == {
         "Fn::Join": ["", ["{{resolve:secretsmanager:", {"Ref": secret_id}, ":SecretString:::}}"]]
     }
-    for handler in ("app.main.handler", "app.authorizer.handler"):
+    for handler in ("app.main.handler", "api_auth.authorizer.handler"):
         (function,) = template.find_resources(
             "AWS::Lambda::Function", {"Properties": {"Handler": handler}}
         ).values()

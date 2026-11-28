@@ -11,7 +11,7 @@ from .functions import EVENT_PYTHON, catalog_function
 
 
 class ApiRuntime(Construct):
-    def __init__(self, scope: Construct, key: str, cluster, param, code, dependency_code):
+    def __init__(self, scope: Construct, key: str, cluster, param, code, auth_code, dependency_code):
         super().__init__(scope, key)
         secret = sm.Secret(
             self, "OriginKey", generate_secret_string=sm.SecretStringGenerator(exclude_punctuation=True)
@@ -73,5 +73,11 @@ class ApiRuntime(Construct):
             iam.PolicyStatement(actions=["s3:PutObject"], resources=[archive.arn_for_objects("specs/*")])
         )
         self.authorizer = catalog_function(
-            self, "Access", "app.authorizer.handler", runtime_env, code, self.dependencies, role
+            self,
+            "Access",
+            "api_auth.authorizer.handler",
+            runtime_env,
+            auth_code,
+            self.dependencies,
+            role,
         )
