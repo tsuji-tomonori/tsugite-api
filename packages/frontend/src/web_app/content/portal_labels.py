@@ -13,6 +13,11 @@ LABEL = {
 
 ACTIONS = {
     "register": "下書き登録",
+    "publication.submit": "公開申請",
+    "publication.approve": "公開申請を承認",
+    "publication.reject": "公開申請を却下",
+    "publication.withdraw": "公開申請を取り下げ",
+    "publication.policy": "提供ガイドライン変更",
     "publish": "公開",
     "unpublish": "掲載取り下げ",
     "apply": "利用申請",
@@ -37,14 +42,4 @@ ACTIONS = {
     "invoke.end": "応答",
     "invoke.denied": "呼び出し拒否",
     "invoke.error": "呼び出しエラー",
-}
-
-
-ROLE_LABELS = {
-    "external": "登録ユーザー",
-    "Cognito": "登録ユーザー",
-    "provider": "提供者",
-    "consumer": "利用者",
-    "admin": "管理者",
-    "auditor": "監査担当",
 }

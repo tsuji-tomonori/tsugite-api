@@ -3,10 +3,12 @@ from __future__ import annotations
 
 from typing import Any
 
-from actions.requests import decide
+from actions.requests import decide, save_guidelines
 from content.portal_labels import ACTIONS, LABEL
+from js import document
 from puepy import t
 from routing.portal_navigation import go
+from runtime.portal_ui import ctx
 
 from components import product_views
 from components.controls import btn, field
@@ -37,13 +39,8 @@ def rights_page(incoming: bool, rows: list[dict[str, Any]]) -> None:
                             + row["applicant"]
                         )
                     t.p("利用目的　" + row["reason"])
-                    stage = {"department": "所属部署の承認待ち", "provider": "提供者の承認待ち"}.get(
-                        row.get("stage", "")
-                    )
-                    if row.get("stage", "") and row["stage"].startswith("unit/"):
-                        stage = row["stage"][5:] + " 部署の承認待ち"
-                    if stage:
-                        t.p(stage)
+                    if stage := row.get("stage"):
+                        t.p(product_views.step_label(stage) + "の承認待ち")
                     evidence = row.get("application", {})
                     for decision in evidence.get("decisions", []):
                         t.p(
@@ -80,3 +77,42 @@ def rights_page(incoming: bool, rows: list[dict[str, Any]]) -> None:
                     if not incoming and row["status"] == "approved":
                         btn("APIを開く", go, "api/" + row["asset_id"])
                         btn("APIクライアントで開く", go, "console/" + row["asset_id"])
+
+
+def inbox() -> None:
+    """公開の審査と利用申請を表示する。"""
+    if ctx["me"].get("admin"):
+        policy = ctx.get("publication_policy", {})
+        units = ctx.get("policy_directory", {}).get("units", [])
+
+        def manage(event: Any) -> None:
+            target = event.target
+            if target.getAttribute("data-add") == "step":
+                template = document.getElementById("publication-template").firstElementChild
+                document.getElementById("publication-steps").appendChild(template.cloneNode(True))
+            elif target.getAttribute("data-remove") == "step":
+                target.closest(".approval-step").remove()
+
+        with t.details(classes="box", on_click=manage):
+            t.summary("提供ガイドラインと公開承認の設定")
+            field(
+                "提供ガイドライン",
+                "publication-guidelines",
+                textarea=True,
+                text=policy.get("guidelines", ""),
+            )
+            t.p("上から順に承認を求めます。保存後に届く公開申請から適用します。")
+            with t.div(id="publication-steps"):
+                for step in policy.get("steps", ["admin"]):
+                    product_views.step_row(step, units)
+            with t.div(id="publication-template", hidden=True):
+                product_views.step_row("admin", units)
+            t.button("承認段階を追加", type="button", classes="btn", data_add="step")
+            btn("提供ガイドラインと承認順を保存", save_guidelines)
+    t.h2("公開申請")
+    for asset in ctx.get("publication_requests", []):
+        t.a(asset["name"], href="#/api/" + asset["id"])
+    if not ctx.get("publication_requests"):
+        t.p("現在、判断を待っている公開申請はありません。")
+    t.h2("利用申請")
+    rights_page(True, ctx["rows"])

@@ -50,6 +50,34 @@ class ApplicationField(Input):
     allowed_values: list[Answer] = Field(default_factory=list, max_length=100)
 
 
+ReviewStep = Annotated[
+    str,
+    Field(
+        pattern=r"^(admin|project_leader|provider|department|unit/[a-z][a-z0-9-]{0,62}|person/[a-zA-Z0-9_.@+-]{1,180})$"
+    ),
+]
+
+
+#: 管理者が設定する商品公開の条件
+class PublicationPolicy(Input):
+    #: 提供ガイドラインの版（未設定は0）
+    revision: int = Field(default=0, ge=0)
+    #: 申請者と審査者が参照する提供指針
+    guidelines: str = Field(default="", max_length=8000)
+    #: 承認を必要とする順序
+    steps: list[ReviewStep] = Field(default_factory=lambda: ["admin"], min_length=1, max_length=12)
+
+
+#: 公開申請への判断
+class PublicationDecision(Input):
+    #: 承認する場合は真
+    approved: bool
+    #: 判断対象の商品版
+    revision: int = Field(ge=1)
+    #: 判断の理由
+    reason: str = Field(min_length=1, max_length=1000)
+
+
 #: 環境別の利用条件・承認設定
 class Offer(Input):
     #: 申請者に表示する案内
@@ -59,9 +87,7 @@ class Offer(Input):
     #: 申請の承認経路
     route: Route = "provider"
     #: 承認担当の順序
-    steps: list[Annotated[str, Field(pattern=r"^(provider|department|unit/[a-z][a-z0-9-]{0,62})$")]] = (
-        Field(default_factory=list[str], max_length=12)
-    )
+    steps: list[ReviewStep] = Field(default_factory=list[str], max_length=12)
     #: 追加の申請項目
     fields: list[ApplicationField] = Field(default_factory=list[ApplicationField], max_length=20)
 
@@ -91,6 +117,8 @@ ApiSlug = Annotated[
 class ListingInput(Input):
     #: 提供プロジェクトの識別子
     owner: str = Field(min_length=1, max_length=63)
+    #: 個人が責任を持つ場合の利用者識別子（未指定なら提供プロジェクト）
+    responsible: str | None = Field(None, max_length=180)
     #: API名
     name: str = Field(min_length=1, max_length=120)
     #: APIの用途・概要
@@ -125,6 +153,8 @@ class Listing(BaseModel):
     id: str
     #: 呼び出しURLで使うAPI識別名
     slug: str | None = None
+    #: 個人が責任を持つ場合の利用者識別子（未指定なら提供プロジェクト）
+    responsible: str | None = Field(None, max_length=180)
     #: API名
     name: str
     #: 提供プロジェクトの識別子
@@ -133,6 +163,8 @@ class Listing(BaseModel):
     summary: str
     #: 利用できる提供環境
     environments: list[Env]
+    #: 公開を待っている承認段階
+    publication_stage: str | None = None
     #: カタログで公開中か
     published: bool
     #: 更新時の競合検出に使う版番号
@@ -153,6 +185,12 @@ class CatalogPage(BaseModel):
 
 #: カタログ掲載APIの詳細
 class Detail(Listing):
+    #: 公開責任者または提供プロジェクトの表示名
+    responsible_label: str = ""
+    #: 公開申請時の提供ガイドライン
+    publication_guidelines: str = ""
+    #: 現在の利用者が公開判断できるか
+    can_review_publication: bool = False
     #: 管理者が全環境の呼び出しを停止しているか
     suspended: bool = False
     #: 提供環境ごとの利用条件

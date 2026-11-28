@@ -12,7 +12,7 @@ import httpx
 import pytest
 from playwright.sync_api import Locator, Page, expect, sync_playwright
 
-from tests.support.catalog import FORM, approved, headers, invocation_headers
+from tests.support.catalog import FORM, approved, headers, invocation_headers, publish_asset
 from tests.support.catalog_journey import browser_evidence, navigate
 from tests.support.list_layout import visible_table_ratio
 from tests.support.portal_server import serve_portal
@@ -46,7 +46,7 @@ def publish(
 ) -> tuple[str, dict[str, Any]]:
     product = api.post("/api/apis", headers=owner, json=form).raise_for_status().json()
     url = "/api/apis/" + product["id"]
-    return url, api.put(url + "/publication?published=true", headers=owner).raise_for_status().json()
+    return url, publish_asset(api, url, owner).raise_for_status().json()
 
 
 def test_withdraw_pending(portal_session: PortalSession) -> None:
@@ -85,7 +85,7 @@ def test_release_history(portal_session: PortalSession) -> None:
         params={"revision": first["revision"]},
         json={**update, "release_note": "稼働状況を追加"},
     ).raise_for_status()
-    api.put(url + "/publication?published=true", headers=owner).raise_for_status()
+    publish_asset(api, url, owner).raise_for_status()
     open_portal(api, page, "利用チーム")
     navigate(page, "APIカタログ")
     page.get_by_role("link", name="在庫", exact=True).click()

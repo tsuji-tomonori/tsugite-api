@@ -26,6 +26,14 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
+        "publication",
+        "指定した順番を飛ばして管理者が公開を承認できる",
+        "packages/backend/src/app/core/publication.py",
+        'return actor.subject != pending["applicant"] and assigned(',
+        'return actor.admin or actor.subject != pending["applicant"] and assigned(',
+        "packages/backend/tests/test_quint_publication.py::test_publication_review",
+    ),
+    Mutation(
         "chat-wait",
         "回答待ちの表示からリングを外す",
         "packages/frontend/src/web_app/components/chat_views.py",

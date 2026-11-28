@@ -33,3 +33,7 @@
 @media (max-width: 960px) {
   .operation-columns { grid-template-columns: minmax(0, 1fr); }
 }
+
+.approval-step:not(:has(option[value="person/"]:checked, option[value="unit/"]:checked)) .step-identifier {
+    display: none;
+}

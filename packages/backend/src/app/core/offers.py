@@ -4,6 +4,7 @@
 import json
 from typing import Any
 
+from app.core.publication import assigned
 from app.core.workspace import delegated
 from fastapi import HTTPException
 from tsugite_db.models import now
@@ -63,14 +64,8 @@ def submission(asset, data, actor):
 
 
 def can_review(db, actor, asset, grant):
-    if grant.stage and grant.applicant == actor.subject:
+    if grant.applicant == actor.subject:
         return False
-    if grant.stage and grant.stage.startswith("unit/"):
-        return grant.stage[5:] in actor.leads
-    if grant.stage == "department":
-        return grant.applicant != actor.subject and bool(
-            actor.leads.intersection(grant.application["departments"])
-        )
-    if grant.stage == "provider":
-        return asset.owner in actor.owners
+    if grant.stage:
+        return assigned(grant.stage, actor, asset.owner, grant.application.get("departments", []))
     return asset.owner in actor.owners or delegated(db, actor, asset, grant)

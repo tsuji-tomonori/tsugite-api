@@ -19,7 +19,7 @@ def directory_fields(row, account=None):
     if (
         (row is None or row.email_synced_at is None)
         and account
-        and account.role in {"consumer", "provider"}
+        and account.role in {"consumer", "provider", ""}
         and re.fullmatch(INVITATION_EMAIL, account.username)
     ):
         email = account.username

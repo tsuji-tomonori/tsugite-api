@@ -29,6 +29,7 @@ def is_test_consumer(profile: dict[str, object], subject: str) -> bool:
         and profile.get("subject") == subject
         and profile.get("admin") is False
         and profile.get("auditor") is False
-        and profile.get("owners") == []
+        and isinstance(profile.get("projects"), list)
+        and profile.get("owners") == profile["projects"]
         and profile.get("leads") == []
     )

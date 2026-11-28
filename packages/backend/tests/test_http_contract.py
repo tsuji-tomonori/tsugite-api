@@ -4,7 +4,7 @@ from unittest.mock import Mock
 from fastapi.routing import APIRoute, iter_route_contexts
 from tsugite_db.session import session
 
-from tests.support.catalog import FORM, headers
+from tests.support.catalog import FORM, headers, publish_asset
 from tests.support.http_contract import validation_request
 
 
@@ -131,7 +131,7 @@ def test_catalog_publication_conflicts(portal, monkeypatch):
     )
     assert response.status_code == 409
     monkeypatch.setattr("app.apis.catalog.publish.workspace_targets", lambda db: {})
-    response = portal.put(path + "/publication", params={"published": True}, headers=owner)
+    response = publish_asset(portal, path, owner)
     assert response.status_code == 409
 
 
