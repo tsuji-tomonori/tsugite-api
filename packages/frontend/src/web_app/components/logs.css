@@ -9,3 +9,12 @@
 .log-table td:first-child, .log-table td:nth-child(2) { min-width: 10rem; }
 .log-detail th { width: 32%; }
 .log-links { align-items: center; flex-wrap: wrap; gap: 1.25rem; }
+
+/* 操作を同じ行に保ち、展開した検索条件には操作行全体の幅を使う。 */
+.log-tools {
+    container-type: inline-size;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+}
+.log-tools > .list-disclosure > .disclosure-body { width: 100cqi; }
