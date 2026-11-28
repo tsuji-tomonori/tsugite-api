@@ -14,6 +14,7 @@ from runtime.portal_ui import ctx
 from components import credential_views
 from components import workspace_views as directory
 from components.controls import btn, field
+from components.page_heading import page_heading
 from components.workspace_members import members_view, membership_editor
 from components.workspace_monitor import monitoring_view
 
@@ -158,6 +159,6 @@ def view(draw: Callable[[UnitView], None] | None = None) -> None:
 
 def list_heading(root: str) -> None:
     """組織一覧に見出しを付ける。"""
-    t.h1(kind_label(root)[1] + "一覧")
+    page_heading(kind_label(root)[1] + "一覧")
     t.span("使用中のデータパーツ", classes="metadata-badge")
     view()

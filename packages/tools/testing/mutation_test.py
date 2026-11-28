@@ -25,6 +25,14 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
+        "page-heading",
+        "画面名から共通の余白を適用するクラスを外す",
+        "packages/frontend/src/web_app/components/page_heading.py",
+        't.div(classes="page-heading")',
+        't.div(classes="heading")',
+        "packages/frontend/tests/test_required_guide_navigation.py::test_header_and_current_page_for_an_authenticated_reader",
+    ),
+    Mutation(
         "publication-progress",
         "承認順の現在地を一段ずらして表示する",
         "packages/frontend/src/web_app/components/product_views.py",

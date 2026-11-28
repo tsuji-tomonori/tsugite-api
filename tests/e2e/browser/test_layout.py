@@ -45,6 +45,14 @@ def assert_layout(page: Page) -> None:
     """展開後のページ幅、関連する欄の間隔、表見出しとグラフの実寸を確認する。"""
     page.evaluate("document.fonts.ready")
     page.evaluate("new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))")
+    heading = page.locator(".content > .page-heading")
+    expect(heading.locator("h1")).to_have_count(1)
+    expect(page.locator(".content h1")).to_have_count(1)
+    if not page.locator(".content > .notice").count():
+        inset = heading.evaluate("""el => {
+            return el.getBoundingClientRect().top - el.parentElement.getBoundingClientRect().top;
+        }""")
+        assert inset == (16 if page.viewport_size["width"] <= 780 else 24), (page.url, inset)
     assert_button_markers(page)
     page.locator("details").evaluate_all("nodes => nodes.forEach(node => node.open = true)")
     assert_button_markers(page)

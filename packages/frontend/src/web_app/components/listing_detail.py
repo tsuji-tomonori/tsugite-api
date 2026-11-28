@@ -16,6 +16,7 @@ from runtime.portal_ui import ctx
 
 from components import api_docs, operation_views, product_views
 from components.controls import btn, field
+from components.page_heading import page_heading
 
 
 def policy_form(
@@ -111,10 +112,10 @@ def detail_page() -> None:
     """商品情報・仕様・操作権限を組み立てる。"""
     a = ctx["detail"]
     if not a:
+        page_heading("APIの詳細")
         t.p("APIを読み込み中…")
         return
-    t.h1(a["name"])
-    t.p(a["summary"])
+    page_heading(a["name"], a["summary"])
     if ctx["me"]["admin"]:
         btn(
             "APIへのアクセスを再開" if a["suspended"] else "APIへのアクセスを一時停止",

@@ -33,6 +33,9 @@ def test_header_and_current_page_for_an_authenticated_reader(
     monkeypatch.setitem(ui.ctx, "me", profile())
     monkeypatch.setitem(ui.ctx, "config", CONFIG)
     _, dom = render(shell.Portal.populate, Mock())
+    headings = dom.getElementsByTagName("h1")
+    assert len(headings) == 1 and visible_text(headings[0]) == "使い方ガイド"
+    assert headings[0].parentNode.parentNode.getAttribute("class") == "page-heading"
     content = visible_text(dom)
     assert "継手API" in content and "reader-project" in content and "ログアウト" in content
     assert any(
