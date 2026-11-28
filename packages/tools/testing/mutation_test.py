@@ -267,6 +267,14 @@ MUTATIONS = (
     ),
     Mutation(
         "frontend",
+        "JSONスキーマの項目名を文字列値と同じ色にする",
+        "packages/frontend/src/web_app/components/api_docs.py",
+        'kind = "key"',
+        'kind = "string"',
+        "packages/frontend/tests/test_components.py::test_schema_block_preserves_json_tokens",
+    ),
+    Mutation(
+        "frontend",
         "API Docsで同じ商品の個人認証情報を毎回発行する",
         "packages/frontend/src/web_app/components/api_docs.py",
         "if project not in keys:",
