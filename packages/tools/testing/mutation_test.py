@@ -91,6 +91,14 @@ MUTATIONS = (
     ),
     Mutation(
         "frontend",
+        "待機アイコンをボタンの文字色から固定色に戻す",
+        "packages/frontend/public/ui.css",
+        "background-color: currentColor;",
+        "background-color: gold;",
+        "tests/e2e/browser/test_busy_icon.py::test_busy_icon_follows_button_color",
+    ),
+    Mutation(
+        "frontend",
         "認証情報の初期更新時刻を有効期間の5分前に固定する",
         "packages/frontend/src/web_app/components/credential_views.py",
         "default_ttl * 3 // 4",
