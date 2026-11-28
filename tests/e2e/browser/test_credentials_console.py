@@ -24,6 +24,9 @@ def test_credentials_console(tmp_path: Path, request: pytest.FixtureRequest) -> 
         sync_playwright() as pw,
     ):
         provider, user, admin = (headers(api, r) for r in ("provider", "consumer", "admin"))
+        api.patch(
+            "/api/me/profile", headers=user, json={"revision": 0, "full_name": "佐藤 花子"}
+        ).raise_for_status()
         asset, _, path = approved(api, provider, user)
         api.put(
             "/api/workspace/memberships",
@@ -66,7 +69,7 @@ def test_credentials_console(tmp_path: Path, request: pytest.FixtureRequest) -> 
                 if mode == "app":
                     page.get_by_label("認証情報の所有者").select_option("shared")
                     page.get_by_label("アプリを利用できる人").select_option("selected")
-                    page.get_by_label("consumer", exact=True).check()
+                    page.get_by_label("consumer（佐藤 花子）", exact=True).check()
                 if mode == "system":
                     expect(page.get_by_label("認証情報の所有者")).to_be_disabled()
                 ttl = page.get_by_label("トークンの有効期限（分）")
