@@ -34,6 +34,14 @@ MUTATIONS = (
         "packages/agent/tests/test_agent_retrieval.py::test_chat_does_not_promote_unrelated_sources",
     ),
     Mutation(
+        "frontend",
+        "初期画面のメニュー名を旧名称に戻す",
+        "packages/frontend/src/web_app/pages/home/__init__.py",
+        'Screen("home", "チャット",',
+        'Screen("home", "ホーム",',
+        "packages/frontend/tests/test_screen_registry.py::test_existing_routes_and_role_menus",
+    ),
+    Mutation(
         "deployed-e2e",
         "実環境でログインした利用者の識別子を照合しない",
         "tests/e2e/deployed/account.py",
