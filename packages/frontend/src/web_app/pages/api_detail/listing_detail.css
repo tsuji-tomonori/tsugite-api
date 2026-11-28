@@ -1,6 +1,11 @@
 /* 商品詳細の仕様と実行欄を配置する。 */
 .docs-actions { margin-block: 1.5rem; }
 .doc-operation { border-block-start: 1px solid var(--line); scroll-margin-top: 1rem; }
+.json-schema .json-key { color: light-dark(#174a89, #9ac6ff); }
+.json-schema .json-string { color: light-dark(#24633c, #9bd6a7); }
+.json-schema .json-number { color: light-dark(#8a420e, #ffc28b); }
+.json-schema .json-boolean { color: light-dark(#703589, #dfb3fa); }
+.json-schema .json-null { color: light-dark(#8c3255, #ffa6c4); }
 .doc-operation > summary { font-weight: 700; overflow-wrap: anywhere; padding-block: 1rem; }
 .operation-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(1.5rem, 3vw, 3rem); align-items: start; padding-block: .5rem 1.5rem; }
 .operation-definition { min-width: 0; }
