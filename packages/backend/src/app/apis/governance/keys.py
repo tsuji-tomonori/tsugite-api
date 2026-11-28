@@ -9,7 +9,7 @@ from typing import Annotated
 from app.apis.governance.directory import audit, manages
 from app.core import credential_policy
 from app.core.access_token import resolve
-from app.core.auth import Actor, bearer, check_member, identify
+from app.core.auth import Actor, bearer, check_member, identify_session
 from app.core.catalog import record
 from app.core.workspace import allowed_audience, ancestry, populate, private_project, units
 from app.dependencies import DB, User
@@ -155,7 +155,7 @@ def invocation_actor(db, token, headers) -> Actor:
             raise HTTPException(401)
         raw = token
     else:
-        actor = populate(db, identify(token))
+        actor = populate(db, identify_session(db, token))
         check_member(db, actor)
     if not (raw or selected):
         if actor is None:

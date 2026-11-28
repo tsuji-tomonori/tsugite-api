@@ -1,4 +1,70 @@
 {
+  "administrators.handoverTest": [
+    {
+      "caller": "",
+      "first": true,
+      "grant": false,
+      "response": 0,
+      "second": false,
+      "target": ""
+    },
+    {
+      "caller": "first",
+      "first": true,
+      "grant": false,
+      "response": 409,
+      "second": false,
+      "target": "first"
+    },
+    {
+      "caller": "second",
+      "first": true,
+      "grant": true,
+      "response": 403,
+      "second": false,
+      "target": "second"
+    },
+    {
+      "caller": "first",
+      "first": true,
+      "grant": true,
+      "response": 200,
+      "second": true,
+      "target": "second"
+    },
+    {
+      "caller": "first",
+      "first": true,
+      "grant": true,
+      "response": 200,
+      "second": true,
+      "target": "second"
+    },
+    {
+      "caller": "second",
+      "first": false,
+      "grant": false,
+      "response": 200,
+      "second": true,
+      "target": "first"
+    },
+    {
+      "caller": "first",
+      "first": false,
+      "grant": false,
+      "response": 403,
+      "second": true,
+      "target": "second"
+    },
+    {
+      "caller": "second",
+      "first": false,
+      "grant": false,
+      "response": 409,
+      "second": true,
+      "target": "second"
+    }
+  ],
   "audience.visibilityTest": [
     {
       "source": "none",
