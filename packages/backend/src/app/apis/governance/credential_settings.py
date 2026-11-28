@@ -11,6 +11,7 @@ from app.core.credential_policy import (
     operations,
     unit_bounds,
 )
+from app.core.member_profiles import directory_profiles
 from app.core.workspace import ancestry, private_project, units
 from app.dependencies import DB, User
 from app.schemas import outputs
@@ -34,8 +35,12 @@ def members_for(db, projects, extra=()):
         ]:
             members[r["subject"]] = r["username"]
     for s in extra:
-        members[s] = people.get(s, s)
-    return [{"subject": s, "username": n} for s, n in sorted(members.items())]
+        members.setdefault(s, people.get(s, s))
+    profiles = directory_profiles(db, members)
+    return [
+        {"subject": s, "username": n, "full_name": profiles[s].full_name if s in profiles else None}
+        for s, n in sorted(members.items())
+    ]
 
 
 def owner(db, asset_id, actor):

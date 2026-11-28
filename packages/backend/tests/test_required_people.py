@@ -80,7 +80,7 @@ def test_invitation_profile_and_retirement(portal, role):
 
 
 def test_self_edit_conflict_and_clear(portal):
-    """本人のプロフィール変更が古い編集画面から失われず、氏名を消しても本人の識別子は変わらない。"""
+    """本人のプロフィール変更が古い編集画面から失われず、氏名の削除を拒否し、表示名だけをクリアできる。"""
     user = headers(portal, "consumer")
     auditor = headers(portal, "auditor")
     url = "/api/me/profile"
@@ -106,6 +106,11 @@ def test_self_edit_conflict_and_clear(portal):
         headers=user,
         json={"full_name": None, "display_name": None, "revision": profile["revision"]},
     )
-    assert cleared.status_code == 200
-    assert cleared.json()["full_name"] is None and cleared.json()["display_name"] is None
+    assert cleared.status_code == 422
+    assert portal.get(url, headers=user).json() == profile
+    cleared = portal.patch(
+        url, headers=user, json={"display_name": None, "revision": profile["revision"]}
+    )
+    assert cleared.raise_for_status().json()["full_name"] == names["full_name"]
+    assert cleared.json()["display_name"] is None
     assert portal.get("/api/me", headers=user).json()["subject"] == original["subject"]

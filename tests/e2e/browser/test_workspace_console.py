@@ -41,7 +41,7 @@ def test_workspace_key_console(tmp_path: Path, request: pytest.FixtureRequest) -
         api.post(
             "/api/members",
             headers=headers(api, "admin"),
-            json={"email": email, "project": "finance", "role": "consumer"},
+            json={"full_name": "試験 花子", "email": email, "project": "finance", "role": "consumer"},
         ).raise_for_status()
         browser = pw.chromium.launch(executable_path=os.getenv("CHROMIUM_PATH") or None)
         admin, leader = (browser.new_page(viewport={"width": 1440, "height": 960}) for _ in range(2))

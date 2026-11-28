@@ -140,7 +140,12 @@ def test_role_screen_layout(tmp_path: Path, request: pytest.FixtureRequest) -> N
                 api.post(
                     "members",
                     headers=admin,
-                    json={"email": email, "role": "consumer", "project": "finance"},
+                    json={
+                        "full_name": "試験 花子",
+                        "email": email,
+                        "role": "consumer",
+                        "project": "finance",
+                    },
                 )
                 .raise_for_status()
                 .json()

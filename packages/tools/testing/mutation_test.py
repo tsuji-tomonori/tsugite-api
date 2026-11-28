@@ -203,6 +203,22 @@ MUTATIONS = (
     ),
     Mutation(
         "member-profile",
+        "招待時に氏名を省略できる",
+        "packages/backend/src/app/schemas/members.py",
+        "full_name: FullName",
+        "full_name: FullName | None = None",
+        "packages/backend/tests/test_member_profiles.py::test_invitation_requires_login_and_full_name",
+    ),
+    Mutation(
+        "frontend",
+        "一覧で氏名を表示名に置き換える",
+        "packages/frontend/src/web_app/components/member_identity.py",
+        'name = person.get("full_name")',
+        'name = person.get("display_name")',
+        "packages/frontend/tests/test_workspace_screens.py::test_direct_members_have_aligned_table_columns",
+    ),
+    Mutation(
+        "member-profile",
         "氏名と表示名の更新で監査イベントを書き込まない",
         "packages/backend/src/app/apis/governance/profiles.py",
         'member_event(db, request, actor, action, subject, ", ".join(changes))',

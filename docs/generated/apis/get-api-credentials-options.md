@@ -36,28 +36,46 @@ GET `/api/credentials/options`
 | API名 | assets[].name | 必須 | 文字列 |
 | 対象のAPI操作 | assets[].operations | 必須 | 配列 / 文字列 |
 | トークンの有効期間上限（分） | assets[].max_minutes | 必須 | 整数 |
-| 対象の利用者一覧 | members | 必須 | 配列 / [利用者の識別情報（Person）](../db/schemas.md#person) |
-| メールアドレス | members[].email | 必須 | 文字列 または 空値 |
-| 氏名 | members[].full_name | 必須 | 文字列 または 空値 |
-| 表示名 | members[].display_name | 必須 | 文字列 または 空値 |
+| 対象の利用者一覧 | members | 必須 | 配列 / [権限設定の候補に表示する氏名（NamedMember）](../db/schemas.md#namedmember) |
 | 対象利用者の識別子 | members[].subject | 必須 | 文字列 |
 | ログイン名 | members[].username | 必須 | 文字列 |
+| 氏名 | members[].full_name | 必須 | 文字列 または 空値 |
 | 組織別の有効期間上限 | limits | 必須 | 配列 / [組織ごとのトークン有効期間上限（UnitLimit）](../db/schemas.md#unitlimit) |
 | 有効期間上限を設定した組織名 | limits[].name | 必須 | 文字列 |
 | 組織の有効期間上限（分） | limits[].minutes | 必須 | 整数 |
 | トークンの有効期間上限（分） | max_minutes | 必須 | 整数 |
 | 対象プロジェクトの管理権限があるか | may_manage | 必須 | 真偽値 |
 
+### 403 application/json の項目
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 利用者に表示するエラー内容 | detail | 必須 | 文字列 |
+
+### 500 application/json の項目
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 問い合わせ用のエラー分類 | error_code | 必須 | 文字列、指定値 問い合わせ用のエラー分類（`INTERNAL_ERROR`） |
+| 利用者に表示するエラー内容 | detail | 必須 | 文字列 |
+
 ### 422 application/json の項目
 
 | 項目の和名 | 物理名 | 指定 | 型・制約 |
 | --- | --- | --- | --- |
-| 入力エラーの明細一覧 | detail | 任意 | 配列 / [入力エラーの項目別明細（ValidationError）](../db/schemas.md#validationerror) |
-| 入力エラーの発生箇所 | detail[].loc | 必須 | 配列 / 文字列 または 整数 |
-| 入力エラーの説明 | detail[].msg | 必須 | 文字列 |
-| 入力エラーの分類コード | detail[].type | 必須 | 文字列 |
-| エラーになった入力値 | detail[].input | 任意 | 任意の型 |
-| 入力エラーの補足情報 | detail[].ctx | 任意 | オブジェクト |
+| 入力エラーの明細一覧 | (HTTPValidationError).detail | 任意 | 配列 / [入力エラーの項目別明細（ValidationError）](../db/schemas.md#validationerror) |
+| 入力エラーの発生箇所 | (HTTPValidationError).detail[].loc | 必須 | 配列 / 文字列 または 整数 |
+| 入力エラーの説明 | (HTTPValidationError).detail[].msg | 必須 | 文字列 |
+| 入力エラーの分類コード | (HTTPValidationError).detail[].type | 必須 | 文字列 |
+| エラーになった入力値 | (HTTPValidationError).detail[].input | 任意 | 任意の型 |
+| 入力エラーの補足情報 | (HTTPValidationError).detail[].ctx | 任意 | オブジェクト |
+| 利用者に表示するエラー内容 | (ErrorDetail).detail | 必須 | 文字列 |
+
+### 401 application/json の項目
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 利用者に表示するエラー内容 | detail | 必須 | 文字列 |
 
 実装・認証依存で送出し得るHTTPエラー（エラーの詳細を示す `detail` を含むJSON）　401, 403, 503。
 
