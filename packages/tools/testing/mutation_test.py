@@ -26,6 +26,14 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
+        "chat-inquiry",
+        "モデルが類似と判定した商品をすべて候補に戻す",
+        "packages/agent/src/chat_retrieval.py",
+        "if key in grounded][:3]",
+        "if key in grounded or key in raw_semantic][:3]",
+        "packages/agent/tests/test_agent_retrieval.py::test_chat_does_not_promote_unrelated_sources",
+    ),
+    Mutation(
         "frontend",
         "初期画面のメニュー名を旧名称に戻す",
         "packages/frontend/src/web_app/pages/home/__init__.py",

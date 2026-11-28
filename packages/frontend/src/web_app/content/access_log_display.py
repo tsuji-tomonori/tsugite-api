@@ -53,7 +53,7 @@ def detail_fields(row: dict[str, Any]) -> list[tuple[str, str]]:
     ]
 
 
-def answer_log_question(row: dict[str, Any], question: str) -> str:
+def answer_log_question(row: dict[str, Any], question: str) -> str | None:
     """一件の記録から答えられる質問に回答する。"""
     text = question.casefold()
     topics = (
@@ -75,7 +75,14 @@ def answer_log_question(row: dict[str, Any], question: str) -> str:
         ),
     )
     labels = {label for words, group in topics if any(word in text for word in words) for label in group}
+    if not labels and text.strip(" ？?。") not in (
+        "概要",
+        "詳細",
+        "まとめ",
+        "概要を教えて",
+        "詳細を教えて",
+        "この呼び出しの概要を教えて",
+    ):
+        return None
     fields = detail_fields(row)
-    if not labels and not any(word in text for word in ("概要", "詳細", "まとめ", "何が", "教えて")):
-        return "この記録からは判断できません。開始・応答時刻、処理時間、結果、識別子について質問できます。詳しい調査は運営に問い合わせてください。"
     return "\n".join(f"{label}　{value}" for label, value in fields if not labels or label in labels)
