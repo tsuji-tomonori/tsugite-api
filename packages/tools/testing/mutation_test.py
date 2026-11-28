@@ -26,6 +26,14 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
+        "quint-diff",
+        "他の形式モデルの差分を業務ルールの更新として認める",
+        "packages/tools/design/formal_changes.py",
+        'if f"{FORMAL}/{domain}.qnt" not in changed:\n            return False',
+        'if f"{FORMAL}/{domain}.qnt" not in changed:\n            return True',
+        "packages/tools/tests/test_formal_changes.py::test_business_policy_requires_its_quint_domain",
+    ),
+    Mutation(
         "deployed-e2e",
         "実環境でログインした利用者の識別子を照合しない",
         "tests/e2e/deployed/account.py",
