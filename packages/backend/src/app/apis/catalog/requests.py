@@ -38,8 +38,6 @@ def requests(
             (Access.subject == actor.subject)
             | (Access.subject.is_(None) & Access.project.in_(actor.projects))
         )
-    elif not actor.leads:
-        stmt = stmt.where(Asset.owner.in_(actor.owners))
     if asset_id:
         stmt = stmt.where(Access.asset_id == asset_id)
     return [

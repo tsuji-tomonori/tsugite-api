@@ -92,7 +92,7 @@ def test_seed_publishes_each_edition_and_reuses_existing_inventory():
     publications = []
 
     def portal(request):
-        if request.url.path == "/demo/provider":
+        if request.url.path in {"/demo/provider", "/demo/admin"}:
             return httpx.Response(200, json={"access_token": "demo", "token": "demo"})
         if request.method == "GET" and request.url.path == "/apis":
             return httpx.Response(200, json=list(inventory.values()))
@@ -105,11 +105,15 @@ def test_seed_publishes_each_edition_and_reuses_existing_inventory():
             return httpx.Response(201, json=inventory[identifier])
         if request.method == "GET":
             return httpx.Response(200, json=inventory[request.url.path.split("/")[-1]])
+        if request.url.path.endswith("/publication-decisions"):
+            identifier = request.url.path.split("/")[-2]
+            publications.append(identifier)
+            inventory[identifier]["published"] = True
+            return httpx.Response(200, json=inventory[identifier])
         assert request.method == "PUT", str(request.url)
         prefix, identifier, operation = request.url.path.strip("/").split("/")
         assert (prefix, operation, request.url.params["published"]) == ("apis", "publication", "true")
-        publications.append(identifier)
-        inventory[identifier]["published"] = True
+        inventory[identifier]["revision"] = 2
         return httpx.Response(200, json=inventory[identifier])
 
     with httpx.Client(base_url="http://demo.test", transport=httpx.MockTransport(portal)) as client:

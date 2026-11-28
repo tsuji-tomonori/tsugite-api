@@ -1,7 +1,5 @@
 # members のAPIで扱う入出力モデルを定義する。
-from typing import Literal
-
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from app.core.member_profiles import INVITATION_EMAIL
 from app.schemas.base import Input
@@ -16,13 +14,14 @@ class Invitation(ProfileNames):
     email: str = Field(pattern=INVITATION_EMAIL, max_length=150)
     #: 招待先プロジェクトの識別子
     project: str
-    #: 利用者の役割
-    role: Literal[
-        #: 利用者
-        "consumer",
-        #: 提供者
-        "provider",
-    ]
+
+    @model_validator(mode="before")
+    @classmethod
+    def accept_legacy_invitation(cls, data):
+        # 旧クライアントの役割指定を受理し、所属だけを登録する。
+        if isinstance(data, dict) and data.get("role") in ("provider", "consumer"):
+            return {key: value for key, value in data.items() if key != "role"}
+        return data
 
 
 #: 個人の管理者ロール

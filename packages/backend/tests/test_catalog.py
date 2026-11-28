@@ -4,7 +4,7 @@ from copy import deepcopy
 from app.apis.gateway import allowed_path, operation_template
 from pytest_given import given, scenario, then, when
 
-from tests.support.catalog import FORM, SPEC, approved, headers, invocation_headers
+from tests.support.catalog import FORM, SPEC, approved, headers, invocation_headers, publish_asset
 
 
 def test_api_slug_is_unique_and_fixed(portal):
@@ -88,7 +88,7 @@ def test_lifecycle(portal):
         assert api.get("/api/apis?inventory=true", headers=p).json()[0]["id"] == key
     with when("APIを公開し、利用チームが検証環境へのアクセスを申請する"):
         assert api.put(url + "/publication?published=true", headers=u).status_code == 403
-        assert api.put(url + "/publication?published=true", headers=p).status_code == 200
+        assert publish_asset(api, url, p).status_code == 200
         assert len(api.get("/api/apis?q=棚卸", headers=u).json()) == 1
         apply = {"project": "finance", "environment": "sandbox", "reason": "月次の在庫確認"}
         assert (
@@ -157,7 +157,7 @@ def test_reapply(portal):
         u = headers(portal, "consumer")
         key = portal.post("/api/apis", headers=p, json=FORM).json()["id"]
         url = f"/api/apis/{key}"
-        portal.put(url + "/publication?published=true", headers=p)
+        publish_asset(portal, url, p)
     with when("利用者が申請し、提供者が却下する"):
         form = {"project": "finance", "environment": "sandbox", "reason": "検証"}
         row = portal.post(url + "/requests", json=form, headers=u).json()
@@ -235,7 +235,7 @@ def test_withdrawal_and_audit_visibility(portal, monkeypatch):
     created = portal.post("/api/apis", headers=owner, json=FORM).json()
     asset = created["id"]
     url = f"/api/apis/{asset}"
-    portal.put(url + "/publication?published=true", headers=owner).raise_for_status()
+    publish_asset(portal, url, owner).raise_for_status()
     path = f"/api/invoke/{asset}/sandbox/finance/items"
     call = invocation_headers(portal, user)
     assert portal.get(path, headers=call).status_code == 403

@@ -180,7 +180,7 @@ def test_audit_row_contains_correlation(portal_module: Module) -> None:
 
 
 def test_member_directory_and_invitation(portal_module: Module) -> None:
-    """管理者は登録済み利用者の名前・役割を確認し、氏名と表示名を添えて招待できる。"""
+    """管理者は登録済み利用者の名前・所属を確認し、氏名と表示名を添えて招待できる。"""
     ui = portal_module("runtime.portal_ui")
     view = portal_module("components.members")
     registered = dict(
@@ -194,7 +194,7 @@ def test_member_directory_and_invitation(portal_module: Module) -> None:
     )
     dom = render(view.members_view)[1]
     row = content(row_with(dom, "mail@example.test"))
-    for text in ("hayashi", "林明", "棚卸窓口", "利用者"):
+    for text in ("hayashi", "林明", "棚卸窓口", "stock"):
         assert text in row
     ids = {el.getAttribute("id") for el in dom.getElementsByTagName("input")}
     assert {"member-email", "member-full-name", "member-display-name"} <= ids
@@ -271,7 +271,7 @@ def test_read_and_change_notice_page(portal_module: Module, monkeypatch: pytest.
 
 
 def test_invite_and_show_members(portal_module: Module, monkeypatch: pytest.MonkeyPatch) -> None:
-    """管理者が招待を確定すると、指定した氏名・表示名・役割で登録し名簿を再取得する。"""
+    """管理者が招待を確定すると、指定した氏名・表示名・所属で登録し名簿を再取得する。"""
     actions = portal_module("actions.members")
     service = portal_module("apis.organization")
     page = portal_module("pages.members.data")
@@ -282,7 +282,6 @@ def test_invite_and_show_members(portal_module: Module, monkeypatch: pytest.Monk
         "member-email": "u2@example.test",
         "member-full-name": "林明",
         "member-display-name": "品質担当",
-        "member-role": "consumer",
         "member-project": "stock",
     }
     monkeypatch.setattr(actions, "value", form.__getitem__)
@@ -303,7 +302,6 @@ def test_invite_and_show_members(portal_module: Module, monkeypatch: pytest.Monk
             "email": "u2@example.test",
             "full_name": "林明",
             "display_name": "品質担当",
-            "role": "consumer",
             "project": "stock",
         }
     )
@@ -342,7 +340,7 @@ def test_confirm_member_removal(
 
 
 def test_identify_members_without_optional_names(portal_module: Module) -> None:
-    """氏名のない利用者もログイン名とメールで識別でき、利用者・提供者の役割を確認できる。"""
+    """氏名のない利用者もログイン名とメールで識別でき、所属プロジェクトを確認できる。"""
     ui = portal_module("runtime.portal_ui")
     view = portal_module("components.members")
     active = dict(
@@ -362,8 +360,8 @@ def test_identify_members_without_optional_names(portal_module: Module) -> None:
     first = row_with(dom, "new@example.test")
     removed_row = row_with(dom, "retired@example.test")
     assert any("削除" in content(b) for b in first.getElementsByTagName("button"))
-    assert "suzuki" in content(first) and "利用者" in content(first)
-    assert "yamada" in content(removed_row) and "提供者" in content(removed_row)
+    assert "suzuki" in content(first) and "利用者" not in content(first)
+    assert "yamada" in content(removed_row) and "提供者" not in content(removed_row)
 
 
 def test_later_notification_page_offers_previous_page(portal_module: Module) -> None:

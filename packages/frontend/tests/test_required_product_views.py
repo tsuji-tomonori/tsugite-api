@@ -661,7 +661,7 @@ def test_provider_publication_buttons_follow_status(
     """提供者の詳細画面に現在の掲載状態に合った公開操作と、既存の利用権を別々に示す。"""
     portal["me"].update(owners=["supply"], admin=True)
     detail = portal_module("components.listing_detail")
-    for published, action in [(False, "公開する"), (True, "掲載を取り下げる")]:
+    for published, action in [(False, "公開申請する"), (True, "掲載を取り下げる")]:
         portal["detail"]["published"] = published
         doc = render(detail.detail_page)[1]
         assert action in [visible(b) for b in doc.getElementsByTagName("button")]

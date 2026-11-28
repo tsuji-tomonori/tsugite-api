@@ -428,7 +428,7 @@ def test_governance_console(demo_url: str, request: pytest.FixtureRequest) -> No
             expect(provider.get_by_role("heading", name="棚卸・在庫照会")).to_be_visible()
             capture(provider, "renamed", "名称を変更した商品")
             provider.get_by_role("button", name="掲載を取り下げる").click()
-            expect(provider.get_by_role("button", name="公開する")).to_be_visible()
+            expect(provider.get_by_role("button", name="公開申請する")).to_be_visible()
             provider.get_by_role("button", name="APIを削除").click()
             expect(provider.get_by_text("APIを削除しました")).to_be_visible()
             capture(provider, "deleted", "削除操作の結果")

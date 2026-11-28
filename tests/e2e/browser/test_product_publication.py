@@ -8,7 +8,7 @@ import pytest
 from playwright.sync_api import expect, sync_playwright
 
 from tests.support.catalog import SPEC
-from tests.support.catalog_journey import navigate
+from tests.support.catalog_journey import approve_in_browser, navigate
 from tests.support.portal_server import serve_portal
 from tests.support.screenshots import capture_image
 
@@ -38,7 +38,8 @@ def test_publish_and_apply_from_product_page(tmp_path: Path, request: pytest.Fix
         owner.locator("#spec-file").set_input_files(
             {"name": "stock.json", "mimeType": "application/json", "buffer": json.dumps(spec).encode()}
         )
-        owner.get_by_role("button", name="保存して公開").click()
+        owner.get_by_role("button", name="保存して公開申請").click()
+        approve_in_browser(browser, owner, url, "在庫")
         expect(owner.get_by_role("button", name="掲載を取り下げる")).to_be_visible()
         user.goto(url)
         user.get_by_role("button", name="利用チーム", exact=True).click()

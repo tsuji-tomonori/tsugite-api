@@ -63,6 +63,26 @@ def inventory_form(asset: dict[str, Any] | None = None) -> None:
     )
     with t.div(classes="box"):
         listing_identity(item)
+        policy = ctx.get("publication_policy", {})
+        if policy.get("guidelines"):
+            t.h3("提供ガイドライン")
+            t.p(policy["guidelines"], classes="terms-text")
+        t.p(
+            "公開承認の順番　"
+            + " → ".join(product_views.step_label(s) for s in policy.get("steps", ["admin"]))
+        )
+        with t.label(classes="field"):
+            t.span("公開責任者（空欄の場合は提供プロジェクト）")
+            t.input(
+                id="responsible",
+                list="responsible-people",
+                classes="form-control",
+                placeholder="ユーザー名（メールアドレス）",
+                value=item.get("responsible") or "",
+            )
+        with t.datalist(id="responsible-people"):
+            for person in ctx.get("policy_directory", {}).get("users", []):
+                t.option(person.get("full_name") or person["username"], value=person["username"])
         for env in product_views.ENV:
             opts = [("", "指定しない")] + [
                 (k, k + " · " + v["owner"])
@@ -107,7 +127,7 @@ def inventory_form(asset: dict[str, Any] | None = None) -> None:
             )
         with t.div(classes="btn-grouping"):
             btn("変更を保存" if asset else "下書きを保存", register)
-            btn("保存して公開", register, True, primary=True)
+            btn("保存して公開申請", register, True, primary=True)
 
 
 def editor() -> None:

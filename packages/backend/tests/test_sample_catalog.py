@@ -1,6 +1,6 @@
 # カタログでサンプル商品を検索・取得できることを検証する。
 from packages.tools.demo.seed_marketplace import CATALOG, offer, seed
-from tests.support.catalog import SPEC, headers, invocation_headers
+from tests.support.catalog import SPEC, headers, invocation_headers, publish_asset
 
 
 def test_seed_replaces_old_contract_and_calls_product(portal):
@@ -11,7 +11,7 @@ def test_seed_replaces_old_contract_and_calls_product(portal):
     listing = offer(parcel, 1)
     old = {**listing, "base_path": "", "spec": SPEC}
     key = portal.post("/api/apis", headers=owner, json=old).raise_for_status().json()["id"]
-    portal.put(f"/api/apis/{key}/publication?published=true", headers=owner).raise_for_status()
+    publish_asset(portal, f"/api/apis/{key}", owner).raise_for_status()
     portal.base_url = "http://testserver/api/"
     ids = seed(portal, 1)
     assert len(set(ids)) == 12 and key in ids

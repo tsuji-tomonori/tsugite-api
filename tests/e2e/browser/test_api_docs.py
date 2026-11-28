@@ -15,7 +15,7 @@ import httpx
 import pytest
 from playwright.sync_api import Route, expect, sync_playwright
 
-from tests.support.catalog import headers
+from tests.support.catalog import headers, publish_asset
 from tests.support.catalog_journey import browser_evidence, navigate
 from tests.support.portal_server import serve_portal
 
@@ -168,7 +168,7 @@ def test_openapi_key_console(tmp_path: Path, request: pytest.FixtureRequest) -> 
                 .json()["id"]
             )
             base = "/api/apis/" + asset
-            api.put(base + "/publication?published=true", headers=owner).raise_for_status()
+            publish_asset(api, base, owner).raise_for_status()
             grant = (
                 api.post(
                     base + "/requests",

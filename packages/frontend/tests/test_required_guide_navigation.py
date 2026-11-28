@@ -312,9 +312,9 @@ def test_guide_article_can_be_opened_from_a_bookmark(
         ),
         pytest.param(
             profile(owner=True),
-            "提供者",
+            "利用者",
             id="owner-role",
-            marks=pytest.mark.case_detail("提供プロジェクトを担当する人には提供者の役割名を表示する。"),
+            marks=pytest.mark.case_detail("提供プロジェクトを担当する人には共通の利用者名を表示する。"),
         ),
         pytest.param(
             profile(auditor=True),

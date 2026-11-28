@@ -1006,6 +1006,50 @@
       "response": 422
     }
   ],
+  "publication.orderedTest": [
+    {
+      "caller": "",
+      "listed": false,
+      "response": 0,
+      "stage": 0
+    },
+    {
+      "caller": "admin",
+      "listed": false,
+      "response": 403,
+      "stage": 0
+    },
+    {
+      "caller": "applicant",
+      "listed": false,
+      "response": 403,
+      "stage": 0
+    },
+    {
+      "caller": "lead",
+      "listed": false,
+      "response": 200,
+      "stage": 1
+    },
+    {
+      "caller": "lead",
+      "listed": false,
+      "response": 403,
+      "stage": 1
+    },
+    {
+      "caller": "admin",
+      "listed": true,
+      "response": 200,
+      "stage": 2
+    },
+    {
+      "caller": "admin",
+      "listed": true,
+      "response": 409,
+      "stage": 2
+    }
+  ],
   "quota.thresholdTest": [
     {
       "calls": 0,

@@ -8,14 +8,14 @@ from app.apis import gateway
 from starlette.responses import Response
 
 from packages.backend.tests.test_org_access import setup_people
-from tests.support.catalog import FORM, headers, invocation_headers
+from tests.support.catalog import FORM, headers, invocation_headers, publish_asset
 from tests.support.quint import histories
 
 
 def publish(portal, owner, **overrides):
     asset = portal.post("/api/apis", headers=owner, json={**FORM, **overrides}).raise_for_status().json()
     url = "/api/apis/" + asset["id"]
-    portal.put(url + "/publication", params={"published": True}, headers=owner).raise_for_status()
+    publish_asset(portal, url, owner).raise_for_status()
     return asset["id"], url
 
 
@@ -129,7 +129,7 @@ def test_product_history(states, portal):
         record = portal.get(url, headers=owner).raise_for_status().json()
         params = {"revision": record["revision"]}
         if op == "publish":
-            portal.put(url + "/publication?published=true", headers=owner).raise_for_status()
+            publish_asset(portal, url, owner).raise_for_status()
         elif op == "apply":
             grant = (
                 portal.post(

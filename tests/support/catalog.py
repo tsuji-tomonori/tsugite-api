@@ -24,7 +24,7 @@ def approved(api, owner, user, *, slug=FORM["slug"]):
         api.post("/api/apis", headers=owner, json={**FORM, "slug": slug}).raise_for_status().json()["id"]
     )
     url = "/api/apis/" + key
-    api.put(url + "/publication?published=true", headers=owner).raise_for_status()
+    publish_asset(api, url, owner).raise_for_status()
     grant = {"project": "finance", "environment": "sandbox", "reason": "利用統計検証"}
     right = api.post(url + "/requests", headers=user, json=grant).raise_for_status().json()
     api.post(
@@ -46,3 +46,14 @@ def invocation_headers(api, user, project="finance", endpoint="/api/credentials"
         .json()
     )
     return {"Authorization": "Bearer " + issued["access_token"]}
+
+
+def publish_asset(api, url, owner, administrator=None):
+    pending = api.put(url + "/publication", params={"published": True}, headers=owner)
+    if pending.status_code != 200 or pending.json()["published"]:
+        return pending
+    return api.post(
+        url + "/publication-decisions",
+        headers=administrator or headers(api, "admin"),
+        json={"approved": True, "reason": "提供条件を確認", "revision": pending.json()["revision"]},
+    )

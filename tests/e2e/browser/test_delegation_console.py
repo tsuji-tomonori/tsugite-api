@@ -6,7 +6,7 @@ import httpx
 import pytest
 from playwright.sync_api import expect, sync_playwright
 
-from tests.support.catalog import FORM, headers
+from tests.support.catalog import FORM, headers, publish_asset
 from tests.support.catalog_journey import browser_evidence, navigate
 from tests.support.portal_server import serve_portal
 
@@ -45,9 +45,7 @@ def test_provider_policy_console(tmp_path: Path, request: pytest.FixtureRequest)
                 json={"subject": subject, "unit_id": dept, "leader": is_lead, "title": "担当"},
             ).raise_for_status()
         asset = api.post("/api/apis", headers=provider, json=FORM).raise_for_status().json()["id"]
-        api.put(
-            "/api/apis/" + asset + "/publication?published=true", headers=provider
-        ).raise_for_status()
+        publish_asset(api, "/api/apis/" + asset, provider).raise_for_status()
         browser = pw.chromium.launch(executable_path=os.getenv("CHROMIUM_PATH") or None)
         publisher, leader = (browser.new_page(viewport={"width": 1440, "height": 960}) for _ in range(2))
         with browser_evidence(request.node, "approval-policy", publisher, leader) as capture:

@@ -23,7 +23,6 @@ async def member_add() -> None:
             "email": username,
             "full_name": full_name,
             "display_name": value("member-display-name") or None,
-            "role": value("member-role"),
             "project": value("member-project"),
         }
     )

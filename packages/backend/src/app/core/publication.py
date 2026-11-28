@@ -1,0 +1,68 @@
+# 公開申請と利用申請に共通する承認担当の判定。
+import json
+
+from app.core.auth import DEMO_GROUPS
+from app.core.config import local_demo
+from app.core.workspace import units
+from app.schemas.catalog import PublicationPolicy
+from fastapi import HTTPException
+from sqlalchemy import select
+from tsugite_db.models import DirectoryTree, Member
+
+
+def publication_policy(db):
+    row = db.get(DirectoryTree, "publication")
+    return PublicationPolicy.model_validate_json(row.units) if row else PublicationPolicy()
+
+
+def resolve_person(db, subject):
+    member = db.get(Member, subject)
+    if member is None and "@" in subject:
+        member = db.scalar(
+            select(Member).where(Member.username == subject.lower(), Member.deleted.is_(False))
+        )
+    if member and not member.deleted:
+        return member.subject
+    if member is None and local_demo() and subject in DEMO_GROUPS:
+        return subject
+    raise HTTPException(422, "有効な利用者を指定してください")
+
+
+def validate_steps(db, steps):
+    tree = units(db)
+    resolved = []
+    for step in steps:
+        if step.startswith("unit/") and tree.get(step[5:], {}).get("kind") not in {
+            "department",
+            "project",
+        }:
+            raise HTTPException(422, "承認先の部署またはプロジェクトを確認してください")
+        if step.startswith("person/"):
+            step = "person/" + resolve_person(db, step[7:])
+            if len(step) > 80:
+                raise HTTPException(422, "承認者の識別子が長すぎます")
+        resolved.append(step)
+    return resolved
+
+
+def assigned(step, actor, owner, departments):
+    if step == "admin":
+        return actor.admin
+    if step == "project_leader":
+        return owner in actor.leads
+    if step == "provider":
+        return owner in actor.owners
+    if step == "department":
+        return bool(actor.leads.intersection(departments))
+    if step.startswith("unit/"):
+        return step[5:] in actor.leads
+    return step == "person/" + actor.subject
+
+
+def reviewer(asset, actor):
+    if not asset.publication_request:
+        return False
+    pending = json.loads(asset.publication_request)
+    return actor.subject != pending["applicant"] and assigned(
+        pending["remaining"][0], actor, asset.owner, pending["departments"]
+    )
