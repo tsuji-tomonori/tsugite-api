@@ -63,7 +63,9 @@ def view() -> None:
     """URL・メソッド・ヘッダー・本文の入力欄を表示する。"""
     with t.section(classes="box"):
         t.h2("URLを直接指定")
-        t.p("継手APIの呼び出しURLには、自分が利用できるAPIキーを選べます。外部URLの認証はヘッダー欄に入力してください。")
+        t.p(
+            "継手APIの呼び出しURLには、自分が利用できるAPIキーを選べます。外部URLの認証はヘッダー欄に入力してください。"
+        )
         field("HTTPメソッド", "manual-method", options=[(m, m) for m in METHODS])
         field("リクエストURL（必須）", "manual-url", placeholder="https://api.example.jp/items?limit=10")
         keys = ctx.get("manual_keys", {})

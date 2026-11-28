@@ -11,7 +11,9 @@ from runtime.portal_ui import ctx, value
 
 async def load_console(page: str) -> None:
     """利用できる申請と認証情報を読み込む。"""
-    ctx.update(console_asset=None, console_operation="", console_rights=[], console_keys=[], manual_keys={})
+    ctx.update(
+        console_asset=None, console_operation="", console_rights=[], console_keys=[], manual_keys={}
+    )
     rights, keys = await asyncio.gather(access_api.requests(), access_api.keys())
     ctx["console_rights"] = [r for r in rights if r["status"] == "approved"]
     ctx["console_keys"] = [k for k in keys if k.get("mode") in ("app", "bearer")]
