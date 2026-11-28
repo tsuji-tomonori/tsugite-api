@@ -2,7 +2,7 @@
 from collections.abc import Callable
 from typing import Any, TypeVar
 
-from .core import Tag
+from .core import Component, Tag
 
 _P = TypeVar("_P", bound="Page")
 
@@ -19,7 +19,10 @@ class Application:
     def mount(self, target: str) -> None: ...
     def handle_error(self, exception: Exception) -> None: ...
 
+_C = TypeVar("_C", bound="Component")
+
 class _Tags:
+    def component(self) -> Callable[[type[_C]], type[_C]]: ...
     def button(self, *children: Any, **attributes: Any) -> Tag: ...
     def __getattr__(self, name: str) -> Any: ...
 

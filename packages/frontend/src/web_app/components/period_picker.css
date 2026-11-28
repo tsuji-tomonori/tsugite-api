@@ -1,0 +1,37 @@
+/* 期間の開始と終了を横に並べ、狭い画面では日付ごとに縦に並べる。 */
+.absolute-period {
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    min-inline-size: 0;
+    margin: 16px 0;
+    padding: 12px;
+}
+.period-columns {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+    gap: var(--section-space);
+    max-width: 42rem;
+}
+.period-endpoint { min-width: 0; }
+.period-endpoint .field { margin: 8px 0 0; }
+.period-endpoint .field input { min-width: 0; width: 100%; }
+.calendar-heading, .calendar-days {
+    display: grid;
+    align-items: center;
+    text-align: center;
+    gap: 2px;
+}
+.calendar-heading { grid-template-columns: auto 1fr auto; margin: 8px 0; }
+.calendar-days { grid-template-columns: repeat(7, minmax(0, 1fr)); grid-template-rows: auto repeat(6, 2.5rem); }
+.calendar-heading button, .calendar-days button {
+    color: var(--ink);
+    background: var(--surface);
+    border: 1px solid transparent;
+    border-radius: 4px;
+    padding: 4px 0;
+    min-height: 32px;
+    cursor: pointer;
+}
+.calendar-heading button { border-color: var(--field-edge); padding-inline: 8px; }
+.calendar-days button:hover { background: var(--rollover); }
+.calendar-days button[aria-pressed="true"] { color: var(--primary-ink); background: var(--primary); font-weight: 700; }
