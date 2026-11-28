@@ -4,6 +4,9 @@ inputs:
   portal_url:
     description: CloudFront portal origin
     required: true
+  gateway_endpoint:
+    description: Same-stack API Gateway endpoint for the authenticated boundary check
+    required: false
   subject:
     description: Expected consumer subject
     required: true
@@ -35,9 +38,10 @@ runs:
     - name: Install Chromium
       shell: bash
       run: .venv/bin/playwright install --with-deps chromium --only-shell
-    - name: Sign in with MFA and read the catalog
+    - name: Verify the authenticated portal and origin boundary
       env:
         E2E_PORTAL_URL: ${{ inputs.portal_url }}
+        E2E_GATEWAY_ENDPOINT: ${{ inputs.gateway_endpoint }}
         E2E_SUBJECT: ${{ inputs.subject }}
         E2E_USERNAME: ${{ inputs.username }}
         E2E_PASSWORD: ${{ inputs.password }}
@@ -48,4 +52,11 @@ runs:
         : "${E2E_USERNAME:?Set E2E_USERNAME in the cloudfront-e2e environment}"
         : "${E2E_PASSWORD:?Set E2E_PASSWORD in the cloudfront-e2e environment}"
         : "${E2E_TOTP_SEED:?Set E2E_TOTP_SEED in the cloudfront-e2e environment}"
-        .venv/bin/python -m pytest -q -s -rN --tb=no tests/e2e/deployed/test_portal.py::test_consumer_login_and_catalog
+        suite=tests/e2e/deployed/test_portal.py
+        cases=("$suite::test_consumer_login_and_catalog")
+        if [[ -n "$E2E_GATEWAY_ENDPOINT" ]]; then
+          cases+=("$suite::test_authenticated_origin_boundary")
+        else
+          echo "手動実行の E2E_GATEWAY_ENDPOINT が未設定のため、認証済みの直アクセス検証は対象外です。"
+        fi
+        .venv/bin/python -m pytest -q -rN --tb=no --show-capture=no "${cases[@]}"
