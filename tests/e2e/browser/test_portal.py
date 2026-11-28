@@ -46,9 +46,22 @@ def test_home_chat_and_inquiry(demo_url: str, request: pytest.FixtureRequest) ->
         expect(page.get_by_role("heading", level=1, name="チャット", exact=True)).to_be_visible()
         expect(page.get_by_label("質問", exact=True)).to_be_visible()
         expect(page.get_by_role("heading", name="どのAPIをお探しですか？")).to_be_visible()
+        # 初回の受付応答を保留し、処理速度に依存せず待機中の表示を確認する。
+        held: list[Route] = []
+        page.route("**/api/chat", lambda route: held.append(route), times=1)
         page.get_by_role("button", name="在庫を確認できるAPIを探して").click()
         history = page.get_by_role("log", name="会話")
+        pending = history.get_by_role("status")
+        expect(pending).to_have_text("回答を準備しています…")
+        animation = "el => getComputedStyle(el, '::before').animationName"
+        assert pending.evaluate(animation) == "chat-spin"
+        capture_image(request.node, "chat", page, "pending", "回答を準備している間に表示するリング")
+        page.emulate_media(reduced_motion="reduce")
+        assert pending.evaluate(animation) == "none"
+        expect(pending).to_be_visible()
+        held[0].continue_()
         expect(history.locator('a[href^="#/api/"]').first).to_be_visible()
+        expect(pending).to_have_count(0)
         capture_image(request.node, "chat", page, "recommendation", "日本語の質問への商品候補")
         page.get_by_label("質問", exact=True).fill("APIキーを発行する手順を教えて")
         page.get_by_role("button", name="送信", exact=True).click()
