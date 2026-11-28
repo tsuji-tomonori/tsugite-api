@@ -2,17 +2,17 @@
 
 判定　合格
 
-対象コミット　`7cad9c4bc476d8d01f322dba83ac9f6c975bcd4d`
+対象コミット　`d9f31e9b0159ab947c37778704413fe3714d504a`
 
-[検証した要件と変更履歴](https://github.com/tsuji-tomonori/tsugite-api/blob/7cad9c4bc476d8d01f322dba83ac9f6c975bcd4d/docs/requirements/items/%E9%96%8B%E7%99%BA%E8%80%85%E3%81%AF%E3%80%81%E3%83%9D%E3%83%BC%E3%82%BF%E3%83%AB%E3%82%92%E9%85%8D%E5%82%99%E3%81%99%E3%82%8B%E3%81%A8%E3%81%8D%E3%80%81API%E3%82%92%E5%8D%98%E4%B8%80%E3%81%AE%E5%85%A5%E5%8F%A3%E3%81%A7%E6%8F%90%E4%BE%9B%E3%81%A7%E3%81%8D%E3%82%8B.md)
+[検証した要件と変更履歴](https://github.com/tsuji-tomonori/tsugite-api/blob/d9f31e9b0159ab947c37778704413fe3714d504a/docs/requirements/items/%E9%96%8B%E7%99%BA%E8%80%85%E3%81%AF%E3%80%81%E3%83%9D%E3%83%BC%E3%82%BF%E3%83%AB%E3%82%92%E9%85%8D%E5%82%99%E3%81%99%E3%82%8B%E3%81%A8%E3%81%8D%E3%80%81API%E3%82%92%E5%8D%98%E4%B8%80%E3%81%AE%E5%85%A5%E5%8F%A3%E3%81%A7%E6%8F%90%E4%BE%9B%E3%81%A7%E3%81%8D%E3%82%8B.md)
 
 ## 実行したテストと証跡
 
-- 成功　非公開S3、呼び出しの認可、キャッシュと配信の設定が設計どおりである（0.245 秒）　`packages/infra/tests/test_stack.py::test_access_boundaries`
+- 成功　非公開S3、呼び出しの認可、キャッシュと配信の設定が設計どおりである（0.343 秒）　`packages/infra/tests/test_stack.py::test_access_boundaries`
   - AWS::EC2::NatGateway　期待 0 件 / 実測 0 件
-- 成功　常時稼働の構成を置かず、Lambdaのメモリ・タイムアウトとログ保存期間を制限する。（0.266 秒）　`packages/infra/tests/test_cost.py::test_cost_drivers_are_bounded`
-- 成功　署名が有効な同じ利用者トークンで、正規入口の本人照会は成功し、直接の本人照会は403になる。（入口ヘッダーがない場合は403）（1.019 秒）　`packages/backend/tests/test_auth.py::test_portal_origin_with_valid_access_token[missing]`
-- 成功　署名が有効な同じ利用者トークンで、正規入口の本人照会は成功し、直接の本人照会は403になる。（入口ヘッダーが一致しない場合は403）（0.222 秒）　`packages/backend/tests/test_auth.py::test_portal_origin_with_valid_access_token[incorrect]`
-- 成功　権限を毎回照合し、取消後は同じトークンでも拒否する（0.278 秒）　`packages/backend/tests/test_gateway_event.py::test_gateway_authorizer_rechecks_each_invocation`
+- 成功　常時稼働の構成を置かず、Lambdaのメモリ・タイムアウトとログ保存期間を制限する。（0.336 秒）　`packages/infra/tests/test_cost.py::test_cost_drivers_are_bounded`
+- 成功　署名が有効な同じ利用者トークンで、正規入口の本人照会は成功し、直接の本人照会は403になる。（入口ヘッダーがない場合は403）（1.064 秒）　`packages/backend/tests/test_auth.py::test_portal_origin_with_valid_access_token[missing]`
+- 成功　署名が有効な同じ利用者トークンで、正規入口の本人照会は成功し、直接の本人照会は403になる。（入口ヘッダーが一致しない場合は403）（0.228 秒）　`packages/backend/tests/test_auth.py::test_portal_origin_with_valid_access_token[incorrect]`
+- 成功　権限を毎回照合し、取消後は同じトークンでも拒否する（0.296 秒）　`packages/backend/tests/test_gateway_event.py::test_gateway_authorizer_rechecks_each_invocation`
 
 [テスト実行記録（JUnit XML）](%E9%96%8B%E7%99%BA%E8%80%85%E3%81%AF%E3%80%81%E3%83%9D%E3%83%BC%E3%82%BF%E3%83%AB%E3%82%92%E9%85%8D%E5%82%99%E3%81%99%E3%82%8B%E3%81%A8%E3%81%8D%E3%80%81API%E3%82%92%E5%8D%98%E4%B8%80%E3%81%AE%E5%85%A5%E5%8F%A3%E3%81%A7%E6%8F%90%E4%BE%9B%E3%81%A7%E3%81%8D%E3%82%8B.xml)
