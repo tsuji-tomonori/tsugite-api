@@ -46,10 +46,7 @@ def detail(listing_id: str) -> Listing:
 
 @app.get("/listing-channels", summary="掲載枠を販売チャネル別に集計")
 def by_channel() -> list[ListingCount]:
-    return db.all(
-        "SELECT channel, COUNT(*) AS count FROM records "
-        "GROUP BY channel ORDER BY channel"
-    )
+    return db.all("SELECT channel, COUNT(*) AS count FROM records GROUP BY channel ORDER BY channel")
 
 
 @app.get("/expiring-listings", summary="公開日数が指定値以下の掲載枠を取得")

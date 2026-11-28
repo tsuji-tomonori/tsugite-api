@@ -46,10 +46,7 @@ def detail(presale_id: str) -> Presale:
 
 @app.get("/presale-campaigns", summary="予約販売枠をキャンペーン別に集計")
 def by_campaign() -> list[PresaleCount]:
-    return db.all(
-        "SELECT campaign, COUNT(*) AS count FROM records "
-        "GROUP BY campaign ORDER BY campaign"
-    )
+    return db.all("SELECT campaign, COUNT(*) AS count FROM records GROUP BY campaign ORDER BY campaign")
 
 
 @app.get("/limited-presales", summary="予約可能数が指定値以下の予約販売枠を取得")

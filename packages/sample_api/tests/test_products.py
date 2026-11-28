@@ -86,3 +86,12 @@ def test_catalog_business_operations_are_distinct():
         fields = frozenset(spec["components"]["schemas"][model]["properties"])
         assert fields not in detail_fields, product["slug"]
         detail_fields.add(fields)
+
+
+def test_inspection_defect_threshold_includes_zero():
+    """不良数の上限をゼロにすると、無欠点の検品ロットだけを取得できる。"""
+    with TestClient(app) as client:
+        response = client.get("/receipt-inspections/low-defect-lots", params={"maximum": 0})
+    assert response.raise_for_status().json() == [
+        {"inspection_id": "I01", "dock": "東荷受口", "lot_code": "L-71", "defect_count": 0}
+    ]

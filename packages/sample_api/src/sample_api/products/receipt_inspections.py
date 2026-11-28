@@ -46,10 +46,7 @@ def detail(inspection_id: str) -> Inspection:
 
 @app.get("/inspection-docks", summary="入荷検品を荷受口別に集計")
 def by_dock() -> list[InspectionCount]:
-    return db.all(
-        "SELECT dock, COUNT(*) AS count FROM records "
-        "GROUP BY dock ORDER BY dock"
-    )
+    return db.all("SELECT dock, COUNT(*) AS count FROM records GROUP BY dock ORDER BY dock")
 
 
 @app.get("/low-defect-lots", summary="不良数が指定値以下の入荷検品を取得")

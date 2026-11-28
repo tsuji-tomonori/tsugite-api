@@ -46,22 +46,16 @@ def detail(hold_id: str) -> Hold:
 
 @app.get("/pickup-counters", summary="店頭取り置きを受取窓口別に集計")
 def by_counter() -> list[HoldCount]:
-    return db.all(
-        "SELECT counter, COUNT(*) AS count FROM records "
-        "GROUP BY counter ORDER BY counter"
-    )
+    return db.all("SELECT counter, COUNT(*) AS count FROM records GROUP BY counter ORDER BY counter")
 
 
 @app.get("/expiring-holds", summary="保管残日数が指定値以下の店頭取り置きを取得")
 def below_limit(maximum: int = Query(1, description="保管残日数の上限")) -> list[Hold]:
-    return db.all(
-        "SELECT * FROM records WHERE days_left <= ? ORDER BY days_left, hold_id", maximum
-    )
+    return db.all("SELECT * FROM records WHERE days_left <= ? ORDER BY days_left, hold_id", maximum)
 
 
 @app.get("/hold-retention", summary="保管残日数の最小値と最大値を取得")
 def days_left_summary() -> HoldRange:
     return db.one(
-        "SELECT MIN(days_left) AS minimum_days_left, "
-        "MAX(days_left) AS maximum_days_left FROM records"
+        "SELECT MIN(days_left) AS minimum_days_left, MAX(days_left) AS maximum_days_left FROM records"
     )

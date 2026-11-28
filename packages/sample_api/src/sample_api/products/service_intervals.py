@@ -46,10 +46,7 @@ def detail(plan_id: str) -> ServicePlan:
 
 @app.get("/service-workshops", summary="定期点検計画を整備部署別に集計")
 def by_workshop() -> list[ServicePlanCount]:
-    return db.all(
-        "SELECT workshop, COUNT(*) AS count FROM records "
-        "GROUP BY workshop ORDER BY workshop"
-    )
+    return db.all("SELECT workshop, COUNT(*) AS count FROM records GROUP BY workshop ORDER BY workshop")
 
 
 @app.get("/upcoming-services", summary="交換までの運転時間が指定値以下の定期点検計画を取得")

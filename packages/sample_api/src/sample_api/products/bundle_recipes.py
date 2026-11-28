@@ -46,10 +46,7 @@ def detail(bundle_code: str) -> Bundle:
 
 @app.get("/bundle-series", summary="セット構成をシリーズ別に集計")
 def by_series() -> list[BundleCount]:
-    return db.all(
-        "SELECT series, COUNT(*) AS count FROM records "
-        "GROUP BY series ORDER BY series"
-    )
+    return db.all("SELECT series, COUNT(*) AS count FROM records GROUP BY series ORDER BY series")
 
 
 @app.get("/compact-bundles", summary="同梱点数が指定値以下のセット構成を取得")

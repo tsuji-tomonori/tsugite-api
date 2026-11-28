@@ -46,10 +46,7 @@ def detail(count_id: str) -> Variance:
 
 @app.get("/count-sectors", summary="棚卸し差異を保管区画別に集計")
 def by_sector() -> list[VarianceCount]:
-    return db.all(
-        "SELECT sector, COUNT(*) AS count FROM records "
-        "GROUP BY sector ORDER BY sector"
-    )
+    return db.all("SELECT sector, COUNT(*) AS count FROM records GROUP BY sector ORDER BY sector")
 
 
 @app.get("/minor-variances", summary="棚卸差異数が指定値以下の棚卸し差異を取得")

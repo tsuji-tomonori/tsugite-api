@@ -46,17 +46,12 @@ def detail(return_id: str) -> Appraisal:
 
 @app.get("/return-grades", summary="返品査定を査定区分別に集計")
 def by_grade() -> list[AppraisalCount]:
-    return db.all(
-        "SELECT grade, COUNT(*) AS count FROM records "
-        "GROUP BY grade ORDER BY grade"
-    )
+    return db.all("SELECT grade, COUNT(*) AS count FROM records GROUP BY grade ORDER BY grade")
 
 
 @app.get("/budget-resales", summary="再販価格が指定値以下の返品査定を取得")
 def below_limit(maximum: int = Query(800, description="再販価格の上限")) -> list[Appraisal]:
-    return db.all(
-        "SELECT * FROM records WHERE resale_yen <= ? ORDER BY resale_yen, return_id", maximum
-    )
+    return db.all("SELECT * FROM records WHERE resale_yen <= ? ORDER BY resale_yen, return_id", maximum)
 
 
 @app.get("/resale-prices", summary="再販価格の最小値と最大値を取得")

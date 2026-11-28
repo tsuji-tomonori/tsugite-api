@@ -46,10 +46,7 @@ def detail(refill_id: str) -> Refill:
 
 @app.get("/refill-aisles", summary="売場補充指示を売場別に集計")
 def by_aisle() -> list[RefillCount]:
-    return db.all(
-        "SELECT aisle, COUNT(*) AS count FROM records "
-        "GROUP BY aisle ORDER BY aisle"
-    )
+    return db.all("SELECT aisle, COUNT(*) AS count FROM records GROUP BY aisle ORDER BY aisle")
 
 
 @app.get("/small-refills", summary="補充予定数が指定値以下の売場補充指示を取得")

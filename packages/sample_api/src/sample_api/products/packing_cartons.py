@@ -46,22 +46,14 @@ def detail(carton_code: str) -> Carton:
 
 @app.get("/carton-materials", summary="梱包箱規格を材質別に集計")
 def by_material() -> list[CartonCount]:
-    return db.all(
-        "SELECT material, COUNT(*) AS count FROM records "
-        "GROUP BY material ORDER BY material"
-    )
+    return db.all("SELECT material, COUNT(*) AS count FROM records GROUP BY material ORDER BY material")
 
 
 @app.get("/light-duty-cartons", summary="耐荷重キログラムが指定値以下の梱包箱規格を取得")
 def below_limit(maximum: int = Query(3, description="耐荷重キログラムの上限")) -> list[Carton]:
-    return db.all(
-        "SELECT * FROM records WHERE load_kg <= ? ORDER BY load_kg, carton_code", maximum
-    )
+    return db.all("SELECT * FROM records WHERE load_kg <= ? ORDER BY load_kg, carton_code", maximum)
 
 
 @app.get("/carton-loads", summary="耐荷重キログラムの最小値と最大値を取得")
 def load_kg_summary() -> CartonRange:
-    return db.one(
-        "SELECT MIN(load_kg) AS minimum_load_kg, "
-        "MAX(load_kg) AS maximum_load_kg FROM records"
-    )
+    return db.one("SELECT MIN(load_kg) AS minimum_load_kg, MAX(load_kg) AS maximum_load_kg FROM records")

@@ -46,17 +46,12 @@ def detail(wave_id: str) -> PickWave:
 
 @app.get("/pick-zones", summary="ピッキング指示を担当ゾーン別に集計")
 def by_zone() -> list[PickWaveCount]:
-    return db.all(
-        "SELECT zone, COUNT(*) AS count FROM records "
-        "GROUP BY zone ORDER BY zone"
-    )
+    return db.all("SELECT zone, COUNT(*) AS count FROM records GROUP BY zone ORDER BY zone")
 
 
 @app.get("/short-waves", summary="未完了行数が指定値以下のピッキング指示を取得")
 def below_limit(maximum: int = Query(2, description="未完了行数の上限")) -> list[PickWave]:
-    return db.all(
-        "SELECT * FROM records WHERE open_lines <= ? ORDER BY open_lines, wave_id", maximum
-    )
+    return db.all("SELECT * FROM records WHERE open_lines <= ? ORDER BY open_lines, wave_id", maximum)
 
 
 @app.get("/wave-workloads", summary="未完了行数の最小値と最大値を取得")

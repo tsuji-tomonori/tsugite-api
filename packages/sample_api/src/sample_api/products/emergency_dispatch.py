@@ -46,10 +46,7 @@ def detail(dispatch_id: str) -> Dispatch:
 
 @app.get("/dispatch-depots", summary="緊急交換手配を派遣拠点別に集計")
 def by_depot() -> list[DispatchCount]:
-    return db.all(
-        "SELECT depot, COUNT(*) AS count FROM records "
-        "GROUP BY depot ORDER BY depot"
-    )
+    return db.all("SELECT depot, COUNT(*) AS count FROM records GROUP BY depot ORDER BY depot")
 
 
 @app.get("/nearby-dispatches", summary="到着予定分数が指定値以下の緊急交換手配を取得")
