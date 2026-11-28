@@ -88,3 +88,37 @@ def test_rewritten_similarity_needs_support_from_original_question():
         lambda role, data: next(responses),
     )
     assert result == (["stock"], ["stock"])
+
+
+def test_chat_does_not_promote_unrelated_sources():
+    """モデルが全資料を同順位にしても、該当なしを返し、一致する質問では該当商品だけを示す。"""
+
+    def asset(key, name):
+        return SimpleNamespace(
+            id=key,
+            name=name,
+            summary=name,
+            owner="team",
+            spec=json.dumps({"info": {"title": name}, "paths": {}}),
+        )
+
+    rows = [asset("stock", "在庫照会"), asset("delivery", "配送状況")]
+
+    def model(role, data):
+        if role == "tool":
+            return {"action": "manual", "query": "おすすめの在庫API"}
+        if role == "generate":
+            return {}
+        return {"vectors": [[1, 0] for _ in data["texts"]]}
+
+    for question in (
+        "月面探査車の走行距離のAPIを探して",
+        "量子転送の使い方を教えて",
+        "量子転送でAPIキーを発行する手順を教えて",
+        "量子転送と在庫のAPIを探して",
+        "おすすめのAPIはありますか",
+    ):
+        result = ask(question, lambda: rows, ACTOR, model)
+        assert result["kind"] == "empty", (question, result)
+        assert "keys" not in result
+    assert ask("在庫のAPIを探して", lambda: rows, ACTOR, model)["keys"] == ["stock"]
