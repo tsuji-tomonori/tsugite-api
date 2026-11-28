@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from actions.catalog import search, turn_page
+from content.guide_search import search as search_guides
 from content.portal_labels import LABEL
 from puepy import t
 from runtime.portal_ui import action, ctx, route
@@ -39,6 +40,15 @@ def cards() -> None:
                     text=ctx["env"],
                 )
                 t.button("検索", type="submit", classes="btn btn-primary")
+    if not inventory and ctx["query"] and not ctx["env"]:
+        matches = search_guides(ctx["query"])
+        if matches:
+            with t.details(classes="list-disclosure", open=not count):
+                t.summary(f"関連するマニュアル（{len(matches)}件）")
+                with t.ul():
+                    for guide in matches:
+                        with t.li():
+                            t.a(guide.title, href="#/guide/" + guide.id)
     if not count:
         with t.div(classes="empty"):
             t.h3("該当するAPIはありません。")

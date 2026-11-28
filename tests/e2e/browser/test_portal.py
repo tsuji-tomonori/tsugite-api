@@ -85,6 +85,51 @@ def test_home_chat_and_inquiry(demo_url: str, request: pytest.FixtureRequest) ->
         browser.close()
 
 
+def test_header_search_suggestions(demo_url: str, request: pytest.FixtureRequest) -> None:
+    """入力中のAPIと手順の候補を開き、候補を選ばず検索しても関連記事を読める。"""
+    import httpx
+    from playwright.sync_api import expect, sync_playwright
+
+    from packages.tools.demo.seed_marketplace import seed
+
+    with httpx.Client(base_url=demo_url + "/api/", trust_env=False) as api:
+        seed(api, 1)
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch(executable_path=os.getenv("CHROMIUM_PATH") or None)
+        page = browser.new_page()
+        page.goto(demo_url)
+        page.get_by_role("button", name="利用チーム", exact=True).click()
+        field = page.get_by_label("API・マニュアルを検索")
+        panel = page.locator("#global-suggestions")
+        field.fill("両替")
+        asset = panel.locator('a[href^="#/api/"]').first
+        expect(asset).to_contain_text("為替")
+        field.press("ArrowDown")
+        expect(asset).to_be_focused()
+        asset.press("Enter")
+        expect(page.locator(".crumb")).to_contain_text("API")
+        expect(panel).to_be_hidden()
+        field.fill("確認")
+        expect(panel.locator('a[href^="#/api/"]').first).to_be_visible()
+        expect(panel.locator('a[href^="#/guide/"]').first).to_be_visible()
+        capture_image(
+            request.node, "header-search", page, "suggestions", "ヘッダーに表示したAPIとマニュアルの候補"
+        )
+        field.fill("夜間バッチ")
+        article = panel.locator('a[href="#/guide/credential"]')
+        expect(article).to_be_visible()
+        article.click()
+        expect(page.locator(".guide-article")).to_be_visible()
+        field.fill("夜間バッチ")
+        field.press("Enter")
+        expect(page.locator(".content a[href='#/guide/credential']")).to_be_visible()
+        field.fill("unmatchedXYZ")
+        expect(panel).to_have_text("候補が見つかりませんでした。")
+        field.press("Escape")
+        expect(panel).to_be_hidden()
+        browser.close()
+
+
 def test_submit_from_inquiries(demo_url: str, request: pytest.FixtureRequest) -> None:
     """利用者が問い合わせ画面から送信すると受付番号が表示され、再訪しても回答待ちの履歴を確認できる。"""
     from playwright.sync_api import expect, sync_playwright
@@ -274,8 +319,8 @@ def test_console_visual_modes(demo_url: str, request: pytest.FixtureRequest) -> 
             page.get_by_label("API名", exact=True).fill("入力中のAPI")
             mode.select_option("light")
             expect(page.get_by_label("API名", exact=True)).to_have_value("入力中のAPI")
-            page.get_by_label("すべての公開APIを検索").fill("配送")
-            page.get_by_label("すべての公開APIを検索").press("Enter")
+            page.get_by_label("API・マニュアルを検索").fill("配送")
+            page.get_by_label("API・マニュアルを検索").press("Enter")
             expect(page.locator(".result-table tbody tr")).to_have_count(1)
             expect(link).to_contain_text("配送")
             mode.select_option("auto")
@@ -475,7 +520,7 @@ def test_portal_login_on_mobile(demo_url: str, request: pytest.FixtureRequest) -
         capture_image(request.node, "login", page, "signed-in", "認証後に戻ったカタログ")
         assert operations == ["InitiateAuth", "RespondToAuthChallenge"]
         page.get_by_role("button", name="ナビゲーション", exact=True).click()
-        expect(page.get_by_label("すべての公開APIを検索")).to_be_visible()
+        expect(page.get_by_label("API・マニュアルを検索")).to_be_visible()
         page.get_by_role("button", name="ログアウト").click()
         expect(page.get_by_role("heading", name="継手APIにログイン")).to_be_visible()
         assert page.url.startswith(demo_url + "/")

@@ -75,6 +75,8 @@ def search(query: str, role: str = "すべて", *, min_coverage: float = 0.29) -
             if coverage >= min_coverage:
                 title = sum(weights[t] for t in terms & TITLE[g.id]) / weight
                 lexical = coverage * (1 + title)
+        if len(query) >= 2 and query in normalize(g.title):
+            lexical = max(lexical, 2.0)
         score = lexical + 2 * semantic.get(g.id, 0)
         if score:
             scores[g.id] = score

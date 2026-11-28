@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import Any
 
 from components.controls import btn
+from components.header_search import header_search
 from js import document, window
 from pages.login import login_page
 from puepy import Page, t
@@ -61,13 +62,7 @@ class Portal(Page):
                 t.strong("継手API", classes="brand")
                 t.span("APIポータル", classes="product")
             if user:
-                with t.form(classes="global-search", on_submit=action(global_search)):
-                    t.input(
-                        id="global-query",
-                        type="search",
-                        placeholder="APIカタログを検索",
-                        aria_label="すべての公開APIを検索",
-                    )
+                header_search(global_search)
             with t.label(classes="mode-control"):
                 t.span("表示", classes="mode-label")
                 with t.select(aria_label="表示モード", on_change=theme_changed):

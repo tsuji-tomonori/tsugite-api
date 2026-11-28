@@ -82,6 +82,14 @@ a:hover, summary:hover { color: var(--primary-hover); text-decoration-thickness:
   border-radius: 4px; height: 32px; padding: 3px 12px 3px 34px;
 }
 .global-search input::placeholder { color: var(--secondary); }
+.search-suggestions {
+  position: absolute; z-index: 10; inset-inline: 0; top: calc(100% + 4px);
+  max-height: min(50vh, 24rem); overflow-y: auto;
+  background: var(--surface); border: 1px solid var(--field-edge); border-radius: 4px;
+}
+.search-suggestions > * { display: block; padding: 8px 12px; overflow-wrap: anywhere; }
+.search-suggestions a:hover, .search-suggestions a:focus { background: var(--rollover); }
+.search-suggestions small { color: var(--secondary); display: inline-block; margin-right: .75em; }
 .mode-control { margin-left: auto; white-space: nowrap; }
 .mode-control select, .mast .btn {
   color: var(--ink); background: var(--bar); border: 0; padding: 8px 12px; font-weight: 700;

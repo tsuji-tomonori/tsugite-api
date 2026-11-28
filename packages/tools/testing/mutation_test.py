@@ -26,6 +26,14 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
+        "frontend",
+        "応答待ちに閉じた検索候補を再表示する",
+        "packages/frontend/src/web_app/components/header_search.py",
+        "if revision != self.revision or not field.isConnected:\n            return\n        panel",
+        "if not field.isConnected:\n            return\n        panel",
+        "packages/frontend/tests/test_header_search.py::test_superseded_suggestions",
+    ),
+    Mutation(
         "chat-inquiry",
         "モデルが類似と判定した商品をすべて候補に戻す",
         "packages/agent/src/chat_retrieval.py",

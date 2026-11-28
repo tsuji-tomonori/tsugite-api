@@ -131,6 +131,12 @@ def rank_assets(
         exact = max(
             (bonus for field, bonus in zip(d.fields, (4, 2, 1, 1)) if contains(field, query)), default=0
         )
+        if (
+            len(query) >= 2
+            and query.isascii()
+            and re.search(r"(?<![a-z0-9])" + re.escape(query), d.fields[0])
+        ):
+            exact = max(exact, 3)
         coverage = math.fsum(weight[w] for w in d.words & query_terms) / total if total else 0.0
         if exact or coverage >= 0.55:
             lexical[d.asset.id] = exact + coverage
