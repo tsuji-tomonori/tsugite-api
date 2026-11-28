@@ -575,3 +575,49 @@ def test_an_inquiry_being_submitted_cannot_be_sent_twice(
     asyncio.run(send())
     _, result = render(draw)
     assert "example-inquiry" in visible_text(result)
+
+
+@pytest.mark.parametrize(
+    "kind",
+    [
+        pytest.param("empty", id="empty", marks=pytest.mark.case_detail("該当なしの質問を引き継ぐ。")),
+        pytest.param(
+            "outside", id="outside", marks=pytest.mark.case_detail("案内範囲外の質問を引き継ぐ。")
+        ),
+    ],
+)
+def test_unanswered_turn_sends_its_own_question_once(
+    portal_module: PortalModule, monkeypatch: pytest.MonkeyPatch, kind: str
+) -> None:
+    """回答できなかった質問を個別に送信でき、失敗後に再送しても受付は一度である。"""
+    chat = portal_module("components.chat_views")
+    events = BrowserEvents(monkeypatch)
+    monkeypatch.setattr(chat, "refresh", Mock())
+    monkeypatch.setattr(chat.client, "report", Mock())
+    questions = ["月面の観測値はありますか", "別の観測値はありますか"]
+    turns = [{"question": q, "reply": {"kind": kind, "answer": "資料がありません。"}} for q in questions]
+    ctx = {"chat": {"turns": turns, "busy": False, "contact": False, "request_id": None}}
+    post = AsyncMock(side_effect=[OSError("再送してください"), "ticket"])
+    monkeypatch.setattr(chat, "post_inquiry", post)
+
+    def buttons(dom: Any) -> list[Any]:
+        return [
+            b for b in dom.getElementsByTagName("button") if visible_text(b) == "この質問を運営に送信"
+        ]
+
+    async def click(button: Any) -> None:
+        events.dispatch(button, "click", Mock())
+        await finish_browser_tasks()
+
+    _, dom = render(chat.home, ctx, Mock())
+    post.assert_not_awaited()
+    first = buttons(dom)[0]
+    asyncio.run(click(first))
+    _, retry = render(chat.home, ctx, Mock())
+    assert "再送してください" in visible_text(retry)
+    asyncio.run(click(buttons(retry)[0]))
+    asyncio.run(click(first))
+    assert [args.args[1] for args in post.await_args_list] == [questions[0], questions[0]]
+    _, received = render(chat.home, ctx, Mock())
+    assert "受付番号 ticket" in visible_text(received)
+    assert len(buttons(received)) == 1
