@@ -84,7 +84,12 @@ def home(
         refresh(render, path)
         try:
             if log:
-                reply = {"kind": "log", "answer": answer_log_question(log, question)}
+                answer = answer_log_question(log, question)
+                reply = (
+                    {"kind": "log", "answer": answer}
+                    if answer
+                    else {"kind": "empty", "answer": "この記録からは判断できません。"}
+                )
             else:
                 job_id = uuid()
                 await messages_api.chat({"job_id": job_id, "question": question})
@@ -119,32 +124,54 @@ def home(
         if state["contact"]:
             document.getElementById("inquiry-question").focus()
 
-    async def send_inquiry(question: str) -> None:
-        if state.get("sending"):
+    async def send_inquiry(question: str, turn: dict[str, Any] | None = None) -> None:
+        draft = state if turn is None else turn
+        if draft.get("sending") or (turn is not None and turn.get("receipt")):
             return
-        state["sending"] = True
+        draft["sending"] = True
         refresh(render, path)
         try:
-            receipt = await post_inquiry(state, prefix + question)
+            receipt = await post_inquiry(draft, prefix + question)
         except Exception as exc:
             client.report(exc, "send_inquiry", route="/api/inquiries")
-            state["inquiry_error"] = str(exc)
+            draft["inquiry_error"] = str(exc)
         else:
-            state.update(contact=False, receipt=receipt)
-            turns.append(
-                {
-                    "question": question,
-                    "reply": {
-                        "kind": "receipt",
-                        "answer": "問い合わせを受け付けました。受付番号 " + receipt,
-                    },
-                }
-            )
-            del turns[:-12]
+            if turn is not None:
+                turn["receipt"] = receipt
+            else:
+                state.update(contact=False, receipt=receipt)
+                turns.append(
+                    {
+                        "question": question,
+                        "reply": {
+                            "kind": "receipt",
+                            "answer": "問い合わせを受け付けました。受付番号 " + receipt,
+                        },
+                    }
+                )
+                del turns[:-12]
         finally:
-            state["sending"] = False
+            draft["sending"] = False
         if ctx.get(state_key) is state:
             refresh(render, path)
+
+    def offer_inquiry(turn: dict[str, Any]) -> None:
+        if receipt := turn.get("receipt"):
+            t.p("問い合わせを受け付けました。受付番号 " + receipt, role="status")
+            return
+        if error := turn.get("inquiry_error"):
+            t.p(error, role="alert")
+
+        def send(event: Any) -> None:
+            asyncio.ensure_future(send_inquiry(turn["question"], turn))
+
+        t.button(
+            "この質問を運営に送信",
+            type="button",
+            classes="btn btn-primary",
+            disabled=turn.get("sending", False),
+            on_click=send,
+        )
 
     def submit_inquiry(event: Any) -> None:
         event.preventDefault()
@@ -188,6 +215,8 @@ def home(
                         t.small("継手API")
                         if reply := turn.get("reply"):
                             show_result(reply)
+                            if reply["kind"] in ("empty", "outside"):
+                                offer_inquiry(turn)
                         else:
                             t.p("回答を準備しています…", role="status")
         with t.form(classes="chat-composer", on_submit=submit):

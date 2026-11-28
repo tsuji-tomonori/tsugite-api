@@ -26,12 +26,12 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
-        "quint-diff",
-        "他の形式モデルの差分を業務ルールの更新として認める",
-        "packages/tools/design/formal_changes.py",
-        'if f"{FORMAL}/{domain}.qnt" not in changed:\n            return False',
-        'if f"{FORMAL}/{domain}.qnt" not in changed:\n            return True',
-        "packages/tools/tests/test_formal_changes.py::test_business_policy_requires_its_quint_domain",
+        "chat-inquiry",
+        "モデルが類似と判定した商品をすべて候補に戻す",
+        "packages/agent/src/chat_retrieval.py",
+        "if key in grounded][:3]",
+        "if key in grounded or key in raw_semantic][:3]",
+        "packages/agent/tests/test_agent_retrieval.py::test_chat_does_not_promote_unrelated_sources",
     ),
     Mutation(
         "deployed-e2e",
@@ -136,6 +136,14 @@ MUTATIONS = (
         'custom_headers={"X-Tsugite-Origin":',
         'custom_headers={"X-Other-Origin":',
         "packages/infra/tests/test_stack.py::test_access_boundaries",
+    ),
+    Mutation(
+        "quint-diff",
+        "他の形式モデルの差分を業務ルールの更新として認める",
+        "packages/tools/design/formal_changes.py",
+        'if f"{FORMAL}/{domain}.qnt" not in changed:\n            return False',
+        'if f"{FORMAL}/{domain}.qnt" not in changed:\n            return True',
+        "packages/tools/tests/test_formal_changes.py::test_business_policy_requires_its_quint_domain",
     ),
     Mutation(
         "requirements",
