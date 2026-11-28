@@ -123,6 +123,14 @@ MUTATIONS = (
     ),
     Mutation(
         "frontend",
+        "MFA登録時に設定コードを最初から開く",
+        "packages/frontend/src/web_app/components/login_views.py",
+        't.details(classes="auth-manual")',
+        't.details(classes="auth-manual", open=True)',
+        "packages/frontend/tests/test_required_guide_home.py::test_registration_qr_matches_manual_code",
+    ),
+    Mutation(
+        "frontend",
         "認証情報の初期更新時刻を有効期間の5分前に固定する",
         "packages/frontend/src/web_app/components/credential_views.py",
         "default_ttl * 3 // 4",
