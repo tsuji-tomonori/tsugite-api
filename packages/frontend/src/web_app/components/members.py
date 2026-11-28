@@ -4,7 +4,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from urllib.parse import quote
 
-from actions.members import member_add, member_page, member_remove
+from actions.members import change_admin_role, member_add, member_page, member_remove
 from content.portal_labels import ROLE_LABELS
 from puepy import t
 from routing.portal_navigation import go
@@ -30,7 +30,9 @@ def members_view() -> None:
     data = ctx["members"]
     with t.div(classes="list-tools"):
         invite_form(data["projects"])
-    with result_table("登録ユーザー", ("名前", "メールアドレス", "役割", "所属プロジェクト", "操作")):
+    with result_table(
+        "登録ユーザー", ("名前", "メールアドレス", "役割", "所属プロジェクト", "管理者権限", "操作")
+    ):
         for row in data["items"]:
             with t.tr():
                 with t.th(scope="row"):
@@ -43,8 +45,14 @@ def members_view() -> None:
                 t.td(row.get("email") or "—")
                 t.td(ROLE_LABELS.get(row["role"], row["role"]))
                 t.td(row.get("project") or "—")
+                t.td("あり" if row.get("admin") else "なし")
                 with t.td(), t.div(classes="btn-grouping"):
                     if not row.get("deleted"):
+                        btn(
+                            "管理者権限を剥奪" if row.get("admin") else "管理者権限を付与",
+                            change_admin_role,
+                            row,
+                        )
                         btn("プロフィールを編集", go, "member-profile/" + quote(row["subject"], safe=""))
                     if row["subject"] != ctx["me"]["subject"]:
                         btn("削除", member_remove, row)
