@@ -837,6 +837,14 @@ MUTATIONS = (
     ),
     Mutation(
         "frontend",
+        "一覧の開閉ボタンを標準の三角付き見出しに戻す",
+        "packages/frontend/src/web_app/components/list_layout.py",
+        'with t.details(classes="list-disclosure", open=expanded):',
+        "with t.details(open=expanded):",
+        "packages/frontend/tests/test_components.py::test_log_search_starts_collapsed_and_shows_active_conditions",
+    ),
+    Mutation(
+        "frontend",
         "日時指定で終了日時を開始日時と同じにする",
         "packages/frontend/src/web_app/components/activity_filters.py",
         'return timestamp("start"), timestamp("end")',
