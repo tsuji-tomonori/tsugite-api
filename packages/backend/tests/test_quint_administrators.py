@@ -12,7 +12,9 @@ def test_admin_role_handover(states, portal):
     email = "operator@example.test"
     person = (
         portal.post(
-            "/api/members", headers=first, json={"email": email, "project": "supply", "role": "provider"}
+            "/api/members",
+            headers=first,
+            json={"email": email, "full_name": "管理 花子", "project": "supply", "role": "provider"},
         )
         .raise_for_status()
         .json()

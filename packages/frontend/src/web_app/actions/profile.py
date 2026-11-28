@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 
+from apis import client
 from apis import organization as organization_api
 from runtime.portal_ui import ctx, route, value
 
@@ -26,11 +27,14 @@ async def load_profile(page: str) -> None:
 
 async def save(endpoint: str, revision: int) -> None:
     """変更したプロフィールを保存する。"""
+    full_name = value("profile-full-name")
+    if not full_name:
+        raise client.InputError("氏名を入力してください")
     ctx["member_profile"] = await organization_api.update_profile(
         endpoint,
         {
             "revision": revision,
-            "full_name": value("profile-full-name") or None,
+            "full_name": full_name,
             "display_name": value("profile-display-name") or None,
         },
     )
