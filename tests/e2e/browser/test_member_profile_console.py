@@ -70,6 +70,12 @@ def test_member_profile_management(tmp_path: Path, request: pytest.FixtureReques
             user.get_by_label("表示名（任意）").fill("みさき")
             user.get_by_role("button", name="保存する", exact=True).click()
             expect(user.get_by_text("プロフィールを保存しました", exact=True)).to_be_visible()
+            display = user.get_by_label("表示名（任意）")
+            display.fill("編集中の表示名")
+            capture(user, "dismissible-notice", "保存結果と右端の閉じるボタン")
+            user.get_by_role("button", name="メッセージを閉じる").press("Enter")
+            expect(user.locator(".notice")).to_have_count(0)
+            expect(display).to_have_value("編集中の表示名")
             for label, key in (("プロジェクト", "finance"), ("部署", department)):
                 menu(admin, label)
                 admin.locator(f'a[href$="/detail/{key}"]').click()

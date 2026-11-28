@@ -175,9 +175,16 @@ textarea.form-control { min-height: 76px; resize: vertical; }
 .code { border: 1px solid var(--line); border-radius: 4px; background: var(--rollover); color: var(--ink); padding: 10px 12px; }
 .decision { border-left: 3px solid var(--line); padding: 4px 12px; }
 .notice {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; overflow-wrap: anywhere;
   background: var(--cs-color-background-status-success); color: var(--ink); border: 2px solid var(--cs-color-border-status-success);
   border-radius: 4px; margin-bottom: 16px; padding: 10px 16px;
 }
+.notice-close {
+  flex: none; min-inline-size: var(--control-height); min-block-size: var(--control-height);
+  border: 1px solid transparent; border-radius: 4px; background: transparent; color: inherit;
+  font-size: 1.25rem; line-height: 1;
+}
+.notice-close:hover { border-color: currentColor; }
 .notice.error { background: var(--cs-color-background-status-error); border-color: var(--cs-color-border-status-error); }
 .loading { max-width: 600px; margin: 8vh auto; padding: 24px; }
 .grant-status { margin-block: 12px; }
