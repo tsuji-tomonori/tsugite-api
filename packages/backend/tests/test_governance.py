@@ -11,7 +11,12 @@ from tests.support.catalog import FORM, approved, headers, invocation_headers
 def test_member_lifecycle(portal):
     """管理者が追加・削除し、同一メールで再登録しても旧利用権を復活させない"""
     admin, other = (headers(portal, r) for r in ("admin", "auditor"))
-    data = {"email": "account@example.org", "role": "consumer", "project": "finance"}
+    data = {
+        "full_name": "試験 花子",
+        "email": "account@example.org",
+        "role": "consumer",
+        "project": "finance",
+    }
     assert portal.post("/api/members", headers=other, json=data).status_code == 403
     member = portal.post("/api/members", headers=admin, json=data).raise_for_status().json()
     assert portal.post("/api/members", headers=admin, json=data).status_code == 409

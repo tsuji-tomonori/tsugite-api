@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from apis import client
 from apis import organization as organization_api
 from js import window
 from routing.portal_navigation import go, load
@@ -11,10 +12,16 @@ from runtime.portal_ui import ctx, value
 
 async def member_add() -> None:
     """フォームの利用者を招待する。"""
+    username = value("member-email")
+    if not username:
+        raise client.InputError("ユーザー名（メールアドレス）を入力してください")
+    full_name = value("member-full-name")
+    if not full_name:
+        raise client.InputError("氏名を入力してください")
     await organization_api.add_member(
         {
-            "email": value("member-email"),
-            "full_name": value("member-full-name") or None,
+            "email": username,
+            "full_name": full_name,
             "display_name": value("member-display-name") or None,
             "role": value("member-role"),
             "project": value("member-project"),

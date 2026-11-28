@@ -1029,7 +1029,7 @@
 | 項目の和名 | 物理名 | 指定 | 型・制約 |
 | --- | --- | --- | --- |
 | 発行対象に選べるAPI | assets | 必須 | 配列 / [認証情報の発行対象API（CredentialAsset）](#credentialasset) |
-| 対象の利用者一覧 | members | 必須 | 配列 / [利用者の識別情報（Person）](#person) |
+| 対象の利用者一覧 | members | 必須 | 配列 / [権限設定の候補に表示する氏名（NamedMember）](#namedmember) |
 | 組織別の有効期間上限 | limits | 必須 | 配列 / [組織ごとのトークン有効期間上限（UnitLimit）](#unitlimit) |
 | トークンの有効期間上限（分） | max_minutes | 必須 | 整数 |
 | 対象プロジェクトの管理権限があるか | may_manage | 必須 | 真偽値 |
@@ -1063,7 +1063,7 @@
     },
     "members": {
       "items": {
-        "$ref": "#/components/schemas/Person"
+        "$ref": "#/components/schemas/NamedMember"
       },
       "title": "対象の利用者一覧",
       "type": "array"
@@ -1803,14 +1803,49 @@
 
 </details>
 
+<a id="internalservererror"></a>
+
+## サーバー内部のエラー（InternalServerError）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 問い合わせ用のエラー分類 | error_code | 必須 | 文字列、指定値 問い合わせ用のエラー分類（`INTERNAL_ERROR`） |
+| 利用者に表示するエラー内容 | detail | 必須 | 文字列 |
+
+<details><summary>JSON Schema</summary>
+
+```json
+{
+  "properties": {
+    "detail": {
+      "title": "利用者に表示するエラー内容",
+      "type": "string"
+    },
+    "error_code": {
+      "const": "INTERNAL_ERROR",
+      "title": "問い合わせ用のエラー分類",
+      "type": "string"
+    }
+  },
+  "required": [
+    "error_code",
+    "detail"
+  ],
+  "title": "サーバー内部のエラー",
+  "type": "object"
+}
+```
+
+</details>
+
 <a id="invitation"></a>
 
 ## ポータル利用者の招待内容（Invitation）
 
 | 項目の和名 | 物理名 | 指定 | 型・制約 |
 | --- | --- | --- | --- |
-| 氏名 | full_name | 任意 | 文字列、最大文字数 `120` または 空値 |
 | 表示名 | display_name | 任意 | 文字列、最大文字数 `80` または 空値 |
+| 氏名 | full_name | 必須 | 文字列、最小文字数 `1`、最大文字数 `120` |
 | 招待先メールアドレス | email | 必須 | 文字列、最大文字数 `150`、正規表現 `"^[^\\s@/]+@[^\\s@/]+\\.[^\\s@/]+$"` |
 | 招待先プロジェクトの識別子 | project | 必須 | 文字列 |
 | 利用者の役割 | role | 必須 | 文字列、指定値 利用者（`consumer`）、提供者（`provider`） |
@@ -1840,16 +1875,10 @@
       "type": "string"
     },
     "full_name": {
-      "anyOf": [
-        {
-          "maxLength": 120,
-          "type": "string"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "title": "氏名"
+      "maxLength": 120,
+      "minLength": 1,
+      "title": "氏名",
+      "type": "string"
     },
     "project": {
       "title": "招待先プロジェクトの識別子",
@@ -1865,6 +1894,7 @@
     }
   },
   "required": [
+    "full_name",
     "email",
     "project",
     "role"
@@ -3288,6 +3318,53 @@
 
 </details>
 
+<a id="namedmember"></a>
+
+## 権限設定の候補に表示する氏名（NamedMember）
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 対象利用者の識別子 | subject | 必須 | 文字列 |
+| ログイン名 | username | 必須 | 文字列 |
+| 氏名 | full_name | 必須 | 文字列 または 空値 |
+
+<details><summary>JSON Schema</summary>
+
+```json
+{
+  "properties": {
+    "full_name": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "氏名"
+    },
+    "subject": {
+      "title": "対象利用者の識別子",
+      "type": "string"
+    },
+    "username": {
+      "title": "ログイン名",
+      "type": "string"
+    }
+  },
+  "required": [
+    "subject",
+    "username",
+    "full_name"
+  ],
+  "title": "権限設定の候補に表示する氏名",
+  "type": "object"
+}
+```
+
+</details>
+
 <a id="newlisting"></a>
 
 ## APIをカタログへ新規登録する入力（NewListing）
@@ -3546,7 +3623,7 @@
 | 項目の和名 | 物理名 | 指定 | 型・制約 |
 | --- | --- | --- | --- |
 | 対象のAPI操作 | operations | 必須 | 配列 / 文字列 |
-| 対象の利用者一覧 | members | 必須 | 配列 / [利用者の識別情報（Person）](#person) |
+| 対象の利用者一覧 | members | 必須 | 配列 / [権限設定の候補に表示する氏名（NamedMember）](#namedmember) |
 | 利用者ごとに許可されたAPI操作 | permissions | 必須 | オブジェクト（キーに対応する値は配列 / 文字列） |
 
 <details><summary>JSON Schema</summary>
@@ -3556,7 +3633,7 @@
   "properties": {
     "members": {
       "items": {
-        "$ref": "#/components/schemas/Person"
+        "$ref": "#/components/schemas/NamedMember"
       },
       "title": "対象の利用者一覧",
       "type": "array"
@@ -3980,8 +4057,8 @@
 
 | 項目の和名 | 物理名 | 指定 | 型・制約 |
 | --- | --- | --- | --- |
-| 氏名 | full_name | 任意 | 文字列、最大文字数 `120` または 空値 |
 | 表示名 | display_name | 任意 | 文字列、最大文字数 `80` または 空値 |
+| 氏名 | full_name | 任意 | 文字列、最小文字数 `1`、最大文字数 `120` |
 | 取得したプロフィールの版番号 | revision | 必須 | 整数、最小値 `0.0` |
 
 <details><summary>JSON Schema</summary>
@@ -4003,16 +4080,10 @@
       "title": "表示名"
     },
     "full_name": {
-      "anyOf": [
-        {
-          "maxLength": 120,
-          "type": "string"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "title": "氏名"
+      "maxLength": 120,
+      "minLength": 1,
+      "title": "氏名",
+      "type": "string"
     },
     "revision": {
       "minimum": 0.0,

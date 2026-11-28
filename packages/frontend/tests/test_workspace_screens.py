@@ -12,6 +12,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 from test_components import render
+from test_required_people_support import content
 
 
 def directory() -> dict[str, Any]:
@@ -64,7 +65,7 @@ def test_directory_pages_filter_before_paginating(portal_module: Callable[[str],
 
 
 def test_direct_members_have_aligned_table_columns(portal_module: Callable[[str], ModuleType]) -> None:
-    """直接所属の利用者をメールアドレス・名前・担当ロールに分け、管理者にだけ操作列を表示する。"""
+    """直接所属の利用者をユーザー名・氏名・メールアドレス・担当ロールに分け、管理者にだけ操作列を表示する。"""
     data = directory()
     data["admin"] = True
     data["users"] = [{"subject": "bob", "username": "legacy-bob"}]
@@ -87,33 +88,34 @@ def test_direct_members_have_aligned_table_columns(portal_module: Callable[[str]
     table = dom.getElementsByTagName("table")[0]
     assert table.getAttribute("aria-label") == "直接の所属メンバー"
     assert [header.firstChild.data for header in table.getElementsByTagName("th")] == [
+        "ユーザー名",
+        "氏名",
         "メールアドレス",
-        "名前",
         "担当ロール",
         "操作",
     ]
     first, second = table.getElementsByTagName("tbody")[0].getElementsByTagName("tr")
-    for row, email, name, role, subject in (
-        (first, "long.alias@example.test", "みさき", "リーダー", "alice"),
-        (second, "—", "—", "メンバー", "bob"),
+    for row, username, name, email, role, subject in (
+        (first, "alice", "高橋 美咲", "long.alias@example.test", "リーダー", "alice"),
+        (second, "legacy-bob", "未登録", "—", "メンバー", "bob"),
     ):
         cells = row.getElementsByTagName("td")
-        assert len(cells) == 4
-        assert cells[0].firstChild.data == email
+        assert len(cells) == 5
+        assert cells[0].firstChild.data == username
         assert cells[1].getElementsByTagName("span")[0].firstChild.data == name
-        assert cells[2].getElementsByTagName("strong")[0].firstChild.data == role
-        assert cells[3].getElementsByTagName("a")[0].getAttribute("href") == (
+        assert cells[2].firstChild.data == email
+        assert cells[3].getElementsByTagName("strong")[0].firstChild.data == role
+        assert cells[4].getElementsByTagName("a")[0].getAttribute("href") == (
             "#/projects/member/p/" + subject
         )
-        assert cells[3].getElementsByTagName("button")[0].firstChild.data == "所属を解除"
-    assert "高橋 美咲" in first.getElementsByTagName("td")[1].toxml()
-    assert "ログイン名 legacy-bob" in second.getElementsByTagName("td")[1].toxml()
-    assert "在庫担当" in first.getElementsByTagName("td")[2].toxml()
+        assert cells[4].getElementsByTagName("button")[0].firstChild.data == "所属を解除"
+    assert "表示名　みさき" in first.getElementsByTagName("td")[1].toxml()
+    assert "在庫担当" in first.getElementsByTagName("td")[3].toxml()
 
     data["admin"] = False
     _, dom = render(page.view)
     table = dom.getElementsByTagName("table")[0]
-    assert len(table.getElementsByTagName("th")) == 3
+    assert len(table.getElementsByTagName("th")) == 4
     assert not table.getElementsByTagName("a") and not table.getElementsByTagName("button")
 
 
@@ -171,7 +173,7 @@ def test_unit_retirement_actions_are_admin_only(portal_module: Callable[[str], M
 def test_project_monitor_shows_members_as_a_table(
     portal_module: Callable[[str], ModuleType], monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """プロジェクト単位の集計であることを案内し、所属メンバーを4列の表で表示する。"""
+    """プロジェクト単位の集計であることを案内し、所属メンバーをユーザー名と氏名を含む表で表示する。"""
     data = directory()
     data["admin"] = True
     path = "projects/monitor/p"
@@ -181,7 +183,14 @@ def test_project_monitor_shows_members_as_a_table(
         "calls": 4,
         "errors": 1,
         "members": [
-            {"subject": "alice", "username": "田中", "unit_id": "p", "title": "係長", "leader": True},
+            {
+                "subject": "alice",
+                "username": "tanaka",
+                "full_name": "田中 花子",
+                "unit_id": "p",
+                "title": "係長",
+                "leader": True,
+            },
             {"subject": "bob", "unit_id": "p", "title": "", "leader": False},
         ],
         "by_api": [],
@@ -199,9 +208,17 @@ def test_project_monitor_shows_members_as_a_table(
     assert details.getElementsByTagName("summary")[0].firstChild.data == "所属メンバー（2 件）"
     table = details.getElementsByTagName("table")[0]
     header = table.getElementsByTagName("thead")[0].getElementsByTagName("th")
-    assert [cell.firstChild.data for cell in header] == ["ユーザー名", "所属", "役職", "管理権限"]
+    assert [cell.firstChild.data for cell in header] == [
+        "ユーザー名",
+        "氏名",
+        "所属",
+        "役職",
+        "管理権限",
+    ]
     rows = table.getElementsByTagName("tbody")[0].getElementsByTagName("tr")
     assert [
-        [cell.firstChild.data for cell in row.childNodes if cell.nodeType == row.ELEMENT_NODE]
-        for row in rows
-    ] == [["田中", "部署00 / 計画", "係長", "リーダー"], ["bob", "部署00 / 計画", "—", "メンバー"]]
+        [content(cell) for cell in row.childNodes if cell.nodeType == row.ELEMENT_NODE] for row in rows
+    ] == [
+        ["tanaka", "田中 花子", "部署00 / 計画", "係長", "リーダー"],
+        ["bob", "未登録", "部署00 / 計画", "—", "メンバー"],
+    ]

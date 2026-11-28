@@ -8,15 +8,15 @@ from pydantic import Field, field_validator
 
 from app.schemas.base import Input
 
+FullName = Annotated[str, Field(min_length=1, max_length=120)]
+
 
 #: 利用者の氏名と表示名
 class ProfileNames(Input):
-    #: 氏名
-    full_name: Annotated[str, Field(max_length=120)] | None = None
     #: 表示名
     display_name: Annotated[str, Field(max_length=80)] | None = None
 
-    @field_validator("full_name", "display_name", mode="before")
+    @field_validator("full_name", "display_name", mode="before", check_fields=False)
     @classmethod
     def clean_name(cls, value: object) -> object:
         if isinstance(value, str):
