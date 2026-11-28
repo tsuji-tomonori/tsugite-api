@@ -329,7 +329,7 @@ def test_governance_console(demo_url: str, request: pytest.FixtureRequest) -> No
         with browser_evidence(request.node, "governance", provider, user) as capture:
             for view, label, role in (
                 (admin, "管理者", "管理者"),
-                (provider, "提供チーム", "提供者"),
+                (provider, "提供チーム", "利用者"),
                 (user, "利用チーム", "利用者"),
             ):
                 view.goto(demo_url)

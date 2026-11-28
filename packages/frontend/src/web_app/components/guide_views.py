@@ -75,7 +75,7 @@ def index(ctx: dict[str, Any]) -> None:
                         placeholder="例　APIを使いたい、読み取りだけ許可したい",
                     )
                 with t.label(classes="field"):
-                    t.span("役割", id="guide-role-label")
+                    t.span("業務の種類", id="guide-role-label")
                     with t.select(
                         id="guide-role",
                         aria_labelledby="guide-role-label",
@@ -83,11 +83,17 @@ def index(ctx: dict[str, Any]) -> None:
                         on_change=update,
                     ):
                         for label in ROLES:
-                            t.option(label, value=label, selected=label == role)
+                            t.option(
+                                {"利用者": "APIの利用", "提供者": "APIの提供", "管理者": "運営管理"}.get(
+                                    label, label
+                                ),
+                                value=label,
+                                selected=label == role,
+                            )
                 t.button("ガイドを検索", type="submit", classes="btn btn-primary")
 
     t.p(
-        "手順が見つかりませんでした。役割を［すべて］にするか、画面名や別の言葉で検索してください。",
+        "手順が見つかりませんでした。業務の種類を［すべて］にするか、画面名や別の言葉で検索してください。",
         id="guide-empty",
         hidden=bool(results),
         classes="empty",

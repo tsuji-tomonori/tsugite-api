@@ -29,7 +29,7 @@ def test_usage_guide(tmp_path: Path, request: pytest.FixtureRequest) -> None:
             page.locator("summary").filter(has_text="検索条件").click()
             user_input = page.get_by_role("searchbox", name="何をしたいですか？")
             user_input.fill(query)
-            page.get_by_label("役割", exact=True).select_option(role)
+            page.get_by_label("業務の種類", exact=True).select_option(role)
             first = page.locator("#guide-grid tr:visible a").first
             expect(first).to_have_attribute("href", "#/guide/" + article)
             first.click()
