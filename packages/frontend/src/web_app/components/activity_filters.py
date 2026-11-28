@@ -5,12 +5,14 @@ from collections.abc import Sequence
 from datetime import datetime, timedelta
 from typing import Any
 
+from js import document
 from puepy import t
 from routing.portal_navigation import go, load
 from runtime.portal_ui import INITIAL_STATE, action, ctx, value
 
 from components.controls import field
 from components.list_layout import disclosure
+from components.period_picker import PERIODS, absolute_period, period_choice
 
 MEASURES = {
     "calls": "呼び出し件数",
@@ -22,12 +24,41 @@ MEASURES = {
 }
 
 
-PERIODS = {"1": "過去1時間", "24": "過去24時間", "168": "過去7日", "720": "過去30日"}
+def selected_interval() -> tuple[str, str]:
+    """入力した日付と時刻をAPIに渡すUTC日時にまとめる。"""
+
+    def timestamp(key: str) -> str:
+        day = value(f"f-{key}-date")
+        clock = value(f"f-{key}-time")
+        return datetime.fromisoformat(f"{day}T{clock}").isoformat() + "Z"
+
+    return timestamp("start"), timestamp("end")
+
+
+def submit_filters(chart: bool, event: Any) -> None:
+    """日時の前後関係と最大期間を確かめ、入力を保ったまま修正できるようにする。"""
+    if value("f-hours") == "custom":
+        start, end = selected_interval()
+        span = datetime.fromisoformat(end) - datetime.fromisoformat(start)
+        if not timedelta(0) < span <= timedelta(days=31):
+            event.preventDefault()
+            control = document.getElementById("f-end-time")
+            control.setCustomValidity("終了日時は開始日時より後で、31日以内にしてください。")
+            control.reportValidity()
+            control.setCustomValidity("")
+            return
+    action(apply_filters, chart)(event)
 
 
 async def apply_filters(chart: bool) -> None:
     """入力条件を適用して再読み込みする。"""
-    f = {k: value("f-" + k) for k in ctx["filters"]}
+    previous = ctx["filters"]
+    f = {k: value("f-" + k) for k in previous if k not in ("start", "end")}
+    if f["hours"] == "custom":
+        f["hours"] = previous["hours"]
+        f["start"], f["end"] = selected_interval()
+    else:
+        f.update(start="", end="")
     if not chart:
         ctx["access_id"] = value("access-id")
     ctx["filters"] = f
@@ -67,7 +98,7 @@ def filter_form(
     def choice(k: str, title: str, opts: Sequence[tuple[str, str]]) -> None:
         field(title, "f-" + k, options=opts, text=f[k])
 
-    with t.form(on_submit=action(apply_filters, chart)):
+    with t.form(on_submit=lambda event: submit_filters(chart, event)):
         with t.div(classes="filter-grid"):
             if not chart:
                 field("照合するリクエストID", "access-id", text=request_id)
@@ -85,11 +116,7 @@ def filter_form(
                 choice("unit", "集計する部署・プロジェクト", [("", "閲覧できる全範囲")] + choices)
             else:
                 t.input(type="hidden", id="f-unit", value="")
-            choice(
-                "hours",
-                "期間",
-                list(PERIODS.items()),
-            )
+            period_choice(f)
             choice(
                 "asset", "対象API", [("", "すべて")] + sorted({(v["asset_id"], v["name"]) for v in dims})
             )
@@ -110,10 +137,7 @@ def filter_form(
             else:
                 t.input(type="hidden", id="f-minutes", value=f["minutes"])
                 t.input(type="hidden", id="f-measure", value=f["measure"])
-        with t.details():
-            t.summary("日時を指定（UTC）")
-            field("開始日時", "f-start", text=f["start"], placeholder="2026-11-21T00:00:00Z")
-            field("終了日時", "f-end", text=f["end"], placeholder="2026-11-21T01:00:00Z")
+        absolute_period(f)
         t.button("条件を適用", type="submit", classes="btn btn-primary")
 
 
