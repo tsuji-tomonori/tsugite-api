@@ -231,10 +231,13 @@ def test_access_log_detail_and_support(portal_session: PortalSession) -> None:
         download = page.get_by_role("button", name="アクセスログをダウンロードして保存")
         toggle = page.locator("summary").filter(has_text="検索条件")
         position = download.bounding_box()
-        toggle.click()
+        expect(toggle).to_have_css("list-style-type", "none")
+        toggle.press("Enter")
         expect(page.get_by_label("照合するリクエストID")).to_be_visible()
+        expect(toggle).to_have_css("list-style-type", "none")
         assert position is not None and download.bounding_box() == position
-        toggle.click()
+        toggle.press("Space")
+        expect(page.get_by_label("照合するリクエストID")).to_be_hidden()
         assert download.bounding_box() == position
     capture(page, "log-list", "検索条件を閉じたスマートフォンのアクセスログ一覧")
     page.get_by_role("button", name="次へ", exact=True).click()
