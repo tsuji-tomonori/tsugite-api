@@ -227,6 +227,13 @@ def test_access_log_detail_and_support(portal_session: PortalSession) -> None:
         )
         expect(page.get_by_label("照合するリクエストID")).to_be_hidden()
         assert visible_table_ratio(listing) >= 0.70
+    toggle = page.locator("summary").filter(has_text="検索条件")
+    expect(toggle).to_have_css("list-style-type", "none")
+    toggle.press("Enter")
+    expect(page.get_by_label("照合するリクエストID")).to_be_visible()
+    expect(toggle).to_have_css("list-style-type", "none")
+    toggle.press("Space")
+    expect(page.get_by_label("照合するリクエストID")).to_be_hidden()
     capture(page, "log-list", "検索条件を閉じたスマートフォンのアクセスログ一覧")
     page.get_by_role("button", name="次へ", exact=True).click()
     expect(listing.get_by_role("link")).to_have_count(1)

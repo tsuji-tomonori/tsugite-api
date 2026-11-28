@@ -805,6 +805,14 @@ MUTATIONS = (
     ),
     Mutation(
         "frontend",
+        "一覧の開閉ボタンを標準の三角付き見出しに戻す",
+        "packages/frontend/src/web_app/components/list_layout.py",
+        'with t.details(classes="list-disclosure", open=expanded):',
+        "with t.details(open=expanded):",
+        "packages/frontend/tests/test_components.py::test_log_search_starts_collapsed_and_shows_active_conditions",
+    ),
+    Mutation(
+        "frontend",
         "一覧の検索条件を常に展開する",
         "packages/frontend/src/web_app/components/list_layout.py",
         'with t.details(classes="list-disclosure", open=expanded):',
