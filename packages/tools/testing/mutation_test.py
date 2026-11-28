@@ -107,6 +107,14 @@ MUTATIONS = (
     ),
     Mutation(
         "frontend",
+        "閉じた通知を再描画で復活させる",
+        "packages/frontend/src/web_app/runtime/portal_shell.py",
+        'ctx.update(message="", error=False)',
+        "ctx.update(error=False)",
+        "packages/frontend/tests/test_required_guide_navigation.py::test_dismiss_current_notice",
+    ),
+    Mutation(
+        "frontend",
         "認証情報の初期更新時刻を有効期間の5分前に固定する",
         "packages/frontend/src/web_app/components/credential_views.py",
         "default_ttl * 3 // 4",
@@ -358,6 +366,14 @@ MUTATIONS = (
         'conditions = [node["if"].value for node in (mapping(job), fields) if "if" in node]',
         "conditions = []",
         "packages/tools/tests/test_completion.py::test_workflow_comments_follow_steps",
+    ),
+    Mutation(
+        "frontend",
+        "キー選択時の呼び出しURLの送信先照合を省く",
+        "packages/frontend/src/web_app/apis/manual.py",
+        "not url.startswith(origin + prefix)",
+        "False",
+        "packages/frontend/tests/test_api_client.py::test_manual_key_checks_destination_before_exchange",
     ),
     Mutation(
         "frontend",

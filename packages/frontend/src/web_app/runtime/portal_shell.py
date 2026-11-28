@@ -21,6 +21,26 @@ def theme_changed(event: Any) -> None:
     document.documentElement.setAttribute("data-mode", mode)
 
 
+def dismiss_notice(event: Any) -> None:
+    """入力中の画面を保ったまま、現在の操作結果だけを閉じる。"""
+    ctx.update(message="", error=False)
+    event.currentTarget.closest(".notice").remove()
+
+
+def notice_banner() -> None:
+    """操作結果と閉じるボタンを共通レイアウトに表示する。"""
+    if ctx["message"]:
+        with t.div(classes="notice error" if ctx["error"] else "notice"):
+            t.span(ctx["message"], role="alert" if ctx["error"] else "status")
+            t.button(
+                "×",
+                type="button",
+                classes="notice-close",
+                aria_label="メッセージを閉じる",
+                on_click=dismiss_notice,
+            )
+
+
 def set_navigation(opened: bool) -> None:
     """ナビゲーションの開閉状態を反映する。"""
     ctx["nav_open"] = opened
@@ -93,12 +113,7 @@ class Portal(Page):
                 btn("ログアウト", logout)
         if not ctx["config"] or not user:
             with t.section(classes="login box"):
-                if ctx["message"]:
-                    t.div(
-                        ctx["message"],
-                        role="alert" if ctx["error"] else "status",
-                        classes="notice error" if ctx["error"] else "notice",
-                    )
+                notice_banner()
                 if ctx["config"]:
                     login_page()
                 else:
@@ -145,12 +160,7 @@ class Portal(Page):
                                 on_click=action(go, entry.path),
                             )
             with t.section(classes="content"):
-                if ctx["message"]:
-                    t.div(
-                        ctx["message"],
-                        role="alert",
-                        classes="notice error" if ctx["error"] else "notice",
-                    )
+                notice_banner()
                 if not screen:
                     t.h1(title)
                     return

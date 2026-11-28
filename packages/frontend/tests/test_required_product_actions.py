@@ -420,6 +420,7 @@ def test_manual_browser_send_displays_response(
     manual = portal_module("components.manual_request")
     inputs.update(
         {
+            "manual-key": "",
             "manual-url": "https://inventory.example/items",
             "manual-method": "PATCH",
             "manual-headers": "X-Warehouse: Tokyo",
@@ -621,6 +622,7 @@ def test_manual_click_prevents_duplicate_during_send(
     manual = portal_module("components.manual_request")
     inputs.update(
         {
+            "manual-key": "",
             "manual-url": "https://warehouse.example/health",
             "manual-method": "GET",
             "manual-headers": "",
