@@ -16,4 +16,4 @@ for spec in "$root"/tests/formal/*.qnt; do
         exit 1
     }
 done
-FORMAL_COVERAGE_REPORT="$out/coverage.md" uv run --locked --package tsugite-backend --group dev python -m pytest -q tests/architecture/core/test_formal_contracts.py packages/backend/tests/test_quint*.py --junitxml="$out/replay.xml"
+FORMAL_COVERAGE_REPORT="$out/coverage.md" uv run --locked --package tsugite-backend --group dev python -m pytest -q tests/formal/test_policy_parser.py tests/architecture/core/test_formal_contracts.py packages/backend/tests/test_quint*.py --junitxml="$out/replay.xml"

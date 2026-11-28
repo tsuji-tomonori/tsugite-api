@@ -26,6 +26,14 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
+        "chat-wait",
+        "回答待ちの表示からリングを外す",
+        "packages/frontend/src/web_app/components/chat_views.py",
+        'role="status", classes="chat-pending"',
+        'role="status"',
+        "packages/frontend/tests/test_required_guide_home.py::test_waiting_for_a_chat_answer_prevents_a_second_submission",
+    ),
+    Mutation(
         "chat-inquiry",
         "モデルが類似と判定した商品をすべて候補に戻す",
         "packages/agent/src/chat_retrieval.py",
@@ -107,6 +115,14 @@ MUTATIONS = (
     ),
     Mutation(
         "frontend",
+        "閉じた通知を再描画で復活させる",
+        "packages/frontend/src/web_app/runtime/portal_shell.py",
+        'ctx.update(message="", error=False)',
+        "ctx.update(error=False)",
+        "packages/frontend/tests/test_required_guide_navigation.py::test_dismiss_current_notice",
+    ),
+    Mutation(
+        "frontend",
         "認証情報の初期更新時刻を有効期間の5分前に固定する",
         "packages/frontend/src/web_app/components/credential_views.py",
         "default_ttl * 3 // 4",
@@ -160,6 +176,14 @@ MUTATIONS = (
         'custom_headers={"X-Tsugite-Origin":',
         'custom_headers={"X-Other-Origin":',
         "packages/infra/tests/test_stack.py::test_access_boundaries",
+    ),
+    Mutation(
+        "quint-diff",
+        "他の形式モデルの差分を業務ルールの更新として認める",
+        "packages/tools/design/formal_changes.py",
+        'if f"{FORMAL}/{domain}.qnt" not in changed:\n            return False',
+        'if f"{FORMAL}/{domain}.qnt" not in changed:\n            return True',
+        "packages/tools/tests/test_formal_changes.py::test_business_policy_requires_its_quint_domain",
     ),
     Mutation(
         "requirements",
@@ -256,6 +280,14 @@ MUTATIONS = (
         "return {k: v for k, v in base.items() if k not in retired_units(db)}",
         "return base",
         "packages/backend/tests/test_unit_lifecycle.py::test_project_transfer",
+    ),
+    Mutation(
+        "frontend",
+        "JSONスキーマの項目名を文字列値と同じ色にする",
+        "packages/frontend/src/web_app/components/api_docs.py",
+        'kind = "key"',
+        'kind = "string"',
+        "packages/frontend/tests/test_components.py::test_schema_block_preserves_json_tokens",
     ),
     Mutation(
         "frontend",
@@ -478,6 +510,14 @@ MUTATIONS = (
         'settings(f"{path}[{index}]", item)',
         "settings(path, item)",
         "packages/tools/tests/test_infrastructure_docs.py::test_component_parameter_sheet",
+    ),
+    Mutation(
+        "stock-lambda",
+        "上限と一致する不良数の検品ロットを除外する",
+        "packages/sample_api/src/sample_api/products/receipt_inspections.py",
+        "WHERE defect_count <= ?",
+        "WHERE defect_count < ?",
+        "packages/sample_api/tests/test_products.py::test_inspection_defect_threshold_includes_zero",
     ),
     Mutation(
         "stock-lambda",

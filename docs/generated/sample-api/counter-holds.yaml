@@ -1,0 +1,262 @@
+openapi: 3.1.0
+info:
+  title: 店頭取り置き
+  description: 取り置き伝票の受取窓口、引換番号、保管期限までの残日数を確認します。
+  version: 1.0.0
+paths:
+  /health:
+    get:
+      summary: データベースの稼働状態を確認
+      operationId: health_health_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+  /holds:
+    get:
+      summary: 店頭取り置きを一覧で取得
+      operationId: list_holds_holds_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Hold'
+                type: array
+                title: Response List Holds Holds Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+  /holds/{hold_id}:
+    get:
+      summary: 店頭取り置きの明細を照会
+      operationId: detail_holds__hold_id__get
+      parameters:
+      - name: hold_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Hold Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Hold'
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+        '404':
+          description: 該当なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MissingRecord'
+  /pickup-counters:
+    get:
+      summary: 店頭取り置きを受取窓口別に集計
+      operationId: by_counter_pickup_counters_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/HoldCount'
+                type: array
+                title: Response By Counter Pickup Counters Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+  /expiring-holds:
+    get:
+      summary: 保管残日数が指定値以下の店頭取り置きを取得
+      operationId: below_limit_expiring_holds_get
+      parameters:
+      - name: maximum
+        in: query
+        required: false
+        schema:
+          type: integer
+          description: 保管残日数の上限
+          default: 1
+          title: Maximum
+        description: 保管残日数の上限
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Hold'
+                title: Response Below Limit Expiring Holds Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /hold-retention:
+    get:
+      summary: 保管残日数の最小値と最大値を取得
+      operationId: days_left_summary_hold_retention_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HoldRange'
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+components:
+  schemas:
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    Health:
+      properties:
+        status:
+          type: string
+          const: ok
+          title: Status
+          default: ok
+      type: object
+      title: Health
+    Hold:
+      properties:
+        hold_id:
+          type: string
+          title: Hold Id
+        counter:
+          type: string
+          title: Counter
+        pickup_code:
+          type: string
+          title: Pickup Code
+        days_left:
+          type: integer
+          title: Days Left
+      type: object
+      required:
+      - hold_id
+      - counter
+      - pickup_code
+      - days_left
+      title: Hold
+    HoldCount:
+      properties:
+        counter:
+          type: string
+          title: Counter
+        count:
+          type: integer
+          title: Count
+      type: object
+      required:
+      - counter
+      - count
+      title: HoldCount
+    HoldRange:
+      properties:
+        minimum_days_left:
+          type: integer
+          title: Minimum Days Left
+        maximum_days_left:
+          type: integer
+          title: Maximum Days Left
+      type: object
+      required:
+      - minimum_days_left
+      - maximum_days_left
+      title: HoldRange
+    InternalServerError:
+      properties:
+        error_code:
+          type: string
+          const: INTERNAL_ERROR
+          title: Error Code
+        detail:
+          type: string
+          title: Detail
+      type: object
+      required:
+      - error_code
+      - detail
+      title: InternalServerError
+    MissingRecord:
+      properties:
+        detail:
+          type: string
+          title: Detail
+      type: object
+      required:
+      - detail
+      title: MissingRecord
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError

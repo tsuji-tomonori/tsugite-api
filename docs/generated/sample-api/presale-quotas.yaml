@@ -1,0 +1,262 @@
+openapi: 3.1.0
+info:
+  title: 予約販売枠
+  description: 予約受付を販売キャンペーン別に集計し、残りの受付枠を確認します。
+  version: 1.0.0
+paths:
+  /health:
+    get:
+      summary: データベースの稼働状態を確認
+      operationId: health_health_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+  /presales:
+    get:
+      summary: 予約販売枠を一覧で取得
+      operationId: list_presales_presales_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Presale'
+                type: array
+                title: Response List Presales Presales Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+  /presales/{presale_id}:
+    get:
+      summary: 予約販売枠の明細を照会
+      operationId: detail_presales__presale_id__get
+      parameters:
+      - name: presale_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Presale Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Presale'
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+        '404':
+          description: 該当なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MissingRecord'
+  /presale-campaigns:
+    get:
+      summary: 予約販売枠をキャンペーン別に集計
+      operationId: by_campaign_presale_campaigns_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/PresaleCount'
+                type: array
+                title: Response By Campaign Presale Campaigns Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+  /limited-presales:
+    get:
+      summary: 予約可能数が指定値以下の予約販売枠を取得
+      operationId: below_limit_limited_presales_get
+      parameters:
+      - name: maximum
+        in: query
+        required: false
+        schema:
+          type: integer
+          description: 予約可能数の上限
+          default: 4
+          title: Maximum
+        description: 予約可能数の上限
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Presale'
+                title: Response Below Limit Limited Presales Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /presale-capacities:
+    get:
+      summary: 予約可能数の最小値と最大値を取得
+      operationId: remaining_slots_summary_presale_capacities_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PresaleRange'
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+components:
+  schemas:
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    Health:
+      properties:
+        status:
+          type: string
+          const: ok
+          title: Status
+          default: ok
+      type: object
+      title: Health
+    InternalServerError:
+      properties:
+        error_code:
+          type: string
+          const: INTERNAL_ERROR
+          title: Error Code
+        detail:
+          type: string
+          title: Detail
+      type: object
+      required:
+      - error_code
+      - detail
+      title: InternalServerError
+    MissingRecord:
+      properties:
+        detail:
+          type: string
+          title: Detail
+      type: object
+      required:
+      - detail
+      title: MissingRecord
+    Presale:
+      properties:
+        presale_id:
+          type: string
+          title: Presale Id
+        campaign:
+          type: string
+          title: Campaign
+        release_date:
+          type: string
+          title: Release Date
+        remaining_slots:
+          type: integer
+          title: Remaining Slots
+      type: object
+      required:
+      - presale_id
+      - campaign
+      - release_date
+      - remaining_slots
+      title: Presale
+    PresaleCount:
+      properties:
+        campaign:
+          type: string
+          title: Campaign
+        count:
+          type: integer
+          title: Count
+      type: object
+      required:
+      - campaign
+      - count
+      title: PresaleCount
+    PresaleRange:
+      properties:
+        minimum_remaining_slots:
+          type: integer
+          title: Minimum Remaining Slots
+        maximum_remaining_slots:
+          type: integer
+          title: Maximum Remaining Slots
+      type: object
+      required:
+      - minimum_remaining_slots
+      - maximum_remaining_slots
+      title: PresaleRange
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError

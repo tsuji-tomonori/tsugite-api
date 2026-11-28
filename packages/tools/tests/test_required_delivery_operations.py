@@ -86,7 +86,7 @@ def test_demo_uses_local_port_after_migration(managed, monkeypatch):
 
 
 def test_seed_publishes_each_edition_and_reuses_existing_inventory():
-    """二拠点に十二商品ずつ公開し、再投入時は未公開に戻った一商品だけを再公開する。"""
+    """二拠点に全商品を一度ずつ公開し、再投入時は未公開に戻った一商品だけを再公開する。"""
     inventory = {}
     creates = []
     publications = []
@@ -114,12 +114,14 @@ def test_seed_publishes_each_edition_and_reuses_existing_inventory():
 
     with httpx.Client(base_url="http://demo.test", transport=httpx.MockTransport(portal)) as client:
         first = seed_marketplace.seed(client, 2)
-        assert len(set(first)) == len(creates) == len(publications) == 24
         products = json.loads(
             (Path(__file__).resolve().parents[3] / "docs/examples/marketplace.json").read_text()
         )
+        expected_count = 2 * len(products)
+        assert len(set(first)) == len(creates) == len(publications) == expected_count
         for product in products:
-            offers = [o for o in creates if product["name"] in o["name"]]
+            slugs = {f"{product['slug']}-{edition}" for edition in (1, 2)}
+            offers = [o for o in creates if o["slug"] in slugs]
             assert len(offers) == 2
             for offer in offers:
                 matching = [
@@ -132,7 +134,7 @@ def test_seed_publishes_each_edition_and_reuses_existing_inventory():
         inventory[first[-1]]["published"] = False
         publications.clear()
         assert set(seed_marketplace.seed(client, 2)) == set(first)
-        assert len(creates) == 24
+        assert len(creates) == expected_count
         assert publications == [first[-1]]
 
 

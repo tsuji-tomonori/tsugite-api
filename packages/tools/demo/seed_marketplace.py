@@ -102,7 +102,7 @@ def seed(api, editions):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="ローカルデモのカタログに用途の異なる12種類のAPIを公開します"
+        description="ローカルデモのカタログに用途の異なるサンプルAPIを公開します"
     )
     parser.add_argument("--editions", type=int, default=1, choices=range(1, 101), metavar="1..100")
     args = parser.parse_args()

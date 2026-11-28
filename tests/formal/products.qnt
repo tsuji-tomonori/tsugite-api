@@ -17,8 +17,9 @@ module products {
   action structural = all { not(removed), result("structure", false, false, closed) }
   action remove = all { not(removed), result("delete", false, true, closed) }
   action step = any { publish, apply, approve, rename, structural, remove, all { removed, result("deleted", false, true, closed) } }
-  /// 削除済みの商品は掲載されず、承認待ちの申請も承認済みの利用権も残らない。
-  val safe = removed implies (not(listed) and not(Set("pending","approved").contains(status)))
+  /// 構造を変更した商品は掲載されない。削除済みの商品は掲載されず、承認待ちの申請も承認済みの利用権も残らない。
+  val safe = (removed implies (not(listed) and not(Set("pending","approved").contains(status)))) and
+    (operation != "structure" or not(listed))
   run editTest = init.then(publish).then(apply).then(approve).then(rename).then(structural)
   run pendingEditTest = init.then(publish).then(apply).then(structural)
   run deleteTest = init.then(publish).then(apply).then(approve).then(remove)
