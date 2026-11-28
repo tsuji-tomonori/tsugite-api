@@ -395,6 +395,8 @@ def test_marketplace_contracts(aws, resources, tmp_path, request):
             )
             assert [e["action"] for e in reversed(events)] == [
                 "register",
+                "publication.submit",
+                "publication.approve",
                 "publish",
                 "apply",
                 "approve",

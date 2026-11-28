@@ -141,6 +141,15 @@ def decide_publication(
     pending = json.loads(a.publication_request)
     stage = pending["remaining"].pop(0)
     a.publication_request = None
+    event(
+        db,
+        request,
+        actor,
+        a,
+        "publication.approve" if data.approved else "publication.reject",
+        a.owner,
+        detail=stage + " " + data.reason,
+    )
     if data.approved and pending["remaining"]:
         a.publication_request = json.dumps(pending, ensure_ascii=False)
     elif data.approved:
@@ -155,14 +164,5 @@ def decide_publication(
         record_release(db, a)
         a.published = True
         event(db, request, actor, a, "publish", a.owner)
-    event(
-        db,
-        request,
-        actor,
-        a,
-        "publication.approve" if data.approved else "publication.reject",
-        a.owner,
-        detail=stage + " " + data.reason,
-    )
     db.commit()
     return listing(a)
