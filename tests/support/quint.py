@@ -1,4 +1,3 @@
-# Quintが生成した確定履歴をpytestの入力にする。
 """Quintが生成した確定履歴をpytestの入力にする。"""
 
 import json

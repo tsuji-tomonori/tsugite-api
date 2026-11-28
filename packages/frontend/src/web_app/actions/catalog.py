@@ -1,4 +1,5 @@
-# カタログの検索状態を管理する。
+"""カタログの検索状態を管理する。"""
+
 from __future__ import annotations
 
 from apis import products as products_api

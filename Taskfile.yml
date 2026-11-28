@@ -57,6 +57,9 @@ tasks:
   docs:quality:
     desc: PRの検査項目と対象ブランチのカバレッジ基準から完了の定義を生成
     cmds: ['uv run --locked --only-group quality-docs python -m packages.tools.design.completion {{.CLI_ARGS}}']
+  docs:formal:
+    desc: Quintの定義からドメインと不変条件の一覧を生成
+    cmds: ['python3 tests/formal/document.py']
   docs:infra:
     desc: CDKを合成し、コンポーネント別のリソース一覧とパラメーターシートを更新
     cmds:

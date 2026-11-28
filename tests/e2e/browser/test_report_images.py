@@ -1,4 +1,5 @@
-# 実行レポートの画像をオフラインで拡大し、キーボード・タッチ・印刷でも確認できる。
+"""実行レポートの画像をオフラインで拡大し、キーボード・タッチ・印刷でも確認できる。"""
+
 import os
 from pathlib import Path
 from xml.etree import ElementTree

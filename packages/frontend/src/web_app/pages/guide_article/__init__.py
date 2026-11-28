@@ -1,4 +1,5 @@
-# ガイド記事と操作先を組み立てる。
+"""ガイド記事と操作先を組み立てる。"""
+
 from __future__ import annotations
 
 from components import guide_views

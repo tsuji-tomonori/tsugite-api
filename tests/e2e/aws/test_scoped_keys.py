@@ -1,5 +1,4 @@
-# EmulatorのCognitoと共有・本人キーでHTTPS接続先を呼び、別人・範囲外・失効を拒否する。
-"""Exercise issued keys across the HTTP boundary with Cognito and a TLS upstream."""
+"""AWSエミュレーターで共有キーと本人用キーによるHTTPS接続を試し、別人・範囲外・失効済みのキーが拒否されることを確かめる。"""
 
 import json
 import os
@@ -11,6 +10,7 @@ import jwt
 from packages.tools.demo.seed_marketplace import CATALOG, offer
 from tests.e2e.aws.https_stock import https_stock
 from tests.e2e.aws.test_portal import live_portal
+from tests.support.catalog import publish_asset
 
 
 def another_finance_user(aws, first_token):
@@ -30,13 +30,13 @@ def another_finance_user(aws, first_token):
     )["AuthenticationResult"]["AccessToken"]
 
 
-def subscribe(api, product, provider, consumer):
+def subscribe(api, product, provider, consumer, administrator):
     asset = (
         api.post("apis", headers=provider, json={**offer(product), "base_path": "/v1"})
         .raise_for_status()
         .json()["id"]
     )
-    api.put(f"apis/{asset}/publication", params={"published": True}, headers=provider).raise_for_status()
+    publish_asset(api, f"apis/{asset}", provider, administrator).raise_for_status()
     grant = (
         api.post(
             f"apis/{asset}/requests",
@@ -72,8 +72,12 @@ def test_scoped_keys_reach_https(aws, resources, tmp_path, request):
         peer_identity = api.get("me", headers=peer).raise_for_status().json()
         assert peer_identity["projects"] == ["finance"] and peer_identity["subject"] != subject
 
-        stock, read_stock = subscribe(api, CATALOG[0], provider, consumer)
-        _, read_rates = subscribe(api, CATALOG[2], provider, consumer)
+        stock, read_stock = subscribe(
+            api, CATALOG[0], provider, consumer, {"Authorization": "Bearer " + tokens["administrator"]}
+        )
+        _, read_rates = subscribe(
+            api, CATALOG[2], provider, consumer, {"Authorization": "Bearer " + tokens["administrator"]}
+        )
         issued = {}
         for kind in ("shared", "personal"):
             issued[kind] = (

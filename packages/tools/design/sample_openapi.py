@@ -1,4 +1,3 @@
-# 商品ごとにFastAPIの実装からOpenAPI YAMLを生成する。
 """商品ごとにFastAPIの実装からOpenAPI YAMLを生成する。"""
 
 from pathlib import Path

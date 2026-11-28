@@ -1,4 +1,5 @@
-# 商品登録から利用までの共通テスト操作を提供する。
+"""商品登録から利用までの共通テスト操作を提供する。"""
+
 import os
 from collections.abc import Callable, Iterator
 from contextlib import ExitStack, contextmanager, suppress
@@ -33,6 +34,24 @@ def navigate(page: Page, label: str) -> None:
     if toggle.get_attribute("aria-expanded") == "false":
         toggle.click()
     page.get_by_role("navigation", name="ポータル").get_by_role("button", name=label, exact=True).click()
+
+
+def approve_in_browser(browser, owner, url, title, tokens=None):
+    expect(owner.get_by_role("button", name="公開申請を取り下げる")).to_be_visible()
+    admin = browser.new_page()
+    admin.goto(url)
+    if tokens:
+        admin.evaluate("(token) => sessionStorage.setItem('access', token)", tokens["administrator"])
+        admin.reload()
+    else:
+        admin.get_by_role("button", name="管理者", exact=True).click()
+    navigate(admin, "届いた申請")
+    admin.get_by_role("link", name=title, exact=True).click()
+    admin.get_by_label("公開判断の理由").fill("用途と接続仕様を確認")
+    admin.get_by_role("button", name="公開申請を承認", exact=True).click()
+    expect(admin.get_by_role("button", name="公開申請を承認")).to_have_count(0)
+    admin.close()
+    owner.reload()
 
 
 def catalog_journey(
@@ -77,9 +96,10 @@ def catalog_journey(
                 ROOT / "docs/examples/stock.openapi.json"
             )
             provider.get_by_role("button", name="下書きを保存").click()
-            expect(provider.get_by_role("button", name="公開する")).to_be_visible()
+            expect(provider.get_by_role("button", name="公開申請する")).to_be_visible()
             capture(provider, "draft", "提供者が保存した公開前の下書き")
-            provider.get_by_role("button", name="公開する").click()
+            provider.get_by_role("button", name="公開申請する").click()
+            approve_in_browser(browser, provider, url, "棚卸API", tokens)
             expect(provider.get_by_role("button", name="掲載を取り下げる")).to_be_visible()
             capture(provider, "01-published", "提供者が公開した棚卸APIとOpenAPIの操作仕様")
         with when("利用チームが検索して申請し、提供チームが承認する"):
@@ -167,7 +187,7 @@ def catalog_journey(
             navigate(provider, "提供するAPI")
             provider.get_by_role("link", name="棚卸API").click()
             provider.get_by_role("button", name="掲載を取り下げる").click()
-            expect(provider.get_by_role("button", name="公開する")).to_be_visible()
+            expect(provider.get_by_role("button", name="公開申請する")).to_be_visible()
             consumer.locator("#environment").select_option("production")
             consumer.get_by_label("利用目的").fill("本番の在庫照会")
             consumer.get_by_role("button", name="申請する").click()

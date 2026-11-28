@@ -1,5 +1,4 @@
-# サンプル商品を登録して公開する。
-"""Publish example listings using the local portal's provider flow."""
+"""ローカルのポータルで提供者の登録・公開手順を使ってサンプル商品を公開する。"""
 
 import argparse
 import json
@@ -66,6 +65,8 @@ def seed(api, editions):
     login = api.post("demo/provider")
     login.raise_for_status()
     headers = {"Authorization": "Bearer " + login.json()["access_token"]}
+    admin_login = api.post("demo/admin").raise_for_status().json()
+    administrator = {"Authorization": "Bearer " + admin_login["access_token"]}
     inventory = api.get("apis", params={"inventory": True}, headers=headers)
     inventory.raise_for_status()
     existing = {row["slug"]: row for row in inventory.json() if row["owner"] == "supply"}
@@ -95,14 +96,23 @@ def seed(api, editions):
                 response = api.put(
                     f"apis/{row['id']}/publication", params={"published": True}, headers=headers
                 )
-                response.raise_for_status()
+                pending = response.raise_for_status().json()
+                api.post(
+                    f"apis/{row['id']}/publication-decisions",
+                    headers=administrator,
+                    json={
+                        "approved": True,
+                        "revision": pending["revision"],
+                        "reason": "デモ用APIを確認",
+                    },
+                ).raise_for_status()
             ids.append(row["id"])
     return ids
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="ローカルデモのカタログに用途の異なる12種類のAPIを公開します"
+        description="ローカルデモのカタログに用途の異なるサンプルAPIを公開します"
     )
     parser.add_argument("--editions", type=int, default=1, choices=range(1, 101), metavar="1..100")
     args = parser.parse_args()

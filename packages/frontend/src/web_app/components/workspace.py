@@ -1,4 +1,5 @@
-# 部署とプロジェクトの表示を組み立てる。
+"""部署とプロジェクトの表示を組み立てる。"""
+
 from __future__ import annotations
 
 from collections.abc import Callable

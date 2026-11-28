@@ -73,7 +73,7 @@ API操作はルートデコレーター、引数・モデル・項目・列挙�
 
 [インフラ設計書](docs/generated/infra/README.md)には、CDKコンポーネントごとのリソース一覧とパラメーターシートがあります。`task docs:infra` はCDKを合成し、`packages/infra/cdk.out/TsugiteApi.template.json` から各表を更新します。接続先を指定する場合は `task docs:infra -- --bindings <ファイル>` を使います。既に合成したテンプレートから表だけを更新するときは `task docs:infra:render` を実行します。
 
-ログイン後のホームでは日本語で公開APIを探し、操作手順を確認し、運営に問い合わせできます。モデルの構成と配備方法は[推論モデルと配備](packages/model/README.md)を参照してください。
+ログイン後に最初に開く「チャット」では日本語で公開APIを探し、操作手順を確認し、運営に問い合わせできます。モデルの構成と配備方法は[推論モデルと配備](packages/model/README.md)を参照してください。
 
 CIはPRで設計書を生成して成果物に含めます。既定ブランチの検証が通ると、生成結果に差分がある場合だけ `docs/generated/` を自動コミットします。
 
@@ -99,7 +99,7 @@ CIはPRで設計書を生成して成果物に含めます。既定ブランチ�
 
 ## 商品としてAPIを公開する
 
-「提供するAPI」→「APIを登録」で、基本版（検証）、準本番、本番から出品する環境と接続先を選びます。OpenAPI 3.0 / 3.1のJSON（内部参照のみ、500KB以内）を選ぶと、API名と説明を仕様から取り込めます。「保存して公開」で商品画面に全操作を掲載します。限定公開にする場合は下書きを保存し、公開範囲を設定してから公開します。
+「提供するAPI」→「APIを登録」で、基本版（検証）、準本番、本番から出品する環境と接続先を選びます。OpenAPI 3.0 / 3.1のJSON（内部参照のみ、500KB以内）を選ぶと、API名と説明を仕様から取り込めます。登録時の公開責任者は提供プロジェクトが初期値です。個人を指名する場合はユーザー名を入力します。「保存して公開申請」で審査を依頼します。管理者は「届いた申請」で提供ガイドラインと公開承認の順番を設定します。初期設定は管理者一段で、最後の担当者が承認すると掲載されます。限定公開にする場合は下書きを保存し、公開範囲を設定してから公開します。
 
 環境ごとの「利用・承認条件」では、利用説明、同意が必要な規約、申請項目と承認順を指定します。例えば、本番に「テスト実施ID」を必須項目として追加し、「受理する値」に発行済みIDを1行ずつ登録すると、一致した申請だけが承認フローに進みます。自動承認でも規約と入力条件を確認します。IDの照合元は提供者が登録した値です。
 
@@ -113,7 +113,7 @@ main へのマージを起点に自動配備するには、[GitHub Actions の�
 
 Python CDKでCloudFront、非公開S3、API Gateway、Lambda、Cognito、Aurora DSQLを構築します。フロントはPuePyとPyScript、APIはFastAPI、DB変更はAlembicです。Pythonのブラウザ実行環境とCSSも同じ配信元に配置します。
 
-CDKをブートストラップ済みのAWS環境で `task synth` が構成を合成し、`task deploy` が配備とDB移行を行います。サンプルを含めると、検証・準本番・本番に12商品を扱うLambdaをそれぞれ配備します。提供者をCognitoの `own-supply`、利用者を `use-finance`、全体監査担当者を `audit` グループに追加してください。
+CDKをブートストラップ済みのAWS環境で `task synth` が構成を合成し、`task deploy` が配備とDB移行を行います。サンプルを含めると、検証・準本番・本番に24商品を扱うLambdaをそれぞれ配備します。プロジェクトの所属メンバーに提供と利用の両方を認めます。既存のCognitoグループ `own-<project>` と `use-<project>` はどちらも同じ所属として扱います。全体監査担当者を `audit` グループに追加してください。
 
 独自の接続先は [設定例](docs/examples/bindings.json) を編集し、`task deploy -- --bindings ファイル名` で指定します。Lambdaは `kind` に `lambda`、`address` に関数ARNを指定します。HTTPSは必要に応じて `secret_arn` に接続用BearerトークンのSecrets Manager ARNを指定し、提供元でも呼び出しを制限します。委任された接続先の配下なら、提供チームが画面でベースパスと [OpenAPI](docs/examples/stock.openapi.json) を登録できます。
 
@@ -144,7 +144,7 @@ task test:aws
 
 GitHub Actions の **Verify** から成果物 **contracts-and-test-results** 内の `test-report.html` または `test-report.pdf` を開くと、ケースごとの期待結果、成否、実行時間、実際の画面とタグ一覧を確認できます。手元では通常のテストに `--junitxml=artifacts/junit.xml`、エミュレーターのテストに `--junitxml=artifacts/aws-emulator.xml` を付けて実行し、`task report` で同じレポートを作れます。
 
-[ポータルの画面仕様と業務フロー](docs/design/portal.md)。デモ起動中に別の端末で `task seed` を実行すると、SQLiteの見本データを持つ12商品が公開されます。`task seed -- --editions 20` では20拠点分の240件を作成します。過去に同じデモ商品を登録した環境で再実行すると、旧仕様を新版に更新して再公開します。仕様を変更した商品の既存の利用権はポータルの規則に従い再申請が必要です。
+[ポータルの画面仕様と業務フロー](docs/design/portal.md)。デモ起動中に別の端末で `task seed` を実行すると、SQLiteの見本データを持つ24商品が公開されます。`task seed -- --editions 20` では20拠点分の480件を作成します。過去に同じデモ商品を登録した環境で再実行すると、旧仕様を新版に更新して再公開します。仕様を変更した商品の既存の利用権はポータルの規則に従い再申請が必要です。
 
 [商品別のOpenAPI YAML](docs/generated/sample-api/) は `task docs:samples` で再生成できます。各商品の5つの業務操作と `GET /health` を掲載しています。商品ごとの実装は [packages/sample_api](packages/sample_api/src/sample_api/products/) にあります。AWSの標準構成では環境別の既存の接続先（例：`stock-sandbox`）を選び、ベースパスを `/<商品slug>` に設定します。画面はJSON入力なので、例えば配送追跡は次のコマンドで同じ定義をJSONにして登録します。
 

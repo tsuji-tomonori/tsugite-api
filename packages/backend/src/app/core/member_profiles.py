@@ -1,5 +1,4 @@
-# アカウントから独立して利用者情報を読み書きする。
-"""Read and update the directory profile independently of account permissions."""
+"""アカウントの権限とは独立して、利用者のプロフィールを読み書きする。"""
 
 import re
 from collections.abc import Iterable
@@ -19,7 +18,7 @@ def directory_fields(row, account=None):
     if (
         (row is None or row.email_synced_at is None)
         and account
-        and account.role in {"consumer", "provider"}
+        and account.role in {"consumer", "provider", ""}
         and re.fullmatch(INVITATION_EMAIL, account.username)
     ):
         email = account.username

@@ -1,4 +1,5 @@
-# HTTPの結果と原因から重要度を決め、対象APIと画面を安全に記録する。
+"""HTTPの結果と原因から重要度を決め、対象APIと画面を安全に記録する。"""
+
 import asyncio
 import json
 from types import SimpleNamespace

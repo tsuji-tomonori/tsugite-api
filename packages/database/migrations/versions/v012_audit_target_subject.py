@@ -1,5 +1,4 @@
-# 監査対象の利用者に対応するDBスキーマへ移行する。
-"""Record the stable subject targeted by an audited member operation."""
+"""利用者に対する操作の監査記録に、対象者の固定識別子を追加する。"""
 
 import sqlalchemy as sa
 from alembic import op

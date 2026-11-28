@@ -1,4 +1,3 @@
-# 代表的な回帰を注入し、ローカルの単体テストが検出するか確かめる。
 """代表的な回帰を注入し、ローカルの単体テストが検出するか確かめる。"""
 
 import argparse
@@ -26,12 +25,36 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
+        "publication",
+        "指定した順番を飛ばして管理者が公開を承認できる",
+        "packages/backend/src/app/core/publication.py",
+        'return actor.subject != pending["applicant"] and assigned(',
+        'return actor.admin or actor.subject != pending["applicant"] and assigned(',
+        "packages/backend/tests/test_quint_publication.py::test_publication_review",
+    ),
+    Mutation(
+        "chat-wait",
+        "回答待ちの表示からリングを外す",
+        "packages/frontend/src/web_app/components/chat_views.py",
+        'role="status", classes="chat-pending"',
+        'role="status"',
+        "packages/frontend/tests/test_required_guide_home.py::test_waiting_for_a_chat_answer_prevents_a_second_submission",
+    ),
+    Mutation(
         "chat-inquiry",
         "モデルが類似と判定した商品をすべて候補に戻す",
         "packages/agent/src/chat_retrieval.py",
         "if key in grounded][:3]",
         "if key in grounded or key in raw_semantic][:3]",
         "packages/agent/tests/test_agent_retrieval.py::test_chat_does_not_promote_unrelated_sources",
+    ),
+    Mutation(
+        "frontend",
+        "初期画面のメニュー名を旧名称に戻す",
+        "packages/frontend/src/web_app/pages/home/__init__.py",
+        'Screen("home", "チャット",',
+        'Screen("home", "ホーム",',
+        "packages/frontend/tests/test_screen_registry.py::test_existing_routes_and_role_menus",
     ),
     Mutation(
         "deployed-e2e",
@@ -48,6 +71,14 @@ MUTATIONS = (
         "if admins == {subject}:",
         "if not admins:",
         "packages/backend/tests/test_quint_administrators.py::test_admin_role_handover",
+    ),
+    Mutation(
+        "formal",
+        "Verifyで形式仕様の日本語文書の再生成チェックを省く",
+        "tests/formal/check.sh",
+        'python3 tests/formal/document.py --quint "$quint" --check\n',
+        "",
+        "tests/architecture/core/test_formal_contracts.py::test_verify_runs_models_and_replays",
     ),
     Mutation(
         "formal",
@@ -80,6 +111,30 @@ MUTATIONS = (
         '"error_code": "INTERNAL_ERROR", ',
         "",
         "packages/backend/tests/test_http_contract.py::test_catalog_search_failure",
+    ),
+    Mutation(
+        "frontend",
+        "待機アイコンをボタンの文字色から固定色に戻す",
+        "packages/frontend/public/ui.css",
+        "background-color: currentColor;",
+        "background-color: gold;",
+        "tests/e2e/browser/test_busy_icon.py::test_busy_icon_follows_button_color",
+    ),
+    Mutation(
+        "frontend",
+        "閉じた通知を再描画で復活させる",
+        "packages/frontend/src/web_app/runtime/portal_shell.py",
+        'ctx.update(message="", error=False)',
+        "ctx.update(error=False)",
+        "packages/frontend/tests/test_required_guide_navigation.py::test_dismiss_current_notice",
+    ),
+    Mutation(
+        "frontend",
+        "MFA登録時に設定コードを最初から開く",
+        "packages/frontend/src/web_app/components/login_views.py",
+        't.details(classes="auth-manual")',
+        't.details(classes="auth-manual", open=True)',
+        "packages/frontend/tests/test_required_guide_home.py::test_registration_qr_matches_manual_code",
     ),
     Mutation(
         "frontend",
@@ -138,6 +193,14 @@ MUTATIONS = (
         "packages/infra/tests/test_stack.py::test_access_boundaries",
     ),
     Mutation(
+        "quint-diff",
+        "他の形式モデルの差分を業務ルールの更新として認める",
+        "packages/tools/design/formal_changes.py",
+        'if f"{FORMAL}/{domain}.qnt" not in changed:\n            return False',
+        'if f"{FORMAL}/{domain}.qnt" not in changed:\n            return True',
+        "packages/tools/tests/test_formal_changes.py::test_business_policy_requires_its_quint_domain",
+    ),
+    Mutation(
         "requirements",
         "変更した要件の古い履歴を新しい変更理由として認める",
         "packages/tools/design/requirements.py",
@@ -187,6 +250,22 @@ MUTATIONS = (
     ),
     Mutation(
         "member-profile",
+        "招待時に氏名を省略できる",
+        "packages/backend/src/app/schemas/members.py",
+        "full_name: FullName",
+        "full_name: FullName | None = None",
+        "packages/backend/tests/test_member_profiles.py::test_invitation_requires_login_and_full_name",
+    ),
+    Mutation(
+        "frontend",
+        "一覧で氏名を表示名に置き換える",
+        "packages/frontend/src/web_app/components/member_identity.py",
+        'name = person.get("full_name")',
+        'name = person.get("display_name")',
+        "packages/frontend/tests/test_workspace_screens.py::test_direct_members_have_aligned_table_columns",
+    ),
+    Mutation(
+        "member-profile",
         "氏名と表示名の更新で監査イベントを書き込まない",
         "packages/backend/src/app/apis/governance/profiles.py",
         'member_event(db, request, actor, action, subject, ", ".join(changes))',
@@ -216,6 +295,14 @@ MUTATIONS = (
         "return {k: v for k, v in base.items() if k not in retired_units(db)}",
         "return base",
         "packages/backend/tests/test_unit_lifecycle.py::test_project_transfer",
+    ),
+    Mutation(
+        "frontend",
+        "JSONスキーマの項目名を文字列値と同じ色にする",
+        "packages/frontend/src/web_app/components/api_docs.py",
+        'kind = "key"',
+        'kind = "string"',
+        "packages/frontend/tests/test_components.py::test_schema_block_preserves_json_tokens",
     ),
     Mutation(
         "frontend",
@@ -318,6 +405,14 @@ MUTATIONS = (
         'conditions = [node["if"].value for node in (mapping(job), fields) if "if" in node]',
         "conditions = []",
         "packages/tools/tests/test_completion.py::test_workflow_comments_follow_steps",
+    ),
+    Mutation(
+        "frontend",
+        "キー選択時の呼び出しURLの送信先照合を省く",
+        "packages/frontend/src/web_app/apis/manual.py",
+        "not url.startswith(origin + prefix)",
+        "False",
+        "packages/frontend/tests/test_api_client.py::test_manual_key_checks_destination_before_exchange",
     ),
     Mutation(
         "frontend",
@@ -430,6 +525,14 @@ MUTATIONS = (
         'settings(f"{path}[{index}]", item)',
         "settings(path, item)",
         "packages/tools/tests/test_infrastructure_docs.py::test_component_parameter_sheet",
+    ),
+    Mutation(
+        "stock-lambda",
+        "上限と一致する不良数の検品ロットを除外する",
+        "packages/sample_api/src/sample_api/products/receipt_inspections.py",
+        "WHERE defect_count <= ?",
+        "WHERE defect_count < ?",
+        "packages/sample_api/tests/test_products.py::test_inspection_defect_threshold_includes_zero",
     ),
     Mutation(
         "stock-lambda",
@@ -558,6 +661,14 @@ MUTATIONS = (
         '{"decision", "tool", "generate"} - manifest.keys()',
         '{"tool", "generate"} - manifest.keys()',
         "tests/architecture/core/test_rule_checks.py::test_model_distribution_requires_all_three_roles",
+    ),
+    Mutation(
+        "architecture",
+        "英訳が重複するモジュール説明を許可する",
+        "tests/architecture/core/project.py",
+        "len(module.body) > 1",
+        "len(module.body) > 2",
+        "tests/architecture/core/test_rule_checks.py::test_module_purpose_requires_one_japanese_docstring",
     ),
     Mutation(
         "architecture",
@@ -901,6 +1012,9 @@ def copy_sources(workspace):
     for folder in ("packages", "deploy/config", "docs/examples", "tests"):
         shutil.copytree(ROOT / folder, workspace / folder, ignore=ignore)
     shutil.copyfile(ROOT / "pyproject.toml", workspace / "pyproject.toml")
+    workflow = workspace / ".github/workflows/check.yml"
+    workflow.parent.mkdir(parents=True)
+    shutil.copyfile(ROOT / ".github/workflows/check.yml", workflow)
 
 
 def run_test(workspace, target):

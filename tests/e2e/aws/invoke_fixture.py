@@ -1,4 +1,3 @@
-# RustPythonでLambda転送経路を検査するための固定応答。商品本体はCPythonで検査する。
 """RustPythonでLambda転送経路を検査するための固定応答。商品本体はCPythonで検査する。"""
 
 import json

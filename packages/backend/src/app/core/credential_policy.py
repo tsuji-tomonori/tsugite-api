@@ -1,5 +1,4 @@
-# 認証情報の有効期間と許可操作を判定する。
-"""Common lifetime and operation decisions used by the portal and both invoke paths."""
+"""ポータルと二つの呼び出し経路で、認証情報の有効期間と許可する操作を判定する。"""
 
 import json
 from time import time

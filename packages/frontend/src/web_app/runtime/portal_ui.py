@@ -1,4 +1,5 @@
-# 画面状態と非同期イベントを管理する。
+"""画面状態と非同期イベントを管理する。"""
+
 from __future__ import annotations
 
 import asyncio
@@ -110,12 +111,4 @@ async def run(fn: Callable[..., Awaitable[None]], *args: Any, trigger: Any = Non
 def role_title() -> str:
     """利用者の役割名を返す。"""
     me = ctx["me"]
-    return (
-        "管理者"
-        if me["admin"]
-        else "提供者"
-        if me["owners"]
-        else "監査担当"
-        if me["auditor"]
-        else "利用者"
-    )
+    return "管理者" if me["admin"] else "監査担当" if me["auditor"] else "利用者"

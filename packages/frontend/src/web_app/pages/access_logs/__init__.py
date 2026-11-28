@@ -1,4 +1,5 @@
-# アクセスログ画面の部品とルートを定義する。
+"""アクセスログ画面の部品とルートを定義する。"""
+
 from actions.logs import load_logs
 from components.activity_filters import filter_form
 from components.logs import logs_view

@@ -1,4 +1,5 @@
-# DB定義がモデルと一致し、旧版のデータを移行できる。
+"""DB定義がモデルと一致し、旧版のデータを移行できる。"""
+
 import pytest
 from alembic import command
 from alembic.config import Config

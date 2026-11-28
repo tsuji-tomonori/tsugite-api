@@ -1,5 +1,4 @@
-# 役割と検索語で使い方を絞り込み、手順から対象画面を開ける。
-"""Exercise local hybrid search, role filters, article navigation and read-only component previews."""
+"""役割と検索語で使い方を絞り込み、記事から対象画面を開く操作と読み取り専用の部品プレビューを検証する。"""
 
 import os
 from pathlib import Path
@@ -29,7 +28,7 @@ def test_usage_guide(tmp_path: Path, request: pytest.FixtureRequest) -> None:
             page.locator("summary").filter(has_text="検索条件").click()
             user_input = page.get_by_role("searchbox", name="何をしたいですか？")
             user_input.fill(query)
-            page.get_by_label("役割", exact=True).select_option(role)
+            page.get_by_label("業務の種類", exact=True).select_option(role)
             first = page.locator("#guide-grid tr:visible a").first
             expect(first).to_have_attribute("href", "#/guide/" + article)
             first.click()

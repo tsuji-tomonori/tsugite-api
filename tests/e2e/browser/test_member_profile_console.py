@@ -1,5 +1,4 @@
-# 管理者が招待時に氏名を入力し、本人の表示名とともに兼務先に表示して監査を確認する。
-"""Browser verification for editing and reading a member profile."""
+"""招待時の氏名と本人が編集した表示名を兼務先で確認し、変更の監査記録を確かめる。"""
 
 import os
 from pathlib import Path
@@ -34,12 +33,19 @@ def test_member_profile_management(tmp_path: Path, request: pytest.FixtureReques
             admin.get_by_role("button", name="管理者", exact=True).click()
             menu(admin, "ユーザー管理")
             admin.locator("summary").filter(has_text="ユーザーを追加").click()
-            admin.get_by_label("メールアドレス", exact=True).fill(email)
-            admin.get_by_label("氏名（任意）", exact=True).fill("高橋 美咲")
+            username = admin.get_by_label("ユーザー名（メールアドレス）（必須）", exact=True)
+            expect(username).to_have_js_property("required", True)
+            username.fill(email)
+            admin.get_by_role("button", name="追加する", exact=True).click()
+            full_name = admin.get_by_label("氏名（必須）", exact=True)
+            expect(full_name).to_be_focused()
+            assert full_name.evaluate("field => field.validity.valueMissing")
+            full_name.fill("高橋 美咲")
             admin.get_by_label("所属プロジェクト").select_option("finance")
             admin.get_by_role("button", name="追加する", exact=True).click()
             row = admin.get_by_role("row").filter(has_text=email)
-            expect(row.get_by_text("高橋 美咲")).to_be_visible()
+            expect(row.get_by_role("rowheader")).to_have_text(email)
+            expect(row.get_by_role("cell").first).to_have_text("高橋 美咲")
 
             authorization = headers(api, "admin")
             subject = next(
@@ -66,10 +72,16 @@ def test_member_profile_management(tmp_path: Path, request: pytest.FixtureReques
             user.get_by_label("登録メールアドレス").fill(email)
             user.get_by_role("button", name="このユーザーでログイン").click()
             menu(user, "自分のプロフィール")
-            expect(user.get_by_label("氏名（任意）")).to_have_value("高橋 美咲")
+            expect(user.get_by_label("氏名（必須）")).to_have_value("高橋 美咲")
             user.get_by_label("表示名（任意）").fill("みさき")
             user.get_by_role("button", name="保存する", exact=True).click()
             expect(user.get_by_text("プロフィールを保存しました", exact=True)).to_be_visible()
+            display = user.get_by_label("表示名（任意）")
+            display.fill("編集中の表示名")
+            capture(user, "dismissible-notice", "保存結果と右端の閉じるボタン")
+            user.get_by_role("button", name="メッセージを閉じる").press("Enter")
+            expect(user.locator(".notice")).to_have_count(0)
+            expect(display).to_have_value("編集中の表示名")
             for label, key in (("プロジェクト", "finance"), ("部署", department)):
                 menu(admin, label)
                 admin.locator(f'a[href$="/detail/{key}"]').click()
@@ -80,7 +92,8 @@ def test_member_profile_management(tmp_path: Path, request: pytest.FixtureReques
                 )
                 expect(member.get_by_role("cell").nth(0)).to_have_text(email)
                 expect(member.get_by_role("cell").nth(1).get_by_text("高橋 美咲")).to_be_visible()
-                expect(member.get_by_role("cell").nth(1).get_by_text("みさき")).to_be_visible()
+                expect(member.get_by_role("cell").nth(1)).to_contain_text("表示名　みさき")
+                expect(member.get_by_role("cell").nth(2)).to_have_text(email)
             capture(admin, "directory-names", "兼務先でメールアドレスと氏名・表示名を確認")
 
             menu(admin, "ユーザー管理")

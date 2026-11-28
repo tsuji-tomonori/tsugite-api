@@ -12,4 +12,4 @@ description: 継手APIで単体テスト、E2E、CDKテストを追加・変更�
 5. テスト結果には実行した層、変異の検出数、確認できなかった項目を記録する。ミューテーションテストはローカル検証として扱う。
 6. 受入テストの変更・移動時は、[要件原本](../../../docs/requirements/items/)の関数名と成功時の画像名を更新する。`python -m packages.tools.testing.requirement_evidence --check` を実行し、PRのVerifyで対応する要件の判定を確認する。
 
-7. 方針に状態遷移や許可条件を追加したら、原本の該当段落からQuintケースと観測用のpytestを指定する。tests/formal/README.md の手順で履歴を再生成し、許可・拒否をそれぞれ観測する。形式仕様を使わない段落は実装の観測先と理由を記録する。
+7. 方針に状態遷移や許可条件を追加したら、原本の該当段落からQuintケースと観測用のpytestを指定する。tests/formal/README.md の手順で履歴を再生成し、許可・拒否をそれぞれ観測する。権限・承認・状態遷移などの変更は、同じPRで段落から参照するQuintケースまたはそのモデル定義を更新する。表示のみの変更は「表示のみ：」、開発者向けのCI・ビルドは「開発工程：」に続けて実装で観測する理由を書き、受入テストを指定する。コミット後に `python -m packages.tools.design.formal_changes --base origin/main` を実行する。

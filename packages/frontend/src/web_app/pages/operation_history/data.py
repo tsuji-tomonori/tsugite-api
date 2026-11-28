@@ -1,4 +1,5 @@
-# 現在のページの操作履歴を取得する。
+"""現在のページの操作履歴を取得する。"""
+
 from __future__ import annotations
 
 from apis import activity as activity_api

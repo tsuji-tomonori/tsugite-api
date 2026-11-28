@@ -1,5 +1,4 @@
-# API呼び出しの診断情報に対応するDBスキーマへ移行する。
-"""Keep the original severity and remediation on invocation log exports."""
+"""API呼び出しログの出力に、記録時の重大度と対処方法を残せるようにする。"""
 
 import sqlalchemy as sa
 from alembic import op

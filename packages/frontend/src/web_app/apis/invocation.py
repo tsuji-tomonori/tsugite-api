@@ -1,4 +1,5 @@
-# ブラウザーからのHTTP送信とトークン交換を扱う。
+"""ブラウザーからのHTTP送信とトークン交換を扱う。"""
+
 from __future__ import annotations
 
 from typing import Any

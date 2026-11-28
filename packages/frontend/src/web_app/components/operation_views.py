@@ -1,4 +1,5 @@
-# 利用者ごとのAPI操作権限を表示する。
+"""利用者ごとのAPI操作権限を表示する。"""
+
 from __future__ import annotations
 
 from collections.abc import Awaitable, Callable
@@ -10,6 +11,7 @@ from js import document
 from puepy import t
 
 from components import credential_views
+from components.member_identity import person_label
 
 
 def provider_view(
@@ -24,7 +26,7 @@ def provider_view(
     policy = ctx["op_policy"]
     operations = policy["operations"]
     permissions = policy["permissions"]
-    names = {m["subject"]: m["username"] for m in policy["members"]}
+    names = {m["subject"]: person_label(m) for m in policy["members"]}
     for subject in permissions:
         names.setdefault(subject, subject)
     draft = ctx.get("edit_operations", {})

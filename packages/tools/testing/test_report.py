@@ -1,5 +1,4 @@
-# テスト結果と画面の証跡をレポートにまとめる。
-"""Build a standalone Japanese report from the JUnit results and actual browser captures."""
+"""JUnitのテスト結果とブラウザーの画面記録を、日本語の単独で閲覧できるレポートにまとめる。"""
 
 import argparse
 import base64

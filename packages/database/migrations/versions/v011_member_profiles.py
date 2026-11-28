@@ -1,5 +1,4 @@
-# 利用者プロフィールに対応するDBスキーマへ移行する。
-"""Store the portal member's names and directory email by subject."""
+"""利用者の識別子に対応する氏名と組織のメールアドレスを保存できるようにする。"""
 
 import sqlalchemy as sa
 from alembic import op

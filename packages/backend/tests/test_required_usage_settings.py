@@ -1,4 +1,5 @@
-# 利用者が確認できる上限・操作・通知を設定し、呼び出し結果と一覧を照合する。
+"""利用者が確認できる上限・操作・通知を設定し、呼び出し結果と一覧を照合する。"""
+
 import pytest
 
 from tests.support.catalog import approved, headers

@@ -1,4 +1,5 @@
-# OpenAPIの参照とパラメーターの優先順を検証する。
+"""OpenAPIの参照とパラメーターの優先順を検証する。"""
+
 from __future__ import annotations
 
 from collections.abc import Callable

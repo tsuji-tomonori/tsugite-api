@@ -1,4 +1,5 @@
-# API Gatewayのルーティングを定義する。
+"""API Gatewayのルーティングを定義する。"""
+
 import json
 
 from aws_cdk import Duration

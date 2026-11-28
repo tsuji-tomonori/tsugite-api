@@ -1,4 +1,5 @@
-# メタデータの一覧と項目編集を表示する。
+"""メタデータの一覧と項目編集を表示する。"""
+
 from __future__ import annotations
 
 from apis import client

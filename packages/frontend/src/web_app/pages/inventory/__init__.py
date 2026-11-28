@@ -1,4 +1,5 @@
-# 提供するAPI画面の部品とルートを定義する。
+"""提供するAPI画面の部品とルートを定義する。"""
+
 from actions.catalog import load_catalog
 from components.catalog import cards
 from components.controls import btn
@@ -11,7 +12,7 @@ SCREENS = (
         "提供するAPI",
         cards,
         load_catalog,
-        group="提供者メニュー",
+        group="商品提供・審査",
         order=110,
         visible=lambda user: bool(user["owners"]),
         heading_action=lambda: btn("APIを登録", go, "register", primary=True),

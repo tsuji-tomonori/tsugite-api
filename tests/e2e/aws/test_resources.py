@@ -1,4 +1,5 @@
-# 構築したS3・API Gateway・Lambdaのタグを取得し、在庫APIが商品を返す。
+"""構築したS3・API Gateway・Lambdaのタグを取得し、在庫APIが商品を返す。"""
+
 import json
 import os
 import ssl

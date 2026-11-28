@@ -1,5 +1,4 @@
-# ロックした依存からバックエンドのLambda配布物を作る。
-"""Package locked Linux wheels for the Lambda runtime without Docker."""
+"""固定したLinux用の依存パッケージから、Dockerを使わずにバックエンドのLambda配布物を作る。"""
 
 import csv
 import io

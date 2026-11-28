@@ -1,4 +1,5 @@
-# 承認済みAPIと手動リクエストの操作欄を表示する。
+"""承認済みAPIと手動リクエストの操作欄を表示する。"""
+
 from __future__ import annotations
 
 from collections.abc import Awaitable, Callable, Sequence

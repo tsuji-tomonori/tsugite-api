@@ -1,4 +1,5 @@
-# 接続確認の後、呼び出し情報をLambdaへ渡して応答を返す。
+"""接続確認の後、呼び出し情報をLambdaへ渡して応答を返す。"""
+
 import io
 import json
 from types import SimpleNamespace
@@ -74,7 +75,7 @@ def test_failed_probe_keeps_draft(portal, monkeypatch):
     import importlib
 
     module = importlib.import_module("app.apis.catalog.publish")
-    from tests.support.catalog import FORM, headers
+    from tests.support.catalog import FORM, headers, publish_asset
 
     owner = headers(portal, "provider")
     key = portal.post("/api/apis", json=FORM, headers=owner).json()["id"]
@@ -83,5 +84,5 @@ def test_failed_probe_keeps_draft(portal, monkeypatch):
         raise HTTPException(502, "接続先を確認してください")
 
     monkeypatch.setattr(module, "probe", unavailable)
-    assert portal.put(f"/api/apis/{key}/publication?published=true", headers=owner).status_code == 502
+    assert publish_asset(portal, f"/api/apis/{key}", owner).status_code == 502
     assert not portal.get("/api/apis/" + key, headers=owner).json()["published"]

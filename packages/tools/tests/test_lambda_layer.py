@@ -1,4 +1,5 @@
-# 同じ依存を別の場所で同期してもLayerが一致し、依存を更新したときだけ内容が変わる。
+"""同じ依存を別の場所で同期してもLayerが一致し、依存を更新したときだけ内容が変わる。"""
+
 import hashlib
 from zipfile import ZIP_DEFLATED, ZipFile
 

@@ -1,5 +1,4 @@
-# AWS EmulatorのCognito利用者とシステムのトークンを発行し、HTTPS到達・拒否・秘密更新を確認する。
-"""Real Cognito identities, scoped token exchange and TLS business calls."""
+"""AWSエミュレーターで利用者用とシステム用の認証情報を発行し、トークン交換、HTTPS接続の許可・拒否、シークレット更新を検証する。"""
 
 import json
 import os
@@ -10,16 +9,17 @@ from packages.tools.demo.seed_marketplace import CATALOG, offer
 from tests.e2e.aws.https_stock import https_stock
 from tests.e2e.aws.test_portal import live_portal
 from tests.e2e.aws.test_scoped_keys import another_finance_user, subscribe
+from tests.support.catalog import publish_asset
 
 
-def stock_and_orders(api, provider, consumer):
+def stock_and_orders(api, provider, consumer, administrator):
     listing = offer(CATALOG[0])
     listing["base_path"] = "/v1"
     orders = offer(CATALOG[4])["spec"]
     listing["spec"]["paths"]["/orders"] = orders["paths"]["/orders"]
     listing["spec"]["components"]["schemas"].update(orders["components"]["schemas"])
     asset = api.post("apis", headers=provider, json=listing).raise_for_status().json()["id"]
-    api.put(f"apis/{asset}/publication?published=true", headers=provider).raise_for_status()
+    publish_asset(api, f"apis/{asset}", provider, administrator).raise_for_status()
     grant = (
         api.post(
             f"apis/{asset}/requests",
@@ -53,8 +53,12 @@ def test_client_tokens_reach_https(aws, resources, tmp_path, request):
             headers={"Authorization": "Bearer " + tokens["administrator"]},
             json={"subject": subject, "unit_id": "finance", "title": "棚卸担当", "leader": True},
         ).raise_for_status()
-        asset, base = stock_and_orders(api, owner, user)
-        _, rates = subscribe(api, CATALOG[2], owner, user)
+        asset, base = stock_and_orders(
+            api, owner, user, {"Authorization": "Bearer " + tokens["administrator"]}
+        )
+        _, rates = subscribe(
+            api, CATALOG[2], owner, user, {"Authorization": "Bearer " + tokens["administrator"]}
+        )
         credentials = {}
         credential_ids = {}
         issued_tokens = {}

@@ -1,5 +1,4 @@
-# CDKのセキュリティ監査を成果物に書き出す。
-"""Write the CDK security review to the CI artifacts directory."""
+"""CDKのセキュリティ監査の結果をCIの成果物に書き出す。"""
 
 import shutil
 import sys

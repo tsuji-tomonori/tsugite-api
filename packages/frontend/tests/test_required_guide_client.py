@@ -1,4 +1,5 @@
-# 要件「運用ログから対象と復旧作業を確認できる」に基づき、ポータルの通信失敗と画面ログを検証する。
+"""要件「運用ログから対象と復旧作業を確認できる」に基づき、ポータルの通信失敗と画面ログを検証する。"""
+
 import asyncio
 import json
 from datetime import datetime, timedelta

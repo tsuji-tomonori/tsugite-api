@@ -1,4 +1,5 @@
-# inquiries のAPIで扱う入出力モデルを定義する。
+"""inquiries のAPIで扱う入出力モデルを定義する。"""
+
 from uuid import UUID
 
 from pydantic import BaseModel, Field

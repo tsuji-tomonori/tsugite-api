@@ -1,4 +1,5 @@
-# 複数画面で使うボタンと入力欄を描画する。
+"""複数画面で使うボタンと入力欄を描画する。"""
+
 from __future__ import annotations
 
 from collections.abc import Awaitable, Callable, Sequence

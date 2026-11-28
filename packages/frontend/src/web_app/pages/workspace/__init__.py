@@ -1,4 +1,5 @@
-# 部署一覧画面の部品とルートを定義する。
+"""部署一覧画面の部品とルートを定義する。"""
+
 from actions.workspace import load_workspace
 from components.workspace import usage_settings, view
 from components.workspace_members import membership_editor

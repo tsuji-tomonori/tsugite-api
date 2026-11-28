@@ -1,4 +1,5 @@
-# 管理者だけが空の部署を子から削除でき、廃止した識別子は再作成できない。
+"""管理者だけが空の部署を子から削除でき、廃止した識別子は再作成できない。"""
+
 from tests.support.catalog import approved, headers, invocation_headers
 
 

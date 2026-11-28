@@ -1,4 +1,5 @@
-# 配備手順とデモの公開契約を、外部プロセスやクラウドへ接続せずに検証する。
+"""配備手順とデモの公開契約を、外部プロセスやクラウドへ接続せずに検証する。"""
+
 import json
 import os
 import re
@@ -86,13 +87,13 @@ def test_demo_uses_local_port_after_migration(managed, monkeypatch):
 
 
 def test_seed_publishes_each_edition_and_reuses_existing_inventory():
-    """二拠点に十二商品ずつ公開し、再投入時は未公開に戻った一商品だけを再公開する。"""
+    """二拠点に全商品を一度ずつ公開し、再投入時は未公開に戻った一商品だけを再公開する。"""
     inventory = {}
     creates = []
     publications = []
 
     def portal(request):
-        if request.url.path == "/demo/provider":
+        if request.url.path in {"/demo/provider", "/demo/admin"}:
             return httpx.Response(200, json={"access_token": "demo", "token": "demo"})
         if request.method == "GET" and request.url.path == "/apis":
             return httpx.Response(200, json=list(inventory.values()))
@@ -105,21 +106,27 @@ def test_seed_publishes_each_edition_and_reuses_existing_inventory():
             return httpx.Response(201, json=inventory[identifier])
         if request.method == "GET":
             return httpx.Response(200, json=inventory[request.url.path.split("/")[-1]])
+        if request.url.path.endswith("/publication-decisions"):
+            identifier = request.url.path.split("/")[-2]
+            publications.append(identifier)
+            inventory[identifier]["published"] = True
+            return httpx.Response(200, json=inventory[identifier])
         assert request.method == "PUT", str(request.url)
         prefix, identifier, operation = request.url.path.strip("/").split("/")
         assert (prefix, operation, request.url.params["published"]) == ("apis", "publication", "true")
-        publications.append(identifier)
-        inventory[identifier]["published"] = True
+        inventory[identifier]["revision"] = 2
         return httpx.Response(200, json=inventory[identifier])
 
     with httpx.Client(base_url="http://demo.test", transport=httpx.MockTransport(portal)) as client:
         first = seed_marketplace.seed(client, 2)
-        assert len(set(first)) == len(creates) == len(publications) == 24
         products = json.loads(
             (Path(__file__).resolve().parents[3] / "docs/examples/marketplace.json").read_text()
         )
+        expected_count = 2 * len(products)
+        assert len(set(first)) == len(creates) == len(publications) == expected_count
         for product in products:
-            offers = [o for o in creates if product["name"] in o["name"]]
+            slugs = {f"{product['slug']}-{edition}" for edition in (1, 2)}
+            offers = [o for o in creates if o["slug"] in slugs]
             assert len(offers) == 2
             for offer in offers:
                 matching = [
@@ -132,7 +139,7 @@ def test_seed_publishes_each_edition_and_reuses_existing_inventory():
         inventory[first[-1]]["published"] = False
         publications.clear()
         assert set(seed_marketplace.seed(client, 2)) == set(first)
-        assert len(creates) == 24
+        assert len(creates) == expected_count
         assert publications == [first[-1]]
 
 

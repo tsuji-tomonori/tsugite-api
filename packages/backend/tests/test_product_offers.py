@@ -1,8 +1,9 @@
-# 環境別の承認条件を守り、複数の承認を指定の順序で行う。
+"""環境別の承認条件を守り、複数の承認を指定の順序で行う。"""
+
 from copy import deepcopy
 
 from packages.backend.tests.test_org_access import setup_people
-from tests.support.catalog import FORM, headers, invocation_headers
+from tests.support.catalog import FORM, headers, invocation_headers, publish_asset
 
 
 def test_three_environments_and_ordered_reviews(portal, monkeypatch):
@@ -27,7 +28,7 @@ def test_three_environments_and_ordered_reviews(portal, monkeypatch):
     }
     asset = portal.post("/api/apis", headers=owner, json=form).raise_for_status().json()["id"]
     url = "/api/apis/" + asset
-    portal.put(url + "/publication?published=true", headers=owner).raise_for_status()
+    publish_asset(portal, url, owner).raise_for_status()
     detail = portal.get(url, headers=applicant).raise_for_status()
     assert "QA-330" not in detail.text
     data = {
@@ -110,7 +111,7 @@ def test_publication_history_and_archive_failures(portal, monkeypatch):
     archive.failing = False
     result = portal.post("/api/apis", headers=owner, json=FORM).raise_for_status().json()
     url = "/api/apis/" + result["id"]
-    first = portal.put(url + "/publication?published=true", headers=owner).raise_for_status().json()
+    first = publish_asset(portal, url, owner).raise_for_status().json()
     updated = deepcopy(FORM)
     updated["spec"]["info"]["version"] = "2.0"
     updated["spec"]["openapi"] = "3.1.0"
@@ -123,11 +124,11 @@ def test_publication_history_and_archive_failures(portal, monkeypatch):
         headers=owner,
     ).raise_for_status()
     archive.failing = True
-    assert portal.put(url + "/publication?published=true", headers=owner).status_code == 503
+    assert publish_asset(portal, url, owner).status_code == 503
     assert not portal.get(url, headers=owner).json()["published"]
     archive.failing = False
     for _ in range(2):
-        portal.put(url + "/publication?published=true", headers=owner).raise_for_status()
+        publish_asset(portal, url, owner).raise_for_status()
     latest, initial = portal.get(url, headers=owner).json()["releases"]
     assert (latest["api_version"], latest["openapi"], latest["added"], latest["changed"]) == (
         "2.0",

@@ -1,4 +1,5 @@
-# 商品を公開し、利用者が商品詳細から利用申請できる。
+"""商品を公開し、利用者が商品詳細から利用申請できる。"""
+
 import json
 import os
 from copy import deepcopy
@@ -8,7 +9,7 @@ import pytest
 from playwright.sync_api import expect, sync_playwright
 
 from tests.support.catalog import SPEC
-from tests.support.catalog_journey import navigate
+from tests.support.catalog_journey import approve_in_browser, navigate
 from tests.support.portal_server import serve_portal
 from tests.support.screenshots import capture_image
 
@@ -19,11 +20,24 @@ def test_publish_and_apply_from_product_page(tmp_path: Path, request: pytest.Fix
     with serve_portal(env) as url, sync_playwright() as pw:
         browser = pw.chromium.launch(executable_path=os.getenv("CHROMIUM_PATH") or None)
         owner, user = browser.new_page(), browser.new_page()
+        admin = browser.new_page()
+        admin.goto(url)
+        admin.get_by_role("button", name="管理者", exact=True).click()
+        navigate(admin, "届いた申請")
+        admin.get_by_text("提供ガイドラインと公開承認の設定", exact=True).click()
+        admin.get_by_label("提供ガイドライン", exact=True).fill("規約と接続仕様を確認")
+        admin.locator("#publication-steps select").select_option("person/consumer")
+        admin.get_by_role("button", name="承認段階を追加").click()
+        admin.get_by_role("button", name="提供ガイドラインと承認順を保存").click()
+        expect(admin.get_by_text("提供ガイドラインと公開承認の順番を保存しました")).to_be_visible()
+        admin.close()
         owner.goto(url)
         owner.get_by_role("button", name="提供チーム", exact=True).click()
         navigate(owner, "提供するAPI")
         owner.get_by_role("button", name="APIを登録", exact=True).click()
         owner.get_by_label("API識別名", exact=True).fill("stock-and-orders")
+        expect(owner.get_by_text("規約と接続仕様を確認")).to_be_visible()
+        owner.get_by_label("公開責任者", exact=False).fill("consumer")
         for name in ("sandbox", "staging", "production"):
             owner.locator("#" + name).select_option("sample-" + name)
         prod = owner.locator(".offer-editor").last
@@ -38,10 +52,18 @@ def test_publish_and_apply_from_product_page(tmp_path: Path, request: pytest.Fix
         owner.locator("#spec-file").set_input_files(
             {"name": "stock.json", "mimeType": "application/json", "buffer": json.dumps(spec).encode()}
         )
-        owner.get_by_role("button", name="保存して公開").click()
-        expect(owner.get_by_role("button", name="掲載を取り下げる")).to_be_visible()
+        owner.get_by_role("button", name="保存して公開申請").click()
+        expect(owner.get_by_role("button", name="公開申請を取り下げる")).to_be_visible()
         user.goto(url)
         user.get_by_role("button", name="利用チーム", exact=True).click()
+        navigate(user, "届いた申請")
+        user.get_by_role("link", name="在庫", exact=True).click()
+        expect(user.get_by_text("公開責任者　consumer")).to_be_visible()
+        user.get_by_label("公開判断の理由").fill("提供規約を確認")
+        user.get_by_role("button", name="公開申請を承認").click()
+        expect(user.get_by_text("公開申請の判断を記録しました")).to_be_visible()
+        approve_in_browser(browser, owner, url, "在庫")
+        expect(owner.get_by_role("button", name="掲載を取り下げる")).to_be_visible()
         navigate(user, "APIカタログ")
         user.get_by_role("link", name="在庫", exact=True).click()
         expect(user.get_by_role("heading", name="API操作一覧")).to_be_visible()

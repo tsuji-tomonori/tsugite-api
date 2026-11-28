@@ -1,5 +1,4 @@
-# 日本語の質問を分類し検索用の埋め込みを生成する。
-"""Japanese topic and retrieval embeddings with a warm content cache."""
+"""日本語の質問を分類し、キャッシュを再利用して検索用の埋め込みを生成する。"""
 
 from collections import OrderedDict
 from functools import cache

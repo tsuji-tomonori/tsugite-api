@@ -1,5 +1,4 @@
-# 宣言内のコメントから設計書に載せる業務名を取得する。
-"""Read business names from mapped classes and match them to SQLAlchemy metadata."""
+"""モデルの宣言に付いた業務名を読み取り、SQLAlchemyのテーブル定義と対応付ける。"""
 
 import ast
 from functools import cache

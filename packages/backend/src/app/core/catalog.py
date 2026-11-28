@@ -1,4 +1,7 @@
-# 商品情報の取得とカタログ操作を共通化する。
+"""商品情報の取得とカタログ操作を共通化する。"""
+
+import json
+
 from app.core.diagnostics import asset_object
 from app.schemas.catalog import Listing
 from fastapi import HTTPException
@@ -34,6 +37,10 @@ def listing(row: Asset) -> Listing:
         id=row.id,
         slug=row.route.slug if row.route else None,
         owner=row.owner,
+        responsible=row.responsible,
+        publication_stage=json.loads(row.publication_request)["remaining"][0]
+        if row.publication_request
+        else None,
         name=row.name,
         summary=row.summary,
         environments=list(asset_object(row, "targets")),

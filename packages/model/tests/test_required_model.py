@@ -1,4 +1,5 @@
-# 推論Lambdaの応答・ウォーム再利用・外部推論の失敗を小さな入力で確認する。
+"""推論Lambdaの応答・ウォーム再利用・外部推論の失敗を小さな入力で確認する。"""
+
 import json
 import sys
 from collections import OrderedDict

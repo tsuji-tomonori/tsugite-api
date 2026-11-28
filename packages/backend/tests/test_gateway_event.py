@@ -1,7 +1,8 @@
-# 権限を毎回照合し、取消後は同じトークンでも拒否する。
+"""権限を毎回照合し、取消後は同じトークンでも拒否する。"""
+
 from app.authorizer import handler
 
-from tests.support.catalog import FORM, headers, invocation_headers
+from tests.support.catalog import FORM, headers, invocation_headers, publish_asset
 
 
 def test_gateway_authorizer_rechecks_each_invocation(portal, monkeypatch):
@@ -11,7 +12,7 @@ def test_gateway_authorizer_rechecks_each_invocation(portal, monkeypatch):
     user = headers(portal, "consumer")
     key = portal.post("/api/apis", json=FORM, headers=owner).json()["id"]
     root = "/api/apis/" + key
-    portal.put(root + "/publication?published=true", headers=owner)
+    publish_asset(portal, root, owner)
     row = portal.post(
         root + "/requests",
         headers=user,

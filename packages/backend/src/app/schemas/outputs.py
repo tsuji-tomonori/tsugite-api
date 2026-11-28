@@ -1,5 +1,4 @@
-# APIの応答モデルを定義する。
-"""Response contracts for handlers that build JSON dictionaries directly."""
+"""JSON辞書を直接組み立てるAPIの応答モデルを定義する。"""
 
 from datetime import datetime
 from typing import Literal, NotRequired, TypedDict
@@ -149,6 +148,12 @@ class MemberIdentity(TypedDict):
     username: str
 
 
+#: 権限設定の候補に表示する氏名
+class NamedMember(MemberIdentity):
+    #: 氏名
+    full_name: str | None
+
+
 #: 利用者の識別情報
 class Person(MemberIdentity, PersonNames):
     pass
@@ -166,8 +171,6 @@ class MemberProfile(PersonNames):
 class Member(Person):
     #: 管理者権限を持つか
     admin: bool
-    #: 利用者の役割
-    role: str
     #: 所属プロジェクトの識別子
     project: NotRequired[str]
     #: 削除済みか
@@ -498,7 +501,7 @@ class OperationPolicy(TypedDict):
     #: 対象のAPI操作
     operations: list[str]
     #: 対象の利用者一覧
-    members: list[MemberIdentity]
+    members: list[NamedMember]
     #: 利用者ごとに許可されたAPI操作
     permissions: dict[str, list[str]]
 
@@ -536,7 +539,7 @@ class CredentialOptions(TypedDict):
     #: 発行対象に選べるAPI
     assets: list[CredentialAsset]
     #: 対象の利用者一覧
-    members: list[MemberIdentity]
+    members: list[NamedMember]
     #: 組織別の有効期間上限
     limits: list[UnitLimit]
     #: トークンの有効期間上限（分）

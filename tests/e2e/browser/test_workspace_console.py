@@ -1,5 +1,4 @@
-# 管理者が組織階層と兼務を設定し、リーダーがキー・利用状況・停止と再開を操作する。
-"""Browser coverage for an administrator and a project leader using real portal routes."""
+"""ポータルの画面で、管理者による組織階層と兼務の設定、リーダーによるキー管理・利用状況の確認・停止と再開を検証する。"""
 
 import os
 import re
@@ -41,7 +40,7 @@ def test_workspace_key_console(tmp_path: Path, request: pytest.FixtureRequest) -
         api.post(
             "/api/members",
             headers=headers(api, "admin"),
-            json={"email": email, "project": "finance", "role": "consumer"},
+            json={"full_name": "試験 花子", "email": email, "project": "finance", "role": "consumer"},
         ).raise_for_status()
         browser = pw.chromium.launch(executable_path=os.getenv("CHROMIUM_PATH") or None)
         admin, leader = (browser.new_page(viewport={"width": 1440, "height": 960}) for _ in range(2))

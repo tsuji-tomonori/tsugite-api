@@ -1,4 +1,5 @@
-// 商品共通の属性承認と、環境別autoルートでの事前条件を確かめる。
+/// 利用申請の自動承認
+/// 商品共通の属性による承認と、環境別の自動承認経路における規約への同意を扱う。
 module automatic {
   var route: str
   var consent: bool
@@ -18,6 +19,7 @@ module automatic {
     nondet m = Bool.oneOf()
     apply(mode,t,m)
   }
+  /// 環境別の自動承認経路では、規約に同意していなければ申請は作成されない。
   val safe = (route == "auto" and not(consent)) implies status == "absent"
   run autoTest = init.then(apply("legacy",true,true)).then(apply("auto",false,true)).then(apply("auto",true,false))
 }

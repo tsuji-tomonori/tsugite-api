@@ -1,4 +1,5 @@
-# 要件「チャットで候補を確認できる」「問い合わせを送信できる」「ログインできる」の画面を検証する。
+"""要件「チャットで候補を確認できる」「問い合わせを送信できる」「ログインできる」の画面を検証する。"""
+
 import asyncio
 from typing import Any
 from unittest.mock import AsyncMock, Mock
@@ -445,6 +446,7 @@ def test_waiting_for_a_chat_answer_prevents_a_second_submission(
         await asyncio.wait_for(waiting.wait(), timeout=2)
         _, busy = render(chat.home, state, Mock())
         try:
+            assert any(p.getAttribute("class") == "chat-pending" for p in busy.getElementsByTagName("p"))
             assert busy.getElementsByTagName("input")[0].hasAttribute("disabled")
             events.dispatch(form, "submit", Mock())
         finally:
@@ -621,3 +623,27 @@ def test_unanswered_turn_sends_its_own_question_once(
     _, received = render(chat.home, ctx, Mock())
     assert "受付番号 ticket" in visible_text(received)
     assert len(buttons(received)) == 1
+
+
+def test_registration_qr_matches_manual_code(
+    portal_module: PortalModule, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """認証アプリに渡す利用者名・発行元・設定コードが一致し、手入力欄は閉じている。"""
+    from urllib.parse import parse_qs, unquote, urlsplit
+
+    views = portal_module("components.login_views")
+    make_qr = Mock(wraps=views.segno.make_qr)
+    monkeypatch.setattr(views.segno, "make_qr", make_qr)
+    secret = "JBSWY3DPEHPK3PXP"
+    _, dom = render(views.registration_codes, "試験+qr@example.test", secret)
+    uri = urlsplit(make_qr.call_args.args[0])
+    assert (uri.scheme, uri.netloc, unquote(uri.path)) == (
+        "otpauth",
+        "totp",
+        "/継手API:試験+qr@example.test",
+    )
+    assert parse_qs(uri.query) == {"issuer": ["継手API"], "secret": [secret]}
+    details = dom.getElementsByTagName("details")[0]
+    assert not details.hasAttribute("open")
+    assert visible_text(details.getElementsByTagName("code")[0]) == secret
+    assert details.getElementsByTagName("button")[0].getAttribute("type") == "button"

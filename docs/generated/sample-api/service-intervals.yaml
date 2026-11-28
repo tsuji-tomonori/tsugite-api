@@ -1,0 +1,262 @@
+openapi: 3.1.0
+info:
+  title: 定期点検計画
+  description: 設備の点検周期と次回交換までの残り運転時間を確認します。
+  version: 1.0.0
+paths:
+  /health:
+    get:
+      summary: データベースの稼働状態を確認
+      operationId: health_health_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+  /service-plans:
+    get:
+      summary: 定期点検計画を一覧で取得
+      operationId: list_service_plans_service_plans_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/ServicePlan'
+                type: array
+                title: Response List Service Plans Service Plans Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+  /service-plans/{plan_id}:
+    get:
+      summary: 定期点検計画の明細を照会
+      operationId: detail_service_plans__plan_id__get
+      parameters:
+      - name: plan_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Plan Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServicePlan'
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+        '404':
+          description: 該当なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MissingRecord'
+  /service-workshops:
+    get:
+      summary: 定期点検計画を整備部署別に集計
+      operationId: by_workshop_service_workshops_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/ServicePlanCount'
+                type: array
+                title: Response By Workshop Service Workshops Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+  /upcoming-services:
+    get:
+      summary: 交換までの運転時間が指定値以下の定期点検計画を取得
+      operationId: below_limit_upcoming_services_get
+      parameters:
+      - name: maximum
+        in: query
+        required: false
+        schema:
+          type: integer
+          description: 交換までの運転時間の上限
+          default: 12
+          title: Maximum
+        description: 交換までの運転時間の上限
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ServicePlan'
+                title: Response Below Limit Upcoming Services Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /service-interval-range:
+    get:
+      summary: 交換までの運転時間の最小値と最大値を取得
+      operationId: remaining_hours_summary_service_interval_range_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServicePlanRange'
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+components:
+  schemas:
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    Health:
+      properties:
+        status:
+          type: string
+          const: ok
+          title: Status
+          default: ok
+      type: object
+      title: Health
+    InternalServerError:
+      properties:
+        error_code:
+          type: string
+          const: INTERNAL_ERROR
+          title: Error Code
+        detail:
+          type: string
+          title: Detail
+      type: object
+      required:
+      - error_code
+      - detail
+      title: InternalServerError
+    MissingRecord:
+      properties:
+        detail:
+          type: string
+          title: Detail
+      type: object
+      required:
+      - detail
+      title: MissingRecord
+    ServicePlan:
+      properties:
+        plan_id:
+          type: string
+          title: Plan Id
+        workshop:
+          type: string
+          title: Workshop
+        part_number:
+          type: string
+          title: Part Number
+        remaining_hours:
+          type: integer
+          title: Remaining Hours
+      type: object
+      required:
+      - plan_id
+      - workshop
+      - part_number
+      - remaining_hours
+      title: ServicePlan
+    ServicePlanCount:
+      properties:
+        workshop:
+          type: string
+          title: Workshop
+        count:
+          type: integer
+          title: Count
+      type: object
+      required:
+      - workshop
+      - count
+      title: ServicePlanCount
+    ServicePlanRange:
+      properties:
+        minimum_remaining_hours:
+          type: integer
+          title: Minimum Remaining Hours
+        maximum_remaining_hours:
+          type: integer
+          title: Maximum Remaining Hours
+      type: object
+      required:
+      - minimum_remaining_hours
+      - maximum_remaining_hours
+      title: ServicePlanRange
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError

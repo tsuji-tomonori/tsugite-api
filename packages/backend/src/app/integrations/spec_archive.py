@@ -1,5 +1,4 @@
-# 商品と内容のハッシュに対応する仕様書を保存する。
-"""Store a canonical document once for each product and content digest."""
+"""商品と内容のハッシュの組み合わせごとに、正規化した仕様書を一度だけ保存する。"""
 
 import hashlib
 import json

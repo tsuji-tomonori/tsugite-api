@@ -1,4 +1,5 @@
-// 同じ商品・プロジェクト・環境を前提に、権利主体と呼び出し元の種別を変える。
+/// 利用権の主体と呼び出し制限
+/// 同じ商品、プロジェクト、環境について、利用権と呼び出し元の種別、利用停止やキー失効などの制限を扱う。
 module entitlement {
   var scope: str
   var caller: str
@@ -16,6 +17,7 @@ module entitlement {
     nondet restriction = Set("open", "suspended", "stopped", "outside", "revokedKey").oneOf()
     check(right, who, restriction)
   }
+  /// 呼び出しが許可されるには、利用権が存在し、呼び出しを妨げる制限が有効になっていないことが必要である。
   val safe = permitted implies gate == "open" and scope != "absent"
   run principalTest = init.then(check("personal","holder","open")).then(check("personal","colleague","open"))
     .then(check("personal","shared","open")).then(check("personal","machine","open"))

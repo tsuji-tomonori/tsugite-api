@@ -1,0 +1,262 @@
+openapi: 3.1.0
+info:
+  title: 掲載枠
+  description: 掲載SKUと販売チャネルごとの公開期間を調べます。
+  version: 1.0.0
+paths:
+  /health:
+    get:
+      summary: データベースの稼働状態を確認
+      operationId: health_health_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+  /listings:
+    get:
+      summary: 掲載枠を一覧で取得
+      operationId: list_listings_listings_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Listing'
+                type: array
+                title: Response List Listings Listings Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+  /listings/{listing_id}:
+    get:
+      summary: 掲載枠の明細を照会
+      operationId: detail_listings__listing_id__get
+      parameters:
+      - name: listing_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Listing Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Listing'
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+        '404':
+          description: 該当なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MissingRecord'
+  /listing-channels:
+    get:
+      summary: 掲載枠を販売チャネル別に集計
+      operationId: by_channel_listing_channels_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/ListingCount'
+                type: array
+                title: Response By Channel Listing Channels Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+  /expiring-listings:
+    get:
+      summary: 公開日数が指定値以下の掲載枠を取得
+      operationId: below_limit_expiring_listings_get
+      parameters:
+      - name: maximum
+        in: query
+        required: false
+        schema:
+          type: integer
+          description: 公開日数の上限
+          default: 2
+          title: Maximum
+        description: 公開日数の上限
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Listing'
+                title: Response Below Limit Expiring Listings Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /listing-periods:
+    get:
+      summary: 公開日数の最小値と最大値を取得
+      operationId: visible_days_summary_listing_periods_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListingRange'
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+components:
+  schemas:
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    Health:
+      properties:
+        status:
+          type: string
+          const: ok
+          title: Status
+          default: ok
+      type: object
+      title: Health
+    InternalServerError:
+      properties:
+        error_code:
+          type: string
+          const: INTERNAL_ERROR
+          title: Error Code
+        detail:
+          type: string
+          title: Detail
+      type: object
+      required:
+      - error_code
+      - detail
+      title: InternalServerError
+    Listing:
+      properties:
+        listing_id:
+          type: string
+          title: Listing Id
+        channel:
+          type: string
+          title: Channel
+        seller_sku:
+          type: string
+          title: Seller Sku
+        visible_days:
+          type: integer
+          title: Visible Days
+      type: object
+      required:
+      - listing_id
+      - channel
+      - seller_sku
+      - visible_days
+      title: Listing
+    ListingCount:
+      properties:
+        channel:
+          type: string
+          title: Channel
+        count:
+          type: integer
+          title: Count
+      type: object
+      required:
+      - channel
+      - count
+      title: ListingCount
+    ListingRange:
+      properties:
+        minimum_visible_days:
+          type: integer
+          title: Minimum Visible Days
+        maximum_visible_days:
+          type: integer
+          title: Maximum Visible Days
+      type: object
+      required:
+      - minimum_visible_days
+      - maximum_visible_days
+      title: ListingRange
+    MissingRecord:
+      properties:
+        detail:
+          type: string
+          title: Detail
+      type: object
+      required:
+      - detail
+      title: MissingRecord
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError

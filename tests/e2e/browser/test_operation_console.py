@@ -1,4 +1,5 @@
-# 提供者が利用者の操作を選び、送料1,400円のHTTPS応答と権限変更直後の転送停止を照合する。
+"""提供者が利用者の操作を選び、送料1,400円のHTTPS応答と権限変更直後の転送停止を照合する。"""
+
 import json
 import os
 from pathlib import Path
@@ -8,7 +9,7 @@ import pytest
 from playwright.sync_api import expect, sync_playwright
 
 from tests.e2e.browser.test_api_docs import delivery_service, delivery_spec
-from tests.support.catalog import headers
+from tests.support.catalog import headers, publish_asset
 from tests.support.catalog_journey import browser_evidence, navigate
 from tests.support.portal_server import serve_portal
 
@@ -40,6 +41,9 @@ def test_person_operation_console(tmp_path: Path, request: pytest.FixtureRequest
             sync_playwright() as pw,
         ):
             provider, consumer = (headers(api, u) for u in ("provider", "consumer"))
+            api.patch(
+                "/api/me/profile", headers=consumer, json={"revision": 0, "full_name": "佐藤 花子"}
+            ).raise_for_status()
             asset = (
                 api.post(
                     "/api/apis",
@@ -56,7 +60,7 @@ def test_person_operation_console(tmp_path: Path, request: pytest.FixtureRequest
                 .raise_for_status()
                 .json()["id"]
             )
-            api.put(f"/api/apis/{asset}/publication?published=true", headers=provider).raise_for_status()
+            publish_asset(api, f"/api/apis/{asset}", provider).raise_for_status()
             grant = (
                 api.post(
                     f"/api/apis/{asset}/requests",
@@ -106,7 +110,7 @@ def test_person_operation_console(tmp_path: Path, request: pytest.FixtureRequest
                         panel.locator("summary").first.click()
 
                 open_policy()
-                panel.get_by_label("対象の利用者").select_option("consumer")
+                panel.get_by_label("対象の利用者").select_option(label="consumer（佐藤 花子）")
                 panel.get_by_role("button", name="権限を表示").click()
                 open_policy()
                 panel.get_by_role("button", name="参照だけを選ぶ").click()
@@ -118,7 +122,9 @@ def test_person_operation_console(tmp_path: Path, request: pytest.FixtureRequest
                 ) as saved_policy:
                     panel.get_by_role("button", name="選んだ操作を保存").click()
                 assert saved_policy.value.status == 200
-                expect(owner.get_by_text("consumer の操作権限を保存しました")).to_be_visible()
+                expect(
+                    owner.get_by_text("consumer（佐藤 花子） の操作権限を保存しました")
+                ).to_be_visible()
                 open_policy()
                 expect(panel.get_by_text("現在の設定　個別設定 · 2 操作を許可")).to_be_visible()
                 panel.scroll_into_view_if_needed()
@@ -164,7 +170,9 @@ def test_person_operation_console(tmp_path: Path, request: pytest.FixtureRequest
                 ) as saved_policy:
                     panel.get_by_role("button", name="選んだ操作を保存").click()
                 assert saved_policy.value.status == 200
-                expect(owner.get_by_text("consumer の操作権限を保存しました")).to_be_visible()
+                expect(
+                    owner.get_by_text("consumer（佐藤 花子） の操作権限を保存しました")
+                ).to_be_visible()
                 assert (
                     api.get(f"/api/apis/{asset}/operation-policy", headers=provider).json()[
                         "permissions"

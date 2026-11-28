@@ -1,4 +1,5 @@
-# 操作ガイドを語句と意図から検索する。
+"""操作ガイドを語句と意図から検索する。"""
+
 from __future__ import annotations
 
 import math

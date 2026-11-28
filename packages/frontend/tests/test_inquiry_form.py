@@ -1,4 +1,5 @@
-# 問い合わせの入力と送受信を検証する。
+"""問い合わせの入力と送受信を検証する。"""
+
 from __future__ import annotations
 
 import asyncio

@@ -1,4 +1,5 @@
-# 利用者が承認待ちの申請を取り下げると画面に反映され、同じ環境に再申請できる。
+"""利用者が承認待ちの申請を取り下げると画面に反映され、同じ環境に再申請できる。"""
+
 import json
 import os
 import re
@@ -12,7 +13,7 @@ import httpx
 import pytest
 from playwright.sync_api import Locator, Page, expect, sync_playwright
 
-from tests.support.catalog import FORM, approved, headers, invocation_headers
+from tests.support.catalog import FORM, approved, headers, invocation_headers, publish_asset
 from tests.support.catalog_journey import browser_evidence, navigate
 from tests.support.list_layout import visible_table_ratio
 from tests.support.portal_server import serve_portal
@@ -46,7 +47,7 @@ def publish(
 ) -> tuple[str, dict[str, Any]]:
     product = api.post("/api/apis", headers=owner, json=form).raise_for_status().json()
     url = "/api/apis/" + product["id"]
-    return url, api.put(url + "/publication?published=true", headers=owner).raise_for_status().json()
+    return url, publish_asset(api, url, owner).raise_for_status().json()
 
 
 def test_withdraw_pending(portal_session: PortalSession) -> None:
@@ -85,7 +86,7 @@ def test_release_history(portal_session: PortalSession) -> None:
         params={"revision": first["revision"]},
         json={**update, "release_note": "稼働状況を追加"},
     ).raise_for_status()
-    api.put(url + "/publication?published=true", headers=owner).raise_for_status()
+    publish_asset(api, url, owner).raise_for_status()
     open_portal(api, page, "利用チーム")
     navigate(page, "APIカタログ")
     page.get_by_role("link", name="在庫", exact=True).click()
@@ -116,7 +117,12 @@ def test_ordered_review(portal_session: PortalSession) -> None:
         api.post(
             "/api/members",
             headers=admin,
-            json={"email": "lead@example.org", "role": "consumer", "project": "finance"},
+            json={
+                "full_name": "試験 花子",
+                "email": "lead@example.org",
+                "role": "consumer",
+                "project": "finance",
+            },
         )
         .raise_for_status()
         .json()

@@ -4,6 +4,7 @@
       "caller": "",
       "first": true,
       "grant": false,
+      "project": "supply",
       "response": 0,
       "second": false,
       "target": ""
@@ -12,6 +13,7 @@
       "caller": "first",
       "first": true,
       "grant": false,
+      "project": "supply",
       "response": 409,
       "second": false,
       "target": "first"
@@ -20,6 +22,7 @@
       "caller": "second",
       "first": true,
       "grant": true,
+      "project": "supply",
       "response": 403,
       "second": false,
       "target": "second"
@@ -28,6 +31,7 @@
       "caller": "first",
       "first": true,
       "grant": true,
+      "project": "supply",
       "response": 200,
       "second": true,
       "target": "second"
@@ -36,6 +40,7 @@
       "caller": "first",
       "first": true,
       "grant": true,
+      "project": "supply",
       "response": 200,
       "second": true,
       "target": "second"
@@ -44,6 +49,7 @@
       "caller": "second",
       "first": false,
       "grant": false,
+      "project": "supply",
       "response": 200,
       "second": true,
       "target": "first"
@@ -52,6 +58,7 @@
       "caller": "first",
       "first": false,
       "grant": false,
+      "project": "supply",
       "response": 403,
       "second": true,
       "target": "second"
@@ -60,6 +67,7 @@
       "caller": "second",
       "first": false,
       "grant": false,
+      "project": "supply",
       "response": 409,
       "second": true,
       "target": "second"
@@ -860,6 +868,12 @@
       "status": "absent"
     },
     {
+      "listed": false,
+      "operation": "submitPublication",
+      "removed": false,
+      "status": "absent"
+    },
+    {
       "listed": true,
       "operation": "publish",
       "removed": false,
@@ -888,6 +902,12 @@
     {
       "listed": false,
       "operation": "init",
+      "removed": false,
+      "status": "absent"
+    },
+    {
+      "listed": false,
+      "operation": "submitPublication",
       "removed": false,
       "status": "absent"
     },
@@ -930,6 +950,12 @@
       "status": "absent"
     },
     {
+      "listed": false,
+      "operation": "submitPublication",
+      "removed": false,
+      "status": "absent"
+    },
+    {
       "listed": true,
       "operation": "publish",
       "removed": false,
@@ -950,29 +976,156 @@
   ],
   "profiles.profileTest": [
     {
+      "hasFullName": false,
       "named": false,
       "operation": "init",
       "response": 0
     },
     {
+      "hasFullName": true,
       "named": true,
       "operation": "selfSet",
       "response": 200
     },
     {
+      "hasFullName": true,
       "named": true,
       "operation": "other",
       "response": 403
     },
     {
+      "hasFullName": true,
       "named": true,
       "operation": "stale",
       "response": 409
     },
     {
+      "hasFullName": true,
       "named": false,
       "operation": "adminClear",
       "response": 200
+    }
+  ],
+  "profiles.requiredFullNameTest": [
+    {
+      "hasFullName": false,
+      "named": false,
+      "operation": "init",
+      "response": 0
+    },
+    {
+      "hasFullName": false,
+      "named": false,
+      "operation": "adminClear",
+      "response": 422
+    },
+    {
+      "hasFullName": true,
+      "named": true,
+      "operation": "selfSet",
+      "response": 200
+    },
+    {
+      "hasFullName": true,
+      "named": true,
+      "operation": "clearFull",
+      "response": 422
+    }
+  ],
+  "publication.orderedTest": [
+    {
+      "caller": "",
+      "listed": false,
+      "response": 0,
+      "stage": 0
+    },
+    {
+      "caller": "admin",
+      "listed": false,
+      "response": 403,
+      "stage": 0
+    },
+    {
+      "caller": "applicant",
+      "listed": false,
+      "response": 403,
+      "stage": 0
+    },
+    {
+      "caller": "lead",
+      "listed": false,
+      "response": 200,
+      "stage": 1
+    },
+    {
+      "caller": "lead",
+      "listed": false,
+      "response": 403,
+      "stage": 1
+    },
+    {
+      "caller": "admin",
+      "listed": true,
+      "response": 200,
+      "stage": 2
+    },
+    {
+      "caller": "admin",
+      "listed": true,
+      "response": 409,
+      "stage": 2
+    }
+  ],
+  "publicationchanges.restartTest": [
+    {
+      "operation": "init",
+      "pending": false,
+      "response": 0
+    },
+    {
+      "operation": "submit",
+      "pending": true,
+      "response": 200
+    },
+    {
+      "operation": "reject",
+      "pending": false,
+      "response": 200
+    },
+    {
+      "operation": "submit",
+      "pending": true,
+      "response": 200
+    },
+    {
+      "operation": "stale",
+      "pending": true,
+      "response": 409
+    },
+    {
+      "operation": "edit",
+      "pending": false,
+      "response": 200
+    },
+    {
+      "operation": "stale",
+      "pending": false,
+      "response": 409
+    },
+    {
+      "operation": "submit",
+      "pending": true,
+      "response": 200
+    },
+    {
+      "operation": "withdraw",
+      "pending": false,
+      "response": 200
+    },
+    {
+      "operation": "stale",
+      "pending": false,
+      "response": 409
     }
   ],
   "quota.thresholdTest": [
@@ -1142,6 +1295,50 @@
       "lifecycle": "reserved",
       "operation": "create",
       "response": 409
+    }
+  ],
+  "usagereview.orderedTest": [
+    {
+      "approved": false,
+      "caller": "",
+      "response": 0,
+      "stage": "person/admin"
+    },
+    {
+      "approved": false,
+      "caller": "provider",
+      "response": 403,
+      "stage": "person/admin"
+    },
+    {
+      "approved": false,
+      "caller": "project_leader",
+      "response": 403,
+      "stage": "person/admin"
+    },
+    {
+      "approved": false,
+      "caller": "person/admin",
+      "response": 200,
+      "stage": "project_leader"
+    },
+    {
+      "approved": false,
+      "caller": "person/admin",
+      "response": 403,
+      "stage": "project_leader"
+    },
+    {
+      "approved": true,
+      "caller": "project_leader",
+      "response": 200,
+      "stage": ""
+    },
+    {
+      "approved": true,
+      "caller": "provider",
+      "response": 409,
+      "stage": ""
     }
   ]
 }

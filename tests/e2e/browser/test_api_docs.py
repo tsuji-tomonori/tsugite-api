@@ -1,4 +1,5 @@
-# OpenAPIの型からパス・クエリ・JSONを入力し、選択したキーでHTTPSの送料計算を実行する。
+"""OpenAPIの型からパス・クエリ・JSONを入力し、選択したキーでHTTPSの送料計算を実行する。"""
+
 import json
 import os
 import ssl
@@ -15,7 +16,7 @@ import httpx
 import pytest
 from playwright.sync_api import Route, expect, sync_playwright
 
-from tests.support.catalog import headers
+from tests.support.catalog import headers, publish_asset
 from tests.support.catalog_journey import browser_evidence, navigate
 from tests.support.portal_server import serve_portal
 
@@ -168,7 +169,7 @@ def test_openapi_key_console(tmp_path: Path, request: pytest.FixtureRequest) -> 
                 .json()["id"]
             )
             base = "/api/apis/" + asset
-            api.put(base + "/publication?published=true", headers=owner).raise_for_status()
+            publish_asset(api, base, owner).raise_for_status()
             grant = (
                 api.post(
                     base + "/requests",
@@ -232,10 +233,29 @@ def test_openapi_key_console(tmp_path: Path, request: pytest.FixtureRequest) -> 
                     page.set_viewport_size({"width": 1280, "height": 1000})
                     schemas = docs.get_by_text("application/json のスキーマ", exact=True)
                     schemas.first.click()
-                    expect(docs.locator("pre").filter(has_text='"packages"').first).to_be_visible()
+                    request_schema = schemas.first.locator("..").locator("pre")
+                    expect(request_schema.locator(".json-number")).to_have_text("1")
                     schemas.nth(1).click()
-                    expect(docs.locator("pre").filter(has_text='"currency"').first).to_be_visible()
-                    docs.get_by_role("heading", name="API Docs").scroll_into_view_if_needed()
+                    response_schema = schemas.nth(1).locator("..").locator("pre")
+                    key_token = response_schema.locator(".json-key").filter(has_text='"currency"')
+                    value_token = response_schema.locator(".json-string").filter(has_text='"string"')
+                    expect(key_token).to_be_visible()
+                    palettes = []
+                    for mode in ("dark", "light"):
+                        page.get_by_label("表示モード").select_option(mode)
+                        colors = tuple(
+                            token.evaluate("(el) => getComputedStyle(el).color")
+                            for token in (key_token, value_token)
+                        )
+                        assert colors[0] != colors[1]
+                        palettes.append(colors)
+                    assert palettes[0] != palettes[1]
+                    models = docs.get_by_text("データモデル", exact=True)
+                    models.click()
+                    model = models.locator("..").locator("pre").first
+                    expect(model.locator(".json-number")).to_have_text("1")
+                    models.click()
+                    response_schema.scroll_into_view_if_needed()
                     capture(
                         page,
                         "specification",
@@ -257,6 +277,9 @@ def test_openapi_key_console(tmp_path: Path, request: pytest.FixtureRequest) -> 
                     busy = docs.locator('button[aria-busy="true"]')
                     expect(busy).to_be_disabled()
                     expect(busy).to_contain_text("実行中")
+                    capture(
+                        busy, "busy-hourglass", "送信中のボタンの右側に文字と同色の砂時計が表示される"
+                    )
                     with page.expect_response(lambda r: "/invoke/" in r.url) as invocation:
                         held[0].continue_()
                     page.unroute("**/token-exchange")
@@ -310,6 +333,20 @@ def test_openapi_key_console(tmp_path: Path, request: pytest.FixtureRequest) -> 
                             "api_ids": [asset],
                         },
                     ).raise_for_status()
+                    legacy = (
+                        api.post(
+                            "/api/keys",
+                            headers=consumer,
+                            json={
+                                "name": "配送用キー",
+                                "kind": "personal",
+                                "project": "finance",
+                                "api_ids": [asset],
+                            },
+                        )
+                        .raise_for_status()
+                        .json()
+                    )
                     page.reload()
                     page.get_by_label("API商品", exact=True).select_option(label="配送見積API")
                     page.get_by_label("parcel（path）").fill("JP18")
@@ -319,6 +356,35 @@ def test_openapi_key_console(tmp_path: Path, request: pytest.FixtureRequest) -> 
                     assert calls[-1][:3] == ("/parcels/JP18/estimate", {}, {"packages": 2})
                     capture(page, "console-oauth", "ログイン中の利用者が承認済みの環境で配送見積を取得")
 
+                    endpoint = (
+                        portal + "/api/invoke/delivery-estimate/sandbox/finance/parcels/JP19/estimate"
+                    )
+                    selected = page.get_by_label("APIキー（任意）", exact=True)
+                    expect(selected).to_have_value("")
+                    page.locator("#manual-url").fill(endpoint)
+                    page.locator("#manual-method").select_option("POST")
+                    page.locator("#manual-headers").fill("Content-Type: application/json")
+                    page.locator("#manual-body").fill('{"packages":4}')
+                    manual_send = page.get_by_role("button", name="指定したURLに送信")
+                    for label in (
+                        "配送アプリ（個人） · finance · アプリ",
+                        "配送用キー（個人） · finance · APIキー",
+                    ):
+                        selected.select_option(label=label)
+                        with page.expect_response(endpoint) as manual_result:
+                            manual_send.click()
+                        assert manual_result.value.status == 200
+                        expect(page.locator("#manual-response")).to_contain_text('"cost": 1400')
+                        assert calls[-1][:3] == ("/parcels/JP19/estimate", {}, {"packages": 4})
+                    capture(
+                        page,
+                        "console-url-key",
+                        "配送用キーを選び、秘密値を入力せずに直接指定したURLから送料を取得",
+                    )
+                    api.delete("/api/keys/" + legacy["id"], headers=consumer).raise_for_status()
+                    manual_send.click()
+                    expect(page.locator("#manual-response")).to_contain_text("HTTP 401")
+
                     url = "https://example.test/status"
                     page.route(
                         url,
@@ -327,6 +393,12 @@ def test_openapi_key_console(tmp_path: Path, request: pytest.FixtureRequest) -> 
                         ),
                     )
                     page.get_by_label("リクエストURL（必須）").fill(url)
+                    manual_send.click()
+                    expect(page.locator("#manual-response")).to_contain_text("呼び出しURLを指定")
+                    selected.select_option("")
+                    page.locator("#manual-method").select_option("GET")
+                    page.locator("#manual-headers").fill("")
+                    page.locator("#manual-body").fill("")
                     with page.expect_request(url) as outgoing:
                         page.get_by_role("button", name="指定したURLに送信").click()
                     expect(page.locator("#manual-response")).to_contain_text("HTTP 202")

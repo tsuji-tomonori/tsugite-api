@@ -1,4 +1,5 @@
-# 提供者・部署・プロジェクトの上限、更新と失効の秒境界、発行後の上限短縮を確認する。
+"""提供者・部署・プロジェクトの上限、更新と失効の秒境界、発行後の上限短縮を確認する。"""
+
 from time import time
 
 from app.core import credential_policy

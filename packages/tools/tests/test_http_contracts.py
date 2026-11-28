@@ -1,4 +1,5 @@
-# 操作別の未検証ステータスを検出する。
+"""操作別の未検証ステータスを検出する。"""
+
 from packages.tools.testing.http_contracts import missing_responses
 
 

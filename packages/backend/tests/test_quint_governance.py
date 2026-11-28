@@ -1,4 +1,3 @@
-# 形式仕様に従い組織、問い合わせ、利用上限の各状態を実システムから読み戻す。
 """形式仕様に従い組織、問い合わせ、利用上限の各状態を実システムから読み戻す。"""
 
 from uuid import UUID
@@ -218,10 +217,13 @@ def test_profile_history(states, portal):
                 json={
                     "revision": 0 if op == "stale" else revision,
                     "display_name": "表示名" if op == "selfSet" else None,
+                    **({"full_name": "利用 太郎"} if op == "selfSet" else {}),
+                    **({"full_name": "　"} if op == "clearFull" else {}),
                 },
             )
             assert result.status_code == step["response"], result.text
         current = portal.get("/api/me/profile", headers=people["consumer"]).raise_for_status().json()
+        assert current["full_name"] == ("利用 太郎" if step["hasFullName"] else None)
         assert current["display_name"] == ("表示名" if step["named"] else None)
         revision = current["revision"]
 

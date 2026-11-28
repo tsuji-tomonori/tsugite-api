@@ -1,4 +1,5 @@
-# 通知の配信フォームと受信一覧を表示する。
+"""通知の配信フォームと受信一覧を表示する。"""
+
 from __future__ import annotations
 
 from collections.abc import Sequence

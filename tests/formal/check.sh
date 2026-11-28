@@ -6,6 +6,7 @@ cd "$root"
 quint="$root/tests/formal/node_modules/.bin/quint"
 out="$root/artifacts/formal"
 mkdir -p "$out"
+python3 tests/formal/document.py --quint "$quint" --check
 python3 tests/formal/generate.py --quint "$quint"
 for spec in "$root"/tests/formal/*.qnt; do
     model=$(basename "$spec" .qnt)
@@ -15,4 +16,4 @@ for spec in "$root"/tests/formal/*.qnt; do
         exit 1
     }
 done
-FORMAL_COVERAGE_REPORT="$out/coverage.md" uv run --locked --package tsugite-backend --group dev python -m pytest -q tests/architecture/core/test_formal_contracts.py packages/backend/tests/test_quint*.py --junitxml="$out/replay.xml"
+FORMAL_COVERAGE_REPORT="$out/coverage.md" uv run --locked --package tsugite-backend --group dev python -m pytest -q tests/formal/test_policy_parser.py tests/architecture/core/test_formal_contracts.py packages/backend/tests/test_quint*.py --junitxml="$out/replay.xml"

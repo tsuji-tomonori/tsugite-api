@@ -1,4 +1,5 @@
-# JUnitの結果と画像・CDKメタデータから生成するレポートを確認する。
+"""JUnitの結果と画像・CDKメタデータから生成するレポートを確認する。"""
+
 import json
 from xml.etree import ElementTree as ET
 

@@ -1,4 +1,5 @@
-# 名簿から個人の管理者権限を付与・剥奪する。
+"""名簿から個人の管理者権限を付与・剥奪する。"""
+
 import os
 
 from playwright.sync_api import expect, sync_playwright

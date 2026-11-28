@@ -1,4 +1,5 @@
-# 6種類の権限で全メニューを開き、狭幅と広幅で余白・操作領域・横あふれを検査する。
+"""6種類の権限で全メニューを開き、狭幅と広幅で余白・操作領域・横あふれを検査する。"""
+
 import os
 from pathlib import Path
 
@@ -140,7 +141,12 @@ def test_role_screen_layout(tmp_path: Path, request: pytest.FixtureRequest) -> N
                 api.post(
                     "members",
                     headers=admin,
-                    json={"email": email, "role": "consumer", "project": "finance"},
+                    json={
+                        "full_name": "試験 花子",
+                        "email": email,
+                        "role": "consumer",
+                        "project": "finance",
+                    },
                 )
                 .raise_for_status()
                 .json()

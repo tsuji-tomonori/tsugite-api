@@ -1,4 +1,5 @@
-# ポータルが使うPuePyの描画と起動の境界を宣言する。
+"""ポータルが使うPuePyの描画と起動の境界を宣言する。"""
+
 from collections.abc import Callable
 from typing import Any, TypeVar
 
@@ -22,6 +23,7 @@ class Application:
 _C = TypeVar("_C", bound="Component")
 
 class _Tags:
+    def __call__(self, *texts: str) -> None: ...
     def component(self) -> Callable[[type[_C]], type[_C]]: ...
     def button(self, *children: Any, **attributes: Any) -> Tag: ...
     def __getattr__(self, name: str) -> Any: ...

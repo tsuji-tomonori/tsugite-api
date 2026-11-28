@@ -1,4 +1,5 @@
-# e2e のテストで使う共通フィクスチャを提供する。
+"""e2e のテストで使う共通フィクスチャを提供する。"""
+
 import base64
 import hashlib
 import json

@@ -1,4 +1,4 @@
-# 部署・プロジェクトの一覧と所属を、画面仕様と組織APIの応答契約に基づいて検証する。
+"""部署・プロジェクトの一覧と所属を、画面仕様と組織APIの応答契約に基づいて検証する。"""
 
 import asyncio
 from types import SimpleNamespace
@@ -441,7 +441,10 @@ def test_load_more_candidates_for_membership(
         lambda: view.membership_editor("projects", project, tree, None, draft=ui.ctx.get("member_form"))
     )[1]
     assert any(
-        option.getAttribute("value") == "u-01" and "staff@example.test" in content(option)
+        option.getAttribute("value") == "u-01"
+        and all(
+            text in content(option) for text in ("stock-user", "森恵", "連絡窓口", "staff@example.test")
+        )
         for option in dom.getElementsByTagName("option")
     )
 

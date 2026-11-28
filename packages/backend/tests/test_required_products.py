@@ -1,9 +1,10 @@
-# 商品提供者と申請者が、環境別の条件・申請結果・公開版を追跡できることを確認する。
+"""商品提供者と申請者が、環境別の条件・申請結果・公開版を追跡できることを確認する。"""
+
 from copy import deepcopy
 
 import pytest
 
-from tests.support.catalog import headers
+from tests.support.catalog import headers, publish_asset
 
 
 def _draft():
@@ -25,7 +26,7 @@ def _register(portal, owner, product):
     created = portal.post("/api/apis", headers=owner, json=product)
     assert created.status_code == 201
     url = f"/api/apis/{created.json()['id']}"
-    published = portal.put(f"{url}/publication", headers=owner, params={"published": True})
+    published = publish_asset(portal, f"{url}", owner)
     assert published.status_code == 200 and published.json()["published"]
     return url
 
@@ -140,7 +141,7 @@ def test_spec_revision_and_release_history(portal):
     draft["release_note"] = "カレンダーを追加して旧照会を廃止"
     updated = portal.put(url, headers=owner, params={"revision": original["revision"]}, json=draft)
     assert updated.status_code == 200 and not updated.json()["published"]
-    republished = portal.put(f"{url}/publication", headers=owner, params={"published": True})
+    republished = publish_asset(portal, f"{url}", owner)
     assert republished.status_code == 200 and republished.json()["published"]
     history = portal.get(url, headers=user).json()["releases"]
     entries = {row["api_version"]: row for row in history}
@@ -383,7 +384,7 @@ def test_provider_stops_and_reopens_new_applications(portal):
     blocked = portal.post(f"{url}/requests", headers=user, json={**body, "project": "pilot"})
     assert blocked.status_code in (403, 404, 409, 422)
     assert not any(row["project"] == "pilot" for row in portal.get("/api/requests", headers=user).json())
-    reopened = portal.put(f"{url}/publication", headers=owner, params={"published": True})
+    reopened = publish_asset(portal, f"{url}", owner)
     assert reopened.status_code == 200
     offer = portal.get(url, headers=user).json()["offers"]["sandbox"]
     next_request = portal.post(
@@ -575,7 +576,7 @@ def test_updated_terms_require_fresh_consent(portal):
     draft["offers"]["sandbox"]["terms"] = "改訂した利用規約"
     edited = portal.put(url, headers=owner, params={"revision": before["revision"]}, json=draft)
     assert edited.status_code == 200
-    published = portal.put(f"{url}/publication", headers=owner, params={"published": True})
+    published = publish_asset(portal, f"{url}", owner)
     assert published.status_code == 200
     current = portal.get(url, headers=user).json()["offers"]["sandbox"]
     assert current["version"] != old_version and current["terms"] == "改訂した利用規約"

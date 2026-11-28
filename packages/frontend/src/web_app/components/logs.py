@@ -1,4 +1,5 @@
-# アクセスログと監査履歴の一覧・詳細を表示する。
+"""アクセスログと監査履歴の一覧・詳細を表示する。"""
+
 from __future__ import annotations
 
 from actions.logs import PAGE_SIZE, can_audit, detail_path, download_logs, log_page

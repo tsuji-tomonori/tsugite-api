@@ -1,4 +1,5 @@
-# 要件「利用状況を把握するとき、プロジェクト別の実績を確認できる」と画面仕様のUTC集計を検証する。
+"""要件「利用状況を把握するとき、プロジェクト別の実績を確認できる」と画面仕様のUTC集計を検証する。"""
+
 import asyncio
 from datetime import datetime, timedelta
 from unittest.mock import AsyncMock

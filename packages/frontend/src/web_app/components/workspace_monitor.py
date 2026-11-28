@@ -1,4 +1,5 @@
-# 組織の利用件数と内訳を表示する。
+"""組織の利用件数と内訳を表示する。"""
+
 from __future__ import annotations
 
 from typing import Any
@@ -8,6 +9,7 @@ from routing.portal_navigation import load
 from runtime.portal_ui import ctx
 
 from components.controls import btn
+from components.member_identity import full_name_cell
 
 
 def breakdown(title: str, rows: list[dict[str, Any]]) -> None:
@@ -60,12 +62,13 @@ def monitoring_view(unit: dict[str, Any], paths: dict[str, str]) -> None:
             with t.table(aria_label="所属メンバー一覧"):
                 with t.thead():
                     with t.tr():
-                        for title in ("ユーザー名", "所属", "役職", "管理権限"):
+                        for title in ("ユーザー名", "氏名", "所属", "役職", "管理権限"):
                             t.th(title, scope="col")
                 with t.tbody():
                     for member in members:
                         with t.tr():
                             t.th(member.get("username") or member["subject"], scope="row")
+                            full_name_cell(member)
                             t.td(paths.get(member["unit_id"], member["unit_id"]))
                             t.td(member.get("title") or "—")
                             t.td("リーダー" if member.get("leader") else "メンバー")

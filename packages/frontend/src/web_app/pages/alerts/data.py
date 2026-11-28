@@ -1,4 +1,5 @@
-# 設定可能な対象と現在のルールを読み込む。
+"""設定可能な対象と現在のルールを読み込む。"""
+
 from __future__ import annotations
 
 from actions.management_targets import load_targets

@@ -1,4 +1,5 @@
-# 自分の申請画面の部品とルートを定義する。
+"""自分の申請画面の部品とルートを定義する。"""
+
 from actions.requests import load_requests
 from components.requests import rights_page
 from content import guide_examples as example

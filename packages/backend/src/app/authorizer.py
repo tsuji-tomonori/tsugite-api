@@ -1,5 +1,4 @@
-# API Gatewayから渡された認証情報を検証する。
-"""HTTP API request authorizer. The backend rechecks the grant before dispatch."""
+"""API Gatewayで呼び出し元の認証情報を検証する。転送前にバックエンドで利用権を再確認する。"""
 
 import os
 import secrets

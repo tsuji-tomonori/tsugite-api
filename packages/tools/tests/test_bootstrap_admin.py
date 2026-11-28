@@ -1,4 +1,5 @@
-# 管理者がいないときだけメールで招待し、作成したユーザーの識別子を次のジョブに渡す。
+"""管理者がいないときだけメールで招待し、作成したユーザーの識別子を次のジョブに渡す。"""
+
 import json
 import subprocess
 from unittest.mock import Mock, call

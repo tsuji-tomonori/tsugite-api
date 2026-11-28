@@ -1,4 +1,3 @@
-# 合成済みCloudFormationテンプレートから、コンポーネント別の設計書を生成する。
 """合成済みCloudFormationテンプレートから、コンポーネント別の設計書を生成する。"""
 
 import argparse

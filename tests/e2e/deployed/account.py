@@ -1,5 +1,4 @@
-# 実環境テストの利用者と接続先を検査し、本人確認コードを生成する。
-"""実環境の専用利用者を照合し、認証アプリと同じ時間ベースのコードを生成する。"""
+"""実環境テスト専用の利用者と接続先を照合し、認証アプリと同じ時刻ベースの本人確認コードを生成する。"""
 
 import base64
 import hashlib
@@ -35,6 +34,7 @@ def is_test_consumer(profile: dict[str, object], subject: str) -> bool:
         and profile.get("subject") == subject
         and profile.get("admin") is False
         and profile.get("auditor") is False
-        and profile.get("owners") == []
+        and isinstance(profile.get("projects"), list)
+        and profile.get("owners") == profile["projects"]
         and profile.get("leads") == []
     )

@@ -1,4 +1,5 @@
-# 通知先の名前と識別子の対応を検証する。
+"""通知先の名前と識別子の対応を検証する。"""
+
 from __future__ import annotations
 
 from collections.abc import Callable

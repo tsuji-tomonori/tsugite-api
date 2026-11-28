@@ -1,4 +1,5 @@
-# 実環境テストで使う認証コード・配信元・利用者照合を検証する。
+"""実環境テストで使う認証コード・配信元・利用者照合を検証する。"""
+
 import pytest
 
 from tests.e2e.deployed.account import gateway_origin, is_test_consumer, portal_origin, totp
@@ -35,7 +36,14 @@ def test_gateway_origin() -> None:
 
 def test_only_expected_consumer() -> None:
     """専用ユーザーの識別子と一般利用者権限がすべて一致した場合に確認を通過する。"""
-    profile = {"subject": "dedicated", "admin": False, "auditor": False, "owners": [], "leads": []}
+    profile = {
+        "subject": "dedicated",
+        "admin": False,
+        "auditor": False,
+        "projects": ["team"],
+        "owners": ["team"],
+        "leads": [],
+    }
     assert is_test_consumer(profile, "dedicated")
     assert not is_test_consumer(profile, "other")
     for key, value in (("admin", True), ("auditor", True), ("owners", ["p"]), ("leads", ["p"])):

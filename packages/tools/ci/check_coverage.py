@@ -1,5 +1,4 @@
-# 対象ブランチのカバレッジ規則を検証する。
-"""Enforce active GitHub line coverage rules on a pull request."""
+"""プルリクエストの対象ブランチで有効な行カバレッジの規則を検証する。"""
 
 import hashlib
 import json
@@ -20,7 +19,7 @@ BROWSER_FIXTURE = Path("tests/e2e/browser/conftest.py")
 BROWSER_TRACE = Path("tests/support/pyodide_trace.py")
 
 
-def coverage_policy(browser_fixture=None, *, previous_agent_root=None):
+def coverage_policy(browser_fixture=None, *, previous_agent_root=None, legacy_comments=False):
     with (ROOT / "pyproject.toml").open("rb") as file:
         config = tomllib.load(file)["tool"]["coverage"]
     # 比較元のコミットでも移動前のエージェントを同じ範囲で計測する。
@@ -31,8 +30,14 @@ def coverage_policy(browser_fixture=None, *, previous_agent_root=None):
     digest = hashlib.sha256(json.dumps(config, sort_keys=True).encode())
     if browser_fixture is None:
         browser_fixture = (ROOT / BROWSER_FIXTURE).read_text(encoding="utf-8")
-    digest.update(browser_fixture.encode())
-    digest.update((ROOT / BROWSER_TRACE).read_text(encoding="utf-8").encode())
+    browser_trace = (ROOT / BROWSER_TRACE).read_text(encoding="utf-8")
+    for source in (browser_fixture, browser_trace):
+        if legacy_comments:
+            # 旧版は同じ説明をコメントにも併記していた。計測器の残りのバイト列も照合する。
+            first = source.partition("\n")[0]
+            if first.startswith('"""') and first.endswith('"""'):
+                source = f"# {first[3:-3]}\n{source}"
+        digest.update(source.encode())
     return digest.hexdigest()
 
 
@@ -129,13 +134,14 @@ def compatible_baseline(folder, sha):
     )
     flat = 'path.name: path.as_posix() for path in FRONTEND.glob("*.py")'
     fixture = (ROOT / BROWSER_FIXTURE).read_text(encoding="utf-8")
-    if marker.read_text().strip() in {
+    policy = marker.read_text().strip()
+    if policy == coverage_policy(legacy_comments=True):
+        return True
+    if policy in {
         coverage_policy(previous_agent_root=root) for root in ("agent", "packages/agent/src/agent")
     }:
         return True
-    if fixture.count(recursive) != 1 or marker.read_text().strip() != coverage_policy(
-        fixture.replace(recursive, flat)
-    ):
+    if fixture.count(recursive) != 1 or policy != coverage_policy(fixture.replace(recursive, flat)):
         return False
     root = "packages/frontend/src/web_app/"
     paths = subprocess.check_output(

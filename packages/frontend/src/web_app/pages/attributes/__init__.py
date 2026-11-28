@@ -1,4 +1,5 @@
-# 属性値の画面を定義する。
+"""属性値の画面を定義する。"""
+
 from actions.workspace import attribute_menu, load_workspace
 from components.workspace import page_title, view
 from routing.screen_registry import Screen

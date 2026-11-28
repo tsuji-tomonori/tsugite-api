@@ -1,4 +1,5 @@
-# 画面の配布・自動登録・表示を検証する。
+"""画面の配布・自動登録・表示を検証する。"""
+
 from __future__ import annotations
 
 import asyncio
@@ -77,6 +78,7 @@ def test_existing_routes_and_role_menus(portal_module: Callable[[str], ModuleTyp
         "プロジェクト",
     ]
     menus = registry.menu(user)
+    assert menus["ワークスペース"][0].page_title() == "チャット"
     assert [s.path for s in menus["ワークスペース"]] == [
         "home",
         "catalog",
@@ -89,11 +91,11 @@ def test_existing_routes_and_role_menus(portal_module: Callable[[str], ModuleTyp
     assert [s.path for s in menus["メタデータ"]] == ["departments", "projects", "metadata"]
     assert [s.path for s in menus["ヘルプ"]] == ["guide", "inquiries"]
     assert [s.path for s in menus["ガバナンス"]] == ["metrics", "logs", "alerts", "audit"]
-    assert "管理" not in menus and "提供者メニュー" not in menus
-    assert [s.path for s in registry.menu({**user, "leads": ["a"]})["提供者メニュー"]] == ["inbox"]
+    assert "管理" not in menus and [s.path for s in menus["商品提供・審査"]] == ["inbox"]
+    assert [s.path for s in registry.menu({**user, "leads": ["a"]})["商品提供・審査"]] == ["inbox"]
     menus = registry.menu({**user, "admin": True, "owners": ["a"]})
     assert [s.path for s in menus["管理"]] == ["members"]
-    assert [s.path for s in menus["提供者メニュー"]] == ["inventory", "inbox"]
+    assert [s.path for s in menus["商品提供・審査"]] == ["inventory", "inbox"]
     for path in ("api/stock", "edit/stock", "guide/keys"):
         assert registry.resolve(path).path == path.partition("/")[0] + "/"
     assert registry.resolve("register").parent == "inventory"

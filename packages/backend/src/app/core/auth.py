@@ -1,4 +1,5 @@
-# ログイン情報から利用者と操作権限を特定する。
+"""ログイン情報から利用者と操作権限を特定する。"""
+
 import secrets
 from dataclasses import dataclass, field, replace
 from functools import lru_cache
@@ -59,7 +60,7 @@ def demo_token(persona: str, db: Session | None = None) -> str:
         member = db.scalar(select(Member).where(Member.username == persona, Member.deleted.is_(False)))
         if member:
             persona = member.subject
-            groups = [("own-" if member.role == "provider" else "use-") + member.project]
+            groups = ["use-" + member.project]
     if not local_demo() or groups is None:
         raise HTTPException(404)
     return jwt.encode(

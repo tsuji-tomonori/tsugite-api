@@ -1,4 +1,5 @@
-# 標準構成のリソース型と論理ID、スタック出力をスナップショットと照合する。
+"""標準構成のリソース型と論理ID、スタック出力をスナップショットと照合する。"""
+
 import csv
 import json
 from collections import Counter

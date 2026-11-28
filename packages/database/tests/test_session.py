@@ -1,4 +1,5 @@
-# Aurora DSQL 接続では Amazon ルート CA を含むバンドルで証明書とホスト名を検証する。
+"""Aurora DSQL 接続では Amazon ルート CA を含むバンドルで証明書とホスト名を検証する。"""
+
 import ssl
 from unittest.mock import patch
 

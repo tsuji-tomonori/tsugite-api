@@ -1,4 +1,5 @@
-# Gitの差分から実行計画を作り、単体テストの計測を合算する経路を検証する。
+"""Gitの差分から実行計画を作り、単体テストの計測を合算する経路を検証する。"""
+
 import json
 import subprocess
 from pathlib import Path

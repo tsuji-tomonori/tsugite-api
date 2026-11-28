@@ -1,5 +1,4 @@
-# 問い合わせに対応するDBスキーマへ移行する。
-"""Persist private inquiries and replies."""
+"""非公開の問い合わせと返信を保存するテーブルを追加する。"""
 
 import sqlalchemy as sa
 from alembic import op

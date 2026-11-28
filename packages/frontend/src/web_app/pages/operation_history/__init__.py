@@ -1,4 +1,5 @@
-# 業務操作履歴画面の部品とルートを定義する。
+"""業務操作履歴画面の部品とルートを定義する。"""
+
 from components.audit import audit_search, audit_view
 from routing.screen_registry import Screen
 

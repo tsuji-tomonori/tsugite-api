@@ -1,8 +1,10 @@
-# OpenAPIの仕様と認証付き実行フォームを表示する。
+"""OpenAPIの仕様と認証付き実行フォームを表示する。"""
+
 from __future__ import annotations
 
 import asyncio
 import json
+import re
 import shlex
 from collections.abc import Awaitable, Callable, Sequence
 from typing import Any
@@ -20,6 +22,25 @@ from runtime.portal_ui import action
 METHODS = ("get", "post", "put", "patch", "delete", "head", "options", "trace")
 INVOKABLE = frozenset(("get", "post", "put", "patch", "delete"))
 ENVIRONMENTS = {"sandbox": "検証", "staging": "準本番", "production": "本番"}
+
+JSON_TOKEN = re.compile(
+    r'(?P<string>"(?:[^"\\]|\\.)*")|(?P<number>-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)'
+    r"|(?P<boolean>true|false)|(?P<null>null)|(?P<punctuation>[\s{},:\[\]]+)"
+)
+
+
+def schema_block(spec: dict[str, Any], schema: Any) -> None:
+    """参照を解決し、整形したJSONの字下げと文字列を保ってスキーマを色分けする。"""
+    source = json.dumps(resolve(spec, schema), ensure_ascii=False, indent=2)
+    with t.pre(classes="code json-schema"):
+        for token in JSON_TOKEN.finditer(source):
+            kind = token.lastgroup
+            if kind == "punctuation":
+                t(token.group())
+                continue
+            if kind == "string" and source.startswith(":", token.end()):
+                kind = "key"
+            t.span(token.group(), classes=f"json-{kind}")
 
 
 def type_name(spec: dict[str, Any], schema: dict[str, Any]) -> str:
@@ -44,7 +65,7 @@ def data_schema(spec: dict[str, Any], media: dict[str, Any]) -> None:
     """データスキーマを描画する。"""
     schema = media.get("schema")
     if schema is not None:
-        t.pre(json.dumps(resolve(spec, schema), ensure_ascii=False, indent=2), classes="code")
+        schema_block(spec, schema)
 
 
 def media_docs(spec: dict[str, Any], content: dict[str, Any]) -> None:
@@ -528,4 +549,4 @@ def view(
                 t.summary("データモデル")
                 for name, raw in spec["components"]["schemas"].items():
                     t.h3(name)
-                    t.pre(json.dumps(resolve(spec, raw), ensure_ascii=False, indent=2), classes="code")
+                    schema_block(spec, raw)

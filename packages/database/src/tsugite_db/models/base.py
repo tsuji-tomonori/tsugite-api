@@ -1,4 +1,5 @@
-# 全テーブルで共用するORM基底クラスを定義する。
+"""全テーブルで共用するORM基底クラスを定義する。"""
+
 from datetime import UTC, datetime
 from uuid import uuid4
 

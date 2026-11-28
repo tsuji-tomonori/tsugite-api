@@ -1,4 +1,5 @@
-# 語句・意味の両方で業務APIを検索し、同義語を含めて順位付けする。
+"""語句・意味の両方で業務APIを検索し、同義語を含めて順位付けする。"""
+
 import json
 
 from app.core.catalog_rank import rank_assets

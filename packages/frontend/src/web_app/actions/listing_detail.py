@@ -1,4 +1,5 @@
-# 商品の停止・公開範囲・削除を扱う。
+"""商品の停止・公開範囲・削除を扱う。"""
+
 from __future__ import annotations
 
 from typing import Any

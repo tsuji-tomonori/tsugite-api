@@ -1,4 +1,5 @@
-# 一覧画面のレイアウトを検証する。
+"""一覧画面のレイアウトを検証する。"""
+
 from playwright.sync_api import Locator
 
 

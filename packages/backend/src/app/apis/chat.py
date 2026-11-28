@@ -1,4 +1,5 @@
-# チャットの質問を受け付けて結果を返す。
+"""チャットの質問を受け付けて結果を返す。"""
+
 import os
 from threading import Lock
 from uuid import UUID

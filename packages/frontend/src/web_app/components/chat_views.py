@@ -1,4 +1,5 @@
-# チャットと問い合わせの操作欄を表示する。
+"""チャットと問い合わせの操作欄を表示する。"""
+
 from __future__ import annotations
 
 import asyncio
@@ -218,7 +219,7 @@ def home(
                             if reply["kind"] in ("empty", "outside"):
                                 offer_inquiry(turn)
                         else:
-                            t.p("回答を準備しています…", role="status")
+                            t.p("回答を準備しています…", role="status", classes="chat-pending")
         with t.form(classes="chat-composer", on_submit=submit):
             with t.label(classes="field"):
                 t.span("質問")

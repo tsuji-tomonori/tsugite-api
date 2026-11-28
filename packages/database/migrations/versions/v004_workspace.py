@@ -1,5 +1,4 @@
-# 所属組織に対応するDBスキーマへ移行する。
-"""Directory, scoped credentials, subscription principals and historical organization attribution."""
+"""所属組織、認証情報の適用範囲、利用申請の主体、操作時点の所属を記録できるようにする。"""
 
 import sqlalchemy as sa
 from alembic import op

@@ -1,5 +1,4 @@
-# デモの提供者と利用者が公開・申請・承認・実行・権限取消を画面で完了できる。
-"""Run against a fresh, migrated loopback demo database on every test."""
+"""テストごとに新しいローカルDBを用意し、提供者と利用者が画面から公開・申請・承認・実行・利用権取消を完了できることを確かめる。"""
 
 import os
 from collections.abc import Iterator
@@ -30,7 +29,7 @@ def test_user_flow(demo_url: str, request: pytest.FixtureRequest) -> None:
 
 
 def test_home_chat_and_inquiry(demo_url: str, request: pytest.FixtureRequest) -> None:
-    """ホームで商品と手順を調べ、運営への問い合わせを明示的に送信できる。"""
+    """ログイン直後のチャットで商品と手順を調べ、運営への問い合わせを明示的に送信できる。"""
     import httpx
     from playwright.sync_api import expect, sync_playwright
 
@@ -43,10 +42,25 @@ def test_home_chat_and_inquiry(demo_url: str, request: pytest.FixtureRequest) ->
         page = browser.new_page(viewport={"width": 390, "height": 844})
         page.goto(demo_url)
         page.get_by_role("button", name="利用チーム", exact=True).click()
+        expect(page.get_by_role("heading", level=1, name="チャット", exact=True)).to_be_visible()
+        expect(page.get_by_label("質問", exact=True)).to_be_visible()
         expect(page.get_by_role("heading", name="どのAPIをお探しですか？")).to_be_visible()
+        # 初回の受付応答を保留し、処理速度に依存せず待機中の表示を確認する。
+        held: list[Route] = []
+        page.route("**/api/chat", lambda route: held.append(route), times=1)
         page.get_by_role("button", name="在庫を確認できるAPIを探して").click()
         history = page.get_by_role("log", name="会話")
+        pending = history.get_by_role("status")
+        expect(pending).to_have_text("回答を準備しています…")
+        animation = "el => getComputedStyle(el, '::before').animationName"
+        assert pending.evaluate(animation) == "chat-spin"
+        capture_image(request.node, "chat", page, "pending", "回答を準備している間に表示するリング")
+        page.emulate_media(reduced_motion="reduce")
+        assert pending.evaluate(animation) == "none"
+        expect(pending).to_be_visible()
+        held[0].continue_()
         expect(history.locator('a[href^="#/api/"]').first).to_be_visible()
+        expect(pending).to_have_count(0)
         capture_image(request.node, "chat", page, "recommendation", "日本語の質問への商品候補")
         page.get_by_label("質問", exact=True).fill("APIキーを発行する手順を教えて")
         page.get_by_role("button", name="送信", exact=True).click()
@@ -117,7 +131,7 @@ def test_submit_from_inquiries(demo_url: str, request: pytest.FixtureRequest) ->
 
 
 def test_large_catalog(demo_url: str, request: pytest.FixtureRequest) -> None:
-    """12業務・20拠点の公開240件を全件照合し、PC・スマートフォンの検索とページ送りを確認する"""
+    """24業務・20拠点の公開480件を全件照合し、PC・スマートフォンの検索とページ送りを確認する"""
     import httpx
     from playwright.sync_api import expect, sync_playwright
 
@@ -130,18 +144,18 @@ def test_large_catalog(demo_url: str, request: pytest.FixtureRequest) -> None:
         consumer = {"Authorization": "Bearer " + api.post("demo/consumer").json()["access_token"]}
         draft = api.post("apis", headers=provider, json=offer(CATALOG[0], 21)).raise_for_status().json()
         observed: list[str] = []
-        for page in range(1, 21):
+        for page in range(1, 41):
             result = (
                 api.get("catalog-page", params={"page": page}, headers=consumer)
                 .raise_for_status()
                 .json()
             )
-            assert (result["total"], result["page"], len(result["items"])) == (240, page, 12)
+            assert (result["total"], result["page"], len(result["items"])) == (480, page, 12)
             observed.extend(item["id"] for item in result["items"])
-        assert len(set(observed)) == 240 and set(observed) == set(ids)
+        assert len(set(observed)) == 480 and set(observed) == set(ids)
         assert draft["id"] not in observed
         assert (
-            api.get("catalog-page", headers=provider, params={"inventory": True}).json()["total"] == 241
+            api.get("catalog-page", headers=provider, params={"inventory": True}).json()["total"] == 481
         )
 
     with sync_playwright() as pw:
@@ -153,12 +167,12 @@ def test_large_catalog(demo_url: str, request: pytest.FixtureRequest) -> None:
                 view.goto(demo_url)
                 view.get_by_role("button", name="利用チーム", exact=True).click()
                 navigate(view, "APIカタログ")
-                expect(view.get_by_role("heading", name="API一覧（240件）")).to_be_visible()
+                expect(view.get_by_role("heading", name="API一覧（480件）")).to_be_visible()
                 expect(view.locator(".result-table tbody tr")).to_have_count(12)
                 assert visible_table_ratio(view.get_by_role("table", name="API一覧")) >= 0.70
                 expect(view.get_by_label("キーワードで検索")).to_be_hidden()
                 assert view.evaluate("document.documentElement.scrollWidth <= innerWidth")
-            capture(desktop, "catalog", "240件の公開カタログ。先頭12件を表示するデスクトップ画面")
+            capture(desktop, "catalog", "480件の公開カタログ。先頭12件を表示するデスクトップ画面")
             capture(mobile, "phone", "390px幅で同じ公開カタログを表示")
             desktop.get_by_role("button", name="次へ").click()
             expect(desktop.get_by_text("13–24 件を表示")).to_be_visible()
@@ -175,7 +189,7 @@ def test_large_catalog(demo_url: str, request: pytest.FixtureRequest) -> None:
             expect(mobile.get_by_role("heading", name="API一覧（6件）")).to_be_visible()
             expect(mobile.locator(".result-table tbody tr")).to_have_count(6)
             assert all("岐阜" in name for name in mobile.locator(".asset-title").all_text_contents())
-            capture(mobile, "filtered", "キーワードと本番環境で絞り、240件から目的の6件を抽出")
+            capture(mobile, "filtered", "キーワードと本番環境で絞り、480件から目的の6件を抽出")
             mobile.locator("summary").filter(has_text="検索条件").click()
             mobile.get_by_label("キーワードで検索").fill("該当なしの検索語")
             mobile.get_by_label("キーワードで検索").press("Enter")
@@ -186,7 +200,7 @@ def test_large_catalog(demo_url: str, request: pytest.FixtureRequest) -> None:
     request.node.user_properties.append(
         (
             "finding",
-            "実測値：12業務×20拠点の公開240件、未公開1件。全20ページを照合し、重複・欠落・下書き混入は各0件。390pxと1440pxで横幅内に収まり、検索ボタンをキーボードで実行できた。",
+            "実測値：24業務×20拠点の公開480件、未公開1件。全40ページを照合し、重複・欠落・下書き混入は各0件。390pxと1440pxで横幅内に収まり、検索ボタンをキーボードで実行できた。",
         )
     )
 
@@ -327,7 +341,7 @@ def test_governance_console(demo_url: str, request: pytest.FixtureRequest) -> No
         with browser_evidence(request.node, "governance", provider, user) as capture:
             for view, label, role in (
                 (admin, "管理者", "管理者"),
-                (provider, "提供チーム", "提供者"),
+                (provider, "提供チーム", "利用者"),
                 (user, "利用チーム", "利用者"),
             ):
                 view.goto(demo_url)
@@ -338,7 +352,8 @@ def test_governance_console(demo_url: str, request: pytest.FixtureRequest) -> No
 
             navigate(admin, "ユーザー管理")
             admin.locator("summary").filter(has_text="ユーザーを追加").click()
-            admin.get_by_label("メールアドレス").fill("catalog-reader@example.org")
+            admin.get_by_label("氏名（必須）").fill("一覧 花子")
+            admin.get_by_label("ユーザー名（メールアドレス）").fill("catalog-reader@example.org")
             admin.get_by_label("所属プロジェクト").select_option("finance")
             admin.get_by_role("button", name="追加する").click()
             row = admin.get_by_role("row").filter(has_text="catalog-reader@example.org")
@@ -425,7 +440,7 @@ def test_governance_console(demo_url: str, request: pytest.FixtureRequest) -> No
             expect(provider.get_by_role("heading", name="棚卸・在庫照会")).to_be_visible()
             capture(provider, "renamed", "名称を変更した商品")
             provider.get_by_role("button", name="掲載を取り下げる").click()
-            expect(provider.get_by_role("button", name="公開する")).to_be_visible()
+            expect(provider.get_by_role("button", name="公開申請する")).to_be_visible()
             provider.get_by_role("button", name="APIを削除").click()
             expect(provider.get_by_text("APIを削除しました")).to_be_visible()
             capture(provider, "deleted", "削除操作の結果")
@@ -477,4 +492,65 @@ def test_portal_login_on_mobile(demo_url: str, request: pytest.FixtureRequest) -
         expect(page.get_by_role("heading", name="継手APIにログイン")).to_be_visible()
         assert page.url.startswith(demo_url + "/")
         assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
+        browser.close()
+
+
+def test_mfa_registration_codes(demo_url: str, request: pytest.FixtureRequest) -> None:
+    """登録用QRを先に表示し、設定コードを開いてコピー・再収納してから登録できる。"""
+    from playwright.sync_api import expect, sync_playwright
+
+    secret = "JBSWY3DPEHPK3PXP"  # このテスト専用の固定値
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch(executable_path=os.getenv("CHROMIUM_PATH") or None)
+        page = browser.new_page(viewport={"width": 390, "height": 844})
+        page.context.grant_permissions(["clipboard-read", "clipboard-write"], origin=demo_url)
+        token = page.request.post(demo_url + "/api/demo/consumer").json()["access_token"]
+        page.route(
+            "**/api/config",
+            lambda route: route.fulfill(
+                json={"demo": False, "client_id": "portal", "identity_endpoint": demo_url + "/identity"}
+            ),
+        )
+        operations = []
+        responses = {
+            "InitiateAuth": {"ChallengeName": "MFA_SETUP", "Session": "start"},
+            "AssociateSoftwareToken": {"Session": "setup", "SecretCode": secret},
+            "VerifySoftwareToken": {"Session": "verified", "Status": "SUCCESS"},
+            "RespondToAuthChallenge": {"AuthenticationResult": {"AccessToken": token}},
+        }
+
+        def identity(route: Route) -> None:
+            operation = route.request.headers["x-amz-target"].split(".")[-1]
+            operations.append(operation)
+            route.fulfill(json=responses[operation])
+
+        page.route("**/identity", identity)
+        page.goto(demo_url + "/#/catalog")
+        page.get_by_label("ユーザー名", exact=True).fill("qr+demo@example.test")
+        page.get_by_label("パスワード", exact=True).fill("example-password")
+        page.get_by_role("button", name="ログイン", exact=True).click()
+
+        qr = page.get_by_role("img", name="認証アプリ登録用のQRコード")
+        expect(qr).to_be_visible()
+        assert qr.evaluate("img => img.src.startsWith('data:image/png;base64,') && img.naturalWidth > 0")
+        disclosure = page.get_by_text("設定コードを表示", exact=True)
+        key = page.get_by_text(secret, exact=True)
+        copy = page.get_by_role("button", name="設定コードをコピー")
+        expect(key).to_be_hidden()
+        expect(copy).to_be_hidden()
+        capture_image(request.node, "login", page, "mfa-qr", "認証アプリ登録の初期表示（テスト用QR）")
+        page.get_by_label("確認コード").fill("012345")
+        disclosure.click()
+        expect(key).to_be_visible()
+        copy.click()
+        expect(page.get_by_text("設定コードをコピーしました。")).to_be_visible()
+        assert page.evaluate("navigator.clipboard.readText()") == secret
+        disclosure.click()
+        expect(key).to_be_hidden()
+        expect(copy).to_be_hidden()
+        expect(page.get_by_label("確認コード")).to_have_value("012345")
+        page.get_by_role("button", name="登録してログイン").click()
+        expect(page.get_by_role("heading", name="APIカタログ", exact=True)).to_be_visible()
+        expect(qr).to_have_count(0)
+        assert operations == list(responses)
         browser.close()

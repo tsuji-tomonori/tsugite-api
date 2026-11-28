@@ -1,4 +1,5 @@
-# 行カバレッジのブランチルールと比較元を独立した小さな計測値で検証する。
+"""行カバレッジのブランチルールと比較元を独立した小さな計測値で検証する。"""
+
 import json
 from decimal import Decimal
 from unittest.mock import Mock

@@ -1,4 +1,5 @@
-# 操作ガイドの表示例に使うサンプル値を定義する。
+"""操作ガイドの表示例に使うサンプル値を定義する。"""
+
 from typing import Any
 
 PROJECT: dict[str, Any] = {

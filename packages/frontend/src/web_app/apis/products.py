@@ -1,4 +1,5 @@
-# 商品の公開・仕様・操作権限のAPIを呼び出す。
+"""商品の公開・仕様・操作権限のAPIを呼び出す。"""
+
 from __future__ import annotations
 
 from typing import Any
@@ -60,3 +61,23 @@ async def update_asset(asset_id: str, revision: int, data: dict[str, Any]) -> di
 async def create_asset(data: dict[str, Any]) -> dict[str, Any]:
     """商品を登録する。"""
     return await client.request_object("/apis", "POST", data)
+
+
+async def publication_policy() -> dict[str, Any]:
+    """提供ガイドラインと承認順を取得する。"""
+    return await client.request_object("/publication-policy")
+
+
+async def save_publication_policy(data: dict[str, Any]) -> None:
+    """これから受け付ける公開申請のルールを保存する。"""
+    await client.api("/publication-policy", "PUT", data)
+
+
+async def publication_requests() -> list[dict[str, Any]]:
+    """判断可能な公開申請を取得する。"""
+    return await client.request_rows("/publication-requests")
+
+
+async def decide_publication(key: str, data: dict[str, Any]) -> None:
+    """商品版を指定して公開申請を審査する。"""
+    await client.api("/apis/" + quote(key, safe="") + "/publication-decisions", "POST", data)

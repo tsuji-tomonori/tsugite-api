@@ -1,5 +1,4 @@
-# ポータル利用者のプロフィールを取得・更新する。
-"""View and edit the portal member's profile through the existing human session."""
+"""ログイン中の利用者のプロフィールを取得・更新する。"""
 
 import json
 
@@ -67,6 +66,8 @@ def edit(db, request, actor, subject, account, data, action):
     row = db.get(MemberProfile, subject)
     if data.revision != (row.revision if row else 0):
         raise HTTPException(409, "同時に更新されました。プロフィールを再読み込みしてください")
+    if "full_name" not in data.model_fields_set and not (row and row.full_name):
+        raise HTTPException(422, "氏名を入力してください")
     changes = {
         field: getattr(data, field)
         for field in NAME_FIELDS

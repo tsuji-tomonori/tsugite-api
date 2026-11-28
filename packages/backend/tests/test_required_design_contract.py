@@ -1,4 +1,5 @@
-# 合成したFastAPIの公開仕様で、和名・制約・参照・設計不備の位置を検証する。
+"""合成したFastAPIの公開仕様で、和名・制約・参照・設計不備の位置を検証する。"""
+
 from copy import deepcopy
 from functools import partial
 from typing import Annotated

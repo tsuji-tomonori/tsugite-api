@@ -1,4 +1,5 @@
-# ポータルへのログイン状態を管理する。
+"""ポータルへのログイン状態を管理する。"""
+
 from __future__ import annotations
 
 from copy import deepcopy
@@ -26,7 +27,7 @@ async def login(persona: str) -> None:
 
 
 async def logout() -> None:
-    """セッションを破棄してホームへ戻る。"""
+    """セッションを破棄してログイン画面へ戻る。"""
     portal_login = client.store.getItem("portal_login")
     client.store.removeItem("portal_login")
     client.store.removeItem("access")

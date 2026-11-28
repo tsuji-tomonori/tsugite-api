@@ -1,5 +1,4 @@
-# スキーマ更新前に既存の列を取得する。
-"""Read the column names needed for idempotent schema upgrades."""
+"""スキーマ更新を繰り返し実行できるように、更新前に既存の列名を取得する。"""
 
 from sqlalchemy import Connection, inspect, text
 

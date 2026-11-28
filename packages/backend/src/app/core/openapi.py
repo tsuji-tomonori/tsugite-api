@@ -1,4 +1,5 @@
-# OpenAPIの操作と内部参照を読み取る。
+"""OpenAPIの操作と内部参照を読み取る。"""
+
 from urllib.parse import unquote
 
 

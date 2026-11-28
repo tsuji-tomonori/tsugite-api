@@ -1,10 +1,11 @@
-# API商品詳細の公開設定と仕様を表示する。
+"""API商品詳細の公開設定と仕様を表示する。"""
+
 from __future__ import annotations
 
 import json
 from typing import Any
 
-from actions.listing_data import publication
+from actions.listing_data import publication, review_publication
 from actions.listing_detail import change_suspension, delete_listing, save_policy
 from content.portal_labels import LABEL
 from js import window
@@ -95,7 +96,9 @@ def publication_actions(a: dict[str, Any]) -> None:
     """公開状態に応じた管理操作を表示する。"""
     with t.div(classes="btn-grouping"):
         btn(
-            "掲載を取り下げる" if a["published"] else "公開する",
+            "掲載を取り下げる"
+            if a["published"]
+            else ("公開申請を取り下げる" if a.get("publication_stage") else "公開申請する"),
             publication,
             a,
             primary=not a["published"],
@@ -119,6 +122,14 @@ def detail_page() -> None:
             a,
         )
     t.p(a["owner"] + " · " + ("公開中" if a["published"] else "未掲載"), classes="muted")
+    t.p("公開責任者　" + (a.get("responsible_label") or a.get("responsible") or a["owner"]))
+    if stage := a.get("publication_stage"):
+        t.p("公開承認待ち　" + product_views.step_label(stage))
+    if a.get("can_review_publication"):
+        t.p(a.get("publication_guidelines", ""), classes="terms-text")
+        field("公開判断の理由", "publication-reason", required=True)
+        btn("公開申請を承認", review_publication, a, True, primary=True)
+        btn("公開申請を却下", review_publication, a, False)
     if a["owner"] in ctx["me"]["owners"]:
         publication_actions(a)
         policy_form(

@@ -1,5 +1,4 @@
-# 差分からCIの対象を選びカバレッジを集計する。
-"""Select PR checks and combine coverage from changed suites with the verified merge base."""
+"""差分からCIの検査対象を選び、変更したテスト群と検証済みの分岐点のカバレッジを集計する。"""
 
 import argparse
 import json

@@ -1,4 +1,5 @@
-# 通知先と受信一覧を読み込む。
+"""通知先と受信一覧を読み込む。"""
+
 from __future__ import annotations
 
 from actions.management_targets import load_targets

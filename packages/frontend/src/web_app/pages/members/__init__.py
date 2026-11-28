@@ -1,4 +1,5 @@
-# ユーザー管理画面の部品とルートを定義する。
+"""ユーザー管理画面の部品とルートを定義する。"""
+
 from __future__ import annotations
 
 from components.members import invite_form, members_view

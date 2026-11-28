@@ -1,5 +1,4 @@
-# ポータルとブラウザー実行環境の静的配布物を作る。
-"""Build a self-hosted PuePy distribution. Downloads are pinned by digest."""
+"""配布元のハッシュを照合し、ポータルとPuePyの実行環境を自前で配信する静的ファイルにまとめる。"""
 
 import json
 import shutil
@@ -151,20 +150,20 @@ def build() -> None:
                     with dest.open("wb") as file:
                         with archive_file(tar, member) as stream:
                             shutil.copyfileobj(stream, file)
-    spec = find_spec("puepy")
-    if spec is None or spec.origin is None:
-        raise RuntimeError("PuePyのインストール先が見つかりません")
-    pyroot = Path(spec.origin).parent
     files = {}
-    for src in sorted(pyroot.glob("*.py")):
-        dest = DIST / "vendor/puepy" / src.name
-        dest.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy(src, dest)
-        files["/vendor/puepy/" + src.name] = "./puepy/" + src.name
-    wheel = distribution("puepy")
-    for package_file in wheel.files or ():
-        if package_file.name.upper() == "LICENSE":
-            shutil.copy(str(wheel.locate_file(package_file)), DIST / "vendor/puepy/LICENSE")
+    for package in ("puepy", "segno"):
+        spec = find_spec(package)
+        if spec is None or spec.origin is None:
+            raise RuntimeError(f"{package}のインストール先が見つかりません")
+        vendor = DIST / "vendor" / package
+        vendor.mkdir(parents=True, exist_ok=True)
+        for src in sorted(Path(spec.origin).parent.glob("*.py")):
+            shutil.copy(src, vendor / src.name)
+            files[f"/vendor/{package}/{src.name}"] = f"./{package}/{src.name}"
+        wheel = distribution(package)
+        for package_file in wheel.files or ():
+            if package_file.name.upper() == "LICENSE":
+                shutil.copy(str(wheel.locate_file(package_file)), vendor / "LICENSE")
     files.update(copy_app_modules(source, DIST))
     shutil.copy(ROOT / "packages/backend/src/app/core/log_record.py", DIST / "log_record.py")
     files["/log_record.py"] = "./log_record.py"

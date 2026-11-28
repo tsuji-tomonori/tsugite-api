@@ -1,4 +1,5 @@
-# 対象商品の申請条件を読み込む。
+"""対象商品の申請条件を読み込む。"""
+
 from __future__ import annotations
 
 from apis import products as products_api

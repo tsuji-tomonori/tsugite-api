@@ -1,4 +1,5 @@
-# 利用申請の商品情報とフォームを表示する。
+"""利用申請の商品情報とフォームを表示する。"""
+
 from __future__ import annotations
 
 from typing import Any

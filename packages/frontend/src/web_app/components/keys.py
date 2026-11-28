@@ -1,4 +1,5 @@
-# キーの発行と管理欄を表示する。
+"""キーの発行と管理欄を表示する。"""
+
 from __future__ import annotations
 
 from collections.abc import Awaitable, Callable, Sequence

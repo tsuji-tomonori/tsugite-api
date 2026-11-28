@@ -1,4 +1,5 @@
-# 問い合わせの履歴と返信欄を表示する。
+"""問い合わせの履歴と返信欄を表示する。"""
+
 from __future__ import annotations
 
 from actions.inquiries import change_scope, inquiry_page, reply_inquiry, submit_inquiry

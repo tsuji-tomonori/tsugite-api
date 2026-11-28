@@ -1,17 +1,23 @@
-# 管理者が追加・削除し、同一メールで再登録しても旧利用権を復活させない。
+"""管理者が追加・削除し、同一メールで再登録しても旧利用権を復活させない。"""
+
 import json
 from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
 
 from app.core.auth import DEMO_GROUPS
 
-from tests.support.catalog import FORM, approved, headers, invocation_headers
+from tests.support.catalog import FORM, approved, headers, invocation_headers, publish_asset
 
 
 def test_member_lifecycle(portal):
     """管理者が追加・削除し、同一メールで再登録しても旧利用権を復活させない"""
     admin, other = (headers(portal, r) for r in ("admin", "auditor"))
-    data = {"email": "account@example.org", "role": "consumer", "project": "finance"}
+    data = {
+        "full_name": "試験 花子",
+        "email": "account@example.org",
+        "role": "consumer",
+        "project": "finance",
+    }
     assert portal.post("/api/members", headers=other, json=data).status_code == 403
     member = portal.post("/api/members", headers=admin, json=data).raise_for_status().json()
     assert portal.post("/api/members", headers=admin, json=data).status_code == 409
@@ -75,7 +81,7 @@ def test_listing_revisions(portal):
         .json()
     )
     assert not updated["published"] and portal.get(path, headers=call).status_code == 403
-    portal.put(url + "/publication?published=true", headers=owner).raise_for_status()
+    publish_asset(portal, url, owner).raise_for_status()
     right = portal.post(
         url + "/requests",
         headers=user,

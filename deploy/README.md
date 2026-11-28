@@ -72,7 +72,7 @@ aws cloudformation deploy --region "$region" --stack-name tsugite-github-actions
 
 ### 初回設定
 
-1. ポータルの管理者が、検証用プロジェクトの「利用者」として専用メールアドレスを招待します。管理者・監査担当・提供者・リーダー権限を持たないアカウントを使います。
+1. ポータルの管理者が、検証用プロジェクトに専用メールアドレスを招待します。管理者・監査担当・リーダー権限を持たない一般メンバーを使います。
 2. GitHub の **Settings → Environments** に `cloudfront-e2e` を作成し、**Deployment branches and tags → Selected branches and tags** で Branch の `main` だけを許可します。
 3. 招待された利用者としてポータルで初回パスワードを変更し、認証アプリ登録画面に表示される「設定キー」を下表の Secret に登録します。同じキーを認証アプリに登録して6桁コードで初回ログインを完了します。
 4. 次の値をすべて同じ Environment に登録します。パスワードと設定キーの両方を扱える実行者は、この専用利用者としてログインできます。Environment の変更権限と main のワークフロー変更権限を管理してください。

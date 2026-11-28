@@ -1,4 +1,5 @@
-# 個人アカウントへの管理者権限の引き継ぎを検証する。
+"""個人アカウントへの管理者権限の引き継ぎを検証する。"""
+
 import pytest
 
 from tests.support.catalog import headers
@@ -12,7 +13,9 @@ def test_admin_role_handover(states, portal):
     email = "operator@example.test"
     person = (
         portal.post(
-            "/api/members", headers=first, json={"email": email, "project": "supply", "role": "provider"}
+            "/api/members",
+            headers=first,
+            json={"email": email, "full_name": "管理 花子", "project": "supply"},
         )
         .raise_for_status()
         .json()
@@ -31,7 +34,7 @@ def test_admin_role_handover(states, portal):
             me = portal.get("/api/me", headers=token).raise_for_status().json()
             assert me["admin"] == state[who]
             if who == "second":
-                assert me["owners"] == ["supply"]
+                assert me["owners"] == me["projects"] == [state["project"]]
             listing = portal.get("/api/members", headers=token)
             if state[who]:
                 assert {r["subject"] for r in listing.json()["items"] if r["admin"]} == {

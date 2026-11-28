@@ -1,4 +1,5 @@
-# 業務操作履歴の検索欄と一覧を表示する。
+"""業務操作履歴の検索欄と一覧を表示する。"""
+
 from __future__ import annotations
 
 from actions.audit import audit_filter, audit_page, download_audit
