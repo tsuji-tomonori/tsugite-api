@@ -92,7 +92,7 @@ def register(data: NewListing, request: Request, actor: User, db: DB):
 
 
 #: APIの登録内容を更新する
-@router.put("/apis/{key}", responses=domain_errors(403, 409), response_model=Listing)
+@router.put("/apis/{key}", responses=domain_errors(403, 409, 503), response_model=Listing)
 def edit(
     #: カタログ掲載APIの識別子
     key: str,

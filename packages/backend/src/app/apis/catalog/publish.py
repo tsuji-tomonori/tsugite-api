@@ -13,6 +13,7 @@ from app.schemas.catalog import Listing, PublicationDecision, PublicationPolicy
 from app.schemas.errors import domain_errors
 from fastapi import APIRouter, HTTPException, Request
 from sqlalchemy import select
+from sqlalchemy.orm import defer
 from tsugite_db.models import Asset, DirectoryTree
 
 router = APIRouter()
@@ -42,7 +43,7 @@ def set_suspension(
 #: APIの公開・掲載取り下げを切り替える
 @router.put(
     "/apis/{key}/publication",
-    responses=domain_errors(403, 404),
+    responses=domain_errors(403, 404, 503),
     response_model=Listing,
     operation_id="publish",
 )
@@ -89,7 +90,7 @@ def read_publication_policy(actor: User, db: DB):
 
 
 #: 管理者が提供ガイドラインと今後の公開申請の承認順を設定する
-@router.put("/publication-policy", response_model=PublicationPolicy, responses=domain_errors(409))
+@router.put("/publication-policy", response_model=PublicationPolicy, responses=domain_errors(409, 503))
 def configure_publication_policy(data: PublicationPolicy, request: Request, actor: User, db: DB):
     if not actor.admin:
         raise HTTPException(403)
@@ -111,7 +112,9 @@ def configure_publication_policy(data: PublicationPolicy, request: Request, acto
 @router.get("/publication-requests", response_model=list[Listing])
 def publication_requests(actor: User, db: DB):
     rows = db.scalars(
-        select(Asset).where(Asset.publication_request.is_not(None), Asset.removed_at.is_(None))
+        select(Asset)
+        .options(defer(Asset.spec))
+        .where(Asset.publication_request.is_not(None), Asset.removed_at.is_(None))
     )
     return [listing(asset) for asset in rows if reviewer(asset, actor)]
 

@@ -1,10 +1,12 @@
 # 公開申請と利用申請に共通する承認担当の判定。
 import json
 
+import boto3
 from app.core.auth import DEMO_GROUPS
-from app.core.config import local_demo
+from app.core.config import local_demo, settings
 from app.core.workspace import units
 from app.schemas.catalog import PublicationPolicy
+from botocore.exceptions import BotoCoreError, ClientError
 from fastapi import HTTPException
 from sqlalchemy import select
 from tsugite_db.models import DirectoryTree, Member
@@ -27,6 +29,29 @@ def resolve_person(db, subject):
         return member.subject
     if member is None and local_demo() and subject in DEMO_GROUPS:
         return subject
+    if member is None and not local_demo():
+        # ポータルで招待されていない既存のCognitoアカウントも、承認時は不変のsubで照合する。
+        idp = boto3.client("cognito-idp")
+        field = "email" if "@" in subject else "sub"
+        try:
+            pages = idp.get_paginator("list_users").paginate(
+                UserPoolId=settings()["pool_id"], Filter=field + " = " + json.dumps(subject)
+            )
+            candidates = {
+                attr["Value"]
+                for page in pages
+                for user in page["Users"]
+                if user.get("Enabled")
+                for attr in user["Attributes"]
+                if attr["Name"] == "sub"
+            }
+        except (BotoCoreError, ClientError) as exc:
+            raise HTTPException(503, "利用者の登録状況を確認できませんでした") from exc
+        if len(candidates) == 1:
+            confirmed = candidates.pop()
+            account = db.get(Member, confirmed)
+            if not account or not account.deleted:
+                return confirmed
     raise HTTPException(422, "有効な利用者を指定してください")
 
 

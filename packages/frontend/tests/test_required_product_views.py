@@ -789,3 +789,90 @@ def test_restricted_visibility_displays_selected_metadata_values(
     assert {e.getAttribute("value") for e in boxes} == {"employee", "contractor"}
     assert [e.getAttribute("value") for e in boxes if e.hasAttribute("checked")] == audience
     assert "社員" in visible(doc) and "業務委託" in visible(doc)
+
+
+def test_publication_inbox_shows_assigned_reviews_and_admin_settings(
+    portal_module: Module, portal: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """公開審査の担当者には商品への入口を、管理者には承認順の編集欄を表示する。"""
+    module = portal_module("components.requests")
+    portal.update(rows=[], publication_requests=[])
+    ordinary = render(module.inbox)[1]
+    assert "判断を待っている公開申請はありません" in visible(ordinary)
+    assert "提供ガイドラインと公開承認の設定" not in visible(ordinary)
+    portal["me"]["admin"] = True
+    portal.update(
+        publication_requests=[{"id": "s1", "name": "棚卸API"}],
+        publication_policy={"guidelines": "仕様を確認", "steps": ["unit/sales", "person/u1"]},
+        policy_directory={
+            "units": [
+                {"id": "sales", "name": "営業部", "kind": "department"},
+                {"id": "title", "name": "役職", "kind": "title"},
+            ],
+            "users": [{"subject": "u1", "username": "sato", "full_name": "佐藤 明"}],
+        },
+    )
+    events = FormEvents()
+    monkeypatch.setattr(module, "t", events)
+    doc = render(module.inbox)[1]
+    assert doc.getElementsByTagName("a")[0].getAttribute("href") == "#/api/s1"
+    steps = control(doc, "div", "publication-steps")
+    assert [
+        e.getAttribute("value")
+        for e in steps.getElementsByTagName("option")
+        if e.hasAttribute("selected")
+    ] == ["unit/sales", "person/u1"]
+    assert "営業部のリーダー" in visible(steps) and "佐藤 明" in visible(steps)
+    assert "unit/title" not in choices(steps)
+
+    def element(key: str) -> Any:
+        node = control(doc, "div", key)
+        return Namespace(firstElementChild=node.firstChild, appendChild=node.appendChild)
+
+    monkeypatch.setattr(module, "document", Namespace(getElementById=element))
+    add = next(
+        button for button in doc.getElementsByTagName("button") if visible(button) == "承認段階を追加"
+    )
+    events.click(Namespace(target=add))
+    assert len(steps.childNodes) == 3
+    last = steps.lastChild
+    remove = last.getElementsByTagName("button")[0]
+    events.click(
+        Namespace(
+            target=Namespace(
+                getAttribute=remove.getAttribute,
+                closest=lambda _: Namespace(remove=lambda: steps.removeChild(last)),
+            )
+        )
+    )
+    assert len(steps.childNodes) == 2
+
+
+def test_publication_detail_shows_responsibility_and_current_reviewer(
+    portal_module: Module, portal: dict[str, Any], product: dict[str, Any]
+) -> None:
+    """下書きの現在の担当者がガイドラインと責任者を確認し、申請に判断を記録できる。"""
+    product.update(
+        published=False,
+        publication_stage="admin",
+        can_review_publication=True,
+        publication_guidelines="公開前に確認",
+        responsible_label="物流 太郎",
+    )
+    detail = render(portal_module("components.listing_detail").detail_page)[1]
+    assert "公開前に確認" in visible(detail) and "物流 太郎" in visible(detail)
+    assert {"公開申請を承認", "公開申請を却下"} <= {
+        visible(el) for el in detail.getElementsByTagName("button")
+    }
+    portal["me"]["owners"] = ["supply"]
+    portal["publication_policy"] = {"guidelines": "利用規約を掲載", "steps": ["admin"]}
+    portal["policy_directory"]["users"] = [
+        {"subject": "u1", "username": "logistics", "full_name": "物流 太郎"}
+    ]
+    product["responsible"] = "u1"
+    editor = render(portal_module("components.listing_editor").inventory_form, product)[1]
+    assert "利用規約を掲載" in visible(editor)
+    assert control(editor, "input", "responsible").getAttribute("value") == "u1"
+    assert choices(control(editor, "datalist", "responsible-people")) == ["logistics"]
+    owner = render(portal_module("components.listing_detail").publication_actions, product)[1]
+    assert "公開申請を取り下げる" in visible(owner)

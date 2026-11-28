@@ -701,3 +701,61 @@ def test_metadata_only_audience_is_saved_as_restricted(
             "delegates": [],
         },
     )
+
+
+def test_publication_settings_and_decisions_use_displayed_revision(
+    portal_module: Module, inputs: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """受信画面で設定した個人指名と段階順を保存し、判断時の商品版と理由を送信する。"""
+    action = portal_module("actions.requests")
+    detail = portal_module("actions.listing_data")
+    client = portal_module("apis.client")
+    state = portal_module("runtime.portal_ui").ctx
+    state.update(me={"admin": False})
+    requests = AsyncMock(return_value=[])
+    monkeypatch.setattr(client, "request_rows", requests)
+    fetch = AsyncMock(return_value={"revision": 3, "steps": ["admin"]})
+    monkeypatch.setattr(client, "request_object", fetch)
+    asyncio.run(action.load_requests("mine"))
+    asyncio.run(action.load_requests("inbox"))
+    fetch.assert_not_awaited()
+    state["me"]["admin"] = True
+    asyncio.run(action.load_requests("inbox"))
+    assert fetch.await_args_list[-1].args == ("/publication-policy",)
+    assert state["publication_policy"]["revision"] == 3
+    name = SimpleNamespace(value="")
+    manual = SimpleNamespace(
+        value="person/", closest=lambda _: SimpleNamespace(querySelector=lambda _: name)
+    )
+    steps = Nodes([manual, SimpleNamespace(value="admin")])
+    monkeypatch.setattr(
+        action,
+        "document",
+        SimpleNamespace(getElementById=lambda _: SimpleNamespace(querySelectorAll=lambda _: steps)),
+    )
+    monkeypatch.setattr(action, "value", lambda _: "接続仕様を確認")
+    send = AsyncMock()
+    monkeypatch.setattr(client, "api", send)
+    monkeypatch.setattr(action, "load", AsyncMock())
+    with pytest.raises(client.InputError, match="ユーザー名"):
+        asyncio.run(action.save_guidelines())
+    send.assert_not_awaited()
+    name.value = " person@example.test "
+    asyncio.run(action.save_guidelines())
+    send.assert_awaited_once_with(
+        "/publication-policy",
+        "PUT",
+        {
+            "revision": 3,
+            "guidelines": "接続仕様を確認",
+            "steps": ["person/person@example.test", "admin"],
+        },
+    )
+    inputs["publication-reason"] = "方針に適合"
+    monkeypatch.setattr(detail, "go", AsyncMock())
+    asyncio.run(detail.review_publication({"id": "s1", "revision": 7}, False))
+    send.assert_awaited_with(
+        "/apis/s1/publication-decisions",
+        "POST",
+        {"revision": 7, "approved": False, "reason": "方針に適合"},
+    )

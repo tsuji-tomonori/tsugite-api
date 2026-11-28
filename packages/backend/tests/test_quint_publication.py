@@ -149,3 +149,47 @@ def test_named_and_project_usage_approvals(portal):
             grant = response.json()
             assert grant["stage"] == next_stage
     assert grant["status"] == "approved"
+
+
+def test_external_contact_is_resolved_to_stable_identity(portal, monkeypatch):
+    """外部登録の有効な利用者をメールから識別子に解決し、照会障害時は申請も条件変更も確定しない。"""
+    from unittest.mock import Mock
+
+    from app.core import publication
+    from botocore.exceptions import EndpointConnectionError
+
+    owner, admin = headers(portal, "provider"), headers(portal, "admin")
+    client = Mock()
+    fetch = client.get_paginator.return_value.paginate
+    fetch.return_value = [
+        {"Users": [{"Enabled": True, "Attributes": [{"Name": "sub", "Value": "existing-user"}]}]}
+    ]
+    monkeypatch.setattr(publication, "settings", lambda: {"pool_id": "external-pool"})
+    monkeypatch.setattr(publication, "local_demo", lambda: False)
+    monkeypatch.setattr(publication.boto3, "client", lambda _: client)
+    form = {**FORM, "responsible": "external@example.test"}
+    row = portal.post("/api/apis", headers=owner, json=form).raise_for_status().json()
+    assert row["responsible"] == "existing-user"
+    fetch.assert_called_with(UserPoolId="external-pool", Filter='email = "external@example.test"')
+    policy = {"steps": ["person/external@example.test"]}
+    assert portal.put("/api/publication-policy", headers=admin, json=policy).raise_for_status().json()[
+        "steps"
+    ] == ["person/existing-user"]
+    url = "/api/apis/" + row["id"]
+    fetch.side_effect = EndpointConnectionError(endpoint_url="https://identity.invalid")
+    assert portal.put(url + "/publication?published=true", headers=owner).status_code == 503
+    assert (
+        portal.put(url, headers=owner, params={"revision": row["revision"]}, json=form).status_code
+        == 503
+    )
+    assert (
+        portal.put("/api/publication-policy", headers=admin, json={**policy, "revision": 1}).status_code
+        == 503
+    )
+    assert not portal.get(url, headers=owner).json()["publication_stage"]
+    fetch.side_effect = None
+    fetch.return_value = [{"Users": []}]
+    assert (
+        portal.put(url, headers=owner, params={"revision": row["revision"]}, json=form).status_code
+        == 422
+    )
