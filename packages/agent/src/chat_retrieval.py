@@ -5,9 +5,10 @@ import math
 import re
 from collections import defaultdict
 
-from app.core.catalog_rank import normalize, rank_assets, terms
+from app.core.catalog_rank import concept_vector, contains, document, normalize, rank_assets, terms
 
 from packages.frontend.src.web_app.content.guide_content import GUIDES, audiences
+from packages.frontend.src.web_app.content.guide_search import FILLER
 from packages.frontend.src.web_app.content.guide_search import search as search_guides
 
 TOPICS = {
@@ -39,10 +40,25 @@ HEADINGS = {
     "catalog": ("目的に合うAPI候補です。", "公開中のAPIから候補を見つけました。"),
     "manual": ("使い方ガイドの該当手順です。", "参照したガイドに沿って手順を案内します。"),
 }
-OUTSIDE = "公開APIの検索と継手APIの使い方に回答できます。運営への問い合わせも受け付けています。"
-NO_MATCH = (
-    "質問に対応する公開APIや手順が見つかりませんでした。操作名や利用目的を変えて検索してください。"
+OUTSIDE = "この質問は公開APIと使い方ガイドの案内範囲外です。"
+NO_MATCH = "質問に合う公開APIや操作手順が見つかりませんでした。"
+REQUEST_WORDS = re.compile(
+    r"おすすめ|お勧め|どんな|ありますか|ありませんか|あります|探し(?:たい|て)?|検索|教えて|"
+    r"知りたい|確認(?:したい|できる)?|できる|使いたい|どのような|使い方|やり方|手順|マニュアル|ガイド|カタログ|商品|方法|(?<![a-z0-9])api(?![a-z0-9]|キー)"
 )
+
+
+def search_subject(question):
+    """Remove request wording so that asking for an API is not evidence for a particular product."""
+    subject = FILLER.sub(" ", REQUEST_WORDS.sub(" ", normalize(question)))
+    return subject.strip(" 　をのはがにでと？?！!。・")
+
+
+def covers_topics(subject, content):
+    """Check named subjects against the source, including catalog synonyms."""
+    topics = re.findall(r"[一-鿿々]{2,}|[ァ-ヺー]{2,}|[a-z0-9]+", subject)
+    concepts = concept_vector(content)
+    return all(contains(content, topic) or concept_vector(topic) & concepts for topic in topics)
 
 
 def dot(left, right):
@@ -67,14 +83,16 @@ def routes(question, models):
     ]
     if outside >= 0.50 and outside >= max(scores.get(key, -1) for key in explicit) + 0.10:
         return []
+    if manual != catalog:
+        return ["manual" if manual else "catalog"]
     return plausible
 
 
 def rewritten(question, value):
     if not isinstance(value, str) or not value.strip() or len(value) > 120 or OVERRIDE.search(value):
         return question
-    original = terms(normalize(question))
-    updated = terms(normalize(value))
+    original = terms(search_subject(question))
+    updated = terms(search_subject(value))
     return value.strip() if original & updated else question
 
 
@@ -120,16 +138,28 @@ def manual_sources(actor):
 
 
 def recommended(question, query, assets, models, use_manual, actor):
+    subject = search_subject(question)
+    if not terms(subject) or not re.search(r"[一-鿿ァ-ヺa-z0-9]|[ぁ-ゖ]{2}", subject):
+        return []
+    edited_subject = search_subject(query)
     if use_manual:
         sources = manual_sources(actor)
-        raw = [g.id for g in search_guides(question) if g.id in sources]
-        edited = [g.id for g in search_guides(query) if g.id in sources] if query != question else raw
+        raw = [g.id for g in search_guides(subject, min_coverage=0.55) if g.id in sources]
+        edited = (
+            [g.id for g in search_guides(edited_subject, min_coverage=0.55) if g.id in sources]
+            if edited_subject and edited_subject != subject
+            else raw
+        )
         documents = [
             (g.id, " ".join((g.title, *g.intents, g.prerequisite, *g.steps))) for g in sources.values()
         ]
     else:
-        raw = [asset.id for asset in rank_assets(assets, question)]
-        edited = [asset.id for asset in rank_assets(assets, query)] if query != question else raw
+        raw = [asset.id for asset in rank_assets(assets, subject)]
+        edited = (
+            [asset.id for asset in rank_assets(assets, edited_subject)]
+            if edited_subject and edited_subject != subject
+            else raw
+        )
         source_order = fuse(raw, edited)
         order = {key: index for index, key in enumerate(source_order)}
         documents = [
@@ -139,10 +169,17 @@ def recommended(question, query, assets, models, use_manual, actor):
     raw_semantic, edited_semantic = (
         semantic(question, query, documents[:240], models) if documents else ([], [])
     )
-    grounded = set(raw) | set(raw_semantic) | set(edited_semantic)
-    edited = [key for key in edited if key in grounded]
-    rewritten_rankings = (edited, edited_semantic) if query != question else ()
-    return fuse(raw, raw_semantic, *rewritten_rankings)[:3]
+    if use_manual:
+        evidence = {key: normalize(content) for key, content in documents if key in raw}
+    else:
+        raw_keys = set(raw)
+        evidence = {
+            asset.id: " ".join(document(asset).fields) for asset in assets if asset.id in raw_keys
+        }
+    direct = {key for key in raw if covers_topics(subject, evidence[key])}
+    # A paraphrase needs both an indexed match and independent support from the original embedding.
+    grounded = direct | ((set(edited) - set(raw)) & set(raw_semantic))
+    return [key for key in fuse(raw, raw_semantic, edited, edited_semantic) if key in grounded][:3]
 
 
 def ask(question, products, actor, models):
