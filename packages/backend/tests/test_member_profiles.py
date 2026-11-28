@@ -79,6 +79,10 @@ def test_profile_edits_filter_directory_and_audit(portal):
         assert {row["unit_id"] for row in shown} == unit_ids
         assert all(row["email"] == email and row["display_name"] == "みさき" for row in shown)
 
+    options = portal.get("/api/credentials/options", headers=check, params={"project": project})
+    candidate = next(m for m in options.raise_for_status().json()["members"] if m["subject"] == subject)
+    assert candidate == {"subject": subject, "username": email, "full_name": "高橋 美咲"}
+
     outside = portal.get("/api/workspace", headers=headers(portal, "provider")).raise_for_status().json()
     assert all(
         row["subject"] != subject for section in ("users", "memberships") for row in outside[section]
@@ -127,7 +131,7 @@ def test_profile_edits_filter_directory_and_audit(portal):
 
 
 def test_legacy_profile_first_edit(portal):
-    """既存のメール招待・アカウント行のない利用者は、任意の氏名を初回保存できる。"""
+    """既存のメール招待・アカウント行のない利用者は、必須の氏名を初回保存できる。"""
     with Session(engine()) as db:
         db.add(
             Member(
@@ -148,6 +152,8 @@ def test_legacy_profile_first_edit(portal):
     version = portal.get(path, headers=own).raise_for_status().json()
     assert version["revision"] == 0 and version["email"] is None
     saved = portal.patch(path, headers=own, json={"revision": 0, "display_name": "表示だけ"})
+    assert saved.status_code == 422
+    saved = portal.patch(path, headers=own, json={"revision": 0, "full_name": "初回 太郎"})
     assert saved.raise_for_status().json()["revision"] == 1
     assert saved.json()["subject"] == "provider"
     with Session(engine()) as db:
@@ -184,3 +190,24 @@ def test_managed_cognito_only_account_requires_matching_subject(portal, monkeypa
     assert portal.get(path, headers=admin).status_code == 404
     with Session(engine()) as db:
         assert db.get(Member, "known-sub") is None
+
+
+def test_invitation_requires_login_and_full_name(portal):
+    """ユーザー名と氏名のどちらかが欠落または空なら招待を拒否し、両方を指定したときだけ登録する。"""
+    admin = headers(portal, "admin")
+    payload = {
+        "email": "names@example.test",
+        "role": "consumer",
+        "project": "finance",
+        "full_name": "佐藤 花子",
+    }
+    for field in ("email", "full_name"):
+        missing = {key: value for key, value in payload.items() if key != field}
+        for invalid in (missing, {**payload, field: None}, {**payload, field: "　 "}):
+            assert portal.post("/api/members", headers=admin, json=invalid).status_code == 422
+    created = portal.post("/api/members", headers=admin, json=payload)
+    assert created.status_code == 201
+    assert (created.json()["username"], created.json()["full_name"]) == (
+        "names@example.test",
+        "佐藤 花子",
+    )
