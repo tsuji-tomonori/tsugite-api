@@ -1,4 +1,5 @@
-# 要件の原本から作る索引と受入証跡を、一時プロジェクトのJUnitで検証する。
+"""要件の原本から作る索引と受入証跡を、一時プロジェクトのJUnitで検証する。"""
+
 import json
 import sys
 from xml.etree import ElementTree

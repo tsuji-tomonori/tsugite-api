@@ -1,5 +1,4 @@
-# 配布用マイグレーションをテスト環境で実行する。
-"""Run the packaged migration using the DSQL dialect and a local PostgreSQL socket."""
+"""DSQL用の方言とローカルのPostgreSQLを使い、配布用マイグレーションをテストする。"""
 
 import os
 import sys

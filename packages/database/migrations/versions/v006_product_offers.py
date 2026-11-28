@@ -1,5 +1,4 @@
-# 商品の提供条件に対応するDBスキーマへ移行する。
-"""Environment offers, application evidence and immutable published releases."""
+"""環境別の提供条件、申請の証跡、公開後に変更できないリリースを保存できるようにする。"""
 
 import sqlalchemy as sa
 from alembic import op

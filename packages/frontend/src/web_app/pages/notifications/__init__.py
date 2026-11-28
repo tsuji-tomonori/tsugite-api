@@ -1,4 +1,5 @@
-# 通知画面の部品とルートを定義する。
+"""通知画面の部品とルートを定義する。"""
+
 from components.notifications import notice_form, notices_view
 from content import guide_examples as example
 from routing.screen_registry import Screen

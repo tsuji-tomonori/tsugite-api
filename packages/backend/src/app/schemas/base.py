@@ -1,4 +1,5 @@
-# base のAPIで扱う入出力モデルを定義する。
+"""base のAPIで扱う入出力モデルを定義する。"""
+
 from datetime import UTC, datetime
 from typing import Annotated
 

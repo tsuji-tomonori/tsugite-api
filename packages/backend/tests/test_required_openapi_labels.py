@@ -1,4 +1,6 @@
-# デモポータルのOpenAPIから、利用者が読む操作名と入出力の和名を確かめる。
+"""デモポータルのOpenAPIから、利用者が読む操作名と入出力の和名を確かめる。"""
+
+
 def test_demo_openapi_has_japanese_operation_and_input_labels(portal):
     """デモのOpenAPIは利用者招待の操作と入力項目を公開設計書と同じ和名で説明する。"""
     document = portal.app.openapi()

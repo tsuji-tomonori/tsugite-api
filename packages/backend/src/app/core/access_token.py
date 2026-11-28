@@ -1,5 +1,4 @@
-# ポータルの呼び出し用アクセストークンを検証する。
-"""Portal access tokens are accepted only by the invocation endpoint."""
+"""API呼び出し専用のエンドポイントで、ポータルが発行したアクセストークンを検証する。"""
 
 import json
 import os

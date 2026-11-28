@@ -1,4 +1,5 @@
-# 店頭取り置きの商品別APIと見本データを定義する。
+"""店頭取り置きの商品別APIと見本データを定義する。"""
+
 from fastapi import Query
 from pydantic import BaseModel
 

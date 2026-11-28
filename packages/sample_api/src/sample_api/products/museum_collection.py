@@ -1,4 +1,5 @@
-# museum_collection 商品のサンプル操作と応答を定義する。
+"""museum_collection 商品のサンプル操作と応答を定義する。"""
+
 from fastapi import Query
 from pydantic import BaseModel
 

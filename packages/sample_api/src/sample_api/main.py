@@ -1,5 +1,4 @@
-# 商品に対応するFastAPIアプリを選んでLambdaから呼び出す。
-"""商品別のFastAPIをベースパスに取り付け、環境ごとのLambdaで実行する。"""
+"""商品別のFastAPIアプリをベースパスに割り当て、環境ごとのLambdaから呼び出す。"""
 
 from fastapi import FastAPI
 from mangum import Mangum

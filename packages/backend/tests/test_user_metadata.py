@@ -1,4 +1,5 @@
-# 属性の登録と利用者への割り当て、表示範囲を検証する。
+"""属性の登録と利用者への割り当て、表示範囲を検証する。"""
+
 from tests.support.catalog import FORM, headers, publish_asset
 
 

@@ -1,4 +1,5 @@
-# 指定期間の時系列を取得する。
+"""指定期間の時系列を取得する。"""
+
 from __future__ import annotations
 
 from actions.activity import load_dimensions, time_params

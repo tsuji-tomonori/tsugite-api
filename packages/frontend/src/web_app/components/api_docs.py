@@ -1,4 +1,5 @@
-# OpenAPIの仕様と認証付き実行フォームを表示する。
+"""OpenAPIの仕様と認証付き実行フォームを表示する。"""
+
 from __future__ import annotations
 
 import asyncio

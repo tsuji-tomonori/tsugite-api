@@ -1,4 +1,5 @@
-# 操作時の画面情報とエラー記録を検証する。
+"""操作時の画面情報とエラー記録を検証する。"""
+
 from __future__ import annotations
 
 import asyncio

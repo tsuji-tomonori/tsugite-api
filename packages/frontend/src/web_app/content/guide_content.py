@@ -1,4 +1,5 @@
-# 操作ガイドの本文と対象ロールを定義する。
+"""操作ガイドの本文と対象ロールを定義する。"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass

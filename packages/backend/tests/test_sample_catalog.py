@@ -1,4 +1,5 @@
-# カタログでサンプル商品を検索・取得できることを検証する。
+"""カタログでサンプル商品を検索・取得できることを検証する。"""
+
 from packages.tools.demo.seed_marketplace import CATALOG, offer, seed
 from tests.support.catalog import SPEC, headers, invocation_headers, publish_asset
 

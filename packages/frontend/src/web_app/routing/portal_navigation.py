@@ -1,4 +1,5 @@
-# URL変更時の画面とデータを更新する。
+"""URL変更時の画面とデータを更新する。"""
+
 from __future__ import annotations
 
 import asyncio

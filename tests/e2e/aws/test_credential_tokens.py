@@ -1,5 +1,4 @@
-# AWS EmulatorのCognito利用者とシステムのトークンを発行し、HTTPS到達・拒否・秘密更新を確認する。
-"""Real Cognito identities, scoped token exchange and TLS business calls."""
+"""AWSエミュレーターで利用者用とシステム用の認証情報を発行し、トークン交換、HTTPS接続の許可・拒否、シークレット更新を検証する。"""
 
 import json
 import os

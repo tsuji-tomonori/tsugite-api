@@ -1,4 +1,5 @@
-# 利用者の所属や権限を管理する。
+"""利用者の所属や権限を管理する。"""
+
 import boto3
 from app.core.admin_roles import assigned_admins, save_admins
 from app.core.auth import DEMO_GROUPS

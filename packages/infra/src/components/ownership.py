@@ -1,4 +1,5 @@
-# リソースの所有者と既存の論理IDを維持する。
+"""リソースの所有者と既存の論理IDを維持する。"""
+
 import json
 from pathlib import Path
 

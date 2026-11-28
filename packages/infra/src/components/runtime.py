@@ -1,4 +1,5 @@
-# APIの実行環境を構成する。
+"""APIの実行環境を構成する。"""
+
 from aws_cdk import ArnFormat, Stack
 from aws_cdk import aws_iam as iam
 from aws_cdk import aws_lambda as fn

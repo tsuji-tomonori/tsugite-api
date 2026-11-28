@@ -1,4 +1,5 @@
-# テストの日本語説明をpytestの結果に反映する。
+"""テストの日本語説明をpytestの結果に反映する。"""
+
 import inspect
 from collections import Counter
 

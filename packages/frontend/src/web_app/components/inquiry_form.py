@@ -1,4 +1,5 @@
-# 共通の問い合わせフォームを描画する。
+"""共通の問い合わせフォームを描画する。"""
+
 from __future__ import annotations
 
 from collections.abc import Callable

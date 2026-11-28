@@ -1,5 +1,4 @@
-# アカウントから独立して利用者情報を読み書きする。
-"""Read and update the directory profile independently of account permissions."""
+"""アカウントの権限とは独立して、利用者のプロフィールを読み書きする。"""
 
 import re
 from collections.abc import Iterable

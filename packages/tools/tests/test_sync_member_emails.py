@@ -1,4 +1,5 @@
-# メール補完はドライランで保存せず、確認したsubだけのメールを更新し氏名を保持する。
+"""メール補完はドライランで保存せず、確認したsubだけのメールを更新し氏名を保持する。"""
+
 from unittest.mock import Mock
 
 from sqlalchemy import create_engine

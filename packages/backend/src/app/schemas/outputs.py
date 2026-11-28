@@ -1,5 +1,4 @@
-# APIの応答モデルを定義する。
-"""Response contracts for handlers that build JSON dictionaries directly."""
+"""JSON辞書を直接組み立てるAPIの応答モデルを定義する。"""
 
 from datetime import datetime
 from typing import Literal, NotRequired, TypedDict

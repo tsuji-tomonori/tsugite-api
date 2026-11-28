@@ -1,4 +1,5 @@
-# 推論モデルの配布条件を検証する。
+"""推論モデルの配布条件を検証する。"""
+
 from ..core.project import ROOT
 from .model_artifacts import check_model_artifacts
 

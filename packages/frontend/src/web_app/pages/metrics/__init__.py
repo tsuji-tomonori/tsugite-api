@@ -1,4 +1,5 @@
-# メトリクス画面の部品とルートを定義する。
+"""メトリクス画面の部品とルートを定義する。"""
+
 from components.activity_filters import filter_form
 from components.metrics import metrics_view
 from content import guide_examples as example

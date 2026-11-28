@@ -1,4 +1,5 @@
-# 問い合わせの送受信とページ移動を扱う。
+"""問い合わせの送受信とページ移動を扱う。"""
+
 from __future__ import annotations
 
 from typing import Any

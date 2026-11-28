@@ -1,4 +1,5 @@
-# アラート画面の部品とルートを定義する。
+"""アラート画面の部品とルートを定義する。"""
+
 from components.alerts import alerts_view, rule_form
 from content import guide_examples as example
 from routing.screen_registry import Screen

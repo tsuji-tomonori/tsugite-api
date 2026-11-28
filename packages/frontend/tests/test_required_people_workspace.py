@@ -1,4 +1,4 @@
-# 部署・プロジェクトの一覧と所属を、画面仕様と組織APIの応答契約に基づいて検証する。
+"""部署・プロジェクトの一覧と所属を、画面仕様と組織APIの応答契約に基づいて検証する。"""
 
 import asyncio
 from types import SimpleNamespace

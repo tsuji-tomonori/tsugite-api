@@ -1,4 +1,5 @@
-# ポータル画面仕様のログイン導線、現在地・所属表示と狭い画面でのメニュー操作を検証する。
+"""ポータル画面仕様のログイン導線、現在地・所属表示と狭い画面でのメニュー操作を検証する。"""
+
 import asyncio
 from types import SimpleNamespace
 from typing import Any

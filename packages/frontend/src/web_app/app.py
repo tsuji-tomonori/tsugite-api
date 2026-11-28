@@ -1,4 +1,5 @@
-# ブラウザーでポータルを起動する。
+"""ブラウザーでポータルを起動する。"""
+
 from __future__ import annotations
 
 import asyncio

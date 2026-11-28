@@ -1,4 +1,5 @@
-# 商品の提供者が購読者の操作権限を設定し、解除できることを確認する。
+"""商品の提供者が購読者の操作権限を設定し、解除できることを確認する。"""
+
 from tests.support.catalog import approved, headers
 
 

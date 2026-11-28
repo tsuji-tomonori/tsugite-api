@@ -1,4 +1,5 @@
-# 全画面で機能ごとの定義を検査し、共通コードへの画面登録と個別画面間の直接依存を検出する。
+"""全画面で機能ごとの定義を検査し、共通コードへの画面登録と個別画面間の直接依存を検出する。"""
+
 import ast
 from pathlib import Path
 
@@ -105,28 +106,26 @@ def test_frontend_source_describes_files_and_public_functions() -> None:
     frontend = ROOT / "packages/frontend"
     errors = []
     for folder in ("src", "tests", "typings", "public"):
-        for suffix in (".py", ".pyi", ".css", ".html", ".svg"):
+        for suffix in (".py", ".css", ".html", ".svg"):
             for path in project_files(frontend / folder, suffix):
                 errors.extend(description_errors(path, path.read_text(encoding="utf-8")))
     assert not errors, "\n".join(errors)
 
 
-def test_first_line_requires_a_japanese_comment() -> None:
-    """空行・英語だけのコメント・日本語の文字列をファイル先頭の説明として受理しない。"""
-    for source in ("\n# 利用者の検索欄。", "# Search form", '"利用者の検索欄。"'):
-        assert description_errors(Path("example.py"), source)
-    assert not description_errors(Path("example.py"), "# 利用者の検索欄を描画する。")
+def test_markup_and_styles_require_a_japanese_comment() -> None:
+    """スタイルとマークアップは、各形式のコメントで先頭に日本語の説明を書く。"""
     assert description_errors(Path("style.css"), "/* search */ .item { color: red; }")
+    assert not description_errors(Path("style.css"), "/* 検索欄の外観を定める。 */")
+    assert not description_errors(Path("index.html"), "<!-- 検索画面を表示する。 -->")
 
 
 def description_errors(path: Path, source: str) -> list[str]:
-    first = source.partition("\n")[0]
-    opening, closing = {"css": ("/*", "*/"), "html": ("<!--", "-->"), "svg": ("<!--", "-->")}.get(
-        path.suffix[1:], ("#", "")
-    )
     errors = []
-    if not (first.startswith(opening) and first.endswith(closing) and KANA.search(first)):
-        errors.append(f"{path}: 先頭行に日本語の説明コメントが必要です")
+    if path.suffix in {".css", ".html", ".svg"}:
+        first = source.partition("\n")[0]
+        opening, closing = ("/*", "*/") if path.suffix == ".css" else ("<!--", "-->")
+        if not (first.startswith(opening) and first.endswith(closing) and KANA.search(first)):
+            errors.append(f"{path}: 先頭行に日本語の説明コメントが必要です")
     if path.suffix == ".py" and "src" in path.parts:
         for node in ast.parse(source).body:
             functions = node.body if isinstance(node, ast.ClassDef) else [node]

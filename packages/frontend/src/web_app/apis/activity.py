@@ -1,4 +1,5 @@
-# 監視・監査・アクセスログのAPIを呼び出す。
+"""監視・監査・アクセスログのAPIを呼び出す。"""
+
 from __future__ import annotations
 
 from typing import Any

@@ -1,5 +1,4 @@
-# 障害の原因と対処情報を記録する。
-"""Operational errors carry only operator-authored instructions into application logs."""
+"""障害の原因を記録し、運用者が定めた対処手順だけをログに載せる。"""
 
 import json
 import logging

@@ -1,4 +1,5 @@
-# credential_leases テーブルの列と型を定義する。
+"""credential_leases テーブルの列と型を定義する。"""
+
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column
 

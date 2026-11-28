@@ -1,4 +1,5 @@
-# 梱包箱規格の商品別APIと見本データを定義する。
+"""梱包箱規格の商品別APIと見本データを定義する。"""
+
 from fastapi import Query
 from pydantic import BaseModel
 

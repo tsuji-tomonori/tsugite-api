@@ -1,4 +1,5 @@
-# データベースのCDKリソースを構成する。
+"""データベースのCDKリソースを構成する。"""
+
 import hashlib
 
 from aws_cdk import CustomResource, RemovalPolicy

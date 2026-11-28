@@ -1,4 +1,5 @@
-# members のAPIで扱う入出力モデルを定義する。
+"""members のAPIで扱う入出力モデルを定義する。"""
+
 from pydantic import Field, model_validator
 
 from app.core.member_profiles import INVITATION_EMAIL

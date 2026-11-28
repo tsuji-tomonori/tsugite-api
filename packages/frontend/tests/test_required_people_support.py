@@ -1,4 +1,5 @@
-# 人・組織・認証情報の画面テストで使う業務データとDOM操作をまとめる。
+"""人・組織・認証情報の画面テストで使う業務データとDOM操作をまとめる。"""
+
 import asyncio
 from collections.abc import Callable, Sequence
 from functools import partial

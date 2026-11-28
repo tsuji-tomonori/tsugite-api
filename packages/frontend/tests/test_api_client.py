@@ -1,4 +1,5 @@
-# APIクライアントの入力と認証を検証する。
+"""APIクライアントの入力と認証を検証する。"""
+
 from __future__ import annotations
 
 import asyncio

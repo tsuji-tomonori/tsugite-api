@@ -1,5 +1,4 @@
-# 商品の呼び出し名に対応するDBスキーマへ移行する。
-"""Reserve a unique invocation name for each catalog product."""
+"""カタログ商品ごとに一意の呼び出し名を割り当てられるようにする。"""
 
 import sqlalchemy as sa
 from alembic import op

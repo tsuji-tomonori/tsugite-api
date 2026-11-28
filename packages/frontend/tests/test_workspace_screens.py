@@ -1,4 +1,5 @@
-# 部署とプロジェクトの画面を検証する。
+"""部署とプロジェクトの画面を検証する。"""
+
 from __future__ import annotations
 
 import asyncio

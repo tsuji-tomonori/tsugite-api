@@ -1,4 +1,5 @@
-# 利用者プロフィールの編集欄を表示する。
+"""利用者プロフィールの編集欄を表示する。"""
+
 from __future__ import annotations
 
 from typing import Any

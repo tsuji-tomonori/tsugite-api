@@ -1,4 +1,5 @@
-# カタログのCDKスタックを組み立てる。
+"""カタログのCDKスタックを組み立てる。"""
+
 import json
 import re
 import tomllib

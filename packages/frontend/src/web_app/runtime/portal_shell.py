@@ -1,4 +1,5 @@
-# 全画面に共通するヘッダーとナビゲーションを描画する。
+"""全画面に共通するヘッダーとナビゲーションを描画する。"""
+
 from __future__ import annotations
 
 from typing import Any

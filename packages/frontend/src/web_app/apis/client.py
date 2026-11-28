@@ -1,4 +1,5 @@
-# 認証済みのAPI通信とエラー記録を共通化する。
+"""認証済みのAPI通信とエラー記録を共通化する。"""
+
 from __future__ import annotations
 
 import json

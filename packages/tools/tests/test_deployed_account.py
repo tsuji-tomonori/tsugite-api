@@ -1,4 +1,5 @@
-# 実環境テストで使う認証コード・配信元・利用者照合を検証する。
+"""実環境テストで使う認証コード・配信元・利用者照合を検証する。"""
+
 import pytest
 
 from tests.e2e.deployed.account import is_test_consumer, portal_origin, totp

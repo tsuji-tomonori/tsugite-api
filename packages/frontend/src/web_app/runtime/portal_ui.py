@@ -1,4 +1,5 @@
-# 画面状態と非同期イベントを管理する。
+"""画面状態と非同期イベントを管理する。"""
+
 from __future__ import annotations
 
 import asyncio

@@ -1,4 +1,5 @@
-# CDKコンポーネントからスタック組み立て処理への逆向き依存を検出する。
+"""CDKコンポーネントからスタック組み立て処理への逆向き依存を検出する。"""
+
 import ast
 
 from ..core.dependencies import dependencies, source_module

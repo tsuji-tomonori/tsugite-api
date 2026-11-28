@@ -1,4 +1,5 @@
-# ログ一件の表示とページ移動を検証する。
+"""ログ一件の表示とページ移動を検証する。"""
+
 from __future__ import annotations
 
 import asyncio

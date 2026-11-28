@@ -1,4 +1,5 @@
-# API呼び出しの記録を保存する。
+"""API呼び出しの記録を保存する。"""
+
 import os
 import secrets
 from uuid import uuid4

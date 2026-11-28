@@ -1,4 +1,5 @@
-# 商品を探して仕様・利用条件を読み、申請と提供の状態を判断する画面を検証する。
+"""商品を探して仕様・利用条件を読み、申請と提供の状態を判断する画面を検証する。"""
+
 import json
 from collections.abc import Callable
 from pathlib import Path

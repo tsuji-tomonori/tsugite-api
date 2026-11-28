@@ -1,4 +1,5 @@
-# 提供者とリーダーが行う操作範囲・有効期間の設定を、画面上の選択から公開APIへの保存まで検証する。
+"""提供者とリーダーが行う操作範囲・有効期間の設定を、画面上の選択から公開APIへの保存まで検証する。"""
+
 from types import SimpleNamespace
 from typing import Any
 from unittest.mock import AsyncMock

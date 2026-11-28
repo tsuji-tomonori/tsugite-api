@@ -1,5 +1,4 @@
-# 管理者が招待時に氏名を入力し、本人の表示名とともに兼務先に表示して監査を確認する。
-"""Browser verification for editing and reading a member profile."""
+"""招待時の氏名と本人が編集した表示名を兼務先で確認し、変更の監査記録を確かめる。"""
 
 import os
 from pathlib import Path

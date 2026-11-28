@@ -1,4 +1,5 @@
-# Cognitoで識別した2人が画面で承認し、在庫照会・取消・監査まで進める。
+"""Cognitoで識別した2人が画面で承認し、在庫照会・取消・監査まで進める。"""
+
 import json
 import os
 import secrets

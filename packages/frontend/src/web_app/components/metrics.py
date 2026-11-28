@@ -1,4 +1,5 @@
-# 集計結果をグラフと表で表示する。
+"""集計結果をグラフと表で表示する。"""
+
 from __future__ import annotations
 
 from puepy import t

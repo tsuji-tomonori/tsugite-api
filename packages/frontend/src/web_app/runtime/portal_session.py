@@ -1,4 +1,5 @@
-# ポータルへのログイン状態を管理する。
+"""ポータルへのログイン状態を管理する。"""
+
 from __future__ import annotations
 
 from copy import deepcopy

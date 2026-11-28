@@ -1,5 +1,4 @@
-# ガバナンスに対応するDBスキーマへ移行する。
-"""Portal governance and scoped invocation history."""
+"""ポータルの管理情報と利用範囲ごとのAPI呼び出し履歴を保存できるようにする。"""
 
 import sqlalchemy as sa
 from alembic import op

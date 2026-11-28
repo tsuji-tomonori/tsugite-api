@@ -1,5 +1,4 @@
-# デモの提供者と利用者が公開・申請・承認・実行・権限取消を画面で完了できる。
-"""Run against a fresh, migrated loopback demo database on every test."""
+"""テストごとに新しいローカルDBを用意し、提供者と利用者が画面から公開・申請・承認・実行・利用権取消を完了できることを確かめる。"""
 
 import os
 from collections.abc import Iterator

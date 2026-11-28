@@ -1,4 +1,5 @@
-# ポータルの起動とセッションのAPIを呼び出す。
+"""ポータルの起動とセッションのAPIを呼び出す。"""
+
 from __future__ import annotations
 
 from typing import Any

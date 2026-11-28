@@ -1,4 +1,5 @@
-# 全層の単体テスト・アーキテクチャテスト・E2Eに簡潔な日本語の説明がある。
+"""全層の単体テスト・アーキテクチャテスト・E2Eに簡潔な日本語の説明がある。"""
+
 import ast
 
 from .case_text import is_japanese_case_text

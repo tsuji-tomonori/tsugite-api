@@ -1,5 +1,4 @@
-# ポータル利用者のプロフィールを取得・更新する。
-"""View and edit the portal member's profile through the existing human session."""
+"""ログイン中の利用者のプロフィールを取得・更新する。"""
 
 import json
 

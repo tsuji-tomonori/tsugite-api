@@ -1,4 +1,5 @@
-# 公開承認の進捗と登録時の責任者を保存する。
+"""公開承認の進捗と登録時の責任者を保存する。"""
+
 import sqlalchemy as sa
 from alembic import op
 from tsugite_db.migration_columns import column_names

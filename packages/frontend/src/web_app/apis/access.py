@@ -1,4 +1,5 @@
-# 利用申請と認証情報のAPIを呼び出す。
+"""利用申請と認証情報のAPIを呼び出す。"""
+
 from __future__ import annotations
 
 from typing import Any

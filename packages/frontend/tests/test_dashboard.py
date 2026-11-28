@@ -1,4 +1,5 @@
-# ダッシュボードの再読み込みを検証する。
+"""ダッシュボードの再読み込みを検証する。"""
+
 from __future__ import annotations
 
 import asyncio

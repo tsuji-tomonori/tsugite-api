@@ -1,4 +1,5 @@
-# 利用者プロフィールの読み書きを扱う。
+"""利用者プロフィールの読み書きを扱う。"""
+
 from __future__ import annotations
 
 import asyncio

@@ -1,4 +1,5 @@
-# 使い方ガイドの一覧と記事を描画する。
+"""使い方ガイドの一覧と記事を描画する。"""
+
 from __future__ import annotations
 
 from collections.abc import Awaitable, Callable

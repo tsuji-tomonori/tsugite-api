@@ -1,4 +1,3 @@
-# 代表的な回帰を注入し、ローカルの単体テストが検出するか確かめる。
 """代表的な回帰を注入し、ローカルの単体テストが検出するか確かめる。"""
 
 import argparse
@@ -662,6 +661,14 @@ MUTATIONS = (
         '{"decision", "tool", "generate"} - manifest.keys()',
         '{"tool", "generate"} - manifest.keys()',
         "tests/architecture/core/test_rule_checks.py::test_model_distribution_requires_all_three_roles",
+    ),
+    Mutation(
+        "architecture",
+        "英訳が重複するモジュール説明を許可する",
+        "tests/architecture/core/project.py",
+        "len(module.body) > 1",
+        "len(module.body) > 2",
+        "tests/architecture/core/test_rule_checks.py::test_module_purpose_requires_one_japanese_docstring",
     ),
     Mutation(
         "architecture",

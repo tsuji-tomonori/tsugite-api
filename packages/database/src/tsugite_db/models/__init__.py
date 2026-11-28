@@ -1,5 +1,4 @@
-# テーブルに対応するORMモデルを読み込み、公開する。
-"""SQLAlchemy metadata and mapped tables used by the application and Alembic."""
+"""アプリケーションとAlembicが共用するテーブル定義とORMモデルを公開する。"""
 
 from .access_rights import Access as Access
 from .affiliations import Affiliation as Affiliation

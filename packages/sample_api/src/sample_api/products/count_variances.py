@@ -1,4 +1,5 @@
-# 棚卸し差異の商品別APIと見本データを定義する。
+"""棚卸し差異の商品別APIと見本データを定義する。"""
+
 from fastapi import Query
 from pydantic import BaseModel
 

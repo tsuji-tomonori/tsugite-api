@@ -1,5 +1,4 @@
-# 閲覧可能な商品を検索条件に応じて順位付けする。
-"""Hybrid ranking over the listings the caller is already allowed to discover."""
+"""閲覧できる商品を対象に、キーワードと意味の両方で検索順位を決める。"""
 
 from __future__ import annotations
 

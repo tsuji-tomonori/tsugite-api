@@ -1,4 +1,5 @@
-# 商品登録・検索・掲載・申請で利用者が指定した条件がAPIに正しく渡ることを検証する。
+"""商品登録・検索・掲載・申請で利用者が指定した条件がAPIに正しく渡ることを検証する。"""
+
 import asyncio
 import json
 from collections.abc import Callable

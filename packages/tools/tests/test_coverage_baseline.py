@@ -1,4 +1,5 @@
-# 旧方式で測った成果物は比較元に階層付き画面がなく計測器の他の部分が一致するときだけ使う。
+"""旧方式で測った成果物は比較元に階層付き画面がなく計測器の他の部分が一致するときだけ使う。"""
+
 import subprocess
 
 from packages.tools.ci import check_coverage as coverage
@@ -70,3 +71,21 @@ def test_baseline_resolves_its_own_frontend_builder(tmp_path):
         path.parent.mkdir(parents=True, exist_ok=True)
         path.touch()
         assert coverage.frontend_builder(tmp_path) == name
+
+
+def test_baseline_matches_previous_japanese_header_only(tmp_path, monkeypatch):
+    """計測器の冒頭だけが旧コメント形式なら保存済みの比較値を使い、処理が変われば再計測する。"""
+    fixture = tmp_path / "collector.py"
+    tracer = tmp_path / "tracer.py"
+    monkeypatch.setattr(coverage, "BROWSER_FIXTURE", fixture)
+    monkeypatch.setattr(coverage, "BROWSER_TRACE", tracer)
+    fixture.write_text('# 画面を計測する。\n"""画面を計測する。"""\n\ncollect()\n', encoding="utf-8")
+    tracer.write_text('# 通過行を記録する。\n"""通過行を記録する。"""\n\ntrace()\n', encoding="utf-8")
+    marker = tmp_path / coverage.POLICY_FILE
+    marker.parent.mkdir()
+    marker.write_text(coverage.coverage_policy())
+    fixture.write_text('"""画面を計測する。"""\n\ncollect()\n', encoding="utf-8")
+    tracer.write_text('"""通過行を記録する。"""\n\ntrace()\n', encoding="utf-8")
+    assert coverage.compatible_baseline(tmp_path, "base")
+    tracer.write_text('"""通過行を記録する。"""\n\nother_trace()\n', encoding="utf-8")
+    assert not coverage.compatible_baseline(tmp_path, "base")

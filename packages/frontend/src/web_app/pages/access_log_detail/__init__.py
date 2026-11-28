@@ -1,4 +1,5 @@
-# アクセスログ詳細画面の部品とルートを定義する。
+"""アクセスログ詳細画面の部品とルートを定義する。"""
+
 from actions.logs import load_detail
 from components.logs import detail_view
 from routing.screen_registry import Screen

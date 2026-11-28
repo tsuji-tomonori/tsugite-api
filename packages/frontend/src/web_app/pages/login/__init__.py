@@ -1,4 +1,5 @@
-# 未ログイン時の画面を組み立てる。
+"""未ログイン時の画面を組み立てる。"""
+
 from __future__ import annotations
 
 from components.login import login_panel

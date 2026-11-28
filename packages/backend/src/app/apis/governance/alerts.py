@@ -1,4 +1,5 @@
-# 運用アラートを取得・更新する。
+"""運用アラートを取得・更新する。"""
+
 from time import time
 
 from app.core.catalog import event, record, right_id

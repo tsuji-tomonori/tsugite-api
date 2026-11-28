@@ -1,4 +1,5 @@
-# 提供するAPI画面の部品とルートを定義する。
+"""提供するAPI画面の部品とルートを定義する。"""
+
 from actions.catalog import load_catalog
 from components.catalog import cards
 from components.controls import btn

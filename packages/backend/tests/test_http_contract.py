@@ -1,4 +1,5 @@
-# 公開操作のエラー経路を実際のHTTPリクエストで確認する。
+"""公開操作のエラー経路を実際のHTTPリクエストで確認する。"""
+
 from unittest.mock import Mock
 
 from fastapi.routing import APIRoute, iter_route_contexts

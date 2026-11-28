@@ -1,4 +1,5 @@
-# 提供者が利用者の操作を選び、送料1,400円のHTTPS応答と権限変更直後の転送停止を照合する。
+"""提供者が利用者の操作を選び、送料1,400円のHTTPS応答と権限変更直後の転送停止を照合する。"""
+
 import json
 import os
 from pathlib import Path

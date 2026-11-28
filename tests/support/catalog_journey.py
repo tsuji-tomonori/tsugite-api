@@ -1,4 +1,5 @@
-# 商品登録から利用までの共通テスト操作を提供する。
+"""商品登録から利用までの共通テスト操作を提供する。"""
+
 import os
 from collections.abc import Callable, Iterator
 from contextlib import ExitStack, contextmanager, suppress

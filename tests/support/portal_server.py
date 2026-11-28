@@ -1,4 +1,5 @@
-# テスト用ポータルを起動する。
+"""テスト用ポータルを起動する。"""
+
 import socket
 import subprocess
 import sys

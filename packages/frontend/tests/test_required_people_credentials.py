@@ -1,4 +1,4 @@
-# 発行条件の選択と正規の発行操作を、認証情報の利用手順と公開API仕様に照らして検証する。
+"""発行条件の選択と正規の発行操作を、認証情報の利用手順と公開API仕様に照らして検証する。"""
 
 from types import SimpleNamespace
 from typing import Any

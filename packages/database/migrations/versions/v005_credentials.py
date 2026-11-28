@@ -1,5 +1,4 @@
-# 認証情報に対応するDBスキーマへ移行する。
-"""Short-lived token clients, renewal schedules and nested authority bounds."""
+"""短期トークン用のクライアント、更新予定、委譲する権限の上限を記録できるようにする。"""
 
 import time
 

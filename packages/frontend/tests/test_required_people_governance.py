@@ -1,4 +1,5 @@
-# 通知・利用上限・操作履歴とユーザー管理を、ポータルの利用手順と各APIの公開契約から検証する。
+"""通知・利用上限・操作履歴とユーザー管理を、ポータルの利用手順と各APIの公開契約から検証する。"""
+
 import asyncio
 from unittest.mock import AsyncMock
 

@@ -1,4 +1,5 @@
-# 部署やプロジェクトの情報を提供する。
+"""部署やプロジェクトの情報を提供する。"""
+
 import json
 
 from app.apis.governance.members import administrator, projects

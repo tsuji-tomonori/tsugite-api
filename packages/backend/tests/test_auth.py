@@ -1,4 +1,5 @@
-# 条件を満たさないアクセストークンを401で拒否する。
+"""条件を満たさないアクセストークンを401で拒否する。"""
+
 from time import time
 from types import SimpleNamespace
 

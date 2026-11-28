@@ -1,4 +1,5 @@
-# チャットと問い合わせの操作欄を表示する。
+"""チャットと問い合わせの操作欄を表示する。"""
+
 from __future__ import annotations
 
 import asyncio

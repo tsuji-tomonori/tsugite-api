@@ -1,4 +1,5 @@
-# 組織改編の前後に発生した同じ商品の実行を、担当部署の監査と集計から照合する。
+"""組織改編の前後に発生した同じ商品の実行を、担当部署の監査と集計から照合する。"""
+
 import json
 
 from tests.support.catalog import approved, headers

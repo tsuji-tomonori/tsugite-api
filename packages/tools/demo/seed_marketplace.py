@@ -1,5 +1,4 @@
-# サンプル商品を登録して公開する。
-"""Publish example listings using the local portal's provider flow."""
+"""ローカルのポータルで提供者の登録・公開手順を使ってサンプル商品を公開する。"""
 
 import argparse
 import json

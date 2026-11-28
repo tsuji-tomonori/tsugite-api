@@ -1,4 +1,5 @@
-# 業務操作履歴の検索と出力を扱う。
+"""業務操作履歴の検索と出力を扱う。"""
+
 from __future__ import annotations
 
 import json

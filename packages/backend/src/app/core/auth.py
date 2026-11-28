@@ -1,4 +1,5 @@
-# ログイン情報から利用者と操作権限を特定する。
+"""ログイン情報から利用者と操作権限を特定する。"""
+
 import secrets
 from dataclasses import dataclass, field, replace
 from functools import lru_cache

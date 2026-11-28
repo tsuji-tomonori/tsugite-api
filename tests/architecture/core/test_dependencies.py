@@ -1,4 +1,5 @@
-# 全実装のインポートを調べ、配布単位を越える未許可の依存を検出する。
+"""全実装のインポートを調べ、配布単位を越える未許可の依存を検出する。"""
+
 from .dependencies import ALLOWED, dependency_violations, layer, source_module
 from .project import ROOT, project_files
 

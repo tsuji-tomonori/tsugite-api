@@ -1,4 +1,5 @@
-# DOMイベントの登録境界を宣言する。
+"""DOMイベントの登録境界を宣言する。"""
+
 from collections.abc import Callable
 from typing import Any
 

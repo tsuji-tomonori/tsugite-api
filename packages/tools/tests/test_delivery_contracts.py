@@ -1,4 +1,5 @@
-# コミットフックが規約に沿った件名を許可し、規約外の件名を理由付きで拒否する。
+"""コミットフックが規約に沿った件名を許可し、規約外の件名を理由付きで拒否する。"""
+
 import shutil
 import subprocess
 from pathlib import Path

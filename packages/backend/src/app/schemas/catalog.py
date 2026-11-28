@@ -1,4 +1,5 @@
-# APIのリクエストとレスポンスの型を定義する。
+"""APIのリクエストとレスポンスの型を定義する。"""
+
 import re
 from typing import Annotated, Any, Literal, Self
 

@@ -1,4 +1,5 @@
-# アラートの編集フォームと一覧を表示する。
+"""アラートの編集フォームと一覧を表示する。"""
+
 from __future__ import annotations
 
 from collections.abc import Sequence

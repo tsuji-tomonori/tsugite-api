@@ -1,5 +1,4 @@
-# カタログに対応するDBスキーマへ移行する。
-"""Create the API inventory, project grants and append-only event stream."""
+"""API台帳、プロジェクトの利用権、追記専用のイベント履歴を保存するテーブルを作成する。"""
 
 import sqlalchemy as sa
 from alembic import op

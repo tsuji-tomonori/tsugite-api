@@ -1,4 +1,5 @@
-# 要件「チャットで候補を確認できる」「問い合わせを送信できる」「ログインできる」の画面を検証する。
+"""要件「チャットで候補を確認できる」「問い合わせを送信できる」「ログインできる」の画面を検証する。"""
+
 import asyncio
 from typing import Any
 from unittest.mock import AsyncMock, Mock

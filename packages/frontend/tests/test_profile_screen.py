@@ -1,4 +1,5 @@
-# プロフィールの表示権限と、保存時にブラウザーが送信する項目を検証する。
+"""プロフィールの表示権限と、保存時にブラウザーが送信する項目を検証する。"""
+
 import asyncio
 from collections.abc import Callable
 from types import ModuleType

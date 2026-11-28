@@ -1,4 +1,5 @@
-# 待機中だけボタンの文字と同じ色のアイコンが表示されることを確認する。
+"""待機中だけボタンの文字と同じ色のアイコンが表示されることを確認する。"""
+
 import os
 
 from playwright.sync_api import sync_playwright

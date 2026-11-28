@@ -1,4 +1,5 @@
-# ユーザー管理の操作を扱う。
+"""ユーザー管理の操作を扱う。"""
+
 from __future__ import annotations
 
 from typing import Any

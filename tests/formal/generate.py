@@ -1,4 +1,3 @@
-# Quintの実行履歴を再生成し、pytestが読む入力と期待状態の差分を検出する。
 """Quintの実行履歴を再生成し、pytestが読む入力と期待状態の差分を検出する。"""
 
 import argparse

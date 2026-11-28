@@ -1,4 +1,5 @@
-# 商品ごとのサンプルAPI実装と公開するOpenAPI仕様の対応を検査する。
+"""商品ごとのサンプルAPI実装と公開するOpenAPI仕様の対応を検査する。"""
+
 from ..core.project import ROOT
 
 

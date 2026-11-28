@@ -1,4 +1,5 @@
-# 各操作で返す業務エラーをOpenAPIに記載する。
+"""各操作で返す業務エラーをOpenAPIに記載する。"""
+
 from http import HTTPStatus
 
 from app.schemas.outputs import ErrorDetail

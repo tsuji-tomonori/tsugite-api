@@ -1,5 +1,4 @@
-# 商品の環境ごとの利用条件と承認順を管理する。
-"""Product environment terms and ordered approval decisions."""
+"""商品を提供する環境ごとに利用条件と承認の順序を管理する。"""
 
 import json
 from typing import Any

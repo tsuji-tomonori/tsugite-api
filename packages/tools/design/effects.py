@@ -1,5 +1,4 @@
-# 実装の構文木からAPIのデータアクセスを解析する。
-"""Find possible storage effects from FastAPI dependencies and local Python calls."""
+"""FastAPIの依存関係とローカル関数の呼び出しをたどり、APIが行い得るデータアクセスを調べる。"""
 
 import ast
 from collections import defaultdict

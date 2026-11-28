@@ -1,4 +1,5 @@
-# 入退社とプロフィールの要件を、会員一覧・所属一覧・監査から照合する。
+"""入退社とプロフィールの要件を、会員一覧・所属一覧・監査から照合する。"""
+
 import pytest
 
 from tests.support.catalog import headers

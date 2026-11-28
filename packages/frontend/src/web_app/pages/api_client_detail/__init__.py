@@ -1,4 +1,5 @@
-# APIクライアント画面の部品とルートを定義する。
+"""APIクライアント画面の部品とルートを定義する。"""
+
 from actions.console import load_console
 from components.console import console_view
 from routing.screen_registry import Screen

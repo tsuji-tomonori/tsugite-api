@@ -1,4 +1,5 @@
-# 公開操作のOpenAPI IDと実装が対応する。
+"""公開操作のOpenAPI IDと実装が対応する。"""
+
 from ..core.project import ROOT
 
 

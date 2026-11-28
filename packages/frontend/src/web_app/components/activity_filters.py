@@ -1,4 +1,5 @@
-# 集計条件と時系列グラフを表示する。
+"""集計条件と時系列グラフを表示する。"""
+
 from __future__ import annotations
 
 from collections.abc import Sequence

@@ -1,4 +1,5 @@
-# 商品情報の取得とカタログ操作を共通化する。
+"""商品情報の取得とカタログ操作を共通化する。"""
+
 import json
 
 from app.core.diagnostics import asset_object

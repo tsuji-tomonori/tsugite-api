@@ -1,5 +1,7 @@
 # 継手API
 
+Pythonの実装と型定義の先頭には、ファイルの役割を日本語の `"""..."""` で一度だけ書く。
+
 単体テストやE2Eを追加・変更・実行する場合は、[テストの検証手順](.agents/skills/verify-tsugite-tests/SKILL.md)に従う。
 
 PRの作成や説明欄の更新時は、[PR本文の記入手順](.agents/skills/write-tsugite-pr/SKILL.md)に従う。

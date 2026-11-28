@@ -1,5 +1,4 @@
-# 一時的なAWSエミュレーター環境でE2Eを実行する。
-"""Start one isolated AWS Emulator, run the AWS E2E suite, then dispose of it."""
+"""テスト用のAWSエミュレーターを起動し、E2Eの実行後に環境を破棄する。"""
 
 import os
 import shutil

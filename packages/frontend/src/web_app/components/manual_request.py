@@ -1,4 +1,5 @@
-# 手動HTTPリクエストの操作欄を表示する。
+"""手動HTTPリクエストの操作欄を表示する。"""
+
 from __future__ import annotations
 
 import asyncio

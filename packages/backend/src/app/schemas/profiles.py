@@ -1,4 +1,5 @@
-# profiles のAPIで扱う入出力モデルを定義する。
+"""profiles のAPIで扱う入出力モデルを定義する。"""
+
 from pydantic import MISSING, Field
 
 from app.schemas.profile_fields import FullName, ProfileNames

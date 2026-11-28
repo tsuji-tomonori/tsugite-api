@@ -1,4 +1,5 @@
-# chat のAPIで扱う入出力モデルを定義する。
+"""chat のAPIで扱う入出力モデルを定義する。"""
+
 from typing import Literal
 from uuid import UUID
 

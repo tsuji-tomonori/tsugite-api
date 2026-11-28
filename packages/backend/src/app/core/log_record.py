@@ -1,5 +1,4 @@
-# ブラウザーとサーバーで共用するログ形式を定義する。
-"""Application log contract shared with the browser build (standard library only)."""
+"""標準ライブラリを使い、ブラウザーとサーバーで共用するログ形式を定義する。"""
 
 import re
 from datetime import UTC, datetime

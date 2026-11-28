@@ -1,4 +1,5 @@
-# 定期点検計画の商品別APIと見本データを定義する。
+"""定期点検計画の商品別APIと見本データを定義する。"""
+
 from fastapi import Query
 from pydantic import BaseModel
 

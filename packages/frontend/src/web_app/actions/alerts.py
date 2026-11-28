@@ -1,4 +1,5 @@
-# 利用件数ルールを管理する。
+"""利用件数ルールを管理する。"""
+
 from __future__ import annotations
 
 from apis import activity as activity_api

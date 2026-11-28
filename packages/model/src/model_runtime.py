@@ -1,5 +1,4 @@
-# モデルを取得して実行環境にキャッシュする。
-"""Download the pinned model once per Lambda execution environment."""
+"""固定した版のモデルをLambdaの実行環境ごとに一度取得してキャッシュする。"""
 
 import hashlib
 import json

@@ -1,4 +1,5 @@
-# リクエストIDで業務操作履歴に遷移する。
+"""リクエストIDで業務操作履歴に遷移する。"""
+
 from __future__ import annotations
 
 from runtime.portal_ui import ctx

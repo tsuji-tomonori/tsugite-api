@@ -1,4 +1,5 @@
-# 通知の配信と既読状態を扱う。
+"""通知の配信と既読状態を扱う。"""
+
 from __future__ import annotations
 
 from apis import messages as messages_api
