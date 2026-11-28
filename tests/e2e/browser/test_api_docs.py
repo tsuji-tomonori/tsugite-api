@@ -332,6 +332,20 @@ def test_openapi_key_console(tmp_path: Path, request: pytest.FixtureRequest) -> 
                             "api_ids": [asset],
                         },
                     ).raise_for_status()
+                    legacy = (
+                        api.post(
+                            "/api/keys",
+                            headers=consumer,
+                            json={
+                                "name": "配送用キー",
+                                "kind": "personal",
+                                "project": "finance",
+                                "api_ids": [asset],
+                            },
+                        )
+                        .raise_for_status()
+                        .json()
+                    )
                     page.reload()
                     page.get_by_label("API商品", exact=True).select_option(label="配送見積API")
                     page.get_by_label("parcel（path）").fill("JP18")
@@ -341,6 +355,35 @@ def test_openapi_key_console(tmp_path: Path, request: pytest.FixtureRequest) -> 
                     assert calls[-1][:3] == ("/parcels/JP18/estimate", {}, {"packages": 2})
                     capture(page, "console-oauth", "ログイン中の利用者が承認済みの環境で配送見積を取得")
 
+                    endpoint = (
+                        portal + "/api/invoke/delivery-estimate/sandbox/finance/parcels/JP19/estimate"
+                    )
+                    selected = page.get_by_label("APIキー（任意）", exact=True)
+                    expect(selected).to_have_value("")
+                    page.locator("#manual-url").fill(endpoint)
+                    page.locator("#manual-method").select_option("POST")
+                    page.locator("#manual-headers").fill("Content-Type: application/json")
+                    page.locator("#manual-body").fill('{"packages":4}')
+                    manual_send = page.get_by_role("button", name="指定したURLに送信")
+                    for label in (
+                        "配送アプリ（個人） · finance · アプリ",
+                        "配送用キー（個人） · finance · APIキー",
+                    ):
+                        selected.select_option(label=label)
+                        with page.expect_response(endpoint) as manual_result:
+                            manual_send.click()
+                        assert manual_result.value.status == 200
+                        expect(page.locator("#manual-response")).to_contain_text('"cost": 1400')
+                        assert calls[-1][:3] == ("/parcels/JP19/estimate", {}, {"packages": 4})
+                    capture(
+                        page,
+                        "console-url-key",
+                        "配送用キーを選び、秘密値を入力せずに直接指定したURLから送料を取得",
+                    )
+                    api.delete("/api/keys/" + legacy["id"], headers=consumer).raise_for_status()
+                    manual_send.click()
+                    expect(page.locator("#manual-response")).to_contain_text("HTTP 401")
+
                     url = "https://example.test/status"
                     page.route(
                         url,
@@ -349,6 +392,12 @@ def test_openapi_key_console(tmp_path: Path, request: pytest.FixtureRequest) -> 
                         ),
                     )
                     page.get_by_label("リクエストURL（必須）").fill(url)
+                    manual_send.click()
+                    expect(page.locator("#manual-response")).to_contain_text("呼び出しURLを指定")
+                    selected.select_option("")
+                    page.locator("#manual-method").select_option("GET")
+                    page.locator("#manual-headers").fill("")
+                    page.locator("#manual-body").fill("")
                     with page.expect_request(url) as outgoing:
                         page.get_by_role("button", name="指定したURLに送信").click()
                     expect(page.locator("#manual-response")).to_contain_text("HTTP 202")

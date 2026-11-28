@@ -147,6 +147,7 @@ def test_manual_request_uses_only_entered_headers(
     """URL直接指定では入力したヘッダーと本文だけを使い、Cookieとリダイレクトを無効にする。"""
     manual = portal_module("components.manual_request")
     fields = {
+        "key": "",
         "url": "https://example.test/orders?a=1",
         "method": "POST",
         "body": "  payload  ",
@@ -182,3 +183,78 @@ def test_invalid_manual_requests_are_rejected(portal_module: Callable[[str], Mod
         manual.request_options("https://example.test", "GET", "missing delimiter", "")
     with pytest.raises(manual.client.InputError, match="本文"):
         manual.request_options("https://example.test", "GET", "", "body")
+
+
+def test_manual_key_eligibility(portal_module: Callable[[str], ModuleType]) -> None:
+    """本人の有効な個人キーと利用可能な共有キーだけを候補にする。"""
+    eligible = portal_module("apis.manual").selectable_key
+    me = {"subject": "alice", "projects": ["team"], "personal_project": "my-space"}
+    key = {"kind": "personal", "creator": "alice", "mode": "legacy", "revoked": False, "project": "team"}
+    assert eligible(key, me)
+    assert eligible(dict(key, project="my-space", mode="bearer"), me)
+    assert eligible(dict(key, kind="shared", creator="other", users=["alice"], mode="system"), me)
+    for changes in (
+        {"creator": "other"},
+        {"project": "other"},
+        {"revoked": True},
+        {"users": ["other"]},
+        {"can_portal_exchange": False},
+        {"mode": "unknown"},
+    ):
+        assert not eligible({**key, **changes}, me)
+
+
+def test_manual_key_checks_destination_before_exchange(
+    portal_module: Callable[[str], ModuleType], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """キーを選ぶと呼び出しURLと認証ヘッダーの重複を確認してから、選択したキーを交換する。"""
+    manual = portal_module("apis.manual")
+    exchange = AsyncMock(return_value={"Authorization": "Bearer delegated"})
+    monkeypatch.setattr(manual, "credential_headers", exchange)
+    origin = "https://portal.example"
+    path = "/api/invoke/stock/sandbox/finance/items"
+    key = {"id": "selected", "mode": "app"}
+    for url in (
+        "https://other.example" + path,
+        origin + "/api/keys",
+        origin + path + "/%2e%2e/../..",
+        origin + path + "%2Fother",
+        origin + "/api/invoke/stock",
+        origin + "/api/invoke//sandbox/finance/items",
+    ):
+        with pytest.raises(manual.client.InputError, match="呼び出しURL"):
+            asyncio.run(manual.apply_key(url, origin, manual.request_options(url, "GET", "", ""), key))
+    url = origin + path + "?limit=1"
+    for header in ("AUTHORIZATION", "X-API-Key", "x-Tsugite-Key-ID", "x-tsugite-screen"):
+        opts = manual.request_options(url, "GET", header + ": other", "")
+        with pytest.raises(manual.client.InputError, match="ヘッダー"):
+            asyncio.run(manual.apply_key(url, origin, opts, key))
+    exchange.assert_not_awaited()
+    opts = manual.request_options(url, "GET", "Accept: application/json", "")
+    asyncio.run(manual.apply_key(url, origin, opts, key))
+    exchange.assert_awaited_once_with(key)
+    assert opts["headers"] == {"accept": "application/json", "Authorization": "Bearer delegated"}
+    assert (opts["mode"], opts["redirect"], opts["credentials"]) == ("same-origin", "error", "omit")
+
+
+def test_manual_legacy_key_uses_id(
+    portal_module: Callable[[str], ModuleType], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """従来キーは本人がログインしている場合だけキーIDと本人のトークンで送信する。"""
+    manual = portal_module("apis.manual")
+    origin = "https://portal.example"
+    url = origin + "/api/invoke/stock/sandbox/finance/items"
+    opts = manual.request_options(url, "GET", "", "")
+    key = {"id": "selected", "mode": "legacy"}
+    monkeypatch.setattr(
+        manual.client, "store", SimpleNamespace(getItem=Mock(side_effect=[None, "session"]))
+    )
+    monkeypatch.setattr(manual.client, "screen_headers", lambda: {"X-Tsugite-Screen": "console"})
+    with pytest.raises(manual.client.InputError, match="ログイン"):
+        asyncio.run(manual.apply_key(url, origin, opts, key))
+    asyncio.run(manual.apply_key(url, origin, opts, key))
+    assert opts["headers"] == {
+        "Authorization": "Bearer session",
+        "X-Tsugite-Key-Id": "selected",
+        "X-Tsugite-Screen": "console",
+    }
