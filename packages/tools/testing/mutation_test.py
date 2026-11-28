@@ -305,6 +305,14 @@ MUTATIONS = (
     ),
     Mutation(
         "frontend",
+        "キー選択時の呼び出しURLの送信先照合を省く",
+        "packages/frontend/src/web_app/apis/manual.py",
+        "not url.startswith(origin + prefix)",
+        "False",
+        "packages/frontend/tests/test_api_client.py::test_manual_key_checks_destination_before_exchange",
+    ),
+    Mutation(
+        "frontend",
         "直接指定したURLにブラウザーの認証情報を送る",
         "packages/frontend/src/web_app/apis/manual.py",
         '"credentials": "omit"',

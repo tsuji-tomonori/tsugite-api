@@ -5,10 +5,11 @@ import asyncio
 from typing import Any
 
 from apis import client
-from apis.invocation import fetch
-from apis.manual import METHODS, request_options
-from js import document
+from apis.invocation import CREDENTIAL_MODES, fetch
+from apis.manual import METHODS, apply_key, request_options
+from js import document, window
 from puepy import t
+from runtime.portal_ui import ctx
 
 from components.controls import field
 
@@ -22,6 +23,11 @@ async def send(button: Any, output: Any) -> None:
 
         url = entered("url").strip()
         options = request_options(url, entered("method"), entered("headers"), entered("body"))
+        if selected := entered("key"):
+            key = ctx["manual_keys"].get(selected)
+            if not key:
+                raise client.InputError("利用するAPIキーを選び直してください")
+            await apply_key(url, str(window.location.origin), options, key)
         try:
             response = await fetch(url, **options)
         except Exception as exc:
@@ -57,9 +63,18 @@ def view() -> None:
     """URL・メソッド・ヘッダー・本文の入力欄を表示する。"""
     with t.section(classes="box"):
         t.h2("URLを直接指定")
-        t.p("ブラウザーから送信します。認証が必要な場合は、接続先用のヘッダーを入力してください。")
+        t.p("継手APIの呼び出しURLには、自分が利用できるAPIキーを選べます。外部URLの認証はヘッダー欄に入力してください。")
         field("HTTPメソッド", "manual-method", options=[(m, m) for m in METHODS])
         field("リクエストURL（必須）", "manual-url", placeholder="https://api.example.jp/items?limit=10")
+        keys = ctx.get("manual_keys", {})
+        choices = [("", "キーを使用しない")]
+        for key in keys.values():
+            kind = "個人" if key["kind"] == "personal" else "共有"
+            mode = CREDENTIAL_MODES.get(key["mode"], "APIキー")
+            choices.append((key["id"], f"{key['name']}（{kind}） · {key['project']} · {mode}"))
+        field("APIキー（任意）", "manual-key", options=choices)
+        if not keys:
+            t.a("利用できるAPIキーを確認", href="#/keys")
         field(
             "ヘッダー（任意）", "manual-headers", textarea=True, placeholder="Accept: application/json"
         )
