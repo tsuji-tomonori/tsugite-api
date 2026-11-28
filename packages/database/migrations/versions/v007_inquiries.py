@@ -1,3 +1,4 @@
+# 問い合わせに対応するDBスキーマへ移行する。
 """Persist private inquiries and replies."""
 
 import sqlalchemy as sa

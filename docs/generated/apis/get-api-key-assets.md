@@ -4,9 +4,9 @@
 
 GET `/api/key-assets`
 
-[API一覧](../README.md) · [CRUD一覧](../crud.md)
+[API一覧](README.md) · [CRUD一覧](../db/crud.md)
 
-共通 · `key_assets_api_key_assets_get` · [key_assets:76](../../../packages/backend/src/app/apis/governance/keys.py#L76)
+共通 · `key_assets_api_key_assets_get` · [key_assets:61](../../../packages/backend/src/app/apis/governance/keys.py#L61)
 
 ## 入力
 
@@ -22,13 +22,14 @@ GET `/api/key-assets`
 
 | ステータス | 説明 | 形式・条件 | スキーマ |
 | --- | --- | --- | --- |
-| 200 | 正常に処理できました | application/json | 配列 / [カタログ掲載APIの概要（Listing）](../schemas.md#listing) |
+| 200 | 正常に処理できました | application/json | 配列 / [カタログ掲載APIの概要（Listing）](../db/schemas.md#listing) |
 
 ### 200 application/json の項目
 
 | 項目の和名 | 物理名 | 指定 | 型・制約 |
 | --- | --- | --- | --- |
 | カタログ掲載APIの識別子 | [].id | 必須 | 文字列 |
+| 呼び出しURLで使うAPI識別名 | [].slug | 任意 | 文字列 または 空値 |
 | API名 | [].name | 必須 | 文字列 |
 | 提供プロジェクトの識別子 | [].owner | 必須 | 文字列 |
 | APIの用途・概要 | [].summary | 必須 | 文字列 |
@@ -36,7 +37,7 @@ GET `/api/key-assets`
 | カタログで公開中か | [].published | 必須 | 真偽値 |
 | 更新時の競合検出に使う版番号 | [].revision | 必須 | 整数 |
 
-実装・認証依存で送出し得るHTTPエラー（エラーの詳細を示す `detail` を含むJSON）　401, 403。
+実装・認証依存で送出し得るHTTPエラー（エラーの詳細を示す `detail` を含むJSON）　401, 403, 503。
 
 AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugite-Origin` を付与します。共通ミドルウェアは通常のAPI応答にリクエスト識別子 `X-Request-ID` とキャッシュへの保存を禁止する `Cache-Control: no-store` を付けます。Lambdaのオリジン検証に失敗すると403、DBの競合は409、DB操作エラーは409または503です。
 
@@ -46,35 +47,39 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| [API利用申請・利用権](../database.md#access_rights) | access_rights | R | 検索 | select | [key_assets:80](../../../packages/backend/src/app/apis/governance/keys.py#L80) |
-| [利用者の組織所属](../database.md#affiliations) | affiliations | R | 検索 | select | [populate:69](../../../packages/backend/src/app/core/workspace.py#L69) |
-| [APIカタログ](../database.md#assets) | assets | R | 検索 | select | [key_assets:88](../../../packages/backend/src/app/apis/governance/keys.py#L88) |
-| [組織階層](../database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
-| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:121](../../../packages/backend/src/app/core/auth.py#L121) |
-| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:56](../../../packages/backend/src/app/core/workspace.py#L56) |
+| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | R | 検索 | select | [key_assets:65](../../../packages/backend/src/app/apis/governance/keys.py#L65) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:107](../../../packages/backend/src/app/core/workspace.py#L107) |
+| [APIカタログ](../db/database.md#assets) | assets | R | 検索 | select | [key_assets:73](../../../packages/backend/src/app/apis/governance/keys.py#L73) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:55](../../../packages/backend/src/app/core/workspace.py#L55) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:126](../../../packages/backend/src/app/core/auth.py#L126) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:92](../../../packages/backend/src/app/core/workspace.py#L92) |
 
 ### AWSサービス
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:53](../../../packages/backend/src/app/core/config.py#L53) |
+| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:54](../../../packages/backend/src/app/core/config.py#L54) |
 
 <details><summary>解析した関数・依存</summary>
 
-- `app.apis.catalog.common.listing`
 - `app.apis.governance.keys.key_assets`
 - `app.core.auth.check_member`
 - `app.core.auth.current`
 - `app.core.auth.human`
 - `app.core.auth.identify`
 - `app.core.auth.keyset`
+- `app.core.catalog.listing`
 - `app.core.config.local_demo`
 - `app.core.config.settings`
+- `app.core.diagnostics.asset_object`
 - `app.core.workspace.allowed_audience`
 - `app.core.workspace.ancestry`
 - `app.core.workspace.configured_projects`
 - `app.core.workspace.policy`
 - `app.core.workspace.populate`
+- `app.core.workspace.project_ids`
+- `app.core.workspace.retired_units`
 - `app.core.workspace.units`
 - `tsugite_db.session.engine`
 - `tsugite_db.session.session`

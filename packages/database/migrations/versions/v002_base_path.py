@@ -1,3 +1,4 @@
+# APIのベースパスに対応するDBスキーマへ移行する。
 """Allow multiple APIs to share one team-owned HTTPS origin."""
 
 import sqlalchemy as sa

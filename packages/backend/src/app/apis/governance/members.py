@@ -1,19 +1,26 @@
-from typing import Literal
-
+# 利用者の所属や権限を管理する。
 import boto3
-from app.apis import outputs
-from app.apis.catalog.common import DB, User
-from app.apis.schemas import Input
 from app.core.auth import DEMO_GROUPS
 from app.core.config import local_demo, settings
 from app.core.diagnostics import OperationalRepair
+from app.core.member_profiles import (
+    NAME_FIELDS,
+    directory_accounts,
+    directory_fields,
+    directory_profiles,
+    forget_profile,
+    set_directory_email,
+)
 from app.core.workspace import configured_projects, retired_units, units
+from app.dependencies import DB, User
+from app.schemas import outputs
+from app.schemas.errors import domain_errors
+from app.schemas.members import Invitation
 from botocore.exceptions import BotoCoreError, ClientError
 from fastapi import APIRouter, HTTPException, Query, Request
-from pydantic import Field
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
-from tsugite_db.models import Event, Member, new_id
+from tsugite_db.models import Event, Member, MemberProfile, new_id
 
 router = APIRouter()
 
@@ -24,36 +31,22 @@ def projects(db=None):
     return sorted(configured_projects())
 
 
-#: ポータル利用者の招待内容
-class Invitation(Input):
-    #: 招待先メールアドレス
-    email: str = Field(pattern=r"^[^\s@/]+@[^\s@/]+\.[^\s@/]+$", max_length=150)
-    #: 招待先プロジェクトの識別子
-    project: str
-    #: 利用者の役割
-    role: Literal[
-        #: 利用者
-        "consumer",
-        #: 提供者
-        "provider",
-    ]
-
-
 def administrator(actor):
     if not actor.admin:
         raise HTTPException(403, "管理者の権限が必要です")
 
 
-def member_event(db, request, actor, action, username):
+def member_event(db, request, actor, action, subject, detail):
     db.add(
         Event(
             actor=actor.subject,
+            target_subject=subject,
             owner="",
             project="",
             asset_id="",
             environment="",
             action=action,
-            detail=username,
+            detail=detail,
             request_id=request.state.request_id,
         )
     )
@@ -64,7 +57,7 @@ def pool():
 
 
 #: ポータルの利用者を一覧する
-@router.get("/members", responses={200: {"model": outputs.MemberPage}})
+@router.get("/members", responses={**domain_errors(503), 200: {"model": outputs.MemberPage}})
 def list_members(
     actor: User,
     db: DB,
@@ -76,10 +69,9 @@ def list_members(
     administrator(actor)
     retired = retired_units(db)
     if local_demo():
+        accounts = {m.subject: m for m in db.scalars(select(Member))}
         rows = [
-            {"subject": key, "username": key, "role": key}
-            for key in DEMO_GROUPS
-            if not db.get(Member, key)
+            {"subject": key, "username": key, "role": key} for key in DEMO_GROUPS if key not in accounts
         ]
         rows.extend(
             {
@@ -88,29 +80,46 @@ def list_members(
                 "role": m.role,
                 "project": retired.get(m.project, m.project),
             }
-            for m in db.scalars(select(Member).where(Member.deleted.is_(False)))
+            for m in accounts.values()
+            if not m.deleted
         )
-        return {"items": rows, "next": "", "projects": projects(db)}
-    idp = boto3.client("cognito-idp")
-    #: 利用者・グループの管理（Cognitoユーザープール） / 利用者の一覧を取得
-    page = idp.list_users(
-        UserPoolId=pool(), Limit=limit, **({"PaginationToken": cursor} if cursor else {})
-    )
-    rows = []
-    for user in page.get("Users", []):
-        attrs = {a["Name"]: a["Value"] for a in user["Attributes"]}
-        sub = attrs["sub"]
-        entry = db.get(Member, sub)
-        rows.append(
-            {
-                "subject": sub,
-                "username": user["Username"],
-                "role": entry.role if entry else "Cognito",
-                "project": retired.get(entry.project, entry.project) if entry else "",
-                "deleted": bool(entry and entry.deleted),
-            }
-        )
-    return {"items": rows, "next": page.get("PaginationToken", ""), "projects": projects(db)}
+        next_cursor = ""
+    else:
+        try:
+            idp = boto3.client("cognito-idp")
+            #: 利用者・グループの管理（Cognitoユーザープール） / 利用者の一覧を取得
+            page = idp.list_users(
+                UserPoolId=pool(), Limit=limit, **({"PaginationToken": cursor} if cursor else {})
+            )
+        except ClientError, BotoCoreError:
+            raise HTTPException(
+                503, "利用者を確認できませんでした。時間をおいて再実行してください"
+            ) from None
+        users = {
+            attrs["sub"]: user["Username"]
+            for user in page.get("Users", [])
+            if (attrs := {a["Name"]: a["Value"] for a in user["Attributes"]}).get("sub")
+        }
+        accounts = directory_accounts(db, users)
+        rows = []
+        for subject, username in users.items():
+            entry = accounts.get(subject)
+            rows.append(
+                {
+                    "subject": subject,
+                    "username": username,
+                    "role": entry.role if entry else "Cognito",
+                    "project": retired.get(entry.project, entry.project) if entry else "",
+                    "deleted": bool(entry and entry.deleted),
+                }
+            )
+        next_cursor = page.get("PaginationToken", "")
+    profiles = directory_profiles(db, (row["subject"] for row in rows))
+    items = [
+        {**row, **directory_fields(profiles.get(row["subject"]), accounts.get(row["subject"]))}
+        for row in rows
+    ]
+    return {"items": items, "next": next_cursor, "projects": projects(db)}
 
 
 def undo_invitation(username):
@@ -128,7 +137,11 @@ def undo_invitation(username):
 
 
 #: ポータルに利用者を招待する
-@router.post("/members", status_code=201, responses={201: {"model": outputs.Person}})
+@router.post(
+    "/members",
+    status_code=201,
+    responses={**domain_errors(403, 409, 503), 201: {"model": outputs.Person}},
+)
 def invite(data: Invitation, request: Request, actor: User, db: DB):
     administrator(actor)
     if data.project not in projects(db):
@@ -149,6 +162,10 @@ def invite(data: Invitation, request: Request, actor: User, db: DB):
             )["User"]
         except idp.exceptions.UsernameExistsException as exc:
             raise HTTPException(409, "登録済みです") from exc
+        except idp.exceptions.InternalErrorException, idp.exceptions.TooManyRequestsException:
+            raise HTTPException(
+                503, "招待サービスが一時的に利用できません。時間をおいて再実行してください"
+            ) from None
         try:
             subject = next(a["Value"] for a in user["Attributes"] if a["Name"] == "sub")
             request.state.target_subject_id = subject
@@ -165,7 +182,13 @@ def invite(data: Invitation, request: Request, actor: User, db: DB):
             raise
     request.state.target_subject_id = subject
     db.add(Member(subject=subject, username=username, project=data.project, role=data.role))
-    member_event(db, request, actor, "member.add", username)
+    profile = MemberProfile(subject=subject, full_name=data.full_name, display_name=data.display_name)
+    set_directory_email(profile, username)
+    db.add(profile)
+    member_event(db, request, actor, "member.add", subject, username)
+    changed = [field for field in NAME_FIELDS if getattr(data, field) is not None]
+    if changed:
+        member_event(db, request, actor, "profile.invite_set", subject, ", ".join(changed))
     try:
         db.commit()
     except SQLAlchemyError:
@@ -174,11 +197,13 @@ def invite(data: Invitation, request: Request, actor: User, db: DB):
             #: 利用者・グループの管理（Cognitoユーザープール） / 利用者を削除
             undo_invitation(username)
         raise
-    return {"subject": subject, "username": username}
+    return {"subject": subject, "username": username, **directory_fields(profile)}
 
 
 #: ポータルの利用者を削除する
-@router.delete("/members/{subject}", responses={200: {"model": outputs.Deleted}})
+@router.delete(
+    "/members/{subject}", responses={**domain_errors(404, 409, 503), 200: {"model": outputs.Deleted}}
+)
 def remove_member(
     #: 対象利用者の識別子
     subject: str,
@@ -213,7 +238,8 @@ def remove_member(
         db.add(row)
     if not row.deleted:
         row.deleted = True
-        member_event(db, request, actor, "member.delete", username)
+        forget_profile(db, subject)
+        member_event(db, request, actor, "member.delete", subject, username)
         db.commit()
     if idp is not None:
         try:

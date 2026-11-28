@@ -1,55 +1,26 @@
+# 認証情報の発行・更新を受け付ける。
 import hashlib
 import hmac
 import json
 import secrets
-from typing import Literal
 from urllib.parse import parse_qsl
 
-from app.apis import outputs
-from app.apis.catalog.common import DB, User
 from app.apis.governance.credential_settings import members_for
 from app.apis.governance.directory import audit, manages
-from app.apis.governance.keys import KeyInput, key_assets, metadata
-from app.apis.schemas import Input
+from app.apis.governance.keys import key_assets, metadata
 from app.core import credential_policy as policy
 from app.core.access_token import encode, machine_actor, may_use
 from app.core.auth import check_member, identify
 from app.core.workspace import populate, private_project, stopped, units
+from app.dependencies import DB, User
+from app.schemas import outputs
+from app.schemas.credentials import Exchange, Issue
+from app.schemas.errors import domain_errors
 from fastapi import APIRouter, HTTPException, Request, Response
 from fastapi.responses import JSONResponse
-from pydantic import Field, SecretStr
 from tsugite_db.models import Asset, CredentialLease, PortalKey, new_id
 
 router = APIRouter()
-
-
-#: 認証情報の発行条件
-class Issue(KeyInput):
-    #: 認証方式
-    mode: Literal[
-        #: 短期トークン方式
-        "bearer",
-        #: 利用者を伴うアプリ認証
-        "app",
-        #: システム間認証
-        "system",
-    ]
-    #: 希望するトークン有効期間（分）
-    ttl_minutes: int = Field(60, ge=1, le=60)
-    #: 発行から更新可能になるまでの時間（分）
-    refresh_minutes: int | None = Field(None, ge=1, le=60)
-    #: 対象のAPI操作
-    operations: dict[str, list[str]] = Field(default_factory=dict)
-    #: 利用を許可する利用者
-    users: list[str] = Field(default_factory=list)
-
-
-#: トークン交換の入力
-class Exchange(Input):
-    #: クライアント識別子
-    client_id: str = Field(min_length=32, max_length=32)
-    #: クライアントシークレット
-    client_secret: SecretStr
 
 
 def secret_for(key):
@@ -129,7 +100,7 @@ def mint(db, key, actor, session_channel):
 @router.post(
     "/credentials",
     status_code=201,
-    responses={201: {"model": outputs.IssuedBearer | outputs.IssuedClient}},
+    responses={**domain_errors(403), 201: {"model": outputs.IssuedBearer | outputs.IssuedClient}},
 )
 def issue(data: Issue, actor: User, db: DB, request: Request, response: Response):
     response.headers["Cache-Control"] = "no-store"
@@ -190,7 +161,9 @@ def issue(data: Issue, actor: User, db: DB, request: Request, response: Response
 
 
 #: ポータルから短期アクセストークンを取得する
-@router.post("/credentials/{key_id}/token", responses={200: {"model": outputs.Token}})
+@router.post(
+    "/credentials/{key_id}/token", responses={**domain_errors(401), 200: {"model": outputs.Token}}
+)
 def portal_token(
     #: 認証情報の識別子
     key_id: str,
@@ -216,7 +189,15 @@ TOKEN_EXCHANGE = "urn:ietf:params:oauth:grant-type:token-exchange"
 #: 利用者のログイン情報を選択した認証情報の短期トークンに交換する
 @router.post(
     "/credentials/{key_id}/token-exchange",
-    responses={200: {"model": outputs.ExchangedToken}},
+    responses={
+        401: {"model": outputs.TokenExchangeError},
+        403: {"model": outputs.TokenExchangeError | outputs.ErrorDetail},
+        200: {"model": outputs.ExchangedToken},
+        400: {
+            "model": outputs.TokenExchangeError,
+            "description": "交換方式が未対応、またはフォームの入力内容が不正です。",
+        },
+    },
     openapi_extra={
         "x-design-auth": "フォームのsubject_tokenにログイン済み利用者のアクセストークンを指定し、本人が利用可能な認証情報に交換します。",
         "requestBody": {
@@ -309,7 +290,7 @@ async def oauth_exchange(
 #: クライアント認証情報をアクセストークンに交換する
 @router.post(
     "/auth/token",
-    responses={200: {"model": outputs.Token}},
+    responses={**domain_errors(400, 401), 200: {"model": outputs.Token}},
     openapi_extra={
         "x-design-auth": "ボディのclient_id・client_secretが必須。appでは本人のAuthorization: Bearerが必須。systemではAuthorizationを送信すると400。"
     },
@@ -346,7 +327,10 @@ def exchange(data: Exchange, db: DB, request: Request, response: Response):
 
 
 #: クライアントシークレットを再発行する
-@router.post("/credentials/{key_id}/rotate", responses={200: {"model": outputs.ClientCredential}})
+@router.post(
+    "/credentials/{key_id}/rotate",
+    responses={**domain_errors(404), 200: {"model": outputs.ClientCredential}},
+)
 def rotate(
     #: 認証情報の識別子
     key_id: str,

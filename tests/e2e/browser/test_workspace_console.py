@@ -1,3 +1,4 @@
+# 管理者が組織階層と兼務を設定し、リーダーがキー・利用状況・停止と再開を操作する。
 """Browser coverage for an administrator and a project leader using real portal routes."""
 
 import os
@@ -149,7 +150,7 @@ def test_workspace_key_console(tmp_path: Path, request: pytest.FixtureRequest) -
                 finally:
                     leader.get_by_role("button", name="表示を閉じる").click()
                     expect(leader.locator("#issued-secret")).to_have_count(0)
-                expect(leader.get_by_role("heading", name=name, exact=True)).to_be_visible()
+                expect(leader.get_by_role("rowheader", name=name, exact=True)).to_be_visible()
 
             capture(leader, "keys", "同じプロジェクトの本人専用キーと共有キー。範囲と状態を確認")
             records = api.get("/api/keys", headers=user).raise_for_status().json()
@@ -179,7 +180,9 @@ def test_workspace_key_console(tmp_path: Path, request: pytest.FixtureRequest) -
             expect(leader.get_by_role("button", name="利用を停止")).to_be_visible()
             assert api.get(path, headers=call_headers).status_code == 200
             menu(leader, re.compile("APIキー"))
-            row = leader.locator("article").filter(has=leader.get_by_role("heading", name="在庫試験用"))
+            row = leader.get_by_role("row").filter(
+                has=leader.get_by_role("rowheader", name="在庫試験用")
+            )
             row.get_by_role("button", name="キーを失効").click()
             expect(row.get_by_text(re.compile("失効済み"))).to_be_visible()
             assert api.get(path, headers=call_headers).status_code in (401, 403)

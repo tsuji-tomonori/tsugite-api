@@ -1,3 +1,4 @@
+# API Gatewayから渡された認証情報を検証する。
 """HTTP API request authorizer. The backend rechecks the grant before dispatch."""
 
 import os

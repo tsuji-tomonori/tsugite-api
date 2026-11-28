@@ -1,3 +1,4 @@
+# 商品を公開し、利用者が商品詳細から利用申請できる。
 import json
 import os
 from copy import deepcopy

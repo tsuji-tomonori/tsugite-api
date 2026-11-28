@@ -1,7 +1,8 @@
+# 語句が一致しない質問も日本語埋め込みで公開商品に結び付ける。
 import json
 from types import SimpleNamespace
 
-from agent.retrieval import TOPICS, ask, rewritten, semantic
+from chat_retrieval import TOPICS, ask, rewritten, semantic
 
 ACTOR = SimpleNamespace(owners=set(), leads=set(), admin=False)
 

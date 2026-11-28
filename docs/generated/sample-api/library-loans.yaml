@@ -1,0 +1,258 @@
+openapi: 3.1.0
+info:
+  title: 図書貸出
+  description: 貸出を図書館や返却までの日数で検索します。
+  version: 1.0.0
+paths:
+  /health:
+    get:
+      summary: データベースの稼働状態を確認
+      operationId: health_health_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+  /loans:
+    get:
+      summary: 貸出を一覧で取得
+      operationId: list_loans_loans_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Loan'
+                type: array
+                title: Response List Loans Loans Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+  /loans/{loan_id}:
+    get:
+      summary: 貸出の詳細を取得
+      operationId: detail_loans__loan_id__get
+      parameters:
+      - name: loan_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Loan Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Loan'
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+        '404':
+          description: 該当なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MissingRecord'
+  /library-branches:
+    get:
+      summary: 図書館ごとの貸出件数を集計
+      operationId: by_branch_library_branches_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/LoanCount'
+                type: array
+                title: Response By Branch Library Branches Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+  /due-soon:
+    get:
+      summary: 返却までの日数が上限以下の貸出を取得
+      operationId: below_limit_due_soon_get
+      parameters:
+      - name: maximum
+        in: query
+        required: false
+        schema:
+          type: integer
+          description: 返却までの日数の上限
+          default: 2
+          title: Maximum
+        description: 返却までの日数の上限
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Loan'
+                title: Response Below Limit Due Soon Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /loan-periods:
+    get:
+      summary: 返却までの日数の範囲を取得
+      operationId: days_remaining_summary_loan_periods_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoanRange'
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+components:
+  schemas:
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    Health:
+      properties:
+        status:
+          type: string
+          const: ok
+          title: Status
+          default: ok
+      type: object
+      title: Health
+    InternalServerError:
+      properties:
+        error_code:
+          type: string
+          const: INTERNAL_ERROR
+          title: Error Code
+        detail:
+          type: string
+          title: Detail
+      type: object
+      required:
+      - error_code
+      - detail
+      title: InternalServerError
+    Loan:
+      properties:
+        loan_id:
+          type: string
+          title: Loan Id
+        branch:
+          type: string
+          title: Branch
+        days_remaining:
+          type: integer
+          title: Days Remaining
+      type: object
+      required:
+      - loan_id
+      - branch
+      - days_remaining
+      title: Loan
+    LoanCount:
+      properties:
+        branch:
+          type: string
+          title: Branch
+        count:
+          type: integer
+          title: Count
+      type: object
+      required:
+      - branch
+      - count
+      title: LoanCount
+    LoanRange:
+      properties:
+        minimum:
+          type: integer
+          title: Minimum
+        maximum:
+          type: integer
+          title: Maximum
+      type: object
+      required:
+      - minimum
+      - maximum
+      title: LoanRange
+    MissingRecord:
+      properties:
+        detail:
+          type: string
+          title: Detail
+      type: object
+      required:
+      - detail
+      title: MissingRecord
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError

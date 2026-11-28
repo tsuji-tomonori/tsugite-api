@@ -1,3 +1,4 @@
+# API呼び出しの診断情報に対応するDBスキーマへ移行する。
 """Keep the original severity and remediation on invocation log exports."""
 
 import sqlalchemy as sa

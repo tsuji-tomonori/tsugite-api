@@ -4,9 +4,9 @@
 
 GET `/api/config`
 
-[API一覧](../README.md) · [CRUD一覧](../crud.md)
+[API一覧](README.md) · [CRUD一覧](../db/crud.md)
 
-共通 · `config_api_config_get` · [config:86](../../../packages/backend/src/app/main.py#L86)
+共通 · `config_api_config_get` · [config:37](../../../packages/backend/src/app/main.py#L37)
 
 ## 入力
 
@@ -22,7 +22,7 @@ GET `/api/config`
 
 | ステータス | 説明 | 形式・条件 | スキーマ |
 | --- | --- | --- | --- |
-| 200 | 正常に処理できました | application/json | [ポータルのログイン設定（PortalConfig）](../schemas.md#portalconfig) |
+| 200 | 正常に処理できました | application/json | [ポータルのログイン設定（PortalConfig）](../db/schemas.md#portalconfig) |
 
 ### 200 application/json の項目
 
@@ -30,6 +30,7 @@ GET `/api/config`
 | --- | --- | --- | --- |
 | デモ環境か | demo | 必須 | 真偽値 |
 | ログイン用ドメイン | domain | 必須 | 文字列 |
+| ユーザープールの認証API接続先 | identity_endpoint | 必須 | 文字列 |
 | ポータルのログイン用クライアント識別子 | client_id | 必須 | 文字列 |
 
 AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugite-Origin` を付与します。共通ミドルウェアは通常のAPI応答にリクエスト識別子 `X-Request-ID` とキャッシュへの保存を禁止する `Cache-Control: no-store` を付けます。Lambdaのオリジン検証に失敗すると403、DBの競合は409、DB操作エラーは409または503です。
@@ -44,7 +45,7 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:53](../../../packages/backend/src/app/core/config.py#L53) |
+| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:54](../../../packages/backend/src/app/core/config.py#L54) |
 
 <details><summary>解析した関数・依存</summary>
 

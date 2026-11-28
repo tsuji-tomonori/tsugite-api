@@ -4,9 +4,9 @@
 
 PUT `/api/apis/{key}/operation-policy`
 
-[API一覧](../README.md) · [CRUD一覧](../crud.md)
+[API一覧](README.md) · [CRUD一覧](../db/crud.md)
 
-共通 · `set_operations_api_apis__key__operation_policy_put` · [set_operations:105](../../../packages/backend/src/app/apis/governance/credential_settings.py#L105)
+共通 · `set_operations_api_apis__key__operation_policy_put` · [set_operations:84](../../../packages/backend/src/app/apis/governance/credential_settings.py#L84)
 
 ## 入力
 
@@ -22,7 +22,7 @@ PUT `/api/apis/{key}/operation-policy`
 
 | Content-Type | スキーマ |
 | --- | --- |
-| application/json | [利用者に許可するAPI操作（Permission）](../schemas.md#permission) |
+| application/json | [利用者に許可するAPI操作（Permission）](../db/schemas.md#permission) |
 
 #### application/json の項目
 
@@ -35,8 +35,8 @@ PUT `/api/apis/{key}/operation-policy`
 
 | ステータス | 説明 | 形式・条件 | スキーマ |
 | --- | --- | --- | --- |
-| 200 | 正常に処理できました | application/json | [利用者に許可するAPI操作（Permission）](../schemas.md#permission) |
-| 422 | 入力内容が条件を満たしていません | application/json | [リクエスト入力エラー（HTTPValidationError）](../schemas.md#httpvalidationerror) |
+| 200 | 正常に処理できました | application/json | [利用者に許可するAPI操作（Permission）](../db/schemas.md#permission) |
+| 422 | 入力内容が条件を満たしていません | application/json | [リクエスト入力エラー（HTTPValidationError）](../db/schemas.md#httpvalidationerror) |
 
 ### 200 application/json の項目
 
@@ -49,14 +49,14 @@ PUT `/api/apis/{key}/operation-policy`
 
 | 項目の和名 | 物理名 | 指定 | 型・制約 |
 | --- | --- | --- | --- |
-| 入力エラーの明細一覧 | detail | 任意 | 配列 / [入力エラーの項目別明細（ValidationError）](../schemas.md#validationerror) |
+| 入力エラーの明細一覧 | detail | 任意 | 配列 / [入力エラーの項目別明細（ValidationError）](../db/schemas.md#validationerror) |
 | 入力エラーの発生箇所 | detail[].loc | 必須 | 配列 / 文字列 または 整数 |
 | 入力エラーの説明 | detail[].msg | 必須 | 文字列 |
 | 入力エラーの分類コード | detail[].type | 必須 | 文字列 |
 | エラーになった入力値 | detail[].input | 任意 | 任意の型 |
 | 入力エラーの補足情報 | detail[].ctx | 任意 | オブジェクト |
 
-実装・認証依存で送出し得るHTTPエラー（エラーの詳細を示す `detail` を含むJSON）　401, 403, 404, 422。
+実装・認証依存で送出し得るHTTPエラー（エラーの詳細を示す `detail` を含むJSON）　401, 403, 404, 422, 503。
 
 AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugite-Origin` を付与します。共通ミドルウェアは通常のAPI応答にリクエスト識別子 `X-Request-ID` とキャッシュへの保存を禁止する `Cache-Control: no-store` を付けます。Lambdaのオリジン検証に失敗すると403、DBの競合は409、DB操作エラーは409または503です。
 
@@ -66,34 +66,34 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| [API利用申請・利用権](../database.md#access_rights) | access_rights | R | 検索 | select | [subscribers:71](../../../packages/backend/src/app/apis/governance/credential_settings.py#L71) |
-| [利用者の組織所属](../database.md#affiliations) | affiliations | R | 主キーで取得 | db.get | [federated_members:250](../../../packages/backend/src/app/apis/governance/directory.py#L250) |
-| [利用者の組織所属](../database.md#affiliations) | affiliations | R | 検索 | select | [roster:75](../../../packages/backend/src/app/apis/governance/directory.py#L75) |
-| [利用者の組織所属](../database.md#affiliations) | affiliations | R | 検索 | select | [populate:69](../../../packages/backend/src/app/core/workspace.py#L69) |
-| [APIカタログ](../database.md#assets) | assets | R | 主キーで取得 | db.get | [record:31](../../../packages/backend/src/app/apis/catalog/common.py#L31) |
-| [監査履歴](../database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [audit:53](../../../packages/backend/src/app/apis/governance/directory.py#L53) |
-| [認証情報の利用制限](../database.md#credential_rules) | credential_rules | C | レコードを追加 | db.add | [set_operations:122](../../../packages/backend/src/app/apis/governance/credential_settings.py#L122) |
-| [認証情報の利用制限](../database.md#credential_rules) | credential_rules | R | 主キーで取得 | db.get | [set_operations:117](../../../packages/backend/src/app/apis/governance/credential_settings.py#L117) |
-| [認証情報の利用制限](../database.md#credential_rules) | credential_rules | U | 利用を許可するAPI操作（JSON）を設定 | ops に代入 | [set_operations:123](../../../packages/backend/src/app/apis/governance/credential_settings.py#L123) |
-| [組織階層](../database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
-| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [federated_members:252](../../../packages/backend/src/app/apis/governance/directory.py#L252) |
-| [ポータル利用者](../database.md#portal_members) | portal_members | R | 検索 | select | [roster:69](../../../packages/backend/src/app/apis/governance/directory.py#L69) |
-| [ポータル利用者](../database.md#portal_members) | portal_members | R | 検索 | select | [roster:79](../../../packages/backend/src/app/apis/governance/directory.py#L79) |
-| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [roster:84](../../../packages/backend/src/app/apis/governance/directory.py#L84) |
-| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [roster:96](../../../packages/backend/src/app/apis/governance/directory.py#L96) |
-| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:121](../../../packages/backend/src/app/core/auth.py#L121) |
-| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:56](../../../packages/backend/src/app/core/workspace.py#L56) |
+| [API利用申請・利用権](../db/database.md#access_rights) | access_rights | R | 検索 | select | [subscribers:50](../../../packages/backend/src/app/apis/governance/credential_settings.py#L50) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 主キーで取得 | db.get | [federated_members:257](../../../packages/backend/src/app/apis/governance/directory.py#L257) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [roster:44](../../../packages/backend/src/app/apis/governance/directory.py#L44) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:107](../../../packages/backend/src/app/core/workspace.py#L107) |
+| [APIカタログ](../db/database.md#assets) | assets | R | 主キーで取得 | db.get | [record:26](../../../packages/backend/src/app/core/catalog.py#L26) |
+| [監査履歴](../db/database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [audit:22](../../../packages/backend/src/app/apis/governance/directory.py#L22) |
+| [認証情報の利用制限](../db/database.md#credential_rules) | credential_rules | C | レコードを追加 | db.add | [set_operations:102](../../../packages/backend/src/app/apis/governance/credential_settings.py#L102) |
+| [認証情報の利用制限](../db/database.md#credential_rules) | credential_rules | R | 主キーで取得 | db.get | [set_operations:97](../../../packages/backend/src/app/apis/governance/credential_settings.py#L97) |
+| [認証情報の利用制限](../db/database.md#credential_rules) | credential_rules | U | 利用を許可するAPI操作（JSON）を設定 | ops に代入 | [set_operations:103](../../../packages/backend/src/app/apis/governance/credential_settings.py#L103) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:55](../../../packages/backend/src/app/core/workspace.py#L55) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [federated_members:259](../../../packages/backend/src/app/apis/governance/directory.py#L259) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 検索 | select | [roster:38](../../../packages/backend/src/app/apis/governance/directory.py#L38) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 検索 | select | [roster:48](../../../packages/backend/src/app/apis/governance/directory.py#L48) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [roster:53](../../../packages/backend/src/app/apis/governance/directory.py#L53) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [roster:69](../../../packages/backend/src/app/apis/governance/directory.py#L69) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:126](../../../packages/backend/src/app/core/auth.py#L126) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:92](../../../packages/backend/src/app/core/workspace.py#L92) |
 
 ### AWSサービス
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| 利用者・グループの管理（Cognitoユーザープール） | cognito-idp | R | グループの利用者を一覧 | list_users_in_group | [federated_members:243](../../../packages/backend/src/app/apis/governance/directory.py#L243) |
-| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:53](../../../packages/backend/src/app/core/config.py#L53) |
+| 利用者・グループの管理（Cognitoユーザープール） | cognito-idp | R | グループの利用者を一覧 | list_users_in_group | [federated_members:250](../../../packages/backend/src/app/apis/governance/directory.py#L250) |
+| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:54](../../../packages/backend/src/app/core/config.py#L54) |
 
 <details><summary>解析した関数・依存</summary>
 
-- `app.apis.catalog.common.record`
 - `app.apis.governance.credential_settings.members_for`
 - `app.apis.governance.credential_settings.owner`
 - `app.apis.governance.credential_settings.set_operations`
@@ -107,13 +107,17 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 - `app.core.auth.human`
 - `app.core.auth.identify`
 - `app.core.auth.keyset`
+- `app.core.catalog.record`
 - `app.core.config.local_demo`
 - `app.core.config.settings`
 - `app.core.credential_policy.operations`
+- `app.core.diagnostics.asset_object`
 - `app.core.openapi.path_items`
 - `app.core.workspace.ancestry`
 - `app.core.workspace.configured_projects`
 - `app.core.workspace.populate`
+- `app.core.workspace.project_ids`
+- `app.core.workspace.retired_units`
 - `app.core.workspace.units`
 - `tsugite_db.session.engine`
 - `tsugite_db.session.session`

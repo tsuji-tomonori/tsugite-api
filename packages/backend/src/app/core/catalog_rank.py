@@ -1,3 +1,4 @@
+# 閲覧可能な商品を検索条件に応じて順位付けする。
 """Hybrid ranking over the listings the caller is already allowed to discover."""
 
 from __future__ import annotations

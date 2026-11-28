@@ -1,11 +1,9 @@
+# 認証情報の有効期間を設定する。
 import json
-from typing import Literal
 
-from app.apis import outputs
-from app.apis.catalog.common import DB, User, record
 from app.apis.governance.directory import audit, federated_members, manages, roster
 from app.apis.governance.keys import key_assets
-from app.apis.schemas import Input
+from app.core.catalog import record
 from app.core.credential_policy import (
     approved_assets,
     effective,
@@ -14,33 +12,15 @@ from app.core.credential_policy import (
     unit_bounds,
 )
 from app.core.workspace import ancestry, private_project, units
+from app.dependencies import DB, User
+from app.schemas import outputs
+from app.schemas.credential_settings import Lifetime, LimitTarget, Permission
+from app.schemas.errors import domain_errors
 from fastapi import APIRouter, HTTPException, Request
-from pydantic import Field
 from sqlalchemy import select
 from tsugite_db.models import Access, Asset, CredentialRule
 
 router = APIRouter()
-
-LimitTarget = Literal[
-    #: 組織
-    "units",
-    #: API
-    "apis",
-]
-
-
-#: 有効期間上限の設定値
-class Lifetime(Input):
-    #: トークンの有効期間上限（分）
-    max_minutes: int | None = Field(default=None, ge=1, le=60)
-
-
-#: 利用者に許可するAPI操作
-class Permission(Input):
-    #: 対象利用者の識別子
-    subject: str = Field(min_length=1, max_length=180)
-    #: この利用者に許可するAPI操作
-    operations: list[str] | None
 
 
 def members_for(db, projects, extra=()):
@@ -75,7 +55,10 @@ def subscribers(db, asset):
 
 
 #: APIの利用者別操作権限を確認する
-@router.get("/apis/{key}/operation-policy", responses={200: {"model": outputs.OperationPolicy}})
+@router.get(
+    "/apis/{key}/operation-policy",
+    responses={**domain_errors(403), 200: {"model": outputs.OperationPolicy}},
+)
 def get_operations(
     #: カタログ掲載APIの識別子
     key: str,
@@ -166,7 +149,9 @@ def get_limit(
 
 
 #: API・組織単位のトークン有効期間上限を設定する
-@router.put("/credential-limits/{kind}/{key}", responses={200: {"model": outputs.Limit}})
+@router.put(
+    "/credential-limits/{kind}/{key}", responses={**domain_errors(403), 200: {"model": outputs.Limit}}
+)
 def set_limit(
     #: 上限の設定対象（API・組織）
     kind: LimitTarget,

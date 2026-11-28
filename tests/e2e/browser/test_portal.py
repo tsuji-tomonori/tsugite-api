@@ -1,3 +1,4 @@
+# デモの提供者と利用者が公開・申請・承認・実行・権限取消を画面で完了できる。
 """Run against a fresh, migrated loopback demo database on every test."""
 
 import os
@@ -10,6 +11,7 @@ from pytest_given import scenario
 
 from tests.support.catalog import invocation_headers
 from tests.support.catalog_journey import catalog_journey
+from tests.support.list_layout import visible_table_ratio
 from tests.support.portal_server import serve_portal
 from tests.support.screenshots import capture_image
 
@@ -32,7 +34,7 @@ def test_home_chat_and_inquiry(demo_url: str, request: pytest.FixtureRequest) ->
     import httpx
     from playwright.sync_api import expect, sync_playwright
 
-    from tools.demo.seed_marketplace import seed
+    from packages.tools.demo.seed_marketplace import seed
 
     with httpx.Client(base_url=demo_url + "/api/", trust_env=False) as api:
         seed(api, 1)
@@ -73,32 +75,33 @@ def test_submit_from_inquiries(demo_url: str, request: pytest.FixtureRequest) ->
         page.get_by_role("button", name="利用チーム", exact=True).click()
         navigate(page, "問い合わせ")
         question = "新しいプロジェクトの利用手順を教えてください"
+        page.locator("summary").filter(has_text="新しい問い合わせ").click()
         field = page.get_by_label("問い合わせ内容")
         field.fill(question)
         page.get_by_role("button", name="問い合わせを送信").click()
         receipt = page.get_by_role("status").filter(has_text="問い合わせを受け付けました。受付番号 ")
         expect(receipt).to_be_visible()
         key = receipt.inner_text().split("受付番号 ")[1]
-        ticket = page.get_by_role("article").filter(has_text=question)
-        expect(ticket.get_by_text("受付番号 " + key, exact=True)).to_be_visible()
+        ticket = page.get_by_role("row").filter(has_text=question)
+        expect(ticket.get_by_role("rowheader", name=key, exact=True)).to_be_visible()
         expect(ticket.get_by_text("回答待ち")).to_be_visible()
-        expect(field).to_have_value("")
+        expect(page.locator("#inquiry-question")).to_have_value("")
         capture_image(
             request.node, "inquiries", page, "submitted", "問い合わせ画面の受付番号と回答待ちの履歴"
         )
         page.reload()
-        expect(ticket.get_by_text("受付番号 " + key, exact=True)).to_be_visible()
+        expect(ticket.get_by_role("rowheader", name=key, exact=True)).to_be_visible()
         expect(ticket).to_have_count(1)
         browser.close()
 
 
 def test_large_catalog(demo_url: str, request: pytest.FixtureRequest) -> None:
-    """6業務・20拠点の公開120件を全件照合し、PC・スマートフォンの検索とページ送りを確認する"""
+    """12業務・20拠点の公開240件を全件照合し、PC・スマートフォンの検索とページ送りを確認する"""
     import httpx
     from playwright.sync_api import expect, sync_playwright
 
+    from packages.tools.demo.seed_marketplace import CATALOG, offer, seed
     from tests.support.catalog_journey import browser_evidence, navigate
-    from tools.demo.seed_marketplace import CATALOG, offer, seed
 
     with httpx.Client(base_url=demo_url + "/api/", trust_env=False) as api:
         ids = seed(api, 20)
@@ -106,18 +109,18 @@ def test_large_catalog(demo_url: str, request: pytest.FixtureRequest) -> None:
         consumer = {"Authorization": "Bearer " + api.post("demo/consumer").json()["access_token"]}
         draft = api.post("apis", headers=provider, json=offer(CATALOG[0], 21)).raise_for_status().json()
         observed: list[str] = []
-        for page in range(1, 11):
+        for page in range(1, 21):
             result = (
                 api.get("catalog-page", params={"page": page}, headers=consumer)
                 .raise_for_status()
                 .json()
             )
-            assert (result["total"], result["page"], len(result["items"])) == (120, page, 12)
+            assert (result["total"], result["page"], len(result["items"])) == (240, page, 12)
             observed.extend(item["id"] for item in result["items"])
-        assert len(set(observed)) == 120 and set(observed) == set(ids)
+        assert len(set(observed)) == 240 and set(observed) == set(ids)
         assert draft["id"] not in observed
         assert (
-            api.get("catalog-page", headers=provider, params={"inventory": True}).json()["total"] == 121
+            api.get("catalog-page", headers=provider, params={"inventory": True}).json()["total"] == 241
         )
 
     with sync_playwright() as pw:
@@ -129,15 +132,18 @@ def test_large_catalog(demo_url: str, request: pytest.FixtureRequest) -> None:
                 view.goto(demo_url)
                 view.get_by_role("button", name="利用チーム", exact=True).click()
                 navigate(view, "APIカタログ")
-                expect(view.get_by_role("heading", name="API一覧（120件）")).to_be_visible()
-                expect(view.locator(".asset-card")).to_have_count(12)
+                expect(view.get_by_role("heading", name="API一覧（240件）")).to_be_visible()
+                expect(view.locator(".result-table tbody tr")).to_have_count(12)
+                assert visible_table_ratio(view.get_by_role("table", name="API一覧")) >= 0.70
+                expect(view.get_by_label("キーワードで検索")).to_be_hidden()
                 assert view.evaluate("document.documentElement.scrollWidth <= innerWidth")
-            capture(desktop, "catalog", "120件の公開カタログ。先頭12件を表示するデスクトップ画面")
+            capture(desktop, "catalog", "240件の公開カタログ。先頭12件を表示するデスクトップ画面")
             capture(mobile, "phone", "390px幅で同じ公開カタログを表示")
             desktop.get_by_role("button", name="次へ").click()
             expect(desktop.get_by_text("13–24 件を表示")).to_be_visible()
             desktop.get_by_role("button", name="前へ").click()
             expect(desktop.get_by_text("1–12 件を表示")).to_be_visible()
+            mobile.locator("summary").filter(has_text="検索条件").click()
             mobile.get_by_label("キーワードで検索").fill("岐阜")
             mobile.get_by_label("提供環境").select_option("production")
             mobile.get_by_label("提供環境").press("Tab")
@@ -145,20 +151,21 @@ def test_large_catalog(demo_url: str, request: pytest.FixtureRequest) -> None:
                 "el => el.matches(':focus-visible') && getComputedStyle(el).outlineStyle !== 'none'"
             )
             mobile.keyboard.press("Enter")
-            expect(mobile.get_by_role("heading", name="API一覧（3件）")).to_be_visible()
-            expect(mobile.locator(".asset-card")).to_have_count(3)
-            assert all("岐阜" in name for name in mobile.locator(".asset-card h3").all_text_contents())
-            capture(mobile, "filtered", "キーワードと本番環境で絞り、120件から目的の3件を抽出")
+            expect(mobile.get_by_role("heading", name="API一覧（6件）")).to_be_visible()
+            expect(mobile.locator(".result-table tbody tr")).to_have_count(6)
+            assert all("岐阜" in name for name in mobile.locator(".asset-title").all_text_contents())
+            capture(mobile, "filtered", "キーワードと本番環境で絞り、240件から目的の6件を抽出")
+            mobile.locator("summary").filter(has_text="検索条件").click()
             mobile.get_by_label("キーワードで検索").fill("該当なしの検索語")
             mobile.get_by_label("キーワードで検索").press("Enter")
             expect(mobile.get_by_text("該当するAPIはありません。")).to_be_visible()
-            expect(mobile.locator(".asset-card")).to_have_count(0)
+            expect(mobile.locator(".result-table tbody tr")).to_have_count(0)
             capture(mobile, "empty", "該当なしを明示し、検索条件を変更できる画面")
         browser.close()
     request.node.user_properties.append(
         (
             "finding",
-            "実測値：6業務×20拠点の公開120件、未公開1件。全10ページを照合し、重複・欠落・下書き混入は各0件。390pxと1440pxで横幅内に収まり、検索ボタンをキーボードで実行できた。",
+            "実測値：12業務×20拠点の公開240件、未公開1件。全20ページを照合し、重複・欠落・下書き混入は各0件。390pxと1440pxで横幅内に収まり、検索ボタンをキーボードで実行できた。",
         )
     )
 
@@ -168,8 +175,8 @@ def test_console_visual_modes(demo_url: str, request: pytest.FixtureRequest) -> 
     import httpx
     from playwright.sync_api import expect, sync_playwright
 
+    from packages.tools.demo.seed_marketplace import seed
     from tests.support.catalog_journey import browser_evidence, navigate
-    from tools.demo.seed_marketplace import seed
 
     with httpx.Client(base_url=demo_url + "/api/", trust_env=False) as api:
         seed(api, 1)
@@ -198,6 +205,7 @@ def test_console_visual_modes(demo_url: str, request: pytest.FixtureRequest) -> 
             navigate(page, "APIカタログ")
             link = page.locator(".asset-title").first
             expect(link).to_be_visible()
+            page.locator("summary").filter(has_text="検索条件").click()
             primary = page.get_by_role("button", name="検索", exact=True)
             mode = page.get_by_label("表示モード")
             for theme, link_color in (("light", "rgb(37, 36, 32)"), ("dark", "rgb(239, 238, 235)")):
@@ -208,7 +216,7 @@ def test_console_visual_modes(demo_url: str, request: pytest.FixtureRequest) -> 
                     "background-color", "rgb(249, 249, 249)" if theme == "light" else "rgb(16, 15, 14)"
                 )
                 expect(primary).to_have_css("border-radius", "4px")
-                expect(page.locator(".asset-card").first).to_have_css("border-radius", "4px")
+                expect(page.locator(".result-table").first).to_have_css("border-radius", "4px")
                 expect(page.locator(".form-select").first).to_have_css("border-radius", "4px")
                 readings = [
                     (label, contrast(item))
@@ -234,7 +242,7 @@ def test_console_visual_modes(demo_url: str, request: pytest.FixtureRequest) -> 
                     theme,
                     "AWSコンソールの"
                     + ("ライト" if theme == "light" else "ダーク")
-                    + "配色で6種類のAPIを表示",
+                    + "配色で12種類のAPIを表示",
                 )
             page.reload()
             expect(mode).to_have_value("dark")
@@ -245,7 +253,7 @@ def test_console_visual_modes(demo_url: str, request: pytest.FixtureRequest) -> 
             expect(page.get_by_label("API名", exact=True)).to_have_value("入力中のAPI")
             page.get_by_label("すべての公開APIを検索").fill("配送")
             page.get_by_label("すべての公開APIを検索").press("Enter")
-            expect(page.locator(".asset-card")).to_have_count(1)
+            expect(page.locator(".result-table tbody tr")).to_have_count(1)
             expect(link).to_contain_text("配送")
             mode.select_option("auto")
             page.emulate_media(color_scheme="dark")
@@ -253,11 +261,12 @@ def test_console_visual_modes(demo_url: str, request: pytest.FixtureRequest) -> 
             page.set_viewport_size({"width": 390, "height": 844})
             page.reload()
             navigate(page, "業務操作履歴")
-            expect(page.locator(".audit-row").first).to_be_visible()
+            expect(page.locator(".result-table tbody tr").first).to_be_visible()
             assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
             capture(page, "mobile-dark", "端末のダーク設定を引き継いだ390px幅の業務操作履歴")
             page.emulate_media(forced_colors="active")
             assert page.evaluate("matchMedia('(forced-colors: active)').matches")
+            page.locator("summary").filter(has_text="検索条件").click()
             page.get_by_label("操作", exact=True).press("Tab")
             button = page.get_by_role("button", name="絞り込む")
             expect(button).to_be_focused()
@@ -307,10 +316,11 @@ def test_governance_console(demo_url: str, request: pytest.FixtureRequest) -> No
                 expect(view.get_by_text(role + "としての利用状況")).to_be_visible()
 
             navigate(admin, "ユーザー管理")
+            admin.locator("summary").filter(has_text="ユーザーを追加").click()
             admin.get_by_label("メールアドレス").fill("catalog-reader@example.org")
             admin.get_by_label("所属プロジェクト").select_option("finance")
             admin.get_by_role("button", name="追加する").click()
-            row = admin.locator(".compact-row").filter(has_text="catalog-reader@example.org")
+            row = admin.get_by_role("row").filter(has_text="catalog-reader@example.org")
             expect(row).to_be_visible()
             capture(admin, "members", "管理者が追加した利用者と所属プロジェクト")
             row.get_by_role("button", name="削除", exact=True).click()
@@ -334,6 +344,7 @@ def test_governance_console(demo_url: str, request: pytest.FixtureRequest) -> No
                 view.get_by_role("button", name="通知を送信", exact=True).click()
                 expect(view.get_by_text("通知を送信しました")).to_be_visible()
             navigate(provider, "アラート")
+            provider.locator("summary").filter(has_text="利用件数のルール").click()
             provider.get_by_label("しきい値（件）").fill("2")
             provider.get_by_label("集計期間").select_option("1440")
             provider.get_by_label("到達時の動作").select_option("stop")
@@ -343,13 +354,14 @@ def test_governance_console(demo_url: str, request: pytest.FixtureRequest) -> No
             call = invocation_headers(api, consumer)
             assert [api.get(path, headers=call).status_code for _ in range(3)] == [200, 200, 429]
             user.locator(".bell-button").click()
-            expect(user.get_by_role("heading", name="利用件数アラート")).to_be_visible()
-            notice = user.locator("article").filter(has_text="在庫API更新予定")
+            expect(user.get_by_text("利用件数アラート", exact=True)).to_be_visible()
+            notice = user.get_by_role("row").filter(has_text="在庫API更新予定")
             notice.get_by_role("button", name="既読にする").click()
-            expect(notice.locator("small").filter(has_text=re.compile(r"^既読 · "))).to_be_visible()
-            expect(user.get_by_role("heading", name="管理者からのお知らせ")).to_be_visible()
+            expect(notice.get_by_role("cell", name="既読", exact=True)).to_be_visible()
+            expect(user.get_by_text("管理者からのお知らせ", exact=True)).to_be_visible()
             capture(user, "notices", "管理者・提供者・しきい値からの通知と個人の既読状態")
             navigate(user, "メトリクス")
+            user.locator("summary").filter(has_text="検索条件").click()
             user.get_by_label("表示指標").select_option("denied")
             user.get_by_label("期間", exact=True).select_option("1")
             user.get_by_label("集計間隔").select_option("5")
@@ -369,6 +381,7 @@ def test_governance_console(demo_url: str, request: pytest.FixtureRequest) -> No
             denied.click()
             expect(user.get_by_role("table", name="呼び出しの詳細")).to_contain_text("http_429")
             navigate(user, "業務操作履歴")
+            user.locator("summary").filter(has_text="検索条件").click()
             user.get_by_label("リクエストID", exact=True).fill(trace)
             user.get_by_role("button", name="絞り込む").click()
             expect(user.get_by_text("呼び出し拒否", exact=True).last).to_be_visible()
@@ -437,6 +450,8 @@ def test_portal_login_on_mobile(demo_url: str, request: pytest.FixtureRequest) -
         expect(page.get_by_role("heading", name="APIカタログ", exact=True)).to_be_visible()
         capture_image(request.node, "login", page, "signed-in", "認証後に戻ったカタログ")
         assert operations == ["InitiateAuth", "RespondToAuthChallenge"]
+        page.get_by_role("button", name="ナビゲーション", exact=True).click()
+        expect(page.get_by_label("すべての公開APIを検索")).to_be_visible()
         page.get_by_role("button", name="ログアウト").click()
         expect(page.get_by_role("heading", name="継手APIにログイン")).to_be_visible()
         assert page.url.startswith(demo_url + "/")

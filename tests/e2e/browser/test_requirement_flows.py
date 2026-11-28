@@ -1,3 +1,4 @@
+# 利用者が承認待ちの申請を取り下げると画面に反映され、同じ環境に再申請できる。
 import json
 import os
 import re
@@ -12,6 +13,7 @@ from playwright.sync_api import Locator, Page, expect, sync_playwright
 
 from tests.support.catalog import FORM, approved, headers, invocation_headers
 from tests.support.catalog_journey import browser_evidence, navigate
+from tests.support.list_layout import visible_table_ratio
 from tests.support.portal_server import serve_portal
 
 PortalSession = tuple[httpx.Client, Page, Callable[[Page | Locator, str, str], None]]
@@ -217,6 +219,15 @@ def test_access_log_detail_and_support(portal_session: PortalSession) -> None:
     navigate(page, "アクセスログ")
     listing = page.get_by_role("table", name="アクセスログ一覧")
     expect(listing.get_by_role("link")).to_have_count(20)
+    for width, height in ((1366, 768), (390, 844), (320, 640)):
+        page.set_viewport_size({"width": width, "height": height})
+        # matchMedia の change がナビゲーションに反映されてから表を計測する。
+        expect(page.get_by_role("button", name="ナビゲーション", exact=True)).to_have_attribute(
+            "aria-expanded", "false" if width <= 780 else "true"
+        )
+        expect(page.get_by_label("照合するリクエストID")).to_be_hidden()
+        assert visible_table_ratio(listing) >= 0.70
+    capture(page, "log-list", "検索条件を閉じたスマートフォンのアクセスログ一覧")
     page.get_by_role("button", name="次へ", exact=True).click()
     expect(listing.get_by_role("link")).to_have_count(1)
     listing.get_by_role("link", name=ids[0], exact=True).press("Enter")
@@ -237,7 +248,7 @@ def test_access_log_detail_and_support(portal_session: PortalSession) -> None:
     page.get_by_role("button", name="問い合わせを送信").click()
     expect(page.get_by_role("status")).to_contain_text("受付番号")
     page.get_by_role("link", name="自分の問い合わせ").click()
-    expect(page.locator("article").filter(has_text=ids[0])).to_contain_text(
+    expect(page.get_by_role("row").filter(has_text=ids[0])).to_contain_text(
         "この呼び出しを確認してください"
     )
 
@@ -265,6 +276,7 @@ def test_lead_access_audit(portal_session: PortalSession) -> None:
     navigate(page, "アクセスログ")
     expect(page.get_by_text("条件に一致するアクセスログはありません。")).to_be_visible()
     navigate(page, "監査履歴")
+    page.locator("summary").filter(has_text="検索条件").click()
     page.get_by_label("集計する部署・プロジェクト").select_option("sales")
     page.get_by_role("button", name="条件を適用").click()
     table = page.get_by_role("table", name="監査履歴一覧")
@@ -290,8 +302,9 @@ def test_auditor_cross_checks_exports(portal_session: PortalSession) -> None:
     trace = api.get(path, headers=call).raise_for_status().headers["x-request-id"]
     open_portal(api, page, "監査担当")
     navigate(page, "監査履歴")
+    page.locator("summary").filter(has_text="検索条件").click()
     page.get_by_label("照合するリクエストID").fill(trace)
-    page.get_by_role("button", name="IDで検索").click()
+    page.get_by_role("button", name="条件を適用").click()
     row = page.get_by_role("row").filter(has_text=trace)
     expect(row).to_contain_text("200")
     with page.expect_download() as access_file:
@@ -304,6 +317,7 @@ def test_auditor_cross_checks_exports(portal_session: PortalSession) -> None:
     row.click()
     expect(page.get_by_role("table", name="呼び出しの詳細")).to_contain_text("consumer")
     page.get_by_role("button", name="業務操作履歴で照合").click()
+    page.locator("summary").filter(has_text="検索条件").click()
     expect(page.get_by_label("リクエストID", exact=True)).to_have_value(trace)
     with page.expect_download() as audit_file:
         page.get_by_role("button", name="業務監査をダウンロード").click()

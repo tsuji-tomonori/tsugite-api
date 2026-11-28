@@ -1,3 +1,4 @@
+# 商品の提供条件に対応するDBスキーマへ移行する。
 """Environment offers, application evidence and immutable published releases."""
 
 import sqlalchemy as sa

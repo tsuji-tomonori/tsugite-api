@@ -4,9 +4,9 @@
 
 DELETE `/api/members/{subject}`
 
-[API一覧](../README.md) · [CRUD一覧](../crud.md)
+[API一覧](README.md) · [CRUD一覧](../db/crud.md)
 
-共通 · `remove_member_api_members__subject__delete` · [remove_member:159](../../../packages/backend/src/app/apis/governance/members.py#L159)
+共通 · `remove_member_api_members__subject__delete` · [remove_member:200](../../../packages/backend/src/app/apis/governance/members.py#L200)
 
 ## 入力
 
@@ -25,8 +25,8 @@ DELETE `/api/members/{subject}`
 
 | ステータス | 説明 | 形式・条件 | スキーマ |
 | --- | --- | --- | --- |
-| 200 | 正常に処理できました | application/json | [削除結果（Deleted）](../schemas.md#deleted) |
-| 422 | 入力内容が条件を満たしていません | application/json | [リクエスト入力エラー（HTTPValidationError）](../schemas.md#httpvalidationerror) |
+| 200 | 正常に処理できました | application/json | [削除結果（Deleted）](../db/schemas.md#deleted) |
+| 422 | 入力内容が条件を満たしていません | application/json | [リクエスト入力エラー（HTTPValidationError）](../db/schemas.md#httpvalidationerror) |
 
 ### 200 application/json の項目
 
@@ -38,7 +38,7 @@ DELETE `/api/members/{subject}`
 
 | 項目の和名 | 物理名 | 指定 | 型・制約 |
 | --- | --- | --- | --- |
-| 入力エラーの明細一覧 | detail | 任意 | 配列 / [入力エラーの項目別明細（ValidationError）](../schemas.md#validationerror) |
+| 入力エラーの明細一覧 | detail | 任意 | 配列 / [入力エラーの項目別明細（ValidationError）](../db/schemas.md#validationerror) |
 | 入力エラーの発生箇所 | detail[].loc | 必須 | 配列 / 文字列 または 整数 |
 | 入力エラーの説明 | detail[].msg | 必須 | 文字列 |
 | 入力エラーの分類コード | detail[].type | 必須 | 文字列 |
@@ -55,22 +55,26 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| [利用者の組織所属](../database.md#affiliations) | affiliations | R | 検索 | select | [populate:69](../../../packages/backend/src/app/core/workspace.py#L69) |
-| [監査履歴](../database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [member_event:47](../../../packages/backend/src/app/apis/governance/members.py#L47) |
-| [組織階層](../database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
-| [ポータル利用者](../database.md#portal_members) | portal_members | C | レコードを追加 | db.add | [remove_member:190](../../../packages/backend/src/app/apis/governance/members.py#L190) |
-| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [remove_member:171](../../../packages/backend/src/app/apis/governance/members.py#L171) |
-| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:121](../../../packages/backend/src/app/core/auth.py#L121) |
-| [ポータル利用者](../database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:56](../../../packages/backend/src/app/core/workspace.py#L56) |
-| [ポータル利用者](../database.md#portal_members) | portal_members | U | 削除済みかを設定 | deleted に代入 | [remove_member:192](../../../packages/backend/src/app/apis/governance/members.py#L192) |
+| [利用者の組織所属](../db/database.md#affiliations) | affiliations | R | 検索 | select | [populate:107](../../../packages/backend/src/app/core/workspace.py#L107) |
+| [監査履歴](../db/database.md#audit_events) | audit_events | C | レコードを追加 | db.add | [member_event:39](../../../packages/backend/src/app/apis/governance/members.py#L39) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [retired_units:33](../../../packages/backend/src/app/core/workspace.py#L33) |
+| [組織階層](../db/database.md#directory_tree) | directory_tree | R | 主キーで取得 | db.get | [units:55](../../../packages/backend/src/app/core/workspace.py#L55) |
+| [利用者プロフィール](../db/database.md#portal_member_profiles) | portal_member_profiles | C | レコードを追加 | db.add | [forget_profile:52](../../../packages/backend/src/app/core/member_profiles.py#L52) |
+| [利用者プロフィール](../db/database.md#portal_member_profiles) | portal_member_profiles | R | 主キーで取得 | db.get | [forget_profile:50](../../../packages/backend/src/app/core/member_profiles.py#L50) |
+| [利用者プロフィール](../db/database.md#portal_member_profiles) | portal_member_profiles | U | 指定されたカラムの値を更新 | setattr による属性更新 | [forget_profile:55](../../../packages/backend/src/app/core/member_profiles.py#L55) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | C | レコードを追加 | db.add | [remove_member:231](../../../packages/backend/src/app/apis/governance/members.py#L231) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [remove_member:212](../../../packages/backend/src/app/apis/governance/members.py#L212) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [check_member:126](../../../packages/backend/src/app/core/auth.py#L126) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | R | 主キーで取得 | db.get | [populate:92](../../../packages/backend/src/app/core/workspace.py#L92) |
+| [ポータル利用者](../db/database.md#portal_members) | portal_members | U | 削除済みかを設定 | deleted に代入 | [remove_member:233](../../../packages/backend/src/app/apis/governance/members.py#L233) |
 
 ### AWSサービス
 
 | 対象の和名 | 物理名 | 操作 | 処理内容 | 実装 | 根拠 |
 | --- | --- | --- | --- | --- | --- |
-| 利用者・グループの管理（Cognitoユーザープール） | cognito-idp | D | 利用者を削除 | admin_delete_user | [remove_member:198](../../../packages/backend/src/app/apis/governance/members.py#L198) |
-| 利用者・グループの管理（Cognitoユーザープール） | cognito-idp | R | 利用者の登録情報を取得 | admin_get_user | [remove_member:181](../../../packages/backend/src/app/apis/governance/members.py#L181) |
-| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:53](../../../packages/backend/src/app/core/config.py#L53) |
+| 利用者・グループの管理（Cognitoユーザープール） | cognito-idp | D | 利用者を削除 | admin_delete_user | [remove_member:240](../../../packages/backend/src/app/apis/governance/members.py#L240) |
+| 利用者・グループの管理（Cognitoユーザープール） | cognito-idp | R | 利用者の登録情報を取得 | admin_get_user | [remove_member:222](../../../packages/backend/src/app/apis/governance/members.py#L222) |
+| 設定パラメータの保管（Systems Manager） | ssm | R | 設定パラメータを取得 | get_parameter | [settings:54](../../../packages/backend/src/app/core/config.py#L54) |
 
 <details><summary>解析した関数・依存</summary>
 
@@ -85,9 +89,12 @@ AWS環境ではCloudFrontが配信元を検証する内部ヘッダー `X-Tsugit
 - `app.core.auth.keyset`
 - `app.core.config.local_demo`
 - `app.core.config.settings`
+- `app.core.member_profiles.forget_profile`
 - `app.core.workspace.ancestry`
 - `app.core.workspace.configured_projects`
 - `app.core.workspace.populate`
+- `app.core.workspace.project_ids`
+- `app.core.workspace.retired_units`
 - `app.core.workspace.units`
 - `tsugite_db.session.engine`
 - `tsugite_db.session.session`

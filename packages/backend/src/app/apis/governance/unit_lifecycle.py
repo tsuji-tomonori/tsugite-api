@@ -1,13 +1,16 @@
+# 部署・プロジェクトの廃止と移管。関連データと監査記録は同じトランザクションで確定する。
 """部署・プロジェクトの廃止と移管。関連データと監査記録は同じトランザクションで確定する。"""
 
 import json
 
-from app.apis import outputs
-from app.apis.catalog.common import DB, User, right_id
 from app.apis.governance.directory import audit, roster, save_tree
 from app.apis.governance.members import administrator
-from app.apis.schemas import Input
+from app.core.catalog import right_id
 from app.core.workspace import ancestry, configured_projects, project_ids, retired_units, units
+from app.dependencies import DB, User
+from app.schemas import outputs
+from app.schemas.errors import domain_errors
+from app.schemas.unit_lifecycle import Transfer
 from fastapi import APIRouter, HTTPException, Request
 from sqlalchemy import select
 from tsugite_db.models import (
@@ -21,12 +24,6 @@ from tsugite_db.models import (
 )
 
 router = APIRouter()
-
-
-#: 組織の移管先
-class Transfer(Input):
-    #: 移管先の部署またはプロジェクトの識別子
-    destination: str
 
 
 def conflict(message):
@@ -58,7 +55,7 @@ def asset_references(db, source, target):
             require_destination(target, "提供中または下書きのAPI")
             asset.owner = target
         policy = json.loads(asset.policy or "{}")
-        for field in ("projects", "departments", "auto_departments", "delegates"):
+        for field in ("projects", "departments", "auto_departments", "delegates", "metadata_values"):
             if source in policy.get(field, []):
                 require_destination(target, "APIの公開・承認条件")
                 policy[field] = replace_ids(policy[field], source, target)
@@ -117,7 +114,17 @@ def migrate_references(db, source, target):
             conflict("所属者がいます。所属を解除するか移管先を選択してください")
         return
     for row in db.scalars(select(Affiliation).where(Affiliation.unit_id == source)):
-        move_record(db, row, (row.subject, target), unit_id=target)
+        destination = db.get(Affiliation, (row.subject, target))
+        if destination is None:
+            move_record(db, row, (row.subject, target), unit_id=target)
+        elif row.active and destination.active:
+            conflict("移管先に同じ所属があります。重複を解消してください")
+        else:
+            if row.active:
+                destination.title = row.title
+                destination.leader = row.leader
+                destination.active = True
+            db.delete(row)
 
 
 def retire(key, target, request, actor, db):
@@ -165,7 +172,9 @@ def retire(key, target, request, actor, db):
 
 
 #: 未使用の部署・プロジェクトを削除する
-@router.delete("/workspace/units/{key}", responses={200: {"model": outputs.Removed}})
+@router.delete(
+    "/workspace/units/{key}", responses={**domain_errors(403, 404, 409), 200: {"model": outputs.Removed}}
+)
 def delete_unit(
     #: 削除する組織の識別子
     key: str,
@@ -177,7 +186,9 @@ def delete_unit(
 
 
 #: 関連する所属と利用設定を既存の組織へ移管し、移管元を廃止する
-@router.post("/workspace/units/{key}/transfer", responses={200: {"model": outputs.Removed}})
+@router.post(
+    "/workspace/units/{key}/transfer", responses={**domain_errors(409), 200: {"model": outputs.Removed}}
+)
 def transfer_unit(
     #: 移管元の組織の識別子
     key: str,

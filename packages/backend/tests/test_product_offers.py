@@ -1,3 +1,4 @@
+# 環境別の承認条件を守り、複数の承認を指定の順序で行う。
 from copy import deepcopy
 
 from packages.backend.tests.test_org_access import setup_people
@@ -139,8 +140,8 @@ def test_publication_history_and_archive_failures(portal, monkeypatch):
 
 def test_internal_path_item_reference_is_invokable(portal):
     """同じ内部参照を使う複数のOpenAPIパスで操作を解決できる"""
-    from app.apis.catalog.releases import entries
     from app.apis.gateway import operation_template
+    from app.core.releases import entries
 
     spec = deepcopy(FORM["spec"])
     spec.update(openapi="3.1.0", components={"pathItems": {"Stock": spec["paths"]["/items"]}})

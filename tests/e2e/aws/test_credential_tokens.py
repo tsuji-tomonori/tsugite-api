@@ -1,3 +1,4 @@
+# AWS EmulatorのCognito利用者とシステムのトークンを発行し、HTTPS到達・拒否・秘密更新を確認する。
 """Real Cognito identities, scoped token exchange and TLS business calls."""
 
 import json
@@ -5,16 +6,18 @@ import os
 
 import httpx
 
+from packages.tools.demo.seed_marketplace import CATALOG, offer
 from tests.e2e.aws.https_stock import https_stock
 from tests.e2e.aws.test_portal import live_portal
 from tests.e2e.aws.test_scoped_keys import another_finance_user, subscribe
-from tools.demo.seed_marketplace import CATALOG, offer
 
 
 def stock_and_orders(api, provider, consumer):
     listing = offer(CATALOG[0])
     listing["base_path"] = "/v1"
-    listing["spec"]["paths"]["/orders"] = offer(CATALOG[4])["spec"]["paths"]["/orders"]
+    orders = offer(CATALOG[4])["spec"]
+    listing["spec"]["paths"]["/orders"] = orders["paths"]["/orders"]
+    listing["spec"]["components"]["schemas"].update(orders["components"]["schemas"])
     asset = api.post("apis", headers=provider, json=listing).raise_for_status().json()["id"]
     api.put(f"apis/{asset}/publication?published=true", headers=provider).raise_for_status()
     grant = (

@@ -1,3 +1,4 @@
+# API呼び出しの記録を保存する。
 import os
 import secrets
 from uuid import uuid4
@@ -27,7 +28,9 @@ def install_request_logs(app):
                 result = await call_next(request)
         except Exception as exc:
             fields.update(reason=type(exc).__name__, failed=True)
-            result = JSONResponse({"detail": "サーバーでエラーが発生しました"}, 500)
+            result = JSONResponse(
+                {"error_code": "INTERNAL_ERROR", "detail": "サーバーでエラーが発生しました"}, 500
+            )
         result.headers["X-Request-ID"] = request.state.request_id
         if request.url.path.startswith("/api/"):
             result.headers["Cache-Control"] = "no-store"

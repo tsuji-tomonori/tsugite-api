@@ -1,8 +1,13 @@
+# e2e のテストで使う共通フィクスチャを提供する。
+import base64
+import hashlib
 import json
 import os
 import shutil
+from io import BytesIO
 from pathlib import Path
 from urllib.parse import urlsplit
+from zipfile import ZipFile
 
 import boto3
 import pytest
@@ -16,7 +21,7 @@ ROOT = Path(__file__).resolve().parents[3]
 def aws():
     endpoint = urlsplit(os.environ.get("AWS_ENDPOINT_URL", ""))
     if (endpoint.scheme, endpoint.hostname) != ("https", "127.0.0.1"):
-        pytest.fail("tools/testing/emulator_e2e.py から実行してください")
+        pytest.fail("packages/tools/testing/emulator_e2e.py から実行してください")
     return boto3.Session()
 
 
@@ -67,4 +72,29 @@ def resources(aws, tmp_path_factory):
     waiter = aws.client("lambda").get_waiter("function_active_v2")
     for name in sample_ids:
         waiter.wait(FunctionName=physical[name], WaiterConfig={"Delay": 1, "MaxAttempts": 30})
+    # RustPython cannot load sqlite3 or pydantic-core. Keep the real CDK functions
+    # for package checks and use separate functions for the AWS invocation transport.
+    functions = aws.client("lambda")
+    fixture = BytesIO()
+    with ZipFile(fixture, "w") as archive:
+        archive.write(Path(__file__).with_name("invoke_fixture.py"), "invoke_fixture.py")
+    for environment, logical in STOCK_FUNCTIONS.items():
+        deployed = functions.get_function_configuration(FunctionName=physical[logical])
+        key = selected[logical]["Properties"]["Code"]["S3Key"]
+        package_zip = archive_dir / key
+        with package_zip.open("rb") as archive:
+            digest = hashlib.file_digest(archive, "sha256").digest()
+        assert deployed["CodeSha256"] == base64.b64encode(digest).decode()
+        assert deployed["Handler"] == "sample_api.main.handler"
+        name = "transport-" + environment
+        functions.create_function(
+            FunctionName=name,
+            Role=deployed["Role"],
+            Runtime=deployed["Runtime"],
+            Handler="invoke_fixture.handler",
+            Code={"ZipFile": fixture.getvalue()},
+        )
+        waiter.wait(FunctionName=name, WaiterConfig={"Delay": 1, "MaxAttempts": 30})
+        physical[name] = name
+    physical["sample-package"] = package_zip
     return physical

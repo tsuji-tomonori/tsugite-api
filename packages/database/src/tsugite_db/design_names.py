@@ -1,3 +1,4 @@
+# 宣言内のコメントから設計書に載せる業務名を取得する。
 """Read business names from mapped classes and match them to SQLAlchemy metadata."""
 
 import ast

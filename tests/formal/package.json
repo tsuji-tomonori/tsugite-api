@@ -1,0 +1,7 @@
+{
+  "name": "tsugite-formal-checks",
+  "private": true,
+  "devDependencies": {
+    "@informalsystems/quint": "0.34.0"
+  }
+}

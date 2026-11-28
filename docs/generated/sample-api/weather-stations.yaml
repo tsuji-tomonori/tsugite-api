@@ -1,0 +1,258 @@
+openapi: 3.1.0
+info:
+  title: 降水観測
+  description: 降水観測を流域や降水量（mm）で検索します。
+  version: 1.0.0
+paths:
+  /health:
+    get:
+      summary: データベースの稼働状態を確認
+      operationId: health_health_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+  /observations:
+    get:
+      summary: 降水観測を一覧で取得
+      operationId: list_observations_observations_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Observation'
+                type: array
+                title: Response List Observations Observations Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+  /observations/{station_id}:
+    get:
+      summary: 降水観測の詳細を取得
+      operationId: detail_observations__station_id__get
+      parameters:
+      - name: station_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Station Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Observation'
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+        '404':
+          description: 該当なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MissingRecord'
+  /river-basins:
+    get:
+      summary: 流域ごとの降水観測件数を集計
+      operationId: by_basin_river_basins_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/ObservationCount'
+                type: array
+                title: Response By Basin River Basins Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+  /dry-stations:
+    get:
+      summary: 降水量（mm）が上限以下の降水観測を取得
+      operationId: below_limit_dry_stations_get
+      parameters:
+      - name: maximum
+        in: query
+        required: false
+        schema:
+          type: integer
+          description: 降水量（mm）の上限
+          default: 18
+          title: Maximum
+        description: 降水量（mm）の上限
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Observation'
+                title: Response Below Limit Dry Stations Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /rainfall-range:
+    get:
+      summary: 降水量（mm）の範囲を取得
+      operationId: rain_mm_summary_rainfall_range_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ObservationRange'
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+components:
+  schemas:
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    Health:
+      properties:
+        status:
+          type: string
+          const: ok
+          title: Status
+          default: ok
+      type: object
+      title: Health
+    InternalServerError:
+      properties:
+        error_code:
+          type: string
+          const: INTERNAL_ERROR
+          title: Error Code
+        detail:
+          type: string
+          title: Detail
+      type: object
+      required:
+      - error_code
+      - detail
+      title: InternalServerError
+    MissingRecord:
+      properties:
+        detail:
+          type: string
+          title: Detail
+      type: object
+      required:
+      - detail
+      title: MissingRecord
+    Observation:
+      properties:
+        station_id:
+          type: string
+          title: Station Id
+        basin:
+          type: string
+          title: Basin
+        rain_mm:
+          type: integer
+          title: Rain Mm
+      type: object
+      required:
+      - station_id
+      - basin
+      - rain_mm
+      title: Observation
+    ObservationCount:
+      properties:
+        basin:
+          type: string
+          title: Basin
+        count:
+          type: integer
+          title: Count
+      type: object
+      required:
+      - basin
+      - count
+      title: ObservationCount
+    ObservationRange:
+      properties:
+        minimum:
+          type: integer
+          title: Minimum
+        maximum:
+          type: integer
+          title: Maximum
+      type: object
+      required:
+      - minimum
+      - maximum
+      title: ObservationRange
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError

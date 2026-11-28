@@ -1,77 +1,25 @@
+# チャットの質問を受け付けて結果を返す。
 import os
 from threading import Lock
-from typing import Literal
 from uuid import UUID
 
-from agent import jobs
-from agent.retrieval import NO_MATCH, ask, manual_sources
-from app.apis.catalog.catalog.router import visible_collection
-from app.apis.catalog.common import DB, User, listing
-from app.apis.schemas import Input, Listing
+import chat_jobs as jobs
+from app.core.catalog import listing
+from app.core.catalog_visibility import visible_collection
+from app.dependencies import DB, User
+from app.schemas.chat import ChatGuide, ChatQuestion, ChatReceipt, ChatResult
+from app.schemas.errors import domain_errors
 from botocore.exceptions import BotoCoreError, ClientError
+from chat_retrieval import NO_MATCH, ask, manual_sources
 from fastapi import APIRouter, HTTPException, Request
-from pydantic import BaseModel, Field
 
 router = APIRouter()
 _local: dict[str, dict] = {}
 _lock = Lock()
 
 
-#: チャットへの質問
-class ChatQuestion(Input):
-    #: チャットの受付識別子
-    job_id: UUID
-    #: 質問本文
-    question: str = Field(min_length=2, max_length=400)
-
-
-#: チャットの受付結果
-class ChatReceipt(BaseModel):
-    #: チャットの受付識別子
-    job_id: UUID
-
-
-#: 操作ガイドの検索結果
-class ChatGuide(BaseModel):
-    #: ガイドの識別子
-    id: str
-    #: ガイド名
-    title: str
-    #: 操作手順
-    steps: list[str]
-    #: 操作後の状態
-    result: str
-
-
-#: チャットの回答
-class ChatResult(BaseModel):
-    #: 回答の種類
-    kind: Literal[
-        #: 回答を作成中
-        "pending",
-        #: 商品検索
-        "catalog",
-        #: 操作ガイド
-        "manual",
-        #: 問い合わせ
-        "contact",
-        #: 該当なし
-        "empty",
-        #: 対象外
-        "outside",
-        #: 処理エラー
-        "error",
-    ]
-    #: 回答本文
-    answer: str = ""
-    #: おすすめのAPI商品
-    products: list[Listing] = Field(default_factory=list)
-    #: 該当する操作ガイド
-    guides: list[ChatGuide] = Field(default_factory=list)
-
-
 #: チャットの質問を受け付ける
-@router.post("/chat", response_model=ChatReceipt, status_code=202)
+@router.post("/chat", responses=domain_errors(429, 503), response_model=ChatReceipt, status_code=202)
 def start_chat(data: ChatQuestion, actor: User, db: DB, request: Request):
     question = data.question.strip()
     if len(question) < 2:
@@ -110,7 +58,7 @@ def start_chat(data: ChatQuestion, actor: User, db: DB, request: Request):
 
 
 #: チャットの回答を取得する
-@router.get("/chat", response_model=ChatResult)
+@router.get("/chat", responses=domain_errors(404), response_model=ChatResult)
 def chat_result(
     #: チャットの受付識別子
     job_id: UUID,

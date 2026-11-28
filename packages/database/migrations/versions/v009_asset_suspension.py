@@ -1,3 +1,4 @@
+# 商品の停止状態に対応するDBスキーマへ移行する。
 """Store the administrator's invocation suspension independently of publication."""
 
 import sqlalchemy as sa

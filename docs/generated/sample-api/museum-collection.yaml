@@ -1,0 +1,258 @@
+openapi: 3.1.0
+info:
+  title: 美術館収蔵品
+  description: 収蔵品を展示室や制作年で検索します。
+  version: 1.0.0
+paths:
+  /health:
+    get:
+      summary: データベースの稼働状態を確認
+      operationId: health_health_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+  /exhibits:
+    get:
+      summary: 収蔵品を一覧で取得
+      operationId: list_exhibits_exhibits_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Exhibit'
+                type: array
+                title: Response List Exhibits Exhibits Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+  /exhibits/{accession}:
+    get:
+      summary: 収蔵品の詳細を取得
+      operationId: detail_exhibits__accession__get
+      parameters:
+      - name: accession
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Accession
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Exhibit'
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+        '404':
+          description: 該当なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MissingRecord'
+  /galleries:
+    get:
+      summary: 展示室ごとの収蔵品件数を集計
+      operationId: by_gallery_galleries_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/ExhibitCount'
+                type: array
+                title: Response By Gallery Galleries Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+  /early-works:
+    get:
+      summary: 制作年が上限以下の収蔵品を取得
+      operationId: below_limit_early_works_get
+      parameters:
+      - name: maximum
+        in: query
+        required: false
+        schema:
+          type: integer
+          description: 制作年の上限
+          default: 1880
+          title: Maximum
+        description: 制作年の上限
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Exhibit'
+                title: Response Below Limit Early Works Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /collection-period:
+    get:
+      summary: 制作年の範囲を取得
+      operationId: year_summary_collection_period_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExhibitRange'
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+components:
+  schemas:
+    Exhibit:
+      properties:
+        accession:
+          type: string
+          title: Accession
+        gallery:
+          type: string
+          title: Gallery
+        year:
+          type: integer
+          title: Year
+      type: object
+      required:
+      - accession
+      - gallery
+      - year
+      title: Exhibit
+    ExhibitCount:
+      properties:
+        gallery:
+          type: string
+          title: Gallery
+        count:
+          type: integer
+          title: Count
+      type: object
+      required:
+      - gallery
+      - count
+      title: ExhibitCount
+    ExhibitRange:
+      properties:
+        minimum:
+          type: integer
+          title: Minimum
+        maximum:
+          type: integer
+          title: Maximum
+      type: object
+      required:
+      - minimum
+      - maximum
+      title: ExhibitRange
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    Health:
+      properties:
+        status:
+          type: string
+          const: ok
+          title: Status
+          default: ok
+      type: object
+      title: Health
+    InternalServerError:
+      properties:
+        error_code:
+          type: string
+          const: INTERNAL_ERROR
+          title: Error Code
+        detail:
+          type: string
+          title: Detail
+      type: object
+      required:
+      - error_code
+      - detail
+      title: InternalServerError
+    MissingRecord:
+      properties:
+        detail:
+          type: string
+          title: Detail
+      type: object
+      required:
+      - detail
+      title: MissingRecord
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError

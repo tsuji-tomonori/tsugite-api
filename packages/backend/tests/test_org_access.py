@@ -1,3 +1,4 @@
+# 公開範囲、委任判断、個人・プロジェクト別申請、部署・役職の自動承認を確認する。
 from app.core.auth import DEMO_GROUPS
 
 from tests.support.catalog import FORM, headers, invocation_headers

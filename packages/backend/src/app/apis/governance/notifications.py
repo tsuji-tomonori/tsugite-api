@@ -1,27 +1,18 @@
-from app.apis import outputs
-from app.apis.catalog.common import DB, User, event, record
+# ポータルの通知を配信・取得する。
 from app.apis.governance.members import projects
-from app.apis.schemas import Input
+from app.core.catalog import event, record
 from app.core.workspace import private_project
+from app.dependencies import DB, User
+from app.schemas import outputs
+from app.schemas.base import database_time
+from app.schemas.errors import domain_errors
+from app.schemas.notifications import Message
 from fastapi import APIRouter, HTTPException, Query, Request
-from pydantic import Field
 from sqlalchemy import exists, func, or_, select
 from sqlalchemy.exc import IntegrityError
 from tsugite_db.models import Access, Event, Notice, NoticeRead
 
 router = APIRouter()
-
-
-#: 送信する通知
-class Message(Input):
-    #: 通知の件名
-    title: str = Field(min_length=1, max_length=160)
-    #: 通知本文
-    body: str = Field(min_length=1, max_length=3000)
-    #: 通知先プロジェクトの識別子
-    project: str = Field(min_length=1, max_length=64)
-    #: カタログ掲載APIの識別子
-    asset_id: str = ""
 
 
 def mailbox(actor):
@@ -64,7 +55,7 @@ def inbox(
                 "body": n.body,
                 "project": n.project,
                 "sender": n.sender,
-                "at": n.at,
+                "at": database_time(n.at),
                 "unread": is_new,
             }
             for n, is_new in records
@@ -82,7 +73,10 @@ def badge(actor: User, db: DB):
 @router.post(
     "/notifications",
     status_code=201,
-    responses={201: {"model": outputs.Identifier, "description": "送信した通知の識別子（id）"}},
+    responses={
+        **domain_errors(403),
+        201: {"model": outputs.Identifier, "description": "送信した通知の識別子（id）"},
+    },
 )
 def send(data: Message, request: Request, actor: User, db: DB):
     if not actor.admin and not actor.owners:
@@ -122,7 +116,7 @@ def send(data: Message, request: Request, actor: User, db: DB):
 
 
 #: 通知を既読にする
-@router.put("/notifications/{key}/read", responses={200: {"model": outputs.Read}})
+@router.put("/notifications/{key}/read", responses={**domain_errors(404), 200: {"model": outputs.Read}})
 def mark_read(
     #: 既読にする通知の識別子
     key: str,

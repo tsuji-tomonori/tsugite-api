@@ -1,5 +1,0 @@
-[project]
-name = "tsugite-tools"
-version = "0.1.0"
-requires-python = ">=3.14,<3.16"
-dependencies = ["tsugite-backend", "tsugite-infra", "tsugite-frontend", "playwright", "sqlglot", "tinycss2"]

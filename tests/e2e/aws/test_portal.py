@@ -1,3 +1,4 @@
+# Cognitoで識別した2人が画面で承認し、在庫照会・取消・監査まで進める。
 import json
 import os
 import secrets
@@ -118,11 +119,11 @@ def live_portal(aws, resources, tmp_path, identity, binding=None, ca=None):
     with auth as (config, tokens):
         config["targets"] = {
             "sample-" + env: {
-                **(binding or {"kind": "lambda", "address": resources[logical_id]}),
+                **(binding or {"kind": "lambda", "address": resources["transport-" + env]}),
                 "owner": "supply",
                 "environment": env,
             }
-            for env, logical_id in STOCK_FUNCTIONS.items()
+            for env in STOCK_FUNCTIONS
         }
         param = "/tsugite/" + tmp_path.name
         aws.client("ssm").put_parameter(Name=param, Type="String", Value=json.dumps(config))
@@ -345,7 +346,7 @@ def test_approved_calls_reach_upstream(
 
 def test_marketplace_contracts(aws, resources, tmp_path, request):
     """6種類を個別に登録・公開・承認して実行し、HTTPSの受信・業務応答・監査記録を照合する"""
-    from tools.demo.seed_marketplace import CATALOG, offer
+    from packages.tools.demo.seed_marketplace import CATALOG, offer
 
     expected = [
         {"items": [{"sku": "TS-01", "stock": 12}]},
@@ -362,7 +363,7 @@ def test_marketplace_contracts(aws, resources, tmp_path, request):
     ):
         owner, user = ({"Authorization": "Bearer " + tokens[k]} for k in ("owner", "user"))
         call_headers = invocation_headers(api, user, endpoint="credentials")
-        for product, answer in zip(CATALOG, expected, strict=True):
+        for product, answer in zip(CATALOG[:6], expected, strict=True):
             data = {**offer(product), "base_path": "/v1"}
             asset = api.post("apis", headers=owner, json=data).raise_for_status().json()["id"]
             api.put(
@@ -408,13 +409,13 @@ def test_marketplace_contracts(aws, resources, tmp_path, request):
                 )
             )
         assert [(m, p) for m, p in calls if m != "HEAD"] == [
-            (item["method"], "/warehouse/v1" + item["path"]) for item in CATALOG
+            (item["method"], "/warehouse/v1" + item["path"]) for item in CATALOG[:6]
         ]
 
 
 def test_upstream_unavailable(aws, resources, tmp_path, request):
     """承認済みのHTTPS接続先が停止したとき、502と監査・アクセスログを同じIDで追跡できる"""
-    from tools.demo.seed_marketplace import CATALOG, offer
+    from packages.tools.demo.seed_marketplace import CATALOG, offer
 
     with ExitStack() as stack:
         with https_stock(aws, tmp_path, os.environ["AWS_CA_BUNDLE"]) as (binding, ca, _):
@@ -467,7 +468,7 @@ def test_upstream_unavailable(aws, resources, tmp_path, request):
 
 
 def test_cognito_member_lifecycle(aws, resources, tmp_path):
-    """AWS EmulatorのCognitoでユーザー追加・所属・削除・既発行トークンの停止を確認する"""
+    """AWS Emulatorで氏名付き招待と本人編集を行い、Cognitoの識別子とトークンが継続して使える。"""
     with live_portal(aws, resources, tmp_path, "directory") as (url, tokens):
         admin = {"Authorization": "Bearer " + tokens["administrator"]}
         claims = jwt.decode(tokens["user"], options={"verify_signature": False})
@@ -483,11 +484,24 @@ def test_cognito_member_lifecycle(aws, resources, tmp_path):
             username = "account@example.org"
             created = api.post(
                 "members",
-                json={"email": username, "role": "consumer", "project": "finance"},
+                json={
+                    "email": username,
+                    "role": "consumer",
+                    "project": "finance",
+                    "full_name": "河合 直子",
+                },
                 headers=admin,
             )
             assert created.status_code == 201, created.text
             member = created.json()
+            assert (member["email"], member["full_name"], member["display_name"]) == (
+                username,
+                "河合 直子",
+                None,
+            )
+            initial = idp.admin_get_user(UserPoolId=pool, Username=username)
+            assert initial["Username"] == member["username"] == username
+            assert {"Name": "sub", "Value": member["subject"]} in initial["UserAttributes"]
             assert any(
                 row["subject"] == member["subject"]
                 for row in api.get("members", headers=admin).json()["items"]
@@ -503,6 +517,35 @@ def test_cognito_member_lifecycle(aws, resources, tmp_path):
             )["AuthenticationResult"]["AccessToken"]
             user = {"Authorization": "Bearer " + token}
             assert api.get("me", headers=user).json()["projects"] == ["finance"]
+            profile = api.get("me/profile", headers=user).raise_for_status().json()
+            assert (profile["subject"], profile["revision"]) == (member["subject"], 1)
+            edited = (
+                api.patch(
+                    "me/profile",
+                    json={"revision": 1, "display_name": "なお"},
+                    headers=user,
+                )
+                .raise_for_status()
+                .json()
+            )
+            assert (edited["full_name"], edited["display_name"], edited["revision"]) == (
+                "河合 直子",
+                "なお",
+                2,
+            )
+            after = idp.admin_get_user(UserPoolId=pool, Username=username)
+            assert (after["Username"], after["UserAttributes"]) == (
+                initial["Username"],
+                initial["UserAttributes"],
+            )
+            assert api.get("me", headers=user).json()["subject"] == member["subject"]
+            workspace = api.get("workspace", headers=admin).raise_for_status().json()
+            row = next(r for r in workspace["memberships"] if r["subject"] == member["subject"])
+            assert (row["email"], row["full_name"], row["display_name"]) == (
+                username,
+                "河合 直子",
+                "なお",
+            )
             assert api.delete(
                 "members/" + member["subject"], params={"username": username}, headers=admin
             ).is_success

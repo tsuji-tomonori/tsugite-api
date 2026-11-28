@@ -1,3 +1,4 @@
+/* チャット欄とメッセージの配置を定義する。 */
 .chat { max-width: 900px; margin: 0 auto; padding: clamp(14px, 3vw, 28px); }
 .chat-welcome { margin-block: 6px 28px; }
 .chat-history { display: grid; gap: 20px; }
@@ -21,4 +22,9 @@
 @media (max-width: 520px) {
   .chat-history:not(:empty) { max-height: 52vh; }
   .chat-user, .chat-agent { padding: 8px 10px; }
+}
+
+@media (max-width: 30rem) {
+  .chat-composer { grid-template-columns: minmax(0, 1fr); }
+  .chat-composer .btn { justify-self: end; }
 }

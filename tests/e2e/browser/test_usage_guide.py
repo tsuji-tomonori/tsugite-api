@@ -1,3 +1,4 @@
+# 役割と検索語で使い方を絞り込み、手順から対象画面を開ける。
 """Exercise local hybrid search, role filters, article navigation and read-only component previews."""
 
 import os
@@ -25,10 +26,11 @@ def test_usage_guide(tmp_path: Path, request: pytest.FixtureRequest) -> None:
             page.goto(url)
             page.get_by_role("button", name=persona, exact=True).click()
             page.get_by_role("link", name="使い方ガイド", exact=True).click()
+            page.locator("summary").filter(has_text="検索条件").click()
             user_input = page.get_by_role("searchbox", name="何をしたいですか？")
             user_input.fill(query)
             page.get_by_label("役割", exact=True).select_option(role)
-            first = page.locator("#guide-grid article:visible a").first
+            first = page.locator("#guide-grid tr:visible a").first
             expect(first).to_have_attribute("href", "#/guide/" + article)
             first.click()
             preview = page.locator(".guide-preview")
@@ -54,12 +56,13 @@ def test_usage_guide(tmp_path: Path, request: pytest.FixtureRequest) -> None:
             assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
             capture_image(request.node, "guide", page, article, role + "が検索して開いた手順")
             page.go_back()
+            page.locator("summary").filter(has_text="検索条件").click()
             expect(user_input).to_have_value(query)
             user_input.fill("unmatchedXYZ")
             expect(page.locator("#guide-empty")).to_be_visible()
             page.get_by_role("button", name="条件をクリア").click()
             expect(user_input).to_be_focused()
-            cards = page.locator("#guide-grid article:visible a")
+            cards = page.locator("#guide-grid tr:visible a")
             expect(cards).to_have_count(20)
             if role == "利用者":
                 page.locator('[href="#/guide/member"]').click()

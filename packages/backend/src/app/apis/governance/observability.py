@@ -1,14 +1,16 @@
+# 利用状況と監視情報を集計する。
 import json
 from datetime import UTC, datetime, timedelta
 from typing import Annotated, Literal
 
-from app.apis import outputs
-from app.apis.catalog.common import DB, User
 from app.apis.governance.directory import manages, unit_condition
 from app.apis.governance.notifications import unread
 from app.core.diagnostics import exported_invocation
 from app.core.log_visibility import led_calls
 from app.core.workspace import allowed_audience, private_project, project_label, units
+from app.dependencies import DB, User
+from app.schemas import outputs
+from app.schemas.errors import domain_errors
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import Response
 from sqlalchemy import func, or_, select, true
@@ -119,7 +121,7 @@ def log_data(row):
 
 
 #: API呼び出し履歴を検索する
-@router.get("/access-logs", responses={200: {"model": list[outputs.AccessLog]}})
+@router.get("/access-logs", responses={**domain_errors(403), 200: {"model": list[outputs.AccessLog]}})
 def access_logs(
     condition: LogCondition,
     db: DB,
@@ -143,7 +145,9 @@ def access_logs(
 
 
 #: リクエスト識別子からAPI呼び出しの詳細を取得する
-@router.get("/access-logs/detail", responses={200: {"model": outputs.AccessLogDetail}})
+@router.get(
+    "/access-logs/detail", responses={**domain_errors(403, 404), 200: {"model": outputs.AccessLogDetail}}
+)
 def access_log_detail(
     condition: LogCondition,
     db: DB,
@@ -169,6 +173,7 @@ def access_log_detail(
     "/access-logs/download",
     response_class=Response,
     responses={
+        **domain_errors(403),
         200: {
             "description": "アクセスログ（1行1件のJSON）",
             "content": {"application/x-ndjson": {"schema": {"type": "string"}}},
@@ -181,7 +186,7 @@ def access_log_detail(
                 #: 次のページの開始位置
                 "X-Next-Cursor": {"schema": {"type": "string"}, "description": "次ページがある場合のみ"},
             },
-        }
+        },
     },
 )
 def download(
@@ -238,7 +243,7 @@ def metric_rows(db, stmt):
 
 
 #: 時間帯別の呼び出し件数と応答時間を集計する
-@router.get("/metrics", responses={200: {"model": outputs.Metrics}})
+@router.get("/metrics", responses={**domain_errors(403), 200: {"model": outputs.Metrics}})
 def metrics(
     actor: User,
     db: DB,
@@ -282,7 +287,7 @@ def metrics(
 
 
 #: ダッシュボードの件数を集計する
-@router.get("/dashboard", responses={200: {"model": outputs.Dashboard}})
+@router.get("/dashboard", responses={**domain_errors(403), 200: {"model": outputs.Dashboard}})
 def dashboard(actor: User, db: DB):
     assets = select(func.count(Asset.id)).where(Asset.removed_at.is_(None))
     rights = (
@@ -357,7 +362,9 @@ def dimension_rows(db, stmt):
 
 
 #: 利用統計を絞り込めるAPIとプロジェクトを一覧する
-@router.get("/metric-dimensions", responses={200: {"model": list[outputs.Dimension]}})
+@router.get(
+    "/metric-dimensions", responses={**domain_errors(403), 200: {"model": list[outputs.Dimension]}}
+)
 def dimensions(
     actor: User,
     db: DB,
@@ -368,6 +375,8 @@ def dimensions(
 
 
 #: 閲覧できるアクセスログのAPIと利用プロジェクトを一覧する
-@router.get("/access-logs/dimensions", responses={200: {"model": list[outputs.Dimension]}})
+@router.get(
+    "/access-logs/dimensions", responses={**domain_errors(403), 200: {"model": list[outputs.Dimension]}}
+)
 def log_dimensions(condition: LogCondition, db: DB):
     return dimension_rows(db, select(AccessLog).where(condition))
