@@ -170,6 +170,14 @@ MUTATIONS = (
         "packages/infra/tests/test_stack.py::test_access_boundaries",
     ),
     Mutation(
+        "quint-diff",
+        "他の形式モデルの差分を業務ルールの更新として認める",
+        "packages/tools/design/formal_changes.py",
+        'if f"{FORMAL}/{domain}.qnt" not in changed:\n            return False',
+        'if f"{FORMAL}/{domain}.qnt" not in changed:\n            return True',
+        "packages/tools/tests/test_formal_changes.py::test_business_policy_requires_its_quint_domain",
+    ),
+    Mutation(
         "requirements",
         "変更した要件の古い履歴を新しい変更理由として認める",
         "packages/tools/design/requirements.py",

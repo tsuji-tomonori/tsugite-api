@@ -99,6 +99,12 @@ def test_pull_request_checks_requirements_and_evidence():
     assert gate["env"]["PR_TITLE"] == "${{ github.event.pull_request.title }}"
     assert gate["env"]["PR_BODY"] == "${{ github.event.pull_request.body }}"
     assert gate["env"]["BASE_SHA"] == "${{ github.event.pull_request.base.sha }}"
+    formal = next(
+        step for step in steps if "packages.tools.design.formal_changes" in step.get("run", "")
+    )
+    assert "if" not in formal
+    assert formal["env"]["BASE_SHA"] == gate["env"]["BASE_SHA"]
+    assert '--base "$BASE_SHA"' in formal["run"]
     assert any("requirement_evidence --check" in step.get("run", "") for step in steps)
     assert any(
         step.get("env", {}).get("EVIDENCE_COMMIT") == "${{ github.event.pull_request.head.sha }}"
