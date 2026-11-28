@@ -13,6 +13,12 @@ def portal_origin(url: str) -> str:
     return url.rstrip("/")
 
 
+def gateway_origin(url: str) -> str:
+    if not re.fullmatch(r"https://[a-z0-9]+\.execute-api\.[a-z0-9-]+\.amazonaws\.com/?", url):
+        raise ValueError("E2E_GATEWAY_ENDPOINT にスタック出力 GatewayEndpoint を指定してください")
+    return url.rstrip("/")
+
+
 def totp(seed: str, timestamp: int) -> str:
     encoded = seed.strip().upper()
     key = base64.b32decode(encoded + "=" * (-len(encoded) % 8))

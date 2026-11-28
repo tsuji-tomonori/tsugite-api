@@ -21,6 +21,7 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/cloudfront-portal-e2e
         with:
+          gateway_endpoint: ${{ vars.E2E_GATEWAY_ENDPOINT }}
           portal_url: ${{ vars.E2E_PORTAL_URL }}
           subject: ${{ vars.E2E_SUBJECT }}
           username: ${{ secrets.E2E_USERNAME }}

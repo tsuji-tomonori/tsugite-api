@@ -44,6 +44,8 @@ jobs:
     needs: verify-merge
     outputs:
       deployed: ${{ steps.current.outputs.deploy }}
+      gateway_endpoint: ${{ steps.boundary.outputs.gateway_endpoint }}
+      portal_url: ${{ steps.boundary.outputs.portal_url }}
     environment: main
     runs-on: ubuntu-latest
     timeout-minutes: 60
@@ -110,10 +112,16 @@ jobs:
         run: uv run --locked --all-packages python -m packages.tools.operations.manage deploy --require-approval never --outputs-file "$RUNNER_TEMP/stack-outputs.json"
 
       - name: Verify the deployed CloudFront and API Gateway origin boundary
+        id: boundary
         if: steps.current.outputs.deploy == 'true'
         env:
           STACK_OUTPUTS: ${{ runner.temp }}/stack-outputs.json
-        run: .venv/bin/python -m pytest -q tests/e2e/deployed/test_origin_boundary.py
+        run: |
+          .venv/bin/python -m pytest -q tests/e2e/deployed/test_origin_boundary.py
+          gateway=$(jq -er '.TsugiteApi.GatewayEndpoint | strings | select(length > 0)' "$STACK_OUTPUTS")
+          echo "gateway_endpoint=$gateway" >> "$GITHUB_OUTPUT"
+          portal=$(jq -er '.TsugiteApi.PortalUrl | strings | select(length > 0)' "$STACK_OUTPUTS")
+          echo "portal_url=$portal" >> "$GITHUB_OUTPUT"
 
   deployed-e2e:
     needs: deploy
@@ -130,8 +138,18 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
+      - name: Match the deployed stack to the dedicated account environment
+        env:
+          DEPLOYED_PORTAL: ${{ needs.deploy.outputs.portal_url }}
+          EXPECTED_PORTAL: ${{ vars.E2E_PORTAL_URL }}
+          GATEWAY: ${{ needs.deploy.outputs.gateway_endpoint }}
+        run: |
+          test -n "$DEPLOYED_PORTAL"
+          test "${DEPLOYED_PORTAL%/}" = "${EXPECTED_PORTAL%/}"
+          test -n "$GATEWAY"
       - uses: ./.github/actions/cloudfront-portal-e2e
         with:
+          gateway_endpoint: ${{ needs.deploy.outputs.gateway_endpoint }}
           portal_url: ${{ vars.E2E_PORTAL_URL }}
           subject: ${{ vars.E2E_SUBJECT }}
           username: ${{ secrets.E2E_USERNAME }}

@@ -61,12 +61,13 @@ aws cloudformation deploy --region "$region" --stack-name tsugite-github-actions
 
 ## CloudFront 経由の実環境 E2E
 
-`Deploy to AWS` は配備に成功すると、`cloudfront-e2e` Environment を使うジョブでポータルを検証します。手動実行も同じテスト手順を使います。配備をスキップしたコミットでは実行しません。**Actions → CloudFront portal E2E → Run workflow → main** から、再配備せずに同じ確認を実行できます。
+`Deploy to AWS` は配備に成功すると、`cloudfront-e2e` Environment を使うジョブでポータルを検証します。配備をスキップしたコミットでは実行しません。**Actions → CloudFront portal E2E → Run workflow → main** から再配備せずに検証できます。配備時は同じスタックの出力から接続先を自動で渡し、認証済みの入口制限も毎回検証します。手動実行では下表の `E2E_GATEWAY_ENDPOINT` を設定した場合にこの比較を実行します。
 
 | 確認 | 合格条件 |
 | --- | --- |
 | 公開 API | 配信 URL の `/api/health` が CloudFront の応答ヘッダー付きで稼働中を返し、`/api/config` でデモが無効、未ログインの `/api/me` が 401 |
 | 利用者ログイン | 新規ブラウザーでポータルにアクセスし、パスワード入力後に「本人確認」が表示され、時間ベースの6桁コード送信後に `/api/me` が専用利用者の識別子と一般利用者権限を返す |
+| 認証済みの入口制限 | MFA後の本人照会に使ったBearerで、同じ `GET /api/me` を比較する。CloudFrontでは200と専用利用者の本人情報、API Gatewayでは403と「入口を確認してください」を確認する |
 | カタログ | ログインした画面から「APIカタログ」を開き、一覧 API が 200 を返し、ブラウザーが応答の件数を表示する。公開商品が0件でも検証可能 |
 
 ### 初回設定
@@ -79,12 +80,13 @@ aws cloudformation deploy --region "$region" --stack-name tsugite-github-actions
 | 種別 | 名前 | 値 |
 | --- | --- | --- |
 | Variable | `E2E_PORTAL_URL` | 対象スタック `TsugiteApi` の出力 `PortalUrl` |
+| Variable | `E2E_GATEWAY_ENDPOINT` | 手動実行で入口制限を検証する場合のみ、同じスタックの出力 `GatewayEndpoint` |
 | Variable | `E2E_SUBJECT` | 対象ユーザープールで専用利用者の属性に表示される `sub` |
 | Secret | `E2E_USERNAME` | 招待時のユーザー名 |
 | Secret | `E2E_PASSWORD` | 初回変更後のパスワード |
 | Secret | `E2E_TOTP_SEED` | 初回登録した認証アプリの設定キー。毎回の6桁コードは実行時に生成 |
 
-Actions の各ステップとログイン処理の進捗行で失敗箇所を確認できます。認証ステップの出力は段階名と合否に限定し、トレース・スクリーンショット・ブラウザーのセッションは保存しません。パスワード変更・認証アプリ再登録時は該当 Secret を更新します。設定不足や検証失敗はジョブの失敗となり、すでに配備したスタックは自動でロールバックされません。
+Actions のステップ名と pytest のケース名から失敗箇所を確認できます。認証ステップではリクエストや例外詳細を出力せず、トレース・スクリーンショット・ブラウザーのセッションは保存しません。パスワード変更・認証アプリ再登録時は該当 Secret を更新します。設定不足や検証失敗はジョブの失敗となり、すでに配備したスタックは自動でロールバックされません。
 
 ## リビジョン 007 の適用後にロールバックが止まった場合
 
