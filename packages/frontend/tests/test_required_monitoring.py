@@ -45,6 +45,15 @@ def test_apply_monitoring_filters(
         "end": "2026-05-02T01:00:00Z",
     }
     controls = {f"f-{key}": value for key, value in chosen.items()} | {"access-id": "trace-51"}
+    controls.update(
+        {
+            "f-hours": "custom",
+            "f-start-date": "2026-05-01",
+            "f-start-time": "22:30",
+            "f-end-date": "2026-05-02",
+            "f-end-time": "01:00",
+        }
+    )
     monkeypatch.setattr(filters, "value", controls.__getitem__)
     refresh = AsyncMock()
     monkeypatch.setattr(filters, "load", refresh)
@@ -475,3 +484,64 @@ def test_log_navigation_requests_only_current_scope(
         params = records.await_args.args[0]
         assert params["scope"] == expected_scope and params["offset"] == 0 and params["request_id"] == ""
         assert logs.ctx["log_rows"] == []
+
+
+@pytest.mark.parametrize(
+    ("end", "valid"),
+    [
+        pytest.param(
+            "2026-01-01T00:00:00Z",
+            False,
+            id="empty",
+            marks=pytest.mark.case_detail("開始と終了が同じ場合は適用しない"),
+        ),
+        pytest.param(
+            "2026-02-01T00:00:00Z",
+            True,
+            id="max",
+            marks=pytest.mark.case_detail("ちょうど31日の期間を適用する"),
+        ),
+        pytest.param(
+            "2026-02-01T00:00:01Z",
+            False,
+            id="over",
+            marks=pytest.mark.case_detail("31日を超えた場合はフォームに戻す"),
+        ),
+    ],
+)
+def test_validate_absolute_period_before_search(
+    portal_module: Module, monkeypatch: pytest.MonkeyPatch, end: str, valid: bool
+) -> None:
+    """サーバーが受け付ける期間だけを送信し、範囲外は終了時刻の欄で説明する。"""
+    filters = portal_module("components.activity_filters")
+    monkeypatch.setattr(filters, "value", lambda _: "custom")
+    monkeypatch.setattr(filters, "selected_interval", lambda: ("2026-01-01T00:00:00Z", end))
+    dispatch, event, document = Mock(), Mock(), Mock()
+    monkeypatch.setattr(filters, "action", dispatch)
+    monkeypatch.setattr(filters, "document", document)
+    filters.submit_filters(False, event)
+    if valid:
+        dispatch.return_value.assert_called_once_with(event)
+    else:
+        dispatch.assert_not_called()
+        event.preventDefault.assert_called_once()
+        document.getElementById.assert_called_once_with("f-end-time")
+        document.getElementById.return_value.reportValidity.assert_called_once()
+
+
+def test_calendar_preserves_utc_selection_and_leap_day(portal_module: Module) -> None:
+    """時差を含む既存期間もUTCの日付と時刻で復元し、うるう日を選択済みとして表示する。"""
+    from test_components import elements
+
+    picker = portal_module("components.period_picker")
+    filters = {"start": "2024-03-01T06:30:00+09:00", "end": "2024-03-01T22:00:00Z", "hours": "24"}
+    _, dom = render(picker.absolute_period, filters)
+    fields = elements(dom)
+    assert fields["f-start-date"].getAttribute("value") == "2024-02-29"
+    assert fields["f-start-time"].getAttribute("value") == "21:30:00"
+    assert fields["f-end-date"].getAttribute("value") == "2024-03-01"
+    buttons = dom.getElementsByTagName("button")
+    selected = [
+        b.getAttribute("aria-label") for b in buttons if b.getAttribute("aria-pressed") == "true"
+    ]
+    assert selected == ["開始 2024-02-29", "終了 2024-03-01"]

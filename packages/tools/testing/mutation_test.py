@@ -829,6 +829,14 @@ MUTATIONS = (
     ),
     Mutation(
         "frontend",
+        "日時指定で終了日時を開始日時と同じにする",
+        "packages/frontend/src/web_app/components/activity_filters.py",
+        'return timestamp("start"), timestamp("end")',
+        'return timestamp("start"), timestamp("start")',
+        "packages/frontend/tests/test_required_monitoring.py::test_apply_monitoring_filters",
+    ),
+    Mutation(
+        "frontend",
         "一覧の検索条件を常に展開する",
         "packages/frontend/src/web_app/components/list_layout.py",
         'with t.details(classes="list-disclosure", open=expanded):',
