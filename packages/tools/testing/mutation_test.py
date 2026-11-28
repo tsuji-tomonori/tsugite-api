@@ -34,6 +34,14 @@ MUTATIONS = (
         "packages/backend/tests/test_quint_publication.py::test_publication_review",
     ),
     Mutation(
+        "chat-wait",
+        "回答待ちの表示からリングを外す",
+        "packages/frontend/src/web_app/components/chat_views.py",
+        'role="status", classes="chat-pending"',
+        'role="status"',
+        "packages/frontend/tests/test_required_guide_home.py::test_waiting_for_a_chat_answer_prevents_a_second_submission",
+    ),
+    Mutation(
         "chat-inquiry",
         "モデルが類似と判定した商品をすべて候補に戻す",
         "packages/agent/src/chat_retrieval.py",
