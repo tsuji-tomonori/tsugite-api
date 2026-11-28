@@ -26,6 +26,14 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
+        "chat-inquiry",
+        "モデルが類似と判定した商品をすべて候補に戻す",
+        "packages/agent/src/chat_retrieval.py",
+        "if key in grounded][:3]",
+        "if key in grounded or key in raw_semantic][:3]",
+        "packages/agent/tests/test_agent_retrieval.py::test_chat_does_not_promote_unrelated_sources",
+    ),
+    Mutation(
         "deployed-e2e",
         "実環境でログインした利用者の識別子を照合しない",
         "tests/e2e/deployed/account.py",
