@@ -558,6 +558,7 @@ def generate(out=OUT):
                     "`task docs:api`",
                 ),
                 ("インフラ", "[CDKコンポーネント別の設計書](infra/README.md)", "`task docs:infra`"),
+                ("形式仕様", "[ドメインと不変条件](formal/domains.md)", "`task docs:formal`"),
                 ("開発ルール", "[完了の定義](dev-rules/definition-of-done.md)", "`task docs:quality`"),
             ],
         ),

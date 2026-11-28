@@ -10,4 +10,5 @@
 | サンプルAPI | [商品別のOpenAPI YAML](sample-api/) | `task docs:samples` |
 | DB | [テーブル・レコード・カラム定義](db/database.md) · [入出力スキーマ](db/schemas.md) · [SQL・AWSのCRUD表](db/crud.md) | `task docs:api` |
 | インフラ | [CDKコンポーネント別の設計書](infra/README.md) | `task docs:infra` |
+| 形式仕様 | [ドメインと不変条件](formal/domains.md) | `task docs:formal` |
 | 開発ルール | [完了の定義](dev-rules/definition-of-done.md) | `task docs:quality` |

@@ -1,4 +1,5 @@
-// 自分のアクセスログと監査画面は異なる。監査は現在の役割と呼出時点の帰属を使う。
+/// アクセスログと監査
+/// 本人画面と監査画面について、本人の呼び出しか、監査対象の範囲内か、現在の役割は何かによって応答を決める。
 module audit {
   var role: str
   var view: str
@@ -19,6 +20,7 @@ module audit {
     nondet led = Bool.oneOf()
     read(r, p, mine, led)
   }
+  /// 本人のアクセスログを取得できた場合、対象の呼び出しは本人のものである。
   val safe = (view == "personal" and response == 200) implies own
   run personalLogTest = init.then(read("member","personal",false,true))
     .then(read("admin","personal",false,true)).then(read("lead","personal",false,true))

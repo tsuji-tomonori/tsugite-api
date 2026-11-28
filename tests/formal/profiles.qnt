@@ -1,4 +1,5 @@
-// 氏名の未登録・登録済み、表示名の有無、権限と版の競合を検証する。
+/// 利用者プロフィール
+/// 氏名の登録状態、表示名、本人・管理者・第三者の更新権限、古い版による更新を扱う。
 module profiles {
   var named: bool
   var hasFullName: bool
@@ -16,6 +17,7 @@ module profiles {
   }
   action step = any { edit("selfSet"), edit("adminClear"), edit("other"), edit("clearFull"),
     all { hasFullName, edit("stale") } }
+  /// 第三者の更新は403、氏名の消去は422で拒否し、更新成功後は氏名が登録されている。
   val safe = and { (operation == "other") implies response == 403,
     (operation == "clearFull") implies response == 422, (response == 200) implies hasFullName }
   run profileTest = init.then(edit("selfSet")).then(edit("other")).then(edit("stale")).then(edit("adminClear"))

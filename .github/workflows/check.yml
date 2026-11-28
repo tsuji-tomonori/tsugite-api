@@ -57,7 +57,7 @@ jobs:
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: python3 -m packages.tools.design.formal_changes --base "$BASE_SHA"
-      #: 全形式モデルの不変条件と生成差分を調べ、要件の操作列を単体・結合テストで再生する。
+      #: 全形式モデルの不変条件を検査し、日本語の一覧と操作列を再生成して差分を調べ、操作列を単体・結合テストで再生する。
       - name: 要件とQuintの操作列を照合
         run: bash tests/formal/check.sh
       - uses: actions/upload-artifact@v4
@@ -68,6 +68,8 @@ jobs:
             artifacts/formal/*.log
             artifacts/formal/replay.xml
             artifacts/formal/coverage.md
+            docs/generated/formal/domains.md
+            tests/formal/*.qnt
             tests/formal/cases.json
           if-no-files-found: error
       #: 各要件に実在する受入テストと証跡の取得方法が定義されている。
