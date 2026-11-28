@@ -2,27 +2,27 @@
 
 判定　合格
 
-対象コミット　`e7d27c12156a070acf58bd298f088bc776c372dc`
+対象コミット　`fff6a9703ac5614bc26974093ab955a813651e4e`
 
-[検証した要件と変更履歴](https://github.com/tsuji-tomonori/tsugite-api/blob/e7d27c12156a070acf58bd298f088bc776c372dc/docs/requirements/items/%E5%88%A9%E7%94%A8%E8%80%85%E3%81%AF%E3%80%81%E5%88%A9%E7%94%A8%E6%A8%A9%E3%81%8C%E6%9C%89%E5%8A%B9%E3%81%AA%E3%81%A8%E3%81%8D%E3%80%81API%E3%82%92%E5%91%BC%E3%81%B3%E5%87%BA%E3%81%99%E3%81%93%E3%81%A8%E3%81%8C%E3%81%A7%E3%81%8D%E3%82%8B.md)
+[検証した要件と変更履歴](https://github.com/tsuji-tomonori/tsugite-api/blob/fff6a9703ac5614bc26974093ab955a813651e4e/docs/requirements/items/%E5%88%A9%E7%94%A8%E8%80%85%E3%81%AF%E3%80%81%E5%88%A9%E7%94%A8%E6%A8%A9%E3%81%8C%E6%9C%89%E5%8A%B9%E3%81%AA%E3%81%A8%E3%81%8D%E3%80%81API%E3%82%92%E5%91%BC%E3%81%B3%E5%87%BA%E3%81%99%E3%81%93%E3%81%A8%E3%81%8C%E3%81%A7%E3%81%8D%E3%82%8B.md)
 
 ## 実行したテストと証跡
 
-- 成功　デモの提供者と利用者が公開・申請・承認・実行・権限取消を画面で完了できる（10.592 秒）　`tests/e2e/browser/test_portal.py::test_user_flow`
+- 成功　デモの提供者と利用者が公開・申請・承認・実行・権限取消を画面で完了できる（9.070 秒）　`tests/e2e/browser/test_portal.py::test_user_flow`
   - ![SKUを指定し、API Docs内で短期認証を発行して得たHTTPステータスと応答本文](../screenshots/demo/06-invoked.png)
-- 成功　承認した呼び出しを接続先へ転送し、権限取消後は遮断する（検証環境の在庫を照会する）（1.923 秒）　`tests/e2e/aws/test_portal.py::test_approved_calls_reach_upstream[cognito-lambda-staging]`
-- 成功　承認した呼び出しを接続先へ転送し、権限取消後は遮断する（本番環境の在庫を照会する）（1.923 秒）　`tests/e2e/aws/test_portal.py::test_approved_calls_reach_upstream[cognito-lambda-production]`
-- 成功　承認した呼び出しを接続先へ転送し、権限取消後は遮断する（利用者がLambdaへ接続する）（1.730 秒）　`tests/e2e/aws/test_portal.py::test_approved_calls_reach_upstream[cognito-lambda]`
-- 成功　承認した呼び出しを接続先へ転送し、権限取消後は遮断する（システムがLambdaへ接続する）（1.808 秒）　`tests/e2e/aws/test_portal.py::test_approved_calls_reach_upstream[machine-lambda]`
-- 成功　承認した呼び出しを接続先へ転送し、権限取消後は遮断する（利用者がHTTPS先へ接続する）（2.223 秒）　`tests/e2e/aws/test_portal.py::test_approved_calls_reach_upstream[cognito-https]`
-- 成功　利用権の操作列を再生し、取消や別環境では接続先への転送が起きない。（形式仕様の操作と期待状態を照合する。）（0.247 秒）　`packages/backend/tests/test_quint_grants.py::test_grant_history[grants.closedTest]`
-- 成功　利用権の操作列を再生し、取消や別環境では接続先への転送が起きない。（形式仕様の操作と期待状態を照合する。）（0.321 秒）　`packages/backend/tests/test_quint_grants.py::test_grant_history[grants.lifecycleTest]`
-- 成功　利用権の操作列を再生し、取消や別環境では接続先への転送が起きない。（形式仕様の操作と期待状態を照合する。）（0.338 秒）　`packages/backend/tests/test_quint_grants.py::test_grant_history[grants.reapplyTest]`
-- 成功　利用権の操作列を再生し、取消や別環境では接続先への転送が起きない。（形式仕様の操作と期待状態を照合する。）（0.295 秒）　`packages/backend/tests/test_quint_grants.py::test_grant_history[grants.scopeTest]`
-- 成功　限定公開における提供元・所属・直接属性の各条件を照合する。（形式仕様の操作と期待状態を照合する。）（0.001 秒）　`packages/backend/tests/test_quint_policy.py::test_audience_policy[audience.visibilityTest]`
+- 成功　承認した呼び出しを接続先へ転送し、権限取消後は遮断する（検証環境の在庫を照会する）（1.561 秒）　`tests/e2e/aws/test_portal.py::test_approved_calls_reach_upstream[cognito-lambda-staging]`
+- 成功　承認した呼び出しを接続先へ転送し、権限取消後は遮断する（本番環境の在庫を照会する）（1.587 秒）　`tests/e2e/aws/test_portal.py::test_approved_calls_reach_upstream[cognito-lambda-production]`
+- 成功　承認した呼び出しを接続先へ転送し、権限取消後は遮断する（利用者がLambdaへ接続する）（1.489 秒）　`tests/e2e/aws/test_portal.py::test_approved_calls_reach_upstream[cognito-lambda]`
+- 成功　承認した呼び出しを接続先へ転送し、権限取消後は遮断する（システムがLambdaへ接続する）（1.604 秒）　`tests/e2e/aws/test_portal.py::test_approved_calls_reach_upstream[machine-lambda]`
+- 成功　承認した呼び出しを接続先へ転送し、権限取消後は遮断する（利用者がHTTPS先へ接続する）（1.844 秒）　`tests/e2e/aws/test_portal.py::test_approved_calls_reach_upstream[cognito-https]`
+- 成功　利用権の操作列を再生し、取消や別環境では接続先への転送が起きない。（形式仕様の操作と期待状態を照合する。）（0.193 秒）　`packages/backend/tests/test_quint_grants.py::test_grant_history[grants.closedTest]`
+- 成功　利用権の操作列を再生し、取消や別環境では接続先への転送が起きない。（形式仕様の操作と期待状態を照合する。）（0.524 秒）　`packages/backend/tests/test_quint_grants.py::test_grant_history[grants.lifecycleTest]`
+- 成功　利用権の操作列を再生し、取消や別環境では接続先への転送が起きない。（形式仕様の操作と期待状態を照合する。）（0.262 秒）　`packages/backend/tests/test_quint_grants.py::test_grant_history[grants.reapplyTest]`
+- 成功　利用権の操作列を再生し、取消や別環境では接続先への転送が起きない。（形式仕様の操作と期待状態を照合する。）（0.225 秒）　`packages/backend/tests/test_quint_grants.py::test_grant_history[grants.scopeTest]`
+- 成功　限定公開における提供元・所属・直接属性の各条件を照合する。（形式仕様の操作と期待状態を照合する。）（0.000 秒）　`packages/backend/tests/test_quint_policy.py::test_audience_policy[audience.visibilityTest]`
 - 成功　本人、別人、共有キーとマシンの権利を区別し、停止・失効を即時反映する。（形式仕様の操作と期待状態を照合する。）（0.001 秒）　`packages/backend/tests/test_quint_policy.py::test_entitlement_policy[entitlement.principalTest]`
 - 成功　本人、別人、共有キーとマシンの権利を区別し、停止・失効を即時反映する。（形式仕様の操作と期待状態を照合する。）（0.001 秒）　`packages/backend/tests/test_quint_policy.py::test_entitlement_policy[entitlement.stopTest]`
-- 成功　認証情報と利用者の操作制限、世代、発行後の秒境界を照合する。（形式仕様の操作と期待状態を照合する。）（0.001 秒）　`packages/backend/tests/test_quint_policy.py::test_operation_policy[credentials.lifetimeTest]`
+- 成功　認証情報と利用者の操作制限、世代、発行後の秒境界を照合する。（形式仕様の操作と期待状態を照合する。）（0.000 秒）　`packages/backend/tests/test_quint_policy.py::test_operation_policy[credentials.lifetimeTest]`
 - 成功　認証情報と利用者の操作制限、世代、発行後の秒境界を照合する。（形式仕様の操作と期待状態を照合する。）（0.000 秒）　`packages/backend/tests/test_quint_policy.py::test_operation_policy[credentials.operationsTest]`
 - 成功　認証情報と利用者の操作制限、世代、発行後の秒境界を照合する。（形式仕様の操作と期待状態を照合する。）（0.000 秒）　`packages/backend/tests/test_quint_policy.py::test_operation_policy[credentials.rotatedTest]`
 
