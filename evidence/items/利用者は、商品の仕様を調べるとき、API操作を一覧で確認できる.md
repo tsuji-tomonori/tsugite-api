@@ -2,13 +2,13 @@
 
 判定　合格
 
-対象コミット　`d066bb6ce7546f575e76448b95619f45705daa33`
+対象コミット　`e77afc4a3eda88a0cba4fd2035ecaa9b1cd3bd8c`
 
-[検証した要件と変更履歴](https://github.com/tsuji-tomonori/tsugite-api/blob/d066bb6ce7546f575e76448b95619f45705daa33/docs/requirements/items/%E5%88%A9%E7%94%A8%E8%80%85%E3%81%AF%E3%80%81%E5%95%86%E5%93%81%E3%81%AE%E4%BB%95%E6%A7%98%E3%82%92%E8%AA%BF%E3%81%B9%E3%82%8B%E3%81%A8%E3%81%8D%E3%80%81API%E6%93%8D%E4%BD%9C%E3%82%92%E4%B8%80%E8%A6%A7%E3%81%A7%E7%A2%BA%E8%AA%8D%E3%81%A7%E3%81%8D%E3%82%8B.md)
+[検証した要件と変更履歴](https://github.com/tsuji-tomonori/tsugite-api/blob/e77afc4a3eda88a0cba4fd2035ecaa9b1cd3bd8c/docs/requirements/items/%E5%88%A9%E7%94%A8%E8%80%85%E3%81%AF%E3%80%81%E5%95%86%E5%93%81%E3%81%AE%E4%BB%95%E6%A7%98%E3%82%92%E8%AA%BF%E3%81%B9%E3%82%8B%E3%81%A8%E3%81%8D%E3%80%81API%E6%93%8D%E4%BD%9C%E3%82%92%E4%B8%80%E8%A6%A7%E3%81%A7%E7%A2%BA%E8%AA%8D%E3%81%A7%E3%81%8D%E3%82%8B.md)
 
 ## 実行したテストと証跡
 
-- 成功　商品を公開し、利用者が商品詳細から利用申請できる（7.386 秒）　`tests/e2e/browser/test_product_publication.py::test_publish_and_apply_from_product_page`
+- 成功　商品を公開し、利用者が商品詳細から利用申請できる（7.826 秒）　`tests/e2e/browser/test_product_publication.py::test_publish_and_apply_from_product_page`
   - ![選んだ操作の入力と応答仕様](../screenshots/publication/operations.png)
 - 成功　API Docsは各操作の入力・成功応答・エラーとモデルを仕様どおり表示し、承認先で試行できる。（0.006 秒）　`packages/frontend/tests/test_required_product_views.py::test_docs_match_openapi_operations`
 
