@@ -91,6 +91,14 @@ MUTATIONS = (
     ),
     Mutation(
         "frontend",
+        "待機アイコンをボタンの文字色から固定色に戻す",
+        "packages/frontend/public/ui.css",
+        "background-color: currentColor;",
+        "background-color: gold;",
+        "tests/e2e/browser/test_busy_icon.py::test_busy_icon_follows_button_color",
+    ),
+    Mutation(
+        "frontend",
         "閉じた通知を再描画で復活させる",
         "packages/frontend/src/web_app/runtime/portal_shell.py",
         'ctx.update(message="", error=False)',

@@ -222,6 +222,15 @@ textarea.form-control { min-height: 76px; resize: vertical; }
 
 .btn[aria-busy="true"] { color: var(--primary-ink); background: var(--primary); cursor: progress; }
 .btn-primary[aria-busy="true"] { color: var(--primary); background: var(--primary-ink); border-color: var(--primary); }
-.btn[aria-busy="true"]::after { content: "⌛"; margin-inline-start: .5rem; }
+.btn[aria-busy="true"]::after {
+  content: "";
+  inline-size: 1em;
+  block-size: 1em;
+  flex: none;
+  margin-inline-start: .5rem;
+  background-color: currentColor;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='1.6' stroke-linejoin='round' stroke-linecap='round'%3E%3Cpath d='M4 2h12M4 18h12M5 2v2c0 3 3 4 5 6-2 2-5 3-5 6v2m10-16v2c0 3-3 4-5 6 2 2 5 3 5 6v2M7 6h6m-5 9h4'/%3E%3C/svg%3E") center / contain no-repeat;
+  forced-color-adjust: preserve-parent-color;
+}
 
 .btn[hidden] { display: none; }
