@@ -14,6 +14,7 @@ from runtime.portal_ui import ctx
 from components import product_views
 from components.controls import btn, field
 from components.list_layout import result_table
+from components.request_progress import request_progress, request_status
 
 
 def rights_page(incoming: bool, rows: list[dict[str, Any]]) -> None:
@@ -23,15 +24,20 @@ def rights_page(incoming: bool, rows: list[dict[str, Any]]) -> None:
         return
     with result_table(
         "届いた申請" if incoming else "自分の申請",
-        ("API", "プロジェクト・環境・状態", "申請内容", "操作"),
+        ("API", "プロジェクト・環境・状態", "申請内容", "操作")
+        if incoming
+        else ("API", "プロジェクト・環境", "ステータス", "申請内容", "操作"),
     ):
         for row in rows:
             with t.tr():
                 t.th(row.get("asset_name") or row["asset_id"], scope="row")
-                t.td(
-                    f"{row['project']} · {LABEL[row['environment']]} · {LABEL[row['status']]}",
-                    classes=row["status"],
-                )
+                context = f"{row['project']} · {LABEL[row['environment']]}"
+                if incoming:
+                    t.td(f"{context} · {LABEL[row['status']]}", classes=row["status"])
+                else:
+                    t.td(context)
+                    with t.td():
+                        request_status(row)
                 with t.td():
                     if row.get("applicant"):
                         t.p(
@@ -40,10 +46,10 @@ def rights_page(incoming: bool, rows: list[dict[str, Any]]) -> None:
                             + row["applicant"]
                         )
                     t.p("利用目的　" + row["reason"])
-                    if stage := row.get("stage"):
+                    if incoming and (stage := row.get("stage")):
                         t.p(product_views.step_label(stage) + "の承認待ち")
                     evidence = row.get("application", {})
-                    for decision in evidence.get("decisions", []):
+                    for decision in evidence.get("decisions", []) if incoming else []:
                         t.p(
                             product_views.step_label(decision["stage"])
                             + " · "
@@ -78,6 +84,9 @@ def rights_page(incoming: bool, rows: list[dict[str, Any]]) -> None:
                     if not incoming and row["status"] == "approved":
                         btn("APIを開く", go, "api/" + row["asset_id"])
                         btn("APIクライアントで開く", go, "console/" + row["asset_id"])
+            if not incoming:
+                with t.tr(), t.td(colspan=5):
+                    request_progress(row)
 
 
 def inbox() -> None:

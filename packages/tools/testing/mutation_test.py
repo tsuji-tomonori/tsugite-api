@@ -33,6 +33,14 @@ MUTATIONS = (
         "packages/frontend/tests/test_required_guide_navigation.py::test_header_and_current_page_for_an_authenticated_reader",
     ),
     Mutation(
+        "request-progress",
+        "利用申請の判断履歴を無視して常に最初の段階を現在地にする",
+        "packages/frontend/src/web_app/components/request_progress.py",
+        "current = len(decisions)",
+        "current = 0",
+        "packages/frontend/tests/test_required_product_views.py::test_applicant_sees_request_progress",
+    ),
+    Mutation(
         "publication-progress",
         "承認順の現在地を一段ずらして表示する",
         "packages/frontend/src/web_app/components/product_views.py",

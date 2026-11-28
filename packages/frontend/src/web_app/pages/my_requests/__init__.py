@@ -15,6 +15,6 @@ SCREENS = (
         examples={"status": lambda: rights_page(False, [example.REQUEST])},
         group="ワークスペース",
         order=40,
-        description="プロジェクトの申請状況と、承認されたAPIを確認できます。",
+        description="利用申請のステータスと承認経路を確認できます。",
     ),
 )
