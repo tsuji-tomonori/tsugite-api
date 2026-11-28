@@ -41,6 +41,12 @@ REQUEST = {
     "status": "pending",
     "reason": "棚卸しのため",
     "stage": "provider",
+    "application": {
+        "steps": ["department", "provider"],
+        "decisions": [
+            {"stage": "department", "action": "approve", "actor": "部門長", "reason": "利用目的を確認"}
+        ],
+    },
 }
 KEY = {
     "id": "sample-credential",

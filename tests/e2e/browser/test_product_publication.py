@@ -88,7 +88,9 @@ def test_publish_and_apply_from_product_page(tmp_path: Path, request: pytest.Fix
         user.get_by_label("テスト実施ID（必須）").fill("QA-882")
         user.get_by_label("利用目的").fill("受注連携")
         user.get_by_role("button", name="申請する").click()
-        expect(user.get_by_text("finance · 本番 · 利用中", exact=True)).to_be_visible()
+        expect(
+            user.get_by_role("row").filter(has_text="finance · 本番").get_by_text("利用中", exact=True)
+        ).to_be_visible()
         expect(user.get_by_text("テスト実施ID　QA-882", exact=True)).to_be_visible()
         capture_image(request.node, "publication", user, "terms", "本番の利用条件と受理された申請内容")
         browser.close()

@@ -64,7 +64,9 @@ def test_withdraw_pending(portal_session: PortalSession) -> None:
     navigate(page, "自分の申請")
     page.get_by_label("判断・取下げの理由").fill("利用計画変更")
     page.get_by_role("button", name="申請を取り下げる").click()
-    expect(page.get_by_text(re.compile("finance · 検証 · 取下げ済み"))).to_be_visible()
+    expect(
+        page.get_by_role("row").filter(has_text="finance · 検証").get_by_text("取下げ済み", exact=True)
+    ).to_be_visible()
     capture(page, "withdrawn", "利用者が取り下げた検証環境の申請")
     assert (
         api.post(url + "/requests", headers=user, json=data).raise_for_status().json()["status"]
@@ -417,3 +419,38 @@ def test_provider_shortens_token_lifetime(portal_session: PortalSession) -> None
     assert api.post("/api/credentials", headers=user, json=data).status_code == 422
     assert api.post("/api/credentials", headers=user, json={**data, "ttl_minutes": 5}).is_success
     capture(page, "api-limit", "提供者が商品に設定した有効期限の上限")
+
+
+def test_applicant_tracks_review(portal_session: PortalSession) -> None:
+    """申請者が自分の一覧から中間承認後の現在地と残りの担当を確認できる。"""
+    api, page, capture = portal_session
+    owner, admin, user = (headers(api, role) for role in ("provider", "admin", "consumer"))
+    steps = ["admin", "provider", "admin"]
+    url, _ = publish(api, owner, {**FORM, "offers": {"sandbox": {"route": "custom", "steps": steps}}})
+    row = (
+        api.post(
+            url + "/requests",
+            headers=user,
+            json={"environment": "sandbox", "project": "finance", "reason": "棚卸"},
+        )
+        .raise_for_status()
+        .json()
+    )
+    open_portal(api, page, "利用チーム")
+    navigate(page, "自分の申請")
+    expect(page.get_by_text("1/3段階　管理者")).to_be_visible()
+    api.post(
+        "/api/requests/" + row["id"],
+        headers=admin,
+        json={"action": "approve", "revision": row["revision"], "reason": "利用目的を確認"},
+    ).raise_for_status()
+    page.reload()
+    expect(page.get_by_text("2/3段階　提供プロジェクトのメンバー")).to_be_visible()
+    page.get_by_text("承認経路", exact=True).click()
+    table = page.get_by_role("table", name="承認経路", exact=True)
+    expect(table.get_by_role("row")).to_have_count(4)
+    expect(table.get_by_role("row").nth(1)).to_contain_text("承認済み")
+    expect(table.get_by_role("row").nth(1)).to_contain_text("利用目的を確認")
+    expect(table.get_by_role("row").nth(2).locator('[aria-current="step"]')).to_have_text("承認待ち")
+    expect(table.get_by_role("row").nth(3)).to_contain_text("未到達")
+    capture(page, "applicant-progress", "申請者が確認する全3段階の承認経路と2段階目の担当")
