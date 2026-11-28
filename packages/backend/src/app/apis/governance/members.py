@@ -96,16 +96,11 @@ def list_members(
     retired = retired_units(db)
     if local_demo():
         accounts = {m.subject: m for m in db.scalars(select(Member))}
-        rows = [
-            {"subject": key, "username": key, "role": "external" if key == "admin" else key}
-            for key in DEMO_GROUPS
-            if key not in accounts
-        ]
+        rows = [{"subject": key, "username": key} for key in DEMO_GROUPS if key not in accounts]
         rows.extend(
             {
                 "subject": m.subject,
                 "username": m.username,
-                "role": m.role,
                 "project": retired.get(m.project, m.project),
             }
             for m in accounts.values()
@@ -136,7 +131,6 @@ def list_members(
                 {
                     "subject": subject,
                     "username": username,
-                    "role": entry.role if entry else "Cognito",
                     "project": retired.get(entry.project, entry.project) if entry else "",
                     "deleted": bool(entry and entry.deleted),
                 }
@@ -207,14 +201,14 @@ def invite(data: Invitation, request: Request, actor: User, db: DB):
                 idp.admin_add_user_to_group(
                     UserPoolId=pool(),
                     Username=username,
-                    GroupName=("own-" if data.role == "provider" else "use-") + data.project,
+                    GroupName="use-" + data.project,
                 )
         except Exception:
             #: 利用者・グループの管理（Cognitoユーザープール） / 利用者を削除
             undo_invitation(username)
             raise
     request.state.target_subject_id = subject
-    db.add(Member(subject=subject, username=username, project=data.project, role=data.role))
+    db.add(Member(subject=subject, username=username, project=data.project, role=""))
     profile = MemberProfile(subject=subject, full_name=data.full_name, display_name=data.display_name)
     set_directory_email(profile, username)
     db.add(profile)

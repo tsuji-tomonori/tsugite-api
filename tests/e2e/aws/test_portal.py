@@ -17,7 +17,7 @@ from pytest_given import scenario
 
 from tests.e2e.aws.https_stock import https_stock
 from tests.e2e.aws.stock_functions import STOCK_FUNCTIONS
-from tests.support.catalog import invocation_headers
+from tests.support.catalog import invocation_headers, publish_asset
 from tests.support.catalog_journey import catalog_journey
 from tests.support.portal_server import ROOT, serve_portal
 
@@ -233,7 +233,7 @@ def test_approved_calls_reach_upstream(
         assert result.status_code == 201, result.text
         key = result.json()["id"]
         asset = "apis/" + key
-        result = api.put(asset + "/publication?published=true", headers=owner)
+        result = publish_asset(api, asset, owner, {"Authorization": "Bearer " + tokens["administrator"]})
         assert result.status_code == 200, result.text
         form = {"project": "finance", "environment": environment, "reason": "棚卸し"}
         result = api.post(asset + "/requests", headers=user, json=form)
@@ -366,8 +366,8 @@ def test_marketplace_contracts(aws, resources, tmp_path, request):
         for product, answer in zip(CATALOG[:6], expected, strict=True):
             data = {**offer(product), "base_path": "/v1"}
             asset = api.post("apis", headers=owner, json=data).raise_for_status().json()["id"]
-            api.put(
-                f"apis/{asset}/publication", params={"published": True}, headers=owner
+            publish_asset(
+                api, f"apis/{asset}", owner, {"Authorization": "Bearer " + tokens["administrator"]}
             ).raise_for_status()
             env = product["environment"]
             form = {"project": "finance", "environment": env, "reason": "月次集計"}
@@ -395,6 +395,8 @@ def test_marketplace_contracts(aws, resources, tmp_path, request):
             )
             assert [e["action"] for e in reversed(events)] == [
                 "register",
+                "publication.submit",
+                "publication.approve",
                 "publish",
                 "apply",
                 "approve",
@@ -429,8 +431,8 @@ def test_upstream_unavailable(aws, resources, tmp_path, request):
                 .raise_for_status()
                 .json()["id"]
             )
-            api.put(
-                f"apis/{asset}/publication", params={"published": True}, headers=owner
+            publish_asset(
+                api, f"apis/{asset}", owner, {"Authorization": "Bearer " + tokens["administrator"]}
             ).raise_for_status()
             right = (
                 api.post(

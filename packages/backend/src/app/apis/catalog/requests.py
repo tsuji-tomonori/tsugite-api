@@ -4,6 +4,7 @@ from app.dependencies import DB, User
 from app.schemas.catalog import Right
 from fastapi import APIRouter
 from sqlalchemy import select
+from sqlalchemy.orm import defer
 from tsugite_db.models import Access, Asset, Event
 
 router = APIRouter()
@@ -39,7 +40,13 @@ def requests(
             | (Access.subject.is_(None) & Access.project.in_(actor.projects))
         )
     elif not actor.leads:
-        stmt = stmt.where(Asset.owner.in_(actor.owners))
+        stages = ["person/" + actor.subject]
+        if actor.admin:
+            stages.append("admin")
+        stmt = stmt.where(
+            Asset.owner.in_(actor.owners) | ((Access.status == "pending") & Access.stage.in_(stages))
+        )
+    stmt = stmt.options(defer(Asset.spec))
     if asset_id:
         stmt = stmt.where(Access.asset_id == asset_id)
     return [

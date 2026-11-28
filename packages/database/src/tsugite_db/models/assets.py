@@ -36,6 +36,10 @@ class Asset(Base):
     offers: Mapped[str | None] = mapped_column(Text)
     #: 次の公開版の変更説明
     release_note: Mapped[str | None] = mapped_column(Text)
+    #: 公開申請の申請者と残りの承認段階（JSON）
+    publication_request: Mapped[str | None] = mapped_column(Text)
+    #: 個人が責任を持つ場合の利用者識別子（未指定なら提供プロジェクト）
+    responsible: Mapped[str | None] = mapped_column(String(180))
     #: 提供環境と接続先の対応（JSON）
     targets: Mapped[str] = mapped_column(Text)
     #: 公開範囲と承認条件（JSON）

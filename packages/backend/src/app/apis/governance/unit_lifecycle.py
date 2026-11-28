@@ -50,7 +50,25 @@ def require_destination(target, dependency):
 
 
 def asset_references(db, source, target):
+    rules = db.get(DirectoryTree, "publication")
+    if rules:
+        config = json.loads(rules.units)
+        if "unit/" + source in config["steps"]:
+            require_destination(target, "公開承認の設定")
+            config["steps"] = [
+                ("unit/" + target if s == "unit/" + source else s) for s in config["steps"]
+            ]
+            rules.units = json.dumps(config, ensure_ascii=False)
     for asset in db.scalars(select(Asset).where(Asset.removed_at.is_(None))):
+        if asset.publication_request:
+            pending = json.loads(asset.publication_request)
+            if "unit/" + source in pending["remaining"] or source in pending["departments"]:
+                require_destination(target, "公開審査中の商品")
+                pending["remaining"] = [
+                    ("unit/" + target if s == "unit/" + source else s) for s in pending["remaining"]
+                ]
+                pending["departments"] = replace_ids(pending["departments"], source, target)
+                asset.publication_request = json.dumps(pending, ensure_ascii=False)
         if asset.owner == source:
             require_destination(target, "提供中または下書きのAPI")
             asset.owner = target

@@ -1,5 +1,5 @@
 # 属性の登録と利用者への割り当て、表示範囲を検証する。
-from tests.support.catalog import FORM, headers
+from tests.support.catalog import FORM, headers, publish_asset
 
 
 def test_metadata_groups_and_visibility(portal):
@@ -76,7 +76,7 @@ def test_metadata_audience_and_transfer(portal):
     asset = (
         "/api/apis/" + portal.post("/api/apis", headers=owner, json=FORM).raise_for_status().json()["id"]
     )
-    portal.put(asset + "/publication?published=true", headers=owner).raise_for_status()
+    publish_asset(portal, asset, owner).raise_for_status()
 
     def policy(data):
         revision = portal.get(asset, headers=owner).json()["revision"]

@@ -172,8 +172,6 @@ class MemberProfile(PersonNames):
 class Member(Person):
     #: 管理者権限を持つか
     admin: bool
-    #: 利用者の役割
-    role: str
     #: 所属プロジェクトの識別子
     project: NotRequired[str]
     #: 削除済みか

@@ -5,7 +5,6 @@ from collections.abc import Sequence
 from urllib.parse import quote
 
 from actions.members import change_admin_role, member_add, member_page, member_remove
-from content.portal_labels import ROLE_LABELS
 from puepy import t
 from routing.portal_navigation import go
 from runtime.portal_ui import action, ctx
@@ -21,7 +20,6 @@ def invite_form(projects: Sequence[str], *, expanded: bool = False) -> None:
         field("ユーザー名（メールアドレス）", "member-email", required=True)
         field("氏名", "member-full-name", required=True)
         field("表示名", "member-display-name", required=False)
-        field("役割", "member-role", options=[("consumer", "利用者"), ("provider", "提供者")])
         field("所属プロジェクト", "member-project", options=[(p, p) for p in projects])
         t.button("追加する", type="submit", classes="btn btn-primary")
 
@@ -33,14 +31,13 @@ def members_view() -> None:
         invite_form(data["projects"])
     with result_table(
         "登録ユーザー",
-        ("ユーザー名", "氏名", "メールアドレス", "役割", "所属プロジェクト", "管理者権限", "操作"),
+        ("ユーザー名", "氏名", "メールアドレス", "所属プロジェクト", "管理者権限", "操作"),
     ):
         for row in data["items"]:
             with t.tr():
                 t.th(row["username"], scope="row")
                 full_name_cell(row)
                 t.td(row.get("email") or "—")
-                t.td(ROLE_LABELS.get(row["role"], row["role"]))
                 t.td(row.get("project") or "—")
                 t.td("あり" if row.get("admin") else "なし")
                 with t.td(), t.div(classes="btn-grouping"):

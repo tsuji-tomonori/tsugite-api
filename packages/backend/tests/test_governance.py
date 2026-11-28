@@ -5,7 +5,7 @@ from copy import deepcopy
 
 from app.core.auth import DEMO_GROUPS
 
-from tests.support.catalog import FORM, approved, headers, invocation_headers
+from tests.support.catalog import FORM, approved, headers, invocation_headers, publish_asset
 
 
 def test_member_lifecycle(portal):
@@ -80,7 +80,7 @@ def test_listing_revisions(portal):
         .json()
     )
     assert not updated["published"] and portal.get(path, headers=call).status_code == 403
-    portal.put(url + "/publication?published=true", headers=owner).raise_for_status()
+    publish_asset(portal, url, owner).raise_for_status()
     right = portal.post(
         url + "/requests",
         headers=user,

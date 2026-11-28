@@ -11,7 +11,7 @@ SCREENS = (
         "提供するAPI",
         cards,
         load_catalog,
-        group="提供者メニュー",
+        group="商品提供・審査",
         order=110,
         visible=lambda user: bool(user["owners"]),
         heading_action=lambda: btn("APIを登録", go, "register", primary=True),

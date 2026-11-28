@@ -8,7 +8,7 @@ import pytest
 from playwright.sync_api import expect, sync_playwright
 
 from tests.e2e.browser.test_api_docs import delivery_service, delivery_spec
-from tests.support.catalog import headers
+from tests.support.catalog import headers, publish_asset
 from tests.support.catalog_journey import browser_evidence, navigate
 from tests.support.portal_server import serve_portal
 
@@ -59,7 +59,7 @@ def test_person_operation_console(tmp_path: Path, request: pytest.FixtureRequest
                 .raise_for_status()
                 .json()["id"]
             )
-            api.put(f"/api/apis/{asset}/publication?published=true", headers=provider).raise_for_status()
+            publish_asset(api, f"/api/apis/{asset}", provider).raise_for_status()
             grant = (
                 api.post(
                     f"/api/apis/{asset}/requests",
