@@ -12,14 +12,8 @@ from routing.portal_navigation import go, load
 from runtime.portal_ui import ctx, value
 
 from components.controls import btn, field
+from components.member_identity import full_name_cell, person_label
 from components.workspace_views import link, url
-
-
-def person_label(person: dict[str, Any]) -> str:
-    """氏名とメールアドレスから表示名を作る。"""
-    name = person.get("display_name") or person.get("full_name")
-    address = person.get("email") or person.get("username") or person["subject"]
-    return f"{name}（{address}）" if name and name != address else address
 
 
 def members_view(root: str, unit: dict[str, Any], data: dict[str, Any]) -> None:
@@ -50,7 +44,7 @@ def members_view(root: str, unit: dict[str, Any], data: dict[str, Any]) -> None:
             t.table(aria_label="直接の所属メンバー"),
         ):
             with t.thead(), t.tr():
-                for label in ("メールアドレス", "名前", "担当ロール"):
+                for label in ("ユーザー名", "氏名", "メールアドレス", "担当ロール"):
                     t.th(label, scope="col")
                 if data["admin"]:
                     t.th("操作", scope="col")
@@ -62,16 +56,10 @@ def members_view(root: str, unit: dict[str, Any], data: dict[str, Any]) -> None:
                     email = person.get("email")
                     if "email" not in person and username and "@" in username:
                         email = username
-                    full_name, display_name = person.get("full_name"), person.get("display_name")
                     with t.tr():
+                        t.td(username or subject)
+                        full_name_cell(person)
                         t.td(email or "—")
-                        with t.td():
-                            t.span(display_name or full_name or "—")
-                            if display_name and full_name and display_name != full_name:
-                                t.div(full_name, classes="muted")
-                            if not (display_name or full_name or email):
-                                label = "ログイン名" if username and username != subject else "利用者ID"
-                                t.div(f"{label} {username or subject}", classes="muted")
                         with t.td():
                             t.strong("リーダー" if row["leader"] else "メンバー")
                             if row.get("title"):
@@ -143,7 +131,7 @@ def membership_editor(
                 with t.div(classes="field-actions"):
                     btn("ユーザーをさらに読み込む" if draft else "登録ユーザーを読み込む", more)
         else:
-            t.p("ユーザー　" + person_label({"subject": subject, "username": names.get(subject), **row}))
+            t.p("ユーザー　" + names.get(subject, person_label(row)))
         field(
             "グループ内の役割" if root.startswith("attributes/") else "役職",
             "org-title",

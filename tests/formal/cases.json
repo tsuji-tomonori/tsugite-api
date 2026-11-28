@@ -884,29 +884,60 @@
   ],
   "profiles.profileTest": [
     {
+      "hasFullName": false,
       "named": false,
       "operation": "init",
       "response": 0
     },
     {
+      "hasFullName": true,
       "named": true,
       "operation": "selfSet",
       "response": 200
     },
     {
+      "hasFullName": true,
       "named": true,
       "operation": "other",
       "response": 403
     },
     {
+      "hasFullName": true,
       "named": true,
       "operation": "stale",
       "response": 409
     },
     {
+      "hasFullName": true,
       "named": false,
       "operation": "adminClear",
       "response": 200
+    }
+  ],
+  "profiles.requiredFullNameTest": [
+    {
+      "hasFullName": false,
+      "named": false,
+      "operation": "init",
+      "response": 0
+    },
+    {
+      "hasFullName": false,
+      "named": false,
+      "operation": "adminClear",
+      "response": 422
+    },
+    {
+      "hasFullName": true,
+      "named": true,
+      "operation": "selfSet",
+      "response": 200
+    },
+    {
+      "hasFullName": true,
+      "named": true,
+      "operation": "clearFull",
+      "response": 422
     }
   ],
   "quota.thresholdTest": [

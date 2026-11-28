@@ -47,6 +47,7 @@ def test_external_directory_pagination(portal, monkeypatch):
     second = _external_member("another@example.com", "staff-002")
     client.admin_create_user.return_value = {"User": first}
     invitation = {
+        "full_name": "試験 花子",
         "email": "new@example.com",
         "role": "consumer",
         "project": "finance",
@@ -133,7 +134,12 @@ def test_duplicate_external_invitation_preserves_original_member(portal, monkeyp
         {"Error": {"Code": "UsernameExistsException", "Message": "User already exists"}},
         "AdminCreateUser",
     )
-    invitation = {"email": "member@example.com", "role": "consumer", "project": "finance"}
+    invitation = {
+        "full_name": "試験 花子",
+        "email": "member@example.com",
+        "role": "consumer",
+        "project": "finance",
+    }
     response = portal.post("/api/members", headers=admin, json=invitation)
     assert response.status_code == 409, response.json()
     assert response.json()["detail"]
@@ -170,7 +176,7 @@ def test_failed_group_assignment_cleans_up_new_invitation(portal, monkeypatch):
         ),
         {},
     ]
-    invitation = {"email": email, "project": "finance", "role": "consumer"}
+    invitation = {"full_name": "試験 花子", "email": email, "project": "finance", "role": "consumer"}
     failed = portal.post("/api/members", headers=admin, json=invitation)
     assert 400 <= failed.status_code < 600 and failed.json()["detail"]
     client.admin_delete_user.assert_called_once_with(UserPoolId="test-pool", Username=email)
@@ -249,7 +255,12 @@ def test_external_member_disappears_before_profile_edit(portal, monkeypatch):
     invited = portal.post(
         "/api/members",
         headers=admin,
-        json={"email": member["Username"], "role": "provider", "project": "supply"},
+        json={
+            "full_name": "試験 花子",
+            "email": member["Username"],
+            "role": "provider",
+            "project": "supply",
+        },
     )
     assert invited.status_code == 201
     client.admin_get_user.side_effect = client.exceptions.UserNotFoundException(
@@ -274,7 +285,7 @@ def test_account_creation_outage_can_be_retried(portal, monkeypatch):
         ),
         {"User": person},
     ]
-    data = {"email": email, "project": "finance", "role": "consumer"}
+    data = {"full_name": "試験 花子", "email": email, "project": "finance", "role": "consumer"}
     unavailable = portal.post("/api/members", headers=admin, json=data)
     assert unavailable.status_code == 503 and unavailable.json()["detail"]
     client.admin_add_user_to_group.assert_not_called()
@@ -328,7 +339,12 @@ def test_removed_cognito_group_member_stays_retired(portal, monkeypatch):
     invited = portal.post(
         "/api/members",
         headers=admin,
-        json={"email": person["Username"], "project": "finance", "role": "consumer"},
+        json={
+            "full_name": "試験 花子",
+            "email": person["Username"],
+            "project": "finance",
+            "role": "consumer",
+        },
     )
     assert invited.status_code == 201
     deleted = portal.delete(
@@ -410,7 +426,9 @@ def test_external_username_lookup_keeps_distinct_subjects(portal, monkeypatch):
     new = _external_member(email, "current-staff")
     client.admin_create_user.return_value = {"User": old}
     created = portal.post(
-        "/api/members", headers=admin, json={"email": email, "project": "finance", "role": "consumer"}
+        "/api/members",
+        headers=admin,
+        json={"full_name": "試験 花子", "email": email, "project": "finance", "role": "consumer"},
     )
     assert created.status_code == 201
     client.admin_get_user.return_value = {
@@ -440,7 +458,12 @@ def test_invitation_to_portal_project_without_external_group(portal, monkeypatch
     result = portal.post(
         "/api/members",
         headers=admin,
-        json={"email": account["Username"], "project": "portal-team", "role": "consumer"},
+        json={
+            "full_name": "試験 花子",
+            "email": account["Username"],
+            "project": "portal-team",
+            "role": "consumer",
+        },
     )
     assert result.status_code == 201 and result.json()["subject"] == "portal-staff"
     client.admin_add_user_to_group.assert_not_called()
@@ -463,7 +486,12 @@ def test_retirement_retry_after_remote_account_has_gone(portal, monkeypatch):
         portal.post(
             "/api/members",
             headers=admin,
-            json={"email": account["Username"], "project": "finance", "role": "provider"},
+            json={
+                "full_name": "試験 花子",
+                "email": account["Username"],
+                "project": "finance",
+                "role": "provider",
+            },
         ).status_code
         == 201
     )
@@ -498,7 +526,7 @@ def test_retirement_does_not_delete_replacement_username(portal, monkeypatch):
         portal.post(
             "/api/members",
             headers=admin,
-            json={"email": email, "role": "consumer", "project": "finance"},
+            json={"full_name": "試験 花子", "email": email, "role": "consumer", "project": "finance"},
         ).status_code
         == 201
     )
@@ -547,7 +575,7 @@ def test_invitation_with_unavailable_project_does_not_create_external_account(po
     denied = portal.post(
         "/api/members",
         headers=admin,
-        json={"email": "late@example.com", "role": "consumer", "project": key},
+        json={"full_name": "試験 花子", "email": "late@example.com", "role": "consumer", "project": key},
     )
     assert denied.status_code in (404, 409, 422) and denied.json()["detail"]
     client.admin_create_user.assert_not_called()
@@ -572,7 +600,12 @@ def test_incomplete_external_invitation_reports_required_recovery(portal, monkey
     response = portal.post(
         "/api/members",
         headers=admin,
-        json={"email": member["Username"], "role": "consumer", "project": "finance"},
+        json={
+            "full_name": "試験 花子",
+            "email": member["Username"],
+            "role": "consumer",
+            "project": "finance",
+        },
     )
     assert response.status_code == 503 and response.json()["detail"]
     items = [json.loads(record.message) for record in caplog.records if record.message.startswith("{")]

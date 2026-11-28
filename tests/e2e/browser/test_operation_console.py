@@ -40,6 +40,9 @@ def test_person_operation_console(tmp_path: Path, request: pytest.FixtureRequest
             sync_playwright() as pw,
         ):
             provider, consumer = (headers(api, u) for u in ("provider", "consumer"))
+            api.patch(
+                "/api/me/profile", headers=consumer, json={"revision": 0, "full_name": "佐藤 花子"}
+            ).raise_for_status()
             asset = (
                 api.post(
                     "/api/apis",
@@ -106,7 +109,7 @@ def test_person_operation_console(tmp_path: Path, request: pytest.FixtureRequest
                         panel.locator("summary").first.click()
 
                 open_policy()
-                panel.get_by_label("対象の利用者").select_option("consumer")
+                panel.get_by_label("対象の利用者").select_option(label="consumer（佐藤 花子）")
                 panel.get_by_role("button", name="権限を表示").click()
                 open_policy()
                 panel.get_by_role("button", name="参照だけを選ぶ").click()
@@ -118,7 +121,9 @@ def test_person_operation_console(tmp_path: Path, request: pytest.FixtureRequest
                 ) as saved_policy:
                     panel.get_by_role("button", name="選んだ操作を保存").click()
                 assert saved_policy.value.status == 200
-                expect(owner.get_by_text("consumer の操作権限を保存しました")).to_be_visible()
+                expect(
+                    owner.get_by_text("consumer（佐藤 花子） の操作権限を保存しました")
+                ).to_be_visible()
                 open_policy()
                 expect(panel.get_by_text("現在の設定　個別設定 · 2 操作を許可")).to_be_visible()
                 panel.scroll_into_view_if_needed()
@@ -164,7 +169,9 @@ def test_person_operation_console(tmp_path: Path, request: pytest.FixtureRequest
                 ) as saved_policy:
                     panel.get_by_role("button", name="選んだ操作を保存").click()
                 assert saved_policy.value.status == 200
-                expect(owner.get_by_text("consumer の操作権限を保存しました")).to_be_visible()
+                expect(
+                    owner.get_by_text("consumer（佐藤 花子） の操作権限を保存しました")
+                ).to_be_visible()
                 assert (
                     api.get(f"/api/apis/{asset}/operation-policy", headers=provider).json()[
                         "permissions"

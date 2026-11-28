@@ -28,7 +28,12 @@ def test_provider_policy_console(tmp_path: Path, request: pytest.FixtureRequest)
             api.post(
                 "/api/members",
                 headers=admin,
-                json={"email": "lead@example.org", "role": "consumer", "project": "finance"},
+                json={
+                    "full_name": "試験 花子",
+                    "email": "lead@example.org",
+                    "role": "consumer",
+                    "project": "finance",
+                },
             )
             .raise_for_status()
             .json()

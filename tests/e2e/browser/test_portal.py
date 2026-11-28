@@ -317,7 +317,8 @@ def test_governance_console(demo_url: str, request: pytest.FixtureRequest) -> No
 
             navigate(admin, "ユーザー管理")
             admin.locator("summary").filter(has_text="ユーザーを追加").click()
-            admin.get_by_label("メールアドレス").fill("catalog-reader@example.org")
+            admin.get_by_label("氏名（必須）").fill("一覧 花子")
+            admin.get_by_label("ユーザー名（メールアドレス）").fill("catalog-reader@example.org")
             admin.get_by_label("所属プロジェクト").select_option("finance")
             admin.get_by_role("button", name="追加する").click()
             row = admin.get_by_role("row").filter(has_text="catalog-reader@example.org")
