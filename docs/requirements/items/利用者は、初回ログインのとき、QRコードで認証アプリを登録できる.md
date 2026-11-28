@@ -12,7 +12,7 @@
 
 認証アプリ登録画面を開くと、ポータルはブラウザー内で生成した登録用QRコードを表示する。設定コードとコピーボタンは閉じた状態とし、「設定コードを表示」を選ぶと確認・コピーできる。開閉しても入力中の6桁の確認コードを保持する。
 
-> 実装検証 test_mfa_registration_codes test_registration_qr_matches_manual_code — QRの登録内容、ブラウザーでの表示・コピーと登録完了を観測する。
+> 実装検証 test_mfa_registration_codes test_registration_qr_matches_manual_code — 表示のみ：既存のMFA登録手順に対し、QRの登録内容、画面での開閉・コピーと入力値の保持を観測する。
 
 ### 受入テスト
 
