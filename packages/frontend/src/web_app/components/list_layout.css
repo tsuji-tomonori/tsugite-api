@@ -40,8 +40,6 @@
 
 .result-table thead th { white-space: nowrap; }
 .result-table .btn { white-space: nowrap; }
-.content:has(> :is(.list-tools, .result-table)) { padding-top: 6px; }
-.content:has(> :is(.list-tools, .result-table)) > .page-heading { margin-bottom: 4px; }
 @media (max-width: 780px) {
   /* 狭い画面の横断検索と所属名はナビゲーションを開いたときに表示する。 */
   #app:has(.workspace[data-nav="closed"]) .mast :is(.global-search, .project) { display: none; }
@@ -64,10 +62,18 @@
 .download-short { display: none; }
 @media (max-width: 400px) {
   #app:has(.workspace[data-nav="closed"]) .mast > .btn { display: none; }
-  #app:has(.workspace[data-nav="closed"] .content > :is(.list-tools, .result-table)) .crumb { display: none; }
   .mast { padding-block: 2px; }
-  .content:has(> :is(.list-tools, .result-table)) { padding-top: 4px; }
   .list-tools { column-gap: 8px; margin-bottom: 6px; }
   .download-short { display: inline; }
   .download-label { display: none; }
+}
+
+@media (max-height: 800px) {
+  .list-tools { margin-bottom: 4px; }
+}
+
+/* 小さな端末でも、44pxの操作領域と結果表の高さを確保する。 */
+@media (max-width: 400px) and (max-height: 700px) {
+  .list-tools { margin-bottom: 2px; }
+  .list-tools .btn, .list-disclosure > summary { min-height: 44px; padding-block: 6px; }
 }

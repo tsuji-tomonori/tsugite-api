@@ -15,7 +15,6 @@ from components.controls import btn, field
 def application_page() -> None:
     """読み込み状態に応じて申請欄を表示する。"""
     a = ctx["detail"]
-    t.h1("利用申請")
     if not a:
         t.p("APIを読み込み中…")
         return

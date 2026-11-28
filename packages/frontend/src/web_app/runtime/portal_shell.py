@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from components.controls import btn
+from components.page_heading import page_heading
 from js import document, window
 from pages.login import login_page
 from puepy import Page, t
@@ -163,14 +164,8 @@ class Portal(Page):
             with t.section(classes="content"):
                 notice_banner()
                 if not screen:
-                    t.h1(title)
+                    page_heading(title)
                     return
                 if not screen.own_heading:
-                    with t.div(classes="page-heading"):
-                        with t.div():
-                            t.h1(title)
-                            if screen.description:
-                                t.p(screen.description, classes="subtitle")
-                        if screen.heading_action:
-                            screen.heading_action()
+                    page_heading(title, screen.description, screen.heading_action)
                 screen.view()

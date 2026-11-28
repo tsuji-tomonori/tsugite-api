@@ -12,7 +12,6 @@ SCREENS = (
         "利用申請",
         application_page,
         load_application,
-        own_heading=True,
         examples={"apply": lambda: application_panel(example.ASSET, example.USER)},
     ),
 )
