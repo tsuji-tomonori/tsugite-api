@@ -57,7 +57,7 @@ aws cloudformation deploy --region "$region" --stack-name tsugite-github-actions
 
 ## CloudFront 経由の実環境 E2E
 
-`Deploy to AWS` は配備が成功すると `CloudFront portal E2E` を呼び出します。配備をスキップしたコミットでは実行しません。**Actions → CloudFront portal E2E → Run workflow → main** から、再配備せずに同じ確認を実行できます。
+`Deploy to AWS` は配備に成功すると、`cloudfront-e2e` Environment を使うジョブでポータルを検証します。手動実行も同じテスト手順を使います。配備をスキップしたコミットでは実行しません。**Actions → CloudFront portal E2E → Run workflow → main** から、再配備せずに同じ確認を実行できます。
 
 | 確認 | 合格条件 |
 | --- | --- |

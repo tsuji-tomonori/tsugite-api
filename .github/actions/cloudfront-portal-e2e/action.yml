@@ -1,0 +1,51 @@
+name: CloudFront portal E2E
+description: Verify the deployed portal and the dedicated consumer's MFA login
+inputs:
+  portal_url:
+    description: CloudFront portal origin
+    required: true
+  subject:
+    description: Expected consumer subject
+    required: true
+  username:
+    description: Dedicated consumer username
+    required: true
+  password:
+    description: Dedicated consumer password
+    required: true
+  totp_seed:
+    description: Dedicated consumer TOTP seed
+    required: true
+runs:
+  using: composite
+  steps:
+    - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
+      with:
+        enable-cache: false
+    - name: Install locked test dependencies
+      shell: bash
+      run: uv sync --locked --package tsugite-e2e
+    - name: Check CloudFront health, configuration and anonymous access
+      env:
+        E2E_PORTAL_URL: ${{ inputs.portal_url }}
+      shell: bash
+      run: |
+        : "${E2E_PORTAL_URL:?Set E2E_PORTAL_URL in the cloudfront-e2e environment}"
+        .venv/bin/python -m pytest -q tests/e2e/deployed/test_portal.py::test_public_cloudfront_api
+    - name: Install Chromium
+      shell: bash
+      run: .venv/bin/playwright install --with-deps chromium --only-shell
+    - name: Sign in with MFA and read the catalog
+      env:
+        E2E_PORTAL_URL: ${{ inputs.portal_url }}
+        E2E_SUBJECT: ${{ inputs.subject }}
+        E2E_USERNAME: ${{ inputs.username }}
+        E2E_PASSWORD: ${{ inputs.password }}
+        E2E_TOTP_SEED: ${{ inputs.totp_seed }}
+      shell: bash
+      run: |
+        : "${E2E_SUBJECT:?Set E2E_SUBJECT in the cloudfront-e2e environment}"
+        : "${E2E_USERNAME:?Set E2E_USERNAME in the cloudfront-e2e environment}"
+        : "${E2E_PASSWORD:?Set E2E_PASSWORD in the cloudfront-e2e environment}"
+        : "${E2E_TOTP_SEED:?Set E2E_TOTP_SEED in the cloudfront-e2e environment}"
+        .venv/bin/python -m pytest -q -s -rN --tb=no tests/e2e/deployed/test_portal.py::test_consumer_login_and_catalog
