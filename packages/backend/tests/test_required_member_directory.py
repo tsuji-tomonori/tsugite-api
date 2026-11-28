@@ -611,3 +611,29 @@ def test_incomplete_external_invitation_reports_required_recovery(portal, monkey
     items = [json.loads(record.message) for record in caplog.records if record.message.startswith("{")]
     recovery = [item for item in items if item.get("level") == "CRITICAL"]
     assert any(item.get("operator_action") for item in recovery)
+
+
+def test_external_admin_handover(portal, monkeypatch):
+    """既存の管理者を全ページから引き継ぎ、同じメールでも識別子が異なる利用者には付与しない。"""
+    token = headers(portal, "admin")
+    client = _directory(monkeypatch)
+    old = _external_member("initial-admin", "admin")
+    second = _external_member("other@example.test", "other")
+    person = _external_member("target@example.test", "target")
+    client.list_users.return_value = {"Users": [person]}
+    client.admin_get_user.return_value = {"Enabled": True, "UserAttributes": person["Attributes"]}
+    url = "/api/members/target/admin-role"
+    client.list_users_in_group.side_effect = [
+        client.exceptions.InternalErrorException(
+            {"Error": {"Code": "InternalErrorException"}}, "ListUsersInGroup"
+        ),
+        {"Users": [old], "NextToken": "more"},
+        {"Users": [second]},
+    ]
+    assert portal.put(url, headers=token, json={"admin": True}).status_code == 503
+    portal.put(url, headers=token, json={"admin": True}).raise_for_status()
+    assert client.list_users_in_group.call_args.kwargs["NextToken"] == "more"
+    client.list_users.return_value = {"Users": [old, second, person]}
+    assert all(m["admin"] for m in portal.get("/api/members", headers=token).json()["items"])
+    client.admin_get_user.return_value = {"Enabled": True, "UserAttributes": second["Attributes"]}
+    assert portal.put(url, headers=token, json={"admin": False}).status_code == 404

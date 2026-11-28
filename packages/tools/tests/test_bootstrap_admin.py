@@ -41,7 +41,7 @@ def test_invite_delivers_password_by_email(monkeypatch, tmp_path):
             "--user-pool-id",
             POOL,
             "--username",
-            "initial-admin",
+            EMAIL,
             "--user-attributes",
             json.dumps([{"Name": "email", "Value": EMAIL}]),
             "--desired-delivery-mediums",
@@ -56,7 +56,7 @@ def test_existing_admin_skips_writes_in_both_jobs(monkeypatch):
     aws = Mock(side_effect=[STACK, {"Users": [{}]}, STACK, {"Users": [{}]}])
     monkeypatch.setattr(bootstrap, "aws", aws)
     bootstrap.invite(EMAIL)
-    bootstrap.grant(POOL, SUB)
+    bootstrap.grant(POOL, SUB, EMAIL)
     assert aws.call_args_list == [LOOKUP, LIST, LOOKUP, LIST]
 
 
@@ -75,18 +75,18 @@ def test_grant_only_invited_user(monkeypatch):
     """招待と同じプールとユーザーなら初回ログイン用の管理権限を付与する。"""
     aws = Mock(side_effect=[STACK, {"Users": []}, {"UserAttributes": [SUB_ATTR]}, None])
     monkeypatch.setattr(bootstrap, "aws", aws)
-    bootstrap.grant(POOL, SUB)
+    bootstrap.grant(POOL, SUB, EMAIL)
     assert aws.call_args_list == [
         LOOKUP,
         LIST,
-        call("cognito-idp", "admin-get-user", "--user-pool-id", POOL, "--username", "initial-admin"),
+        call("cognito-idp", "admin-get-user", "--user-pool-id", POOL, "--username", EMAIL),
         call(
             "cognito-idp",
             "admin-add-user-to-group",
             "--user-pool-id",
             POOL,
             "--username",
-            "initial-admin",
+            EMAIL,
             "--group-name",
             "admin",
         ),
@@ -100,7 +100,7 @@ def test_replaced_user_cannot_be_promoted(monkeypatch):
     )
     monkeypatch.setattr(bootstrap, "aws", aws)
     with pytest.raises(SystemExit, match="識別子"):
-        bootstrap.grant(POOL, SUB)
+        bootstrap.grant(POOL, SUB, EMAIL)
     assert aws.call_count == 3
 
 
@@ -109,7 +109,7 @@ def test_pool_replacement_stops_grant(monkeypatch):
     aws = Mock(return_value=STACK)
     monkeypatch.setattr(bootstrap, "aws", aws)
     with pytest.raises(SystemExit, match="プール"):
-        bootstrap.grant("old", SUB)
+        bootstrap.grant("old", SUB, EMAIL)
     assert aws.call_args_list == [LOOKUP]
 
 

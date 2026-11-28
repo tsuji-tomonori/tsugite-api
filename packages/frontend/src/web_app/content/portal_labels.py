@@ -24,6 +24,8 @@ ACTIONS = {
     "edit": "掲載内容変更",
     "delete": "API削除",
     "member.add": "ユーザー追加",
+    "admin.grant": "管理者権限の付与",
+    "admin.revoke": "管理者権限の剥奪",
     "member.delete": "ユーザー削除",
     "profile.invite_set": "招待時のプロフィール登録",
     "profile.self_update": "本人によるプロフィール変更",
@@ -38,4 +40,11 @@ ACTIONS = {
 }
 
 
-ROLE_LABELS = {"provider": "提供者", "consumer": "利用者", "admin": "管理者", "auditor": "監査担当"}
+ROLE_LABELS = {
+    "external": "登録ユーザー",
+    "Cognito": "登録ユーザー",
+    "provider": "提供者",
+    "consumer": "利用者",
+    "admin": "管理者",
+    "auditor": "監査担当",
+}

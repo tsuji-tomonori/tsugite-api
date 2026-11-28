@@ -6,7 +6,7 @@ from typing import Any
 from apis import client
 from apis import organization as organization_api
 from js import window
-from routing.portal_navigation import load
+from routing.portal_navigation import go, load
 from runtime.portal_ui import ctx, value
 
 
@@ -44,3 +44,17 @@ async def member_page(cursor: str) -> None:
     """カーソルの位置に移動する。"""
     ctx["member_cursor"] = cursor
     await load()
+
+
+async def change_admin_role(row: dict[str, Any]) -> None:
+    """対象者と操作を確認して管理者権限を更新する。"""
+    grant = not row.get("admin")
+    action = "付与" if grant else "剥奪"
+    if not window.confirm(f"{row['username']} の管理者権限を{action}しますか？"):
+        return
+    await organization_api.set_admin_role(row["subject"], grant)
+    if not grant and row["subject"] == ctx["me"]["subject"]:
+        await go("catalog")
+    else:
+        await load()
+    ctx["message"] = f"管理者権限を{action}しました"
