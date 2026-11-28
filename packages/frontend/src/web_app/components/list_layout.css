@@ -10,6 +10,7 @@
 .list-tools > .list-disclosure[open] { flex-basis: 100%; }
 .list-disclosure { min-width: 0; }
 .list-disclosure > summary {
+  list-style-type: none;
   width: fit-content;
   max-width: 100%;
   padding: 10px 12px;
@@ -20,6 +21,7 @@
   font-weight: 700;
   overflow-wrap: anywhere;
 }
+.list-disclosure > summary::-webkit-details-marker { display: none; }
 .list-disclosure > summary small { margin-inline-start: 8px; font-weight: 400; }
 .disclosure-body {
   background: var(--surface);
