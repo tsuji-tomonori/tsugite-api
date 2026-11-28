@@ -94,5 +94,101 @@
     "method": "GET",
     "path": "/exhibits",
     "environment": "sandbox"
+  },
+  {
+    "name": "掲載枠",
+    "slug": "web-assortments",
+    "summary": "掲載SKUと販売チャネルごとの公開期間を調べます。",
+    "method": "GET",
+    "path": "/listings",
+    "environment": "sandbox"
+  },
+  {
+    "name": "セット構成",
+    "slug": "bundle-recipes",
+    "summary": "販売セットに含める構成品と同梱点数を確認します。",
+    "method": "GET",
+    "path": "/bundles",
+    "environment": "sandbox"
+  },
+  {
+    "name": "ピッキング指示",
+    "slug": "pick-waves",
+    "summary": "出荷ウェーブの担当ゾーン、ピック棚番、未完了の行数を照会します。",
+    "method": "GET",
+    "path": "/waves",
+    "environment": "sandbox"
+  },
+  {
+    "name": "予約販売枠",
+    "slug": "presale-quotas",
+    "summary": "予約受付を販売キャンペーン別に集計し、残りの受付枠を確認します。",
+    "method": "GET",
+    "path": "/presales",
+    "environment": "sandbox"
+  },
+  {
+    "name": "入荷検品",
+    "slug": "receipt-inspections",
+    "summary": "検品票ごとに検品場所、ロット番号、検出した不良数を照会します。",
+    "method": "GET",
+    "path": "/inspections",
+    "environment": "sandbox"
+  },
+  {
+    "name": "売場補充指示",
+    "slug": "shelf-replenishment",
+    "summary": "売場の陳列棚ごとに補充指示と補充予定数を確認します。",
+    "method": "GET",
+    "path": "/refills",
+    "environment": "sandbox"
+  },
+  {
+    "name": "定期点検計画",
+    "slug": "service-intervals",
+    "summary": "設備の点検周期と次回交換までの残り運転時間を確認します。",
+    "method": "GET",
+    "path": "/service-plans",
+    "environment": "sandbox"
+  },
+  {
+    "name": "店頭取り置き",
+    "slug": "counter-holds",
+    "summary": "取り置き伝票の受取窓口、引換番号、保管期限までの残日数を確認します。",
+    "method": "GET",
+    "path": "/holds",
+    "environment": "sandbox"
+  },
+  {
+    "name": "梱包箱規格",
+    "slug": "packing-cartons",
+    "summary": "梱包箱の材質と寸法区分ごとの最大積載重量を照会します。",
+    "method": "GET",
+    "path": "/cartons",
+    "environment": "sandbox"
+  },
+  {
+    "name": "棚卸し差異",
+    "slug": "count-variances",
+    "summary": "棚卸し票の保管区画、差異理由、帳簿と実棚の差異数を照会します。",
+    "method": "GET",
+    "path": "/variances",
+    "environment": "sandbox"
+  },
+  {
+    "name": "緊急交換手配",
+    "slug": "emergency-dispatch",
+    "summary": "故障受付ごとに派遣拠点、交換部品、現場到着までの分数を確認します。",
+    "method": "GET",
+    "path": "/dispatches",
+    "environment": "sandbox"
+  },
+  {
+    "name": "返品査定",
+    "slug": "return-grading",
+    "summary": "返品伝票の査定区分、再販可否の判定、再販価格を照会します。",
+    "method": "GET",
+    "path": "/appraisals",
+    "environment": "sandbox"
   }
 ]

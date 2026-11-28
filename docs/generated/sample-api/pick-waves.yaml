@@ -1,0 +1,262 @@
+openapi: 3.1.0
+info:
+  title: ピッキング指示
+  description: 出荷ウェーブの担当ゾーン、ピック棚番、未完了の行数を照会します。
+  version: 1.0.0
+paths:
+  /health:
+    get:
+      summary: データベースの稼働状態を確認
+      operationId: health_health_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+  /waves:
+    get:
+      summary: ピッキング指示を一覧で取得
+      operationId: list_waves_waves_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/PickWave'
+                type: array
+                title: Response List Waves Waves Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+  /waves/{wave_id}:
+    get:
+      summary: ピッキング指示の明細を照会
+      operationId: detail_waves__wave_id__get
+      parameters:
+      - name: wave_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Wave Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PickWave'
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+        '404':
+          description: 該当なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MissingRecord'
+  /pick-zones:
+    get:
+      summary: ピッキング指示を担当ゾーン別に集計
+      operationId: by_zone_pick_zones_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/PickWaveCount'
+                type: array
+                title: Response By Zone Pick Zones Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+  /short-waves:
+    get:
+      summary: 未完了行数が指定値以下のピッキング指示を取得
+      operationId: below_limit_short_waves_get
+      parameters:
+      - name: maximum
+        in: query
+        required: false
+        schema:
+          type: integer
+          description: 未完了行数の上限
+          default: 2
+          title: Maximum
+        description: 未完了行数の上限
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PickWave'
+                title: Response Below Limit Short Waves Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /wave-workloads:
+    get:
+      summary: 未完了行数の最小値と最大値を取得
+      operationId: open_lines_summary_wave_workloads_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PickWaveRange'
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+components:
+  schemas:
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    Health:
+      properties:
+        status:
+          type: string
+          const: ok
+          title: Status
+          default: ok
+      type: object
+      title: Health
+    InternalServerError:
+      properties:
+        error_code:
+          type: string
+          const: INTERNAL_ERROR
+          title: Error Code
+        detail:
+          type: string
+          title: Detail
+      type: object
+      required:
+      - error_code
+      - detail
+      title: InternalServerError
+    MissingRecord:
+      properties:
+        detail:
+          type: string
+          title: Detail
+      type: object
+      required:
+      - detail
+      title: MissingRecord
+    PickWave:
+      properties:
+        wave_id:
+          type: string
+          title: Wave Id
+        zone:
+          type: string
+          title: Zone
+        bin_code:
+          type: string
+          title: Bin Code
+        open_lines:
+          type: integer
+          title: Open Lines
+      type: object
+      required:
+      - wave_id
+      - zone
+      - bin_code
+      - open_lines
+      title: PickWave
+    PickWaveCount:
+      properties:
+        zone:
+          type: string
+          title: Zone
+        count:
+          type: integer
+          title: Count
+      type: object
+      required:
+      - zone
+      - count
+      title: PickWaveCount
+    PickWaveRange:
+      properties:
+        minimum_open_lines:
+          type: integer
+          title: Minimum Open Lines
+        maximum_open_lines:
+          type: integer
+          title: Maximum Open Lines
+      type: object
+      required:
+      - minimum_open_lines
+      - maximum_open_lines
+      title: PickWaveRange
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError

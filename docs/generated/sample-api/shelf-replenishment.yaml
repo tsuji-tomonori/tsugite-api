@@ -1,0 +1,262 @@
+openapi: 3.1.0
+info:
+  title: 売場補充指示
+  description: 売場の陳列棚ごとに補充指示と補充予定数を確認します。
+  version: 1.0.0
+paths:
+  /health:
+    get:
+      summary: データベースの稼働状態を確認
+      operationId: health_health_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+  /refills:
+    get:
+      summary: 売場補充指示を一覧で取得
+      operationId: list_refills_refills_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Refill'
+                type: array
+                title: Response List Refills Refills Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+  /refills/{refill_id}:
+    get:
+      summary: 売場補充指示の明細を照会
+      operationId: detail_refills__refill_id__get
+      parameters:
+      - name: refill_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Refill Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Refill'
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+        '404':
+          description: 該当なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MissingRecord'
+  /refill-aisles:
+    get:
+      summary: 売場補充指示を売場別に集計
+      operationId: by_aisle_refill_aisles_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/RefillCount'
+                type: array
+                title: Response By Aisle Refill Aisles Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+  /small-refills:
+    get:
+      summary: 補充予定数が指定値以下の売場補充指示を取得
+      operationId: below_limit_small_refills_get
+      parameters:
+      - name: maximum
+        in: query
+        required: false
+        schema:
+          type: integer
+          description: 補充予定数の上限
+          default: 6
+          title: Maximum
+        description: 補充予定数の上限
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Refill'
+                title: Response Below Limit Small Refills Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /refill-volumes:
+    get:
+      summary: 補充予定数の最小値と最大値を取得
+      operationId: refill_units_summary_refill_volumes_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefillRange'
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+components:
+  schemas:
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    Health:
+      properties:
+        status:
+          type: string
+          const: ok
+          title: Status
+          default: ok
+      type: object
+      title: Health
+    InternalServerError:
+      properties:
+        error_code:
+          type: string
+          const: INTERNAL_ERROR
+          title: Error Code
+        detail:
+          type: string
+          title: Detail
+      type: object
+      required:
+      - error_code
+      - detail
+      title: InternalServerError
+    MissingRecord:
+      properties:
+        detail:
+          type: string
+          title: Detail
+      type: object
+      required:
+      - detail
+      title: MissingRecord
+    Refill:
+      properties:
+        refill_id:
+          type: string
+          title: Refill Id
+        aisle:
+          type: string
+          title: Aisle
+        shelf_label:
+          type: string
+          title: Shelf Label
+        refill_units:
+          type: integer
+          title: Refill Units
+      type: object
+      required:
+      - refill_id
+      - aisle
+      - shelf_label
+      - refill_units
+      title: Refill
+    RefillCount:
+      properties:
+        aisle:
+          type: string
+          title: Aisle
+        count:
+          type: integer
+          title: Count
+      type: object
+      required:
+      - aisle
+      - count
+      title: RefillCount
+    RefillRange:
+      properties:
+        minimum_refill_units:
+          type: integer
+          title: Minimum Refill Units
+        maximum_refill_units:
+          type: integer
+          title: Maximum Refill Units
+      type: object
+      required:
+      - minimum_refill_units
+      - maximum_refill_units
+      title: RefillRange
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError

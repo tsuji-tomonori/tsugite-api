@@ -1,0 +1,262 @@
+openapi: 3.1.0
+info:
+  title: セット構成
+  description: 販売セットに含める構成品と同梱点数を確認します。
+  version: 1.0.0
+paths:
+  /health:
+    get:
+      summary: データベースの稼働状態を確認
+      operationId: health_health_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+  /bundles:
+    get:
+      summary: セット構成を一覧で取得
+      operationId: list_bundles_bundles_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Bundle'
+                type: array
+                title: Response List Bundles Bundles Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+  /bundles/{bundle_code}:
+    get:
+      summary: セット構成の明細を照会
+      operationId: detail_bundles__bundle_code__get
+      parameters:
+      - name: bundle_code
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Bundle Code
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Bundle'
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+        '404':
+          description: 該当なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MissingRecord'
+  /bundle-series:
+    get:
+      summary: セット構成をシリーズ別に集計
+      operationId: by_series_bundle_series_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/BundleCount'
+                type: array
+                title: Response By Series Bundle Series Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+  /compact-bundles:
+    get:
+      summary: 同梱点数が指定値以下のセット構成を取得
+      operationId: below_limit_compact_bundles_get
+      parameters:
+      - name: maximum
+        in: query
+        required: false
+        schema:
+          type: integer
+          description: 同梱点数の上限
+          default: 3
+          title: Maximum
+        description: 同梱点数の上限
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Bundle'
+                title: Response Below Limit Compact Bundles Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /bundle-sizes:
+    get:
+      summary: 同梱点数の最小値と最大値を取得
+      operationId: piece_count_summary_bundle_sizes_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BundleRange'
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+components:
+  schemas:
+    Bundle:
+      properties:
+        bundle_code:
+          type: string
+          title: Bundle Code
+        series:
+          type: string
+          title: Series
+        component_sku:
+          type: string
+          title: Component Sku
+        piece_count:
+          type: integer
+          title: Piece Count
+      type: object
+      required:
+      - bundle_code
+      - series
+      - component_sku
+      - piece_count
+      title: Bundle
+    BundleCount:
+      properties:
+        series:
+          type: string
+          title: Series
+        count:
+          type: integer
+          title: Count
+      type: object
+      required:
+      - series
+      - count
+      title: BundleCount
+    BundleRange:
+      properties:
+        minimum_piece_count:
+          type: integer
+          title: Minimum Piece Count
+        maximum_piece_count:
+          type: integer
+          title: Maximum Piece Count
+      type: object
+      required:
+      - minimum_piece_count
+      - maximum_piece_count
+      title: BundleRange
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    Health:
+      properties:
+        status:
+          type: string
+          const: ok
+          title: Status
+          default: ok
+      type: object
+      title: Health
+    InternalServerError:
+      properties:
+        error_code:
+          type: string
+          const: INTERNAL_ERROR
+          title: Error Code
+        detail:
+          type: string
+          title: Detail
+      type: object
+      required:
+      - error_code
+      - detail
+      title: InternalServerError
+    MissingRecord:
+      properties:
+        detail:
+          type: string
+          title: Detail
+      type: object
+      required:
+      - detail
+      title: MissingRecord
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
