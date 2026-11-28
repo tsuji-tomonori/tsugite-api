@@ -1874,20 +1874,6 @@ wheels = [
 name = "tsugite-agent"
 version = "0.1.0"
 source = { editable = "packages/agent" }
-dependencies = [
-    { name = "boto3" },
-    { name = "sqlalchemy" },
-    { name = "tsugite-backend" },
-    { name = "tsugite-database" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "boto3" },
-    { name = "sqlalchemy", specifier = ">=2,<3" },
-    { name = "tsugite-backend", editable = "packages/backend" },
-    { name = "tsugite-database", editable = "packages/database" },
-]
 
 [[package]]
 name = "tsugite-api"

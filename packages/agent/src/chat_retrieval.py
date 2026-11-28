@@ -1,14 +1,9 @@
-"""質問を分類し、キーワードと意味の両方でガイドを検索して、根拠のある回答を組み立てる。"""
+"""質問に応じて検索ツールを選び、取得した根拠をモデルで評価する。"""
 
 import math
 import re
 from collections import defaultdict
-
-from app.core.catalog_rank import concept_vector, contains, document, normalize, rank_assets, terms
-
-from packages.frontend.src.web_app.content.guide_content import GUIDES, audiences
-from packages.frontend.src.web_app.content.guide_search import FILLER
-from packages.frontend.src.web_app.content.guide_search import search as search_guides
+from dataclasses import dataclass
 
 TOPICS = {
     "catalog": (
@@ -35,29 +30,16 @@ OVERRIDE = re.compile(
     r"<\|[^\n]{1,40}\|>|(?:一般知識|雑談)で答えて",
     re.I,
 )
-HEADINGS = {
-    "catalog": ("目的に合うAPI候補です。", "公開中のAPIから候補を見つけました。"),
-    "manual": ("使い方ガイドの該当手順です。", "参照したガイドに沿って手順を案内します。"),
-}
-OUTSIDE = "この質問は公開APIと使い方ガイドの案内範囲外です。"
-NO_MATCH = "質問に合う公開APIや操作手順が見つかりませんでした。"
-REQUEST_WORDS = re.compile(
-    r"おすすめ|お勧め|どんな|ありますか|ありませんか|あります|探し(?:たい|て)?|検索|教えて|"
-    r"知りたい|確認(?:したい|できる)?|できる|使いたい|どのような|使い方|やり方|手順|マニュアル|ガイド|カタログ|商品|方法|(?<![a-z0-9])api(?![a-z0-9]|キー)"
-)
 
 
-def search_subject(question):
-    """Remove request wording so that asking for an API is not evidence for a particular product."""
-    subject = FILLER.sub(" ", REQUEST_WORDS.sub(" ", normalize(question)))
-    return subject.strip(" 　をのはがにでと？?！!。・")
-
-
-def covers_topics(subject, content):
-    """Check named subjects against the source, including catalog synonyms."""
-    topics = re.findall(r"[一-鿿々]{2,}|[ァ-ヺー]{2,}|[a-z0-9]+", subject)
-    concepts = concept_vector(content)
-    return all(contains(content, topic) or concept_vector(topic) & concepts for topic in topics)
+@dataclass
+class Candidates:
+    query: str
+    raw: list[str]
+    edited: list[str]
+    documents: list[tuple[str, str]]
+    direct: set[str]
+    steps: dict[str, tuple[str, list[str]]]
 
 
 def dot(left, right):
@@ -76,23 +58,13 @@ def routes(question, models):
     catalog, manual = bool(CATALOG.search(question)), bool(MANUAL.search(question))
     explicit = {"catalog": catalog, "manual": manual}
     outside = scores.get("outside", -1)
-    ordered = sorted(explicit, key=lambda key: (-scores.get(key, -1), key))
+    ordered = sorted(explicit, key=lambda key: (-scores.get(key, -1), not explicit[key], key))
     plausible = [
         key for key in ordered if explicit[key] or scores.get(key, -1) >= max(0.43, outside + 0.055)
     ]
     if outside >= 0.50 and outside >= max(scores.get(key, -1) for key in explicit) + 0.10:
         return []
-    if manual != catalog:
-        return ["manual" if manual else "catalog"]
     return plausible
-
-
-def rewritten(question, value):
-    if not isinstance(value, str) or not value.strip() or len(value) > 120 or OVERRIDE.search(value):
-        return question
-    original = terms(search_subject(question))
-    updated = terms(search_subject(value))
-    return value.strip() if original & updated else question
 
 
 def fuse(*rankings):
@@ -127,102 +99,49 @@ def semantic(question, query, documents, models):
     )
 
 
-def manual_sources(actor):
-    roles = {"利用者"}
-    if actor.owners or actor.leads:
-        roles.add("提供者")
-    if actor.admin:
-        roles.update(("提供者", "管理者"))
-    return {guide.id: guide for guide in GUIDES if roles.intersection(audiences(guide))}
-
-
-def recommended(question, query, assets, models, use_manual, actor):
-    subject = search_subject(question)
-    if not terms(subject) or not re.search(r"[一-鿿ァ-ヺa-z0-9]|[ぁ-ゖ]{2}", subject):
-        return []
-    edited_subject = search_subject(query)
-    if use_manual:
-        sources = manual_sources(actor)
-        raw = [g.id for g in search_guides(subject, min_coverage=0.55) if g.id in sources]
-        edited = (
-            [g.id for g in search_guides(edited_subject, min_coverage=0.55) if g.id in sources]
-            if edited_subject and edited_subject != subject
-            else raw
-        )
-        documents = [
-            (g.id, " ".join((g.title, *g.intents, g.prerequisite, *g.steps))) for g in sources.values()
-        ]
-    else:
-        raw = [asset.id for asset in rank_assets(assets, subject)]
-        edited = (
-            [asset.id for asset in rank_assets(assets, edited_subject)]
-            if edited_subject and edited_subject != subject
-            else raw
-        )
-        source_order = fuse(raw, edited)
-        order = {key: index for index, key in enumerate(source_order)}
-        documents = [
-            (asset.id, f"{asset.name} {asset.summary}")
-            for asset in sorted(assets, key=lambda a: (order.get(a.id, len(order)), a.id))
-        ]
-    raw_semantic, edited_semantic = (
-        semantic(question, query, documents[:240], models) if documents else ([], [])
-    )
-    if use_manual:
-        evidence = {key: normalize(content) for key, content in documents if key in raw}
-    else:
-        raw_keys = set(raw)
-        evidence = {
-            asset.id: " ".join(document(asset).fields) for asset in assets if asset.id in raw_keys
-        }
-    direct = {key for key in raw if covers_topics(subject, evidence[key])}
-    # A paraphrase needs both an indexed match and independent support from the original embedding.
-    grounded = direct | ((set(edited) - set(raw)) & set(raw_semantic))
-    return [key for key in fuse(raw, raw_semantic, edited, edited_semantic) if key in grounded][:3]
-
-
-def ask(question, products, actor, models):
+def decide(question, search, models):
     if OVERRIDE.search(question):
-        return {"kind": "outside", "answer": OUTSIDE}
+        return {"kind": "outside"}
     if CONTACT.search(question) and not MANUAL.search(question):
-        return {"kind": "contact", "answer": "問い合わせの内容を入力し、送信してください。"}
+        return {"kind": "contact"}
     allowed = routes(question, models)
     if allowed is None:
-        # Local demos and model outages still accept matches with verifiable sources.
+        # 判定モデルが利用できない場合も、明示された検索先で出典を照合する。
         allowed = (
             ["manual"] if MANUAL.search(question) else ["catalog"] if CATALOG.search(question) else []
         )
     if not allowed:
-        return {"kind": "outside", "answer": OUTSIDE}
+        return {"kind": "outside"}
     plan = models("tool", {"question": question, "allowed": allowed})
     tool = plan.get("action")
     if tool not in allowed:
         tool = allowed[0]
-    query = rewritten(question, plan.get("query"))
     kinds = [tool, *(kind for kind in allowed if kind != tool)]
     for kind in kinds:
-        keys = recommended(
-            question, query, products() if kind == "catalog" else [], models, kind == "manual", actor
+        found = search(kind, plan.get("query"))
+        raw_semantic, edited_semantic = (
+            semantic(question, found.query, found.documents[:240], models)
+            if found.documents
+            else ([], [])
         )
+        grounded = found.direct | ((set(found.edited) - set(found.raw)) & set(raw_semantic))
+        ranked = fuse(found.raw, raw_semantic, found.edited, edited_semantic)
+        keys = [key for key in ranked if key in grounded][:3]
         if not keys:
             continue
         if kind == "catalog":
-            return {"kind": kind, "answer": HEADINGS[kind][0], "keys": keys}
-        guides = manual_sources(actor)
-        evidence = [(guides[key].title, [*guides[key].steps, guides[key].result]) for key in keys]
+            return {"kind": kind, "keys": keys}
+        evidence = [found.steps[key] for key in keys]
         generated = models(
-            "generate", {"question": question, "headings": HEADINGS[kind], "evidence": evidence}
+            "generate", {"question": question, "evidence": evidence, "headings": ["手順"]}
         )
-        heading = generated.get("heading")
-        answer = heading if heading in HEADINGS[kind] else HEADINGS[kind][0]
         index = generated.get("source")
         index = index if type(index) is int and 0 <= index < len(keys) else 0
         key = keys[index]
         step = generated.get("step")
         return {
             "kind": kind,
-            "answer": answer,
             "keys": [key, *(item for item in keys if item != key)],
             "focus": [key, step if type(step) is int else 0],
         }
-    return {"kind": "empty", "answer": NO_MATCH}
+    return {"kind": "empty"}

@@ -277,7 +277,7 @@ def test_baseline_measurement_uses_clean_checkout(project, monkeypatch, per_suit
             marks=pytest.mark.case_detail("推論用配布物の変更時はモデル単体とリソースを検査する"),
         ),
         pytest.param(
-            "packages/agent/src/chat_jobs.py",
+            "packages/agent/src/chat_retrieval.py",
             ["synth", "types", "aws"],
             ["packages/agent/tests", "packages/backend/tests"],
             id="agent-job",

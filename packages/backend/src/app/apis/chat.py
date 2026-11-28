@@ -4,14 +4,14 @@ import os
 from threading import Lock
 from uuid import UUID
 
-import chat_jobs as jobs
+from app.core import chat_jobs as jobs
 from app.core.catalog import listing
 from app.core.catalog_visibility import visible_collection
+from app.core.chat_search import NO_MATCH, ask, manual_sources
 from app.dependencies import DB, User
 from app.schemas.chat import ChatGuide, ChatQuestion, ChatReceipt, ChatResult
 from app.schemas.errors import domain_errors
 from botocore.exceptions import BotoCoreError, ClientError
-from chat_retrieval import NO_MATCH, ask, manual_sources
 from fastapi import APIRouter, HTTPException, Request
 
 router = APIRouter()

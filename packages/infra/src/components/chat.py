@@ -44,7 +44,7 @@ class PortalChat(Construct):
             self,
             "Worker",
             runtime=EVENT_PYTHON,
-            handler="chat_jobs.handler",
+            handler="app.core.chat_jobs.handler",
             code=backend_code,
             layers=[dependencies],
             role=role,

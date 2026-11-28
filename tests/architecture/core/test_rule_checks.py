@@ -24,10 +24,13 @@ def test_boundary_checker_rejects_cross_layer_imports():
             "from packages.database.src.tsugite_db import models",
             "データベース",
         ),
-        ("packages/infra/app.py", "import chat_jobs as worker", "エージェント"),
-        ("packages/infra/app.py", "from packages.agent.src import chat_jobs", "エージェント"),
-        ("packages/agent/src/chat_jobs.py", "from packages.model.src import completion", "モデル"),
-        ("packages/model/src/completion.py", "import chat_jobs as jobs", "エージェント"),
+        ("packages/infra/app.py", "import chat_retrieval as worker", "エージェント"),
+        ("packages/infra/app.py", "from packages.agent.src import chat_retrieval", "エージェント"),
+        ("packages/agent/src/chat_retrieval.py", "from packages.model.src import completion", "モデル"),
+        ("packages/model/src/completion.py", "import chat_retrieval as jobs", "エージェント"),
+        ("packages/agent/src/chat_retrieval.py", "import boto3", "AWS SDK"),
+        ("packages/agent/src/chat_retrieval.py", "from sqlalchemy.orm import Session", "データベース"),
+        ("packages/agent/src/chat_retrieval.py", "from app.core import chat_jobs", "バックエンド"),
         ("packages/agent/src/chat_retrieval.py", "from web_app import chat_views", "フロント"),
         (
             "packages/agent/src/chat_retrieval.py",
@@ -50,9 +53,9 @@ def test_boundary_checker_rejects_cross_layer_imports():
 def test_boundary_checker_accepts_supported_collaboration():
     """APIのジョブ受付、エージェントのガイド共有、モデル内の参照を許可する。"""
     for path, source in (
-        ("packages/backend/src/app/main.py", "import chat_jobs as jobs"),
+        ("packages/backend/src/app/main.py", "import chat_retrieval as jobs"),
         (
-            "packages/agent/src/chat_retrieval.py",
+            "packages/backend/src/app/core/chat_search.py",
             "from packages.frontend.src.web_app.content.guide_content import GUIDES",
         ),
         ("packages/model/src/completion.py", "import model_runtime"),

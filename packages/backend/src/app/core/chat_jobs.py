@@ -11,11 +11,11 @@ from typing import Any, Protocol, cast
 import boto3
 from app.core.auth import Actor
 from app.core.catalog_visibility import visible_collection
+from app.core.chat_search import ask
 from app.core.diagnostics import OperationalRepair, emit
 from app.core.log_record import SCREENS
 from botocore.config import Config
 from botocore.exceptions import ClientError
-from chat_retrieval import ask
 from sqlalchemy.orm import Session
 from tsugite_db.session import engine
 

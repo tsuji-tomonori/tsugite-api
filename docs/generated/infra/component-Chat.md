@@ -395,7 +395,7 @@
 | `Properties.Environment.Variables.CHAT_TOOL` | `${Ref:ChatTool7CAFC729}` |
 | `Properties.Environment.Variables.DSQL_HOST` | `${GetAtt:Database.Endpoint}` |
 | `Properties.Environment.Variables.DSQL_USER` | `tsugite_chat` |
-| `Properties.Handler` | `chat_jobs.handler` |
+| `Properties.Handler` | `app.core.chat_jobs.handler` |
 | `Properties.Layers[0]` | `${Ref:RuntimeDependencies72FC0EEE}` |
 | `Properties.LoggingConfig.LogGroup` | `${Ref:ChatWorkerLogsBC291E87}` |
 | `Properties.MemorySize` | `768` |

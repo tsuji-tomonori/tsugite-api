@@ -140,7 +140,7 @@ def test_chat_worker_failure_responses(portal, monkeypatch):
     """チャット受付の送信制限で429を、ワーカーに接続できないときは503を返す。"""
     from uuid import uuid4
 
-    import chat_jobs
+    from app.core import chat_jobs
     from botocore.exceptions import EndpointConnectionError
 
     monkeypatch.setenv("CHAT_WORKER", "worker")

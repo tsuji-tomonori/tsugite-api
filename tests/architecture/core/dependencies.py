@@ -53,7 +53,7 @@ ALLOWED = {
     "フロント": set(),
     "インフラ": set(),
     "モデル": set(),
-    "エージェント": {"バックエンド", "データベース"},
+    "エージェント": set(),
     "開発ツール": {
         "サンプルAPI",
         "HTTPフレームワーク",
@@ -124,6 +124,8 @@ def dependency_violations(path, source):
     errors = []
     for line, imported in dependencies(ast.parse(source, filename=str(path)), module.rpartition(".")[0]):
         target = layer(imported)
+        if owner == "エージェント" and imported.partition(".")[0] in {"boto3", "botocore"}:
+            target = "AWS SDK"
         if target is None or target == owner or target in ALLOWED[owner]:
             continue
         if module == "app.integrations.upstream" and imported in {
@@ -132,7 +134,7 @@ def dependency_violations(path, source):
         }:
             continue  # ローカルでのみ同じFastAPIアプリを呼ぶ。
         # チャット検索だけがブラウザーに依存しないガイド本文と検索関数を共有する。
-        if module == "agent.chat_retrieval" and imported.split(".")[:3] in (
+        if module == "app.core.chat_search" and imported.split(".")[:3] in (
             ["web_app", "content", "guide_content"],
             ["web_app", "content", "guide_search"],
         ):

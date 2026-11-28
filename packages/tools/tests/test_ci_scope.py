@@ -209,7 +209,7 @@ def test_agent_sources_select_agent_consumers_and_deployment_checks(tmp_path):
     suites = [*SUITES, ci.ARCHITECTURE]
     (tmp_path / "coverage-parts" / ci.part_name(ci.ARCHITECTURE)).touch()
     for path, expected in (
-        ("packages/agent/src/chat_jobs.py", {ci.AGENT, ci.BACKEND, ci.BROWSER}),
+        ("packages/agent/src/chat_retrieval.py", {ci.AGENT, ci.BACKEND, ci.BROWSER}),
         ("packages/model/src/decision.py", {ci.MODEL}),
         ("packages/model/src/manifest.json", {ci.MODEL}),
     ):

@@ -90,7 +90,7 @@ import sys
 from pathlib import Path
 code, dependencies = sys.argv[1:]
 sys.path[:0] = [code, dependencies]
-import chat_jobs as jobs
+from app.core import chat_jobs as jobs
 from app.core.auth import Actor
 assert Path(jobs.__file__).resolve().is_relative_to(code)
 assert callable(jobs.handler)

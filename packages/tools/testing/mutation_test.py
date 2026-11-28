@@ -70,7 +70,7 @@ MUTATIONS = (
         "packages/agent/src/chat_retrieval.py",
         "if key in grounded][:3]",
         "if key in grounded or key in raw_semantic][:3]",
-        "packages/agent/tests/test_agent_retrieval.py::test_chat_does_not_promote_unrelated_sources",
+        "packages/backend/tests/test_chat_search.py::test_chat_does_not_promote_unrelated_sources",
     ),
     Mutation(
         "frontend",
@@ -722,7 +722,7 @@ MUTATIONS = (
         "architecture",
         "共有ガイドの利用も拒否する",
         "tests/architecture/core/dependencies.py",
-        'module == "agent.chat_retrieval" and',
+        'module == "app.core.chat_search" and',
         'module == "agent.unused" and',
         "tests/architecture/core/test_rule_checks.py::test_boundary_checker_accepts_supported_collaboration",
     ),

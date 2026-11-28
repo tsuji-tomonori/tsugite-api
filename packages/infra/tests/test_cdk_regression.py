@@ -75,7 +75,7 @@ def test_backend_layer_changes_only_with_dependencies(tmp_path):
             "app.main.handler",
             "app.authorizer.handler",
             "app.migrate.handler",
-            "chat_jobs.handler",
+            "app.core.chat_jobs.handler",
         }
         functions = {
             props["Handler"]: props
@@ -177,3 +177,20 @@ def test_schema_waits_for_chat_models(catalog_stack):
     assert len(model_ids) == 3
     schema = template.to_json()["Resources"]["Schema"]
     assert model_ids.issubset(schema.get("DependsOn", []))
+
+
+def test_gateway_http_integrations_use_fastapi(catalog_stack):
+    """API Gatewayの全HTTP統合先がFastAPIを配備したLambdaであることを確認する。"""
+    template = Template.from_stack(catalog_stack)
+    functions = template.find_resources("AWS::Lambda::Function")
+    integrations = template.find_resources("AWS::ApiGatewayV2::Integration")
+    assert integrations
+    for integration in integrations.values():
+        props = integration["Properties"]
+        assert props["IntegrationType"] == "AWS_PROXY"
+        function, attribute = props["IntegrationUri"]["Fn::GetAtt"]
+        assert attribute == "Arn"
+        assert functions[function]["Properties"]["Handler"] in {
+            "app.main.handler",
+            "sample_api.main.handler",
+        }
