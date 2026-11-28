@@ -26,6 +26,14 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
+        "deployed-e2e",
+        "実環境でログインした利用者の識別子を照合しない",
+        "tests/e2e/deployed/account.py",
+        'and profile.get("subject") == subject',
+        "and True",
+        "packages/tools/tests/test_deployed_account.py::test_only_expected_consumer",
+    ),
+    Mutation(
         "formal",
         "利用者別の禁止操作を許可する",
         "packages/backend/src/app/core/credential_policy.py",
