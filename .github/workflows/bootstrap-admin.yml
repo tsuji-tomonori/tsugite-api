@@ -60,6 +60,7 @@ jobs:
           aws-region: ${{ vars.AWS_REGION }}
           role-session-name: gha-admin-grant-${{ github.run_id }}-${{ github.run_attempt }}
       - env:
+          BOOTSTRAP_ADMIN_EMAIL: ${{ secrets.BOOTSTRAP_ADMIN_EMAIL }}
           INVITED_POOL: ${{ needs.invite.outputs.pool }}
           INVITED_SUBJECT: ${{ needs.invite.outputs.subject }}
         run: uv run --no-project --python 3.15 python packages/tools/operations/bootstrap_admin.py grant

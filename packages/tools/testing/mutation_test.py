@@ -26,6 +26,38 @@ class Mutation:
 
 MUTATIONS = (
     Mutation(
+        "chat-inquiry",
+        "モデルが類似と判定した商品をすべて候補に戻す",
+        "packages/agent/src/chat_retrieval.py",
+        "if key in grounded][:3]",
+        "if key in grounded or key in raw_semantic][:3]",
+        "packages/agent/tests/test_agent_retrieval.py::test_chat_does_not_promote_unrelated_sources",
+    ),
+    Mutation(
+        "frontend",
+        "初期画面のメニュー名を旧名称に戻す",
+        "packages/frontend/src/web_app/pages/home/__init__.py",
+        'Screen("home", "チャット",',
+        'Screen("home", "ホーム",',
+        "packages/frontend/tests/test_screen_registry.py::test_existing_routes_and_role_menus",
+    ),
+    Mutation(
+        "deployed-e2e",
+        "実環境でログインした利用者の識別子を照合しない",
+        "tests/e2e/deployed/account.py",
+        'and profile.get("subject") == subject',
+        "and True",
+        "packages/tools/tests/test_deployed_account.py::test_only_expected_consumer",
+    ),
+    Mutation(
+        "admin-role",
+        "最後の管理者の権限を剥奪できてしまう",
+        "packages/backend/src/app/apis/governance/admin_roles.py",
+        "if admins == {subject}:",
+        "if not admins:",
+        "packages/backend/tests/test_quint_administrators.py::test_admin_role_handover",
+    ),
+    Mutation(
         "formal",
         "Verifyで形式仕様の日本語文書の再生成チェックを省く",
         "tests/formal/check.sh",
@@ -64,6 +96,14 @@ MUTATIONS = (
         '"error_code": "INTERNAL_ERROR", ',
         "",
         "packages/backend/tests/test_http_contract.py::test_catalog_search_failure",
+    ),
+    Mutation(
+        "frontend",
+        "待機アイコンをボタンの文字色から固定色に戻す",
+        "packages/frontend/public/ui.css",
+        "background-color: currentColor;",
+        "background-color: gold;",
+        "tests/e2e/browser/test_busy_icon.py::test_busy_icon_follows_button_color",
     ),
     Mutation(
         "frontend",
@@ -168,6 +208,22 @@ MUTATIONS = (
         'style=f"--buckets:{len(pts)}"',
         'style="--buckets:0"',
         "packages/frontend/tests/test_dashboard.py::test_dashboard_recovers_from_metrics_failure",
+    ),
+    Mutation(
+        "member-profile",
+        "招待時に氏名を省略できる",
+        "packages/backend/src/app/schemas/members.py",
+        "full_name: FullName",
+        "full_name: FullName | None = None",
+        "packages/backend/tests/test_member_profiles.py::test_invitation_requires_login_and_full_name",
+    ),
+    Mutation(
+        "frontend",
+        "一覧で氏名を表示名に置き換える",
+        "packages/frontend/src/web_app/components/member_identity.py",
+        'name = person.get("full_name")',
+        'name = person.get("display_name")',
+        "packages/frontend/tests/test_workspace_screens.py::test_direct_members_have_aligned_table_columns",
     ),
     Mutation(
         "member-profile",
@@ -302,6 +358,14 @@ MUTATIONS = (
         'conditions = [node["if"].value for node in (mapping(job), fields) if "if" in node]',
         "conditions = []",
         "packages/tools/tests/test_completion.py::test_workflow_comments_follow_steps",
+    ),
+    Mutation(
+        "frontend",
+        "キー選択時の呼び出しURLの送信先照合を省く",
+        "packages/frontend/src/web_app/apis/manual.py",
+        "not url.startswith(origin + prefix)",
+        "False",
+        "packages/frontend/tests/test_api_client.py::test_manual_key_checks_destination_before_exchange",
     ),
     Mutation(
         "frontend",
@@ -810,6 +874,22 @@ MUTATIONS = (
         "for source in (operation, item):",
         "packages/frontend/tests/test_openapi_fields.py::"
         "test_operation_overrides_path_parameter_and_resolves_pointer",
+    ),
+    Mutation(
+        "frontend",
+        "一覧の開閉ボタンを標準の三角付き見出しに戻す",
+        "packages/frontend/src/web_app/components/list_layout.py",
+        'with t.details(classes="list-disclosure", open=expanded):',
+        "with t.details(open=expanded):",
+        "packages/frontend/tests/test_components.py::test_log_search_starts_collapsed_and_shows_active_conditions",
+    ),
+    Mutation(
+        "frontend",
+        "日時指定で終了日時を開始日時と同じにする",
+        "packages/frontend/src/web_app/components/activity_filters.py",
+        'return timestamp("start"), timestamp("end")',
+        'return timestamp("start"), timestamp("start")',
+        "packages/frontend/tests/test_required_monitoring.py::test_apply_monitoring_filters",
     ),
     Mutation(
         "frontend",

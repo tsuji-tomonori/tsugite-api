@@ -12,11 +12,41 @@ from tests.support.portal_server import serve_portal
 from tests.support.screenshots import capture_image
 
 
+def assert_button_markers(page: Page) -> None:
+    """ボタンの文言、内側の装飾、ブラウザーが描画するリストマーカーを検査する。"""
+    buttons = page.locator(
+        'button, input:is([type="button"], [type="submit"], [type="reset"]), '
+        '[role="button"], .btn, .list-disclosure > summary'
+    )
+    violations = buttons.evaluate_all("""buttons => {
+        const triangle = /[▼▽▾▿⏷🔻🔽⌄⌵]/u;
+        return buttons.flatMap(button => {
+            const label = button.innerText || button.value || button.getAttribute('aria-label') || '';
+            const elements = [button, ...button.querySelectorAll('*')];
+            for (const el of elements) {
+                for (const pseudo of ['::before', '::after', '::marker']) {
+                    const content = getComputedStyle(el, pseudo).content;
+                    if (triangle.test(content)) return [label + ' ' + pseudo + ' ' + content];
+                }
+                const style = getComputedStyle(el);
+                if (style.display.includes('list-item') &&
+                    ['disclosure-open', 'disclosure-closed'].includes(style.listStyleType)) {
+                    return [label + ' ' + style.listStyleType];
+                }
+            }
+            return triangle.test(label) ? [label] : [];
+        });
+    }""")
+    assert not violations, (page.url, violations)
+
+
 def assert_layout(page: Page) -> None:
     """展開後のページ幅、関連する欄の間隔、表見出しとグラフの実寸を確認する。"""
     page.evaluate("document.fonts.ready")
     page.evaluate("new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))")
+    assert_button_markers(page)
     page.locator("details").evaluate_all("nodes => nodes.forEach(node => node.open = true)")
+    assert_button_markers(page)
     assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
     for bar in page.locator(".time-bar").evaluate_all(
         "els => els.map(el => [el.getBoundingClientRect().width, el.getBoundingClientRect().height])"
@@ -110,7 +140,12 @@ def test_role_screen_layout(tmp_path: Path, request: pytest.FixtureRequest) -> N
                 api.post(
                     "members",
                     headers=admin,
-                    json={"email": email, "role": "consumer", "project": "finance"},
+                    json={
+                        "full_name": "試験 花子",
+                        "email": email,
+                        "role": "consumer",
+                        "project": "finance",
+                    },
                 )
                 .raise_for_status()
                 .json()
@@ -127,6 +162,8 @@ def test_role_screen_layout(tmp_path: Path, request: pytest.FixtureRequest) -> N
                 page = browser.new_page(viewport={"width": 1440, "height": 900})
                 token = api.post("demo/" + role).raise_for_status().json()["access_token"]
                 page.goto(url)
+                expect(page.get_by_role("button", name="利用チーム", exact=True)).to_be_visible()
+                assert_button_markers(page)
                 page.evaluate("token => sessionStorage.setItem('access', token)", token)
                 page.reload()
                 nav = page.get_by_role("navigation", name="ポータル")
@@ -138,6 +175,10 @@ def test_role_screen_layout(tmp_path: Path, request: pytest.FixtureRequest) -> N
                     expect(nav.locator('[aria-current="page"]')).to_have_text(label)
                     expect(page.locator(".notice.error")).to_have_count(0)
                     inspect_screen(page, request.node, role, label)
+                    if role == "consumer" and label == "アクセスログ":
+                        capture_image(
+                            request.node, "layout", page, "log-buttons", "三角を表示しない操作ボタン"
+                        )
                     inspect_details(page, label, request.node, role)
                 page.close()
             browser.close()

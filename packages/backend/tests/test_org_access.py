@@ -169,7 +169,12 @@ def test_invitation_respects_identity_source(portal):
             portal.post(
                 "/api/members",
                 headers=admin,
-                json={"email": project + "@example.org", "role": "provider", "project": project},
+                json={
+                    "full_name": "試験 花子",
+                    "email": project + "@example.org",
+                    "role": "provider",
+                    "project": project,
+                },
             )
             .raise_for_status()
             .json()["subject"]
@@ -215,7 +220,12 @@ def test_workspace_honors_current_groups(portal, monkeypatch):
         portal.post(
             "/api/members",
             headers=headers(portal, "admin"),
-            json={"email": "former@example.org", "role": "consumer", "project": "finance"},
+            json={
+                "full_name": "試験 花子",
+                "email": "former@example.org",
+                "role": "consumer",
+                "project": "finance",
+            },
         )
         .raise_for_status()
         .json()

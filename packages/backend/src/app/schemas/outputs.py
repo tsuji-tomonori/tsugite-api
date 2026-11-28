@@ -149,6 +149,12 @@ class MemberIdentity(TypedDict):
     username: str
 
 
+#: 権限設定の候補に表示する氏名
+class NamedMember(MemberIdentity):
+    #: 氏名
+    full_name: str | None
+
+
 #: 利用者の識別情報
 class Person(MemberIdentity, PersonNames):
     pass
@@ -164,6 +170,8 @@ class MemberProfile(PersonNames):
 
 #: ポータル利用者
 class Member(Person):
+    #: 管理者権限を持つか
+    admin: bool
     #: 利用者の役割
     role: str
     #: 所属プロジェクトの識別子
@@ -496,7 +504,7 @@ class OperationPolicy(TypedDict):
     #: 対象のAPI操作
     operations: list[str]
     #: 対象の利用者一覧
-    members: list[MemberIdentity]
+    members: list[NamedMember]
     #: 利用者ごとに許可されたAPI操作
     permissions: dict[str, list[str]]
 
@@ -534,7 +542,7 @@ class CredentialOptions(TypedDict):
     #: 発行対象に選べるAPI
     assets: list[CredentialAsset]
     #: 対象の利用者一覧
-    members: list[MemberIdentity]
+    members: list[NamedMember]
     #: 組織別の有効期間上限
     limits: list[UnitLimit]
     #: トークンの有効期間上限（分）

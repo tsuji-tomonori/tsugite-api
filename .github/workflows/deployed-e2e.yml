@@ -1,0 +1,28 @@
+name: CloudFront portal E2E
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  portal:
+    if: github.repository == 'tsuji-tomonori/tsugite-api' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: cloudfront-e2e
+    timeout-minutes: 15
+    concurrency:
+      group: tsugite-cloudfront-e2e
+      queue: max
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/cloudfront-portal-e2e
+        with:
+          portal_url: ${{ vars.E2E_PORTAL_URL }}
+          subject: ${{ vars.E2E_SUBJECT }}
+          username: ${{ secrets.E2E_USERNAME }}
+          password: ${{ secrets.E2E_PASSWORD }}
+          totp_seed: ${{ secrets.E2E_TOTP_SEED }}

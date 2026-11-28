@@ -30,7 +30,7 @@ def test_user_flow(demo_url: str, request: pytest.FixtureRequest) -> None:
 
 
 def test_home_chat_and_inquiry(demo_url: str, request: pytest.FixtureRequest) -> None:
-    """ホームで商品と手順を調べ、運営への問い合わせを明示的に送信できる。"""
+    """ログイン直後のチャットで商品と手順を調べ、運営への問い合わせを明示的に送信できる。"""
     import httpx
     from playwright.sync_api import expect, sync_playwright
 
@@ -43,6 +43,8 @@ def test_home_chat_and_inquiry(demo_url: str, request: pytest.FixtureRequest) ->
         page = browser.new_page(viewport={"width": 390, "height": 844})
         page.goto(demo_url)
         page.get_by_role("button", name="利用チーム", exact=True).click()
+        expect(page.get_by_role("heading", level=1, name="チャット", exact=True)).to_be_visible()
+        expect(page.get_by_label("質問", exact=True)).to_be_visible()
         expect(page.get_by_role("heading", name="どのAPIをお探しですか？")).to_be_visible()
         page.get_by_role("button", name="在庫を確認できるAPIを探して").click()
         history = page.get_by_role("log", name="会話")
@@ -51,12 +53,33 @@ def test_home_chat_and_inquiry(demo_url: str, request: pytest.FixtureRequest) ->
         page.get_by_label("質問", exact=True).fill("APIキーを発行する手順を教えて")
         page.get_by_role("button", name="送信", exact=True).click()
         expect(history.get_by_role("link", name="ガイドで確認").first).to_be_visible()
-        page.get_by_role("button", name="運営に問い合わせる").click()
-        page.get_by_label("問い合わせ内容").fill("利用申請を確認してください")
-        page.get_by_role("button", name="問い合わせを送信").click()
-        expect(history.get_by_text("問い合わせを受け付けました。受付番号", exact=False)).to_be_visible()
+        expect(history.get_by_role("button", name="この質問を運営に送信")).to_have_count(0)
+        question = "月面探査車の走行距離を取得できるAPIを探して"
+        sent = []
+        page.on(
+            "request",
+            lambda req: (
+                sent.append(req.post_data_json)
+                if req.method == "POST" and req.url.endswith("/api/inquiries")
+                else None
+            ),
+        )
+        page.get_by_label("質問", exact=True).fill(question)
+        page.get_by_role("button", name="送信", exact=True).click()
+        turn = history.locator("article.chat-turn").filter(has_text=question)
+        send = turn.get_by_role("button", name="この質問を運営に送信")
+        expect(send).to_be_visible()
+        expect(turn.locator(".chat-source")).to_have_count(0)
+        assert not sent
+        capture_image(
+            request.node, "chat", page, "unmatched", "質問に合う商品がなく運営へ送信できる状態"
+        )
+        send.click()
+        expect(turn.get_by_role("status")).to_contain_text("問い合わせを受け付けました。受付番号")
+        expect(send).to_have_count(0)
+        assert [item["question"] for item in sent] == [question]
         page.get_by_role("link", name="自分の問い合わせ", exact=True).click()
-        expect(page.get_by_text("回答待ち", exact=True)).to_be_visible()
+        expect(page.get_by_role("row").filter(has_text=question)).to_contain_text("回答待ち")
         capture_image(request.node, "chat", page, "inquiry", "受付後に確認した自分の問い合わせ")
         assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
         browser.close()
@@ -317,7 +340,8 @@ def test_governance_console(demo_url: str, request: pytest.FixtureRequest) -> No
 
             navigate(admin, "ユーザー管理")
             admin.locator("summary").filter(has_text="ユーザーを追加").click()
-            admin.get_by_label("メールアドレス").fill("catalog-reader@example.org")
+            admin.get_by_label("氏名（必須）").fill("一覧 花子")
+            admin.get_by_label("ユーザー名（メールアドレス）").fill("catalog-reader@example.org")
             admin.get_by_label("所属プロジェクト").select_option("finance")
             admin.get_by_role("button", name="追加する").click()
             row = admin.get_by_role("row").filter(has_text="catalog-reader@example.org")

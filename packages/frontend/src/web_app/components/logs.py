@@ -23,7 +23,7 @@ def logs_view(scope: str = "personal") -> None:
         t.p("ログを取得できませんでした。")
         btn("再読み込み", load)
         return
-    with t.div(classes="list-tools"):
+    with t.div(classes="list-tools log-tools"):
         filters_view(False, scope=scope)
         download_button("アクセスログをダウンロード", action(download_logs))
     rows = ctx["log_rows"]

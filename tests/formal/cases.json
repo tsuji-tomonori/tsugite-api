@@ -1,4 +1,70 @@
 {
+  "administrators.handoverTest": [
+    {
+      "caller": "",
+      "first": true,
+      "grant": false,
+      "response": 0,
+      "second": false,
+      "target": ""
+    },
+    {
+      "caller": "first",
+      "first": true,
+      "grant": false,
+      "response": 409,
+      "second": false,
+      "target": "first"
+    },
+    {
+      "caller": "second",
+      "first": true,
+      "grant": true,
+      "response": 403,
+      "second": false,
+      "target": "second"
+    },
+    {
+      "caller": "first",
+      "first": true,
+      "grant": true,
+      "response": 200,
+      "second": true,
+      "target": "second"
+    },
+    {
+      "caller": "first",
+      "first": true,
+      "grant": true,
+      "response": 200,
+      "second": true,
+      "target": "second"
+    },
+    {
+      "caller": "second",
+      "first": false,
+      "grant": false,
+      "response": 200,
+      "second": true,
+      "target": "first"
+    },
+    {
+      "caller": "first",
+      "first": false,
+      "grant": false,
+      "response": 403,
+      "second": true,
+      "target": "second"
+    },
+    {
+      "caller": "second",
+      "first": false,
+      "grant": false,
+      "response": 409,
+      "second": true,
+      "target": "second"
+    }
+  ],
   "audience.visibilityTest": [
     {
       "source": "none",
@@ -884,29 +950,60 @@
   ],
   "profiles.profileTest": [
     {
+      "hasFullName": false,
       "named": false,
       "operation": "init",
       "response": 0
     },
     {
+      "hasFullName": true,
       "named": true,
       "operation": "selfSet",
       "response": 200
     },
     {
+      "hasFullName": true,
       "named": true,
       "operation": "other",
       "response": 403
     },
     {
+      "hasFullName": true,
       "named": true,
       "operation": "stale",
       "response": 409
     },
     {
+      "hasFullName": true,
       "named": false,
       "operation": "adminClear",
       "response": 200
+    }
+  ],
+  "profiles.requiredFullNameTest": [
+    {
+      "hasFullName": false,
+      "named": false,
+      "operation": "init",
+      "response": 0
+    },
+    {
+      "hasFullName": false,
+      "named": false,
+      "operation": "adminClear",
+      "response": 422
+    },
+    {
+      "hasFullName": true,
+      "named": true,
+      "operation": "selfSet",
+      "response": 200
+    },
+    {
+      "hasFullName": true,
+      "named": true,
+      "operation": "clearFull",
+      "response": 422
     }
   ],
   "quota.thresholdTest": [

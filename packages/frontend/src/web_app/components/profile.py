@@ -24,7 +24,7 @@ def view() -> None:
         return
     with t.section(classes="box"):
         t.p("メールアドレス　" + (profile["email"] or "—"))
-        field("氏名", "profile-full-name", text=profile["full_name"] or "", required=False)
+        field("氏名", "profile-full-name", text=profile["full_name"] or "", required=True)
         field("表示名", "profile-display-name", text=profile["display_name"] or "", required=False)
         with t.div(classes="btn-grouping"):
             btn("保存する", save, profile_endpoint(page), profile["revision"], primary=True)

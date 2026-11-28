@@ -57,7 +57,7 @@ def intent_vector(query: str, terms: set[str]) -> dict[str, float]:
     return {key: value / norm for key, value in vector.items()}
 
 
-def search(query: str, role: str = "すべて") -> list[Guide]:
+def search(query: str, role: str = "すべて", *, min_coverage: float = 0.29) -> list[Guide]:
     """対象ロールの記事を関連度順に返す。"""
     guides = [g for g in GUIDES if role == "すべて" or role in audiences(g)]
     query = normalize(query).strip()
@@ -72,7 +72,7 @@ def search(query: str, role: str = "すべて") -> list[Guide]:
         lexical = 0.0
         if weight:
             coverage = sum(weights[t] for t in terms & INDEX[g.id]) / weight
-            if coverage >= 0.29:
+            if coverage >= min_coverage:
                 title = sum(weights[t] for t in terms & TITLE[g.id]) / weight
                 lexical = coverage * (1 + title)
         score = lexical + 2 * semantic.get(g.id, 0)
