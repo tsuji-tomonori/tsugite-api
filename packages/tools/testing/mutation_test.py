@@ -553,7 +553,7 @@ MUTATIONS = (
     Mutation(
         "stock-lambda",
         "上限と一致する不良数の検品ロットを除外する",
-        "packages/sample_api/src/sample_api/products/receipt_inspections.py",
+        "packages/sample_api/src/sample_api/apis/receipt_inspections.py",
         "WHERE defect_count <= ?",
         "WHERE defect_count < ?",
         "packages/sample_api/tests/test_products.py::test_inspection_defect_threshold_includes_zero",
@@ -561,7 +561,7 @@ MUTATIONS = (
     Mutation(
         "stock-lambda",
         "存在しない商品を成功として返す",
-        "packages/sample_api/src/sample_api/database.py",
+        "packages/sample_api/src/sample_api/core/database.py",
         "raise HTTPException(404,",
         "raise HTTPException(200,",
         "packages/sample_api/tests/test_stock_lambda.py::test_stock_response[missing]",

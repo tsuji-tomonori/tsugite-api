@@ -20,7 +20,7 @@
 
 | 分野 | 変更ファイルの例 | 合格が必要なテスト | 追加の検査・生成 |
 | --- | --- | --- | --- |
-| サンプルAPI | `packages/sample_api/src/sample_api/database.py` | サンプルAPI、アーキテクチャ、バックエンド、インフラ、ブラウザーE2E、開発ツール | Ruff（書式・静的解析）、API設計書・契約の生成、依存関係・CDK監査、CDK合成・インフラ文書生成、AWSエミュレーターE2E |
+| サンプルAPI | `packages/sample_api/src/sample_api/apis/bundle_recipes.py` | サンプルAPI、アーキテクチャ、バックエンド、インフラ、ブラウザーE2E、開発ツール | Ruff（書式・静的解析）、API設計書・契約の生成、依存関係・CDK監査、CDK合成・インフラ文書生成、AWSエミュレーターE2E |
 | エージェント | `packages/agent/src/chat_jobs.py` | エージェント、アーキテクチャ、バックエンド、インフラ、ブラウザーE2E | Ruff（書式・静的解析）、型検査、依存関係・CDK監査、CDK合成・インフラ文書生成、AWSエミュレーターE2E |
 | 推論モデル | `packages/model/src/completion.py` | 推論モデル、アーキテクチャ、インフラ | Ruff（書式・静的解析）、型検査、依存関係・CDK監査、CDK合成・インフラ文書生成、AWSエミュレーターE2E |
 | バックエンド | `packages/backend/src/app/apis/catalog/apply.py` | エージェント、アーキテクチャ、バックエンド、ブラウザーE2E、開発ツール | Ruff（書式・静的解析）、型検査、API設計書・契約の生成、CDK合成・インフラ文書生成、AWSエミュレーターE2E |
@@ -172,7 +172,7 @@
 | CDKスタックが各コンポーネントを組み立て、コンポーネントからスタックを参照しない。 | — | [test_components_do_not_import_the_stack](../../../tests/architecture/infra/test_stack.py#L8) |
 | エージェントが使う推論モデルの役割、取得元、ハッシュを検査する。 | — | [test_model_distributes_pinned_weights](../../../tests/architecture/model/test_distribution.py#L6) |
 | 推論関数の配布物から業務パッケージを読み込まずにハンドラーを起動準備できる。 | 判定関数は業務パッケージなしで読み込める<br>生成関数は業務パッケージと判定用依存なしで読み込める | [test_packaged_worker_imports_independently](../../../tests/architecture/model/test_workers.py#L26) |
-| 商品ごとに実装モジュールと公開用のOpenAPIファイルが一対一で対応する。 | — | [test_each_product_has_a_published_contract](../../../tests/architecture/sample_api/test_products.py#L5) |
+| 商品ごとにルート、入出力モデル、公開用OpenAPIが一対一で対応する。 | — | [test_each_product_has_a_published_contract](../../../tests/architecture/sample_api/test_products.py#L5) |
 | 設計解析とその補助モジュールで外部辞書の読み込みと正規表現を検出する。 | — | [test_design_analysis_uses_only_python_sources_and_syntax_trees](../../../tests/architecture/tools/test_design_sources.py#L98) |
 | コードやスタイルシートを読む開発ツールで正規表現による解析を検出する。 | — | [test_project_tools_do_not_parse_source_files_with_regex](../../../tests/architecture/tools/test_design_sources.py#L103) |
 | 廃止した用語集の復活と設計書生成パッケージへの外部辞書の追加を検出する。 | — | [test_design_source_directories_contain_no_sidecar_data](../../../tests/architecture/tools/test_design_sources.py#L122) |

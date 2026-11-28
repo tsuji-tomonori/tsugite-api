@@ -146,10 +146,10 @@ GitHub Actions の **Verify** から成果物 **contracts-and-test-results** 内
 
 [ポータルの画面仕様と業務フロー](docs/design/portal.md)。デモ起動中に別の端末で `task seed` を実行すると、SQLiteの見本データを持つ24商品が公開されます。`task seed -- --editions 20` では20拠点分の480件を作成します。過去に同じデモ商品を登録した環境で再実行すると、旧仕様を新版に更新して再公開します。仕様を変更した商品の既存の利用権はポータルの規則に従い再申請が必要です。
 
-[商品別のOpenAPI YAML](docs/generated/sample-api/) は `task docs:samples` で再生成できます。各商品の5つの業務操作と `GET /health` を掲載しています。商品ごとの実装は [packages/sample_api](packages/sample_api/src/sample_api/products/) にあります。AWSの標準構成では環境別の既存の接続先（例：`stock-sandbox`）を選び、ベースパスを `/<商品slug>` に設定します。画面はJSON入力なので、例えば配送追跡は次のコマンドで同じ定義をJSONにして登録します。
+[商品別のOpenAPI YAML](docs/generated/sample-api/) は `task docs:samples` で再生成できます。各商品の5つの業務操作と `GET /health` を掲載しています。商品ごとのルートは [apis](packages/sample_api/src/sample_api/apis/)、入出力モデルは [schemas](packages/sample_api/src/sample_api/schemas/) の同名ファイルにあります。SQLite、ヘルスチェック、共通エラー処理は [core](packages/sample_api/src/sample_api/core/) にあります。AWSの標準構成では環境別の既存の接続先（例：`stock-sandbox`）を選び、ベースパスを `/<商品slug>` に設定します。画面はJSON入力なので、例えば配送追跡は次のコマンドで同じ定義をJSONにして登録します。
 
 ```bash
-uv run --locked --all-packages python -c 'import json; from sample_api.products.parcel_tracking import app; print(json.dumps(app.openapi(), ensure_ascii=False, indent=2))' > parcel-tracking.json
+uv run --locked --all-packages python -c 'import json; from sample_api.apis.parcel_tracking import app; print(json.dumps(app.openapi(), ensure_ascii=False, indent=2))' > parcel-tracking.json
 ```
 
 旧在庫APIの `/items` と `/items/{sku}` は引き続きベースパスなしで呼べます。サンプルのデータはLambdaの実行環境内に保持し、発注は入力数量で結果を試算します。
