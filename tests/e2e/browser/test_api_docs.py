@@ -254,7 +254,7 @@ def test_openapi_key_console(tmp_path: Path, request: pytest.FixtureRequest) -> 
                     model = models.locator("..").locator("pre").first
                     expect(model.locator(".json-number")).to_have_text("1")
                     models.click()
-                    docs.get_by_role("heading", name="API Docs").scroll_into_view_if_needed()
+                    response_schema.scroll_into_view_if_needed()
                     capture(
                         page,
                         "specification",
