@@ -99,6 +99,14 @@ MUTATIONS = (
     ),
     Mutation(
         "frontend",
+        "閉じた通知を再描画で復活させる",
+        "packages/frontend/src/web_app/runtime/portal_shell.py",
+        'ctx.update(message="", error=False)',
+        "ctx.update(error=False)",
+        "packages/frontend/tests/test_required_guide_navigation.py::test_dismiss_current_notice",
+    ),
+    Mutation(
+        "frontend",
         "認証情報の初期更新時刻を有効期間の5分前に固定する",
         "packages/frontend/src/web_app/components/credential_views.py",
         "default_ttl * 3 // 4",
@@ -1020,3 +1028,4 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
+
