@@ -34,6 +34,7 @@ def resolve_person(db, subject):
         idp = boto3.client("cognito-idp")
         field = "email" if "@" in subject else "sub"
         try:
+            #: 利用者・グループの管理（Cognitoユーザープール） / 指名した利用者の識別子と有効状態を確認
             pages = idp.get_paginator("list_users").paginate(
                 UserPoolId=settings()["pool_id"], Filter=field + " = " + json.dumps(subject)
             )
