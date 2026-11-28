@@ -30,7 +30,7 @@ def test_user_flow(demo_url: str, request: pytest.FixtureRequest) -> None:
 
 
 def test_home_chat_and_inquiry(demo_url: str, request: pytest.FixtureRequest) -> None:
-    """ホームで商品と手順を調べ、運営への問い合わせを明示的に送信できる。"""
+    """ログイン直後のチャットで商品と手順を調べ、運営への問い合わせを明示的に送信できる。"""
     import httpx
     from playwright.sync_api import expect, sync_playwright
 
@@ -43,6 +43,8 @@ def test_home_chat_and_inquiry(demo_url: str, request: pytest.FixtureRequest) ->
         page = browser.new_page(viewport={"width": 390, "height": 844})
         page.goto(demo_url)
         page.get_by_role("button", name="利用チーム", exact=True).click()
+        expect(page.get_by_role("heading", level=1, name="チャット", exact=True)).to_be_visible()
+        expect(page.get_by_label("質問", exact=True)).to_be_visible()
         expect(page.get_by_role("heading", name="どのAPIをお探しですか？")).to_be_visible()
         page.get_by_role("button", name="在庫を確認できるAPIを探して").click()
         history = page.get_by_role("log", name="会話")

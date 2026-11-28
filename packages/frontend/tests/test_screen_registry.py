@@ -77,6 +77,7 @@ def test_existing_routes_and_role_menus(portal_module: Callable[[str], ModuleTyp
         "プロジェクト",
     ]
     menus = registry.menu(user)
+    assert menus["ワークスペース"][0].page_title() == "チャット"
     assert [s.path for s in menus["ワークスペース"]] == [
         "home",
         "catalog",
