@@ -42,6 +42,14 @@ MUTATIONS = (
         "packages/tools/tests/test_deployed_account.py::test_only_expected_consumer",
     ),
     Mutation(
+        "admin-role",
+        "最後の管理者の権限を剥奪できてしまう",
+        "packages/backend/src/app/apis/governance/admin_roles.py",
+        "if admins == {subject}:",
+        "if not admins:",
+        "packages/backend/tests/test_quint_administrators.py::test_admin_role_handover",
+    ),
+    Mutation(
         "formal",
         "利用者別の禁止操作を許可する",
         "packages/backend/src/app/core/credential_policy.py",
