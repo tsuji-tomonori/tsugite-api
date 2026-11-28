@@ -647,13 +647,23 @@ def test_provider_inventory_distinguishes_listing_status(
         rows=[
             portal["detail"],
             {**portal["detail"], "id": "new", "name": "棚番取得", "published": False},
+            {
+                **portal["detail"],
+                "id": "pending",
+                "name": "在庫更新",
+                "published": False,
+                "publication_stage": "admin",
+                "publication_position": 2,
+                "publication_total": 3,
+            },
         ],
-        total=2,
+        total=3,
     )
     doc = render(portal_module("components.catalog").cards)[1]
     rows = [visible(r) for r in doc.getElementsByTagName("tr")]
     assert any("在庫照会" in row and "公開中" in row for row in rows)
     assert any("棚番取得" in row and ("未掲載" in row or "下書き" in row) for row in rows)
+    assert any("在庫更新" in row and "公開承認待ち（2/3段階）　管理者" in row for row in rows)
 
 
 def test_provider_publication_buttons_follow_status(
@@ -877,3 +887,31 @@ def test_publication_detail_shows_responsibility_and_current_reviewer(
     assert choices(control(editor, "datalist", "responsible-people")) == ["logistics"]
     owner = render(portal_module("components.listing_detail").publication_actions, product)[1]
     assert "公開申請を取り下げる" in visible(owner)
+
+
+def test_owner_sees_publication_progress(portal_module: Module, portal: dict[str, Any]) -> None:
+    """同じ担当を含む三段階でも承認済み・承認待ち・未到達を申請順に表示する。"""
+    portal["me"]["owners"] = ["supply"]
+    asset = portal["detail"]
+    asset.update(
+        published=False,
+        publication_stage="admin",
+        publication_steps=["admin", "admin", "department"],
+        publication_position=2,
+        publication_total=3,
+    )
+    page = portal_module("components.listing_detail").detail_page
+    doc = render(page)[1]
+    assert "公開承認待ち（2/3段階）　管理者" in visible(doc)
+    rows = doc.getElementsByTagName("ol")[0].getElementsByTagName("li")
+    assert [visible(row) for row in rows] == [
+        "管理者（承認済み）",
+        "管理者（承認待ち）",
+        "申請者の所属部署の上長（未到達）",
+    ]
+    assert rows[1].getAttribute("aria-current") == "step"
+    asset.update(publication_stage=None, publication_outcome="rejected", publication_reason="仕様を修正")
+    text = visible(render(page)[1])
+    assert "却下されました。理由：仕様を修正" in text and "次回の公開申請（全3段階）" in text
+    asset["publication_outcome"] = "withdrawn"
+    assert "公開申請を取り下げました。" in visible(render(page)[1])

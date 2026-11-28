@@ -166,6 +166,10 @@ class Listing(BaseModel):
     environments: list[Env]
     #: 公開を待っている承認段階
     publication_stage: str | None = None
+    #: 申請時の承認段階数
+    publication_total: int | None = None
+    #: 現在の承認段階（1始まり）
+    publication_position: int | None = None
     #: カタログで公開中か
     published: bool
     #: 更新時の競合検出に使う版番号
@@ -186,6 +190,12 @@ class CatalogPage(BaseModel):
 
 #: カタログ掲載APIの詳細
 class Detail(Listing):
+    #: 提供者に示す申請時点の承認順、または次回申請の予定順
+    publication_steps: list[str] = Field(default_factory=list[str])
+    #: 未掲載の商品で直近の公開申請が終了した理由
+    publication_outcome: Literal["rejected", "withdrawn"] | None = None
+    #: 直近の公開申請を却下した理由
+    publication_reason: str = ""
     #: 公開責任者または提供プロジェクトの表示名
     responsible_label: str = ""
     #: 公開申請時の提供ガイドライン

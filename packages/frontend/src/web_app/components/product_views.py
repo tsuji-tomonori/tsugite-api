@@ -45,6 +45,48 @@ def step_label(step: str) -> str:
     return dict(approval_options()).get(step, step)
 
 
+def publication_status(asset: dict[str, Any]) -> str:
+    """提供一覧と商品詳細に表示する公開状態を返す。"""
+    if stage := asset.get("publication_stage"):
+        position, total = asset.get("publication_position"), asset.get("publication_total")
+        progress = f"（{position}/{total}段階）" if position and total else ""
+        return "公開承認待ち" + progress + "　" + step_label(stage)
+    return "公開中" if asset["published"] else "未掲載"
+
+
+def publication_progress(asset: dict[str, Any]) -> None:
+    """提供者に現在の申請の承認順、または次回申請の予定を示す。"""
+    if asset["published"]:
+        return
+    steps = asset.get("publication_steps", [])
+    position = asset.get("publication_position")
+    if asset.get("publication_stage"):
+        if not steps or not position:
+            return
+        t.h2("公開申請の進捗")
+        with t.ol():
+            for index, step in enumerate(steps, 1):
+                label = step_label(step)
+                if index == position:
+                    with t.li(aria_current="step"):
+                        t.strong(label + "（承認待ち）")
+                else:
+                    t.li(label + ("（承認済み）" if index < position else "（未到達）"))
+        return
+    outcome = asset.get("publication_outcome")
+    if outcome == "rejected":
+        t.p("公開申請は却下されました。理由：" + asset.get("publication_reason", ""))
+    elif outcome == "withdrawn":
+        t.p("公開申請を取り下げました。")
+    if steps:
+        t.p(
+            "次回の公開申請（全"
+            + str(len(steps))
+            + "段階）　"
+            + " → ".join(step_label(s) for s in steps)
+        )
+
+
 def approval_options() -> list[tuple[str, str]]:
     """指定可能な組織と利用者を名前付きの選択肢にする。"""
     directory = ctx.get("policy_directory", {})
