@@ -17,7 +17,8 @@ module products {
   action structural = all { not(removed), result("structure", false, false, closed) }
   action remove = all { not(removed), result("delete", false, true, closed) }
   action step = any { submitPublication, publish, apply, approve, rename, structural, remove, all { removed, result("deleted", false, true, closed) } }
-  val safe = removed implies (not(listed) and not(Set("pending","approved").contains(status)))
+  val safe = (removed implies (not(listed) and not(Set("pending","approved").contains(status)))) and
+    (operation != "structure" or not(listed))
   run editTest = init.then(submitPublication).then(publish).then(apply).then(approve).then(rename).then(structural)
   run pendingEditTest = init.then(submitPublication).then(publish).then(apply).then(structural)
   run deleteTest = init.then(submitPublication).then(publish).then(apply).then(approve).then(remove)

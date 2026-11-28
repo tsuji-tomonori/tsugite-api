@@ -14,7 +14,7 @@ def test_seed_replaces_old_contract_and_calls_product(portal):
     publish_asset(portal, f"/api/apis/{key}", owner).raise_for_status()
     portal.base_url = "http://testserver/api/"
     ids = seed(portal, 1)
-    assert len(set(ids)) == 12 and key in ids
+    assert len(set(ids)) == len(CATALOG) and key in ids
     detail = portal.get(f"apis/{key}", headers=owner).raise_for_status().json()
     assert detail["spec"] == listing["spec"] and detail["published"]
     grant = (

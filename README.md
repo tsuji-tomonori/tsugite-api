@@ -113,7 +113,7 @@ main へのマージを起点に自動配備するには、[GitHub Actions の�
 
 Python CDKでCloudFront、非公開S3、API Gateway、Lambda、Cognito、Aurora DSQLを構築します。フロントはPuePyとPyScript、APIはFastAPI、DB変更はAlembicです。Pythonのブラウザ実行環境とCSSも同じ配信元に配置します。
 
-CDKをブートストラップ済みのAWS環境で `task synth` が構成を合成し、`task deploy` が配備とDB移行を行います。サンプルを含めると、検証・準本番・本番に12商品を扱うLambdaをそれぞれ配備します。プロジェクトの所属メンバーに提供と利用の両方を認めます。既存のCognitoグループ `own-<project>` と `use-<project>` はどちらも同じ所属として扱います。全体監査担当者を `audit` グループに追加してください。
+CDKをブートストラップ済みのAWS環境で `task synth` が構成を合成し、`task deploy` が配備とDB移行を行います。サンプルを含めると、検証・準本番・本番に24商品を扱うLambdaをそれぞれ配備します。プロジェクトの所属メンバーに提供と利用の両方を認めます。既存のCognitoグループ `own-<project>` と `use-<project>` はどちらも同じ所属として扱います。全体監査担当者を `audit` グループに追加してください。
 
 独自の接続先は [設定例](docs/examples/bindings.json) を編集し、`task deploy -- --bindings ファイル名` で指定します。Lambdaは `kind` に `lambda`、`address` に関数ARNを指定します。HTTPSは必要に応じて `secret_arn` に接続用BearerトークンのSecrets Manager ARNを指定し、提供元でも呼び出しを制限します。委任された接続先の配下なら、提供チームが画面でベースパスと [OpenAPI](docs/examples/stock.openapi.json) を登録できます。
 

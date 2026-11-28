@@ -1,0 +1,262 @@
+openapi: 3.1.0
+info:
+  title: 棚卸し差異
+  description: 棚卸し票の保管区画、差異理由、帳簿と実棚の差異数を照会します。
+  version: 1.0.0
+paths:
+  /health:
+    get:
+      summary: データベースの稼働状態を確認
+      operationId: health_health_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+  /variances:
+    get:
+      summary: 棚卸し差異を一覧で取得
+      operationId: list_variances_variances_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Variance'
+                type: array
+                title: Response List Variances Variances Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+  /variances/{count_id}:
+    get:
+      summary: 棚卸し差異の明細を照会
+      operationId: detail_variances__count_id__get
+      parameters:
+      - name: count_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Count Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Variance'
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+        '404':
+          description: 該当なし
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MissingRecord'
+  /count-sectors:
+    get:
+      summary: 棚卸し差異を保管区画別に集計
+      operationId: by_sector_count_sectors_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/VarianceCount'
+                type: array
+                title: Response By Sector Count Sectors Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+  /minor-variances:
+    get:
+      summary: 棚卸差異数が指定値以下の棚卸し差異を取得
+      operationId: below_limit_minor_variances_get
+      parameters:
+      - name: maximum
+        in: query
+        required: false
+        schema:
+          type: integer
+          description: 棚卸差異数の上限
+          default: 1
+          title: Maximum
+        description: 棚卸差異数の上限
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Variance'
+                title: Response Below Limit Minor Variances Get
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /variance-spread:
+    get:
+      summary: 棚卸差異数の最小値と最大値を取得
+      operationId: variance_units_summary_variance_spread_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VarianceRange'
+        '500':
+          description: サーバー内部のエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+components:
+  schemas:
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    Health:
+      properties:
+        status:
+          type: string
+          const: ok
+          title: Status
+          default: ok
+      type: object
+      title: Health
+    InternalServerError:
+      properties:
+        error_code:
+          type: string
+          const: INTERNAL_ERROR
+          title: Error Code
+        detail:
+          type: string
+          title: Detail
+      type: object
+      required:
+      - error_code
+      - detail
+      title: InternalServerError
+    MissingRecord:
+      properties:
+        detail:
+          type: string
+          title: Detail
+      type: object
+      required:
+      - detail
+      title: MissingRecord
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    Variance:
+      properties:
+        count_id:
+          type: string
+          title: Count Id
+        sector:
+          type: string
+          title: Sector
+        reason_code:
+          type: string
+          title: Reason Code
+        variance_units:
+          type: integer
+          title: Variance Units
+      type: object
+      required:
+      - count_id
+      - sector
+      - reason_code
+      - variance_units
+      title: Variance
+    VarianceCount:
+      properties:
+        sector:
+          type: string
+          title: Sector
+        count:
+          type: integer
+          title: Count
+      type: object
+      required:
+      - sector
+      - count
+      title: VarianceCount
+    VarianceRange:
+      properties:
+        minimum_variance_units:
+          type: integer
+          title: Minimum Variance Units
+        maximum_variance_units:
+          type: integer
+          title: Maximum Variance Units
+      type: object
+      required:
+      - minimum_variance_units
+      - maximum_variance_units
+      title: VarianceRange
