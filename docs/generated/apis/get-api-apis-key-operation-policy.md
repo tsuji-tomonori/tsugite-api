@@ -25,31 +25,39 @@ GET `/api/apis/{key}/operation-policy`
 | ステータス | 説明 | 形式・条件 | スキーマ |
 | --- | --- | --- | --- |
 | 200 | 正常に処理できました | application/json | [APIの利用者別操作権限（OperationPolicy）](../db/schemas.md#operationpolicy) |
-| 422 | 入力内容が条件を満たしていません | application/json | [リクエスト入力エラー（HTTPValidationError）](../db/schemas.md#httpvalidationerror) |
+| 403 | Forbidden | application/json | [HTTPエラーの内容（ErrorDetail）](../db/schemas.md#errordetail) |
+| 500 | サーバー内部のエラー | application/json | [サーバー内部のエラー（InternalServerError）](../db/schemas.md#internalservererror) |
+| 401 | 利用者認証が必要です | application/json | [HTTPエラーの内容（ErrorDetail）](../db/schemas.md#errordetail) |
 
 ### 200 application/json の項目
 
 | 項目の和名 | 物理名 | 指定 | 型・制約 |
 | --- | --- | --- | --- |
 | 対象のAPI操作 | operations | 必須 | 配列 / 文字列 |
-| 対象の利用者一覧 | members | 必須 | 配列 / [利用者の識別情報（Person）](../db/schemas.md#person) |
-| メールアドレス | members[].email | 必須 | 文字列 または 空値 |
-| 氏名 | members[].full_name | 必須 | 文字列 または 空値 |
-| 表示名 | members[].display_name | 必須 | 文字列 または 空値 |
+| 対象の利用者一覧 | members | 必須 | 配列 / [権限設定の候補に表示する氏名（NamedMember）](../db/schemas.md#namedmember) |
 | 対象利用者の識別子 | members[].subject | 必須 | 文字列 |
 | ログイン名 | members[].username | 必須 | 文字列 |
+| 氏名 | members[].full_name | 必須 | 文字列 または 空値 |
 | 利用者ごとに許可されたAPI操作 | permissions | 必須 | オブジェクト（キーに対応する値は配列 / 文字列） |
 
-### 422 application/json の項目
+### 403 application/json の項目
 
 | 項目の和名 | 物理名 | 指定 | 型・制約 |
 | --- | --- | --- | --- |
-| 入力エラーの明細一覧 | detail | 任意 | 配列 / [入力エラーの項目別明細（ValidationError）](../db/schemas.md#validationerror) |
-| 入力エラーの発生箇所 | detail[].loc | 必須 | 配列 / 文字列 または 整数 |
-| 入力エラーの説明 | detail[].msg | 必須 | 文字列 |
-| 入力エラーの分類コード | detail[].type | 必須 | 文字列 |
-| エラーになった入力値 | detail[].input | 任意 | 任意の型 |
-| 入力エラーの補足情報 | detail[].ctx | 任意 | オブジェクト |
+| 利用者に表示するエラー内容 | detail | 必須 | 文字列 |
+
+### 500 application/json の項目
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 問い合わせ用のエラー分類 | error_code | 必須 | 文字列、指定値 問い合わせ用のエラー分類（`INTERNAL_ERROR`） |
+| 利用者に表示するエラー内容 | detail | 必須 | 文字列 |
+
+### 401 application/json の項目
+
+| 項目の和名 | 物理名 | 指定 | 型・制約 |
+| --- | --- | --- | --- |
+| 利用者に表示するエラー内容 | detail | 必須 | 文字列 |
 
 実装・認証依存で送出し得るHTTPエラー（エラーの詳細を示す `detail` を含むJSON）　401, 403, 404, 503。
 

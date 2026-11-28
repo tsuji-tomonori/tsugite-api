@@ -194,7 +194,7 @@ def test_member_directory_and_invitation(portal_module: Module) -> None:
     )
     dom = render(view.members_view)[1]
     row = content(row_with(dom, "mail@example.test"))
-    for text in ("林明", "棚卸窓口", "利用者"):
+    for text in ("hayashi", "林明", "棚卸窓口", "利用者"):
         assert text in row
     ids = {el.getAttribute("id") for el in dom.getElementsByTagName("input")}
     assert {"member-email", "member-full-name", "member-display-name"} <= ids
